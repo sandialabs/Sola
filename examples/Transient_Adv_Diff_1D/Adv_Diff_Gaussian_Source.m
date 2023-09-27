@@ -1,10 +1,16 @@
-classdef Adv_Diff < Constrained_ODE_Optimization
+classdef Adv_Diff_Gaussian_Source < Constrained_ODE_Optimization
     
     
     properties
         A;
         M;
+        B;
+        Br;
         x;
+        num_space_control_nodes;
+        time_weights;
+        source_loc;
+        z_time_mesh;
         beta_reg;
     end
     
@@ -18,19 +24,19 @@ classdef Adv_Diff < Constrained_ODE_Optimization
         end
         
         function [val,grad_z] = Regularization_Objective(obj,z) 
-            val = 0.0;
-            grad_z = 0*z;
+            val = .5*obj.beta_reg*z'*(kron(diag(obj.time_weights(2:end)),obj.Br'*obj.M*obj.Br)*z);
+            grad_z = obj.beta_reg*(kron(diag(obj.time_weights(2:end)),obj.Br'*obj.M*obj.Br))*z;
         end
         
         function [f, f_u, f_z] = Time_Instance_RHS(obj,u,z,t)
             % Extract the control for the given time.
             w = obj.Temporal_Weights(t);
-            zt = reshape(z,obj.m,obj.N)*w;
-
+            zt = reshape(z,obj.num_space_control_nodes,length(obj.z_time_mesh))*w;
+            
             % Evaluate the RHS and its derivatives.
-            f = linsolve(obj.M,-obj.A*u + obj.M*zt);
+            f = linsolve(obj.M,-obj.A*u + obj.M*obj.B*zt);
             f_u = linsolve(obj.M,-obj.A);
-            f_z = kron(w',eye(obj.m));
+            f_z = kron(w',obj.B);
         end
         
         function [h, h_z] = Initial_Condition(obj,z)
@@ -44,7 +50,7 @@ classdef Adv_Diff < Constrained_ODE_Optimization
         end
         
         function [Mv] = Regularization_Objective_zz_Apply(obj,v,z) 
-            Mv = 0*v;
+            Mv = obj.beta_reg*(kron(diag(obj.time_weights(2:end)),obj.Br'*obj.M*obj.Br))*v;
         end
         
         function [Mv] = Time_Instance_RHS_uu_Apply(obj,v,u,z,t,lambda) 
@@ -75,8 +81,8 @@ classdef Adv_Diff < Constrained_ODE_Optimization
     end
     
     methods (Access = public)
-        function obj = Adv_Diff(m,n,T,Neumann)
-            obj = obj@Constrained_ODE_Optimization(m,n,T,Neumann);
+        function obj = Adv_Diff_Gaussian_Source(m,n,T,N,num_space_control_nodes)
+            obj = obj@Constrained_ODE_Optimization(m,n,T,N);
             
             Pe = 1; % Peclet number
             
@@ -104,15 +110,39 @@ classdef Adv_Diff < Constrained_ODE_Optimization
             
             obj.A = A;
             obj.M = M;
-            obj.beta_reg = 10^-5;
+            obj.beta_reg = 10^-3;
+            
+            % Trapazoid rule for time integration
+            time_weights = ones(N,1);
+            time_weights(1) = .5*time_weights(1);
+            time_weights(end) = .5*time_weights(end);
+            time_weights = T*time_weights/sum(time_weights);
+            obj.time_weights = time_weights;
+            
+            % Control matrix (Gaussian)
+            source_loc = linspace(0,1,num_space_control_nodes)';
+            B = zeros(m,num_space_control_nodes);
+            for k = 1:num_space_control_nodes
+               B(:,k) = exp(-200*(obj.x-source_loc(k)).^2); 
+            end
+            Br = B;
+            B(1,:) = 0*B(1,:);
+            B(end,:) = 0*B(end,:);
+            
+            obj.B = B;
+            obj.Br = Br;
+            obj.num_space_control_nodes = num_space_control_nodes;
+            obj.source_loc = source_loc;
+            obj.z_time_mesh = linspace(0,T,N)';
+            obj.z_time_mesh = obj.z_time_mesh(2:end);
         end
        
         function [target] = Evaluate_Target(obj,t,x)
-           target = t^2*exp(-50*(x-.5).^2); 
+           target = 0.2*t^2*exp(-10*(x-.5).^2); 
         end
         
         function [w] = Temporal_Weights(obj,t)
-            w = (obj.t_mesh-t)/(obj.t_mesh(2)-obj.t_mesh(1));
+            w = (obj.z_time_mesh-t)/(obj.z_time_mesh(2)-obj.z_time_mesh(1));
             Im = intersect(find(w<=0),find(abs(w)<=1));
             Ip = intersect(find(w>0),find(abs(w)<=1));
             I = find(abs(w)>1);
