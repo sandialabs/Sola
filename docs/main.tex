@@ -3,9 +3,9 @@
 \usepackage{algorithm}
 \usepackage{float}
 \usepackage{subcaption}
- \usepackage{relsize}
+\usepackage{relsize}
 \usepackage{graphicx}
-\usepackage{booktabs} 
+\usepackage{booktabs}
 \usepackage[table]{xcolor}
 \usepackage{bm}
 \usepackage{setspace}
@@ -15,17 +15,19 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{cite}
+\usepackage{geometry}
+
+\geometry{
+    letterpaper,
+    total={8.5in,11in},
+    left=1.25in,
+    right=1in,
+    top=1in,
+    bottom=1in,
+}
+
 \newtheorem{prop}{Proposition}
 \newtheorem{example}{Example}
-\usepackage{geometry}
- \geometry{
- letterpaper,
- total={8.5in,11in},
- left=1.25in,
- right=1in,
- top=1in,
- bottom=1in,
- }
 
 \renewcommand{\vec}[1] {\ensuremath{\boldsymbol{#1}}}
 \def\R{{\mathbb R}}
@@ -35,99 +37,144 @@
 \def\t{{\vec{\theta}}}
 \def\e{{\vec{e}}}
 \def\x{{\vec{x}}}
+\def\v{{\vec{v}}}
+\newcommand{\trp}{^{\mathsf{T}}}
+\newcommand{\invtrp}{^{-\mathsf{T}}}
+
+\definecolor{red}{cmyk}{0, 1.00, 0.62,0}
+\definecolor{blue}{RGB}{35, 87, 178}
+\definecolor{green}{cmyk}{0.7, 0, 1.0, 0.09 }
 
 \newcommand{\joeynote}[1]{{\color{red}Joey : {#1}}}
+\newcommand{\shanenote}[1]{{\color{blue}Shane : {#1}}}
 
 \begin{document}
 \section*{Problem Formulation}
 
-Our Matlab library is designed to solve constrained optimization problems of the form 
+The SABL library is designed to solve constrained optimization problems of the form
 \begin{align}
 \label{eqn:opt_prob}
 & \min_{u ,z } J(u,z) \\
 & s.t. \hspace{5 mm} c(u,z) = 0\nonumber
 \end{align}
-via a reduced space optimization strategy. In particular, if $c(u,z)=0$ admits a unique solution for any given $z$, then there exists a solution operator $S(z)$ such that $c(S(z),z)=0$ $\forall z$. We may reformulate~\eqref{eqn:opt_prob} in reduced space and solve the equivalent optimization problem 
+via a reduced space optimization strategy.
+Here, $u$ indicates the state variable, $z$ is the control variable, $J$ is the objective function, and $c$ specifies the constraints.
+If $c(u,z)=0$ admits a unique solution for any given $z$, then there exists a solution operator $S(z)$ such that $c(S(z),z)=0$ $\forall z$. We may reformulate~\eqref{eqn:opt_prob} in reduced space and solve the equivalent optimization problem
 \begin{align}
 \label{eqn:rs_opt_prob}
- \min_{z } \hat{J}(z)=J(S(z),z)
+ \min_{z } \hat{J}(z)=J(S(z),z),
 \end{align}
-which will be the focus of this document and the corresponding Matlab codes. Along with solving~\eqref{eqn:rs_opt_prob}, we would also like the code to facilitate the use of hyper-differential sensitivity analysis (HDSA) for the solution of~\eqref{eqn:rs_opt_prob}.
+which will be the focus of this document and the corresponding MATLAB codes. Along with solving~\eqref{eqn:rs_opt_prob}, we would also like the code to facilitate the use of hyper-differential sensitivity analysis (HDSA) for the solution of~\eqref{eqn:rs_opt_prob}.
 
-\section*{Base Class: \textit{Constrained\_Optimization} }
+\section*{Base Class: \texttt{Constrained\_Optimization} }
 
-We adopt an object oriented design in Matlab by defining a base class \textit{Constrained\_Optimization} where the problem, optimization, and HDSA interfaces will be defined. As we present the mathematics used in \textit{Constrained\_Optimization} we will introduce functions, properties, and inherited classes corresponding to the mathematical expressions.
-
-To facilitate our analysis, we require efficient algorithms to compute the gradient $\nabla_z \hat{J}(z)$ and hessian vector products $\nabla_{z,z} \hat{J}(z) v$, for a given vector $v$. To this end we introduce adjoint-based derivatives which is implemented in the code. Algorithm~\ref{alg:adjoint_gradient} demonstrates how to efficiently calculate the gradient. In the algorithm and throughout this document we will use $c_u$ and $c_z$ to denote the Jacobians of $c$ with respect to $u$ and $z$, respectively, $\nabla_u J$ and $\nabla_z J$ to denote the gradients (where $u$ and $z$ are independent of one another) of $J$ with respect to $u$ and $z$, respectively, and a superscript $T$ to denote a matrix transpose. Based on Algorithm~\ref{alg:adjoint_gradient}, Table~\ref{tab:con_opt_pure_virtual_funs_1} summarizes pure virtual functions defined in \textit{Constrained\_Optimization} which must be implemented for a given problem to enable the gradient computation.
+We adopt an object-oriented design in MATLAB by defining a base class \texttt{Constrained\_Optimization} where the problem, optimization, and HDSA interfaces will be defined.
+% As we present the mathematics used in \texttt{Constrained\_Optimization} we will introduce functions, properties, and inherited classes corresponding to the mathematical expressions.
+To facilitate our analysis, we require efficient algorithms to compute the gradient $\nabla_z \hat{J}(z)$ and hessian vector products $\nabla_{z,z} \hat{J}(z) v$, for a given vector $v$. To this end we introduce adjoint-based derivatives which is implemented in the code. Algorithm~\ref{alg:adjoint_gradient} demonstrates how to efficiently calculate the gradient. In the algorithm and throughout this document we will use $c_u$ and $c_z$ to denote the Jacobians of $c$ with respect to $u$ and $z$, respectively, $\nabla_u J$ and $\nabla_z J$ to denote the gradients (where $u$ and $z$ are independent of one another) of $J$ with respect to $u$ and $z$, respectively, and a superscript $\mathsf{T}$ to denote a matrix transpose. Based on Algorithm~\ref{alg:adjoint_gradient}, Table~\ref{tab:con_opt_pure_virtual_funs_1} summarizes pure virtual functions defined in \texttt{Constrained\_Optimization} which must be implemented for a given problem to enable the gradient computation.
 
 \begin{algorithm}
 \caption{Adjoint-based gradient calculation}
 \label{alg:adjoint_gradient}
 \textbf{Input: } $\overline{z}$\\
 \textbf{1: } Solve the state equation to determine $\overline{u}$ such that $c(\overline{u},\overline{z})=0$\\
-\textbf{2: } Solve the adjoint equation $c_u(\overline{u},\overline{z})^T \overline{\lambda} = - \nabla_u J(\overline{u},\overline{z})$ for $\overline{\lambda}$ (i.e. a linear solve) \\
-\textbf{3: } Compute $\nabla_z \hat{J}(\overline{z}) = c_z(\overline{u},\overline{z})^T \overline{\lambda} + \nabla_z J(\overline{u},\overline{z})$ \\
+\textbf{2: } Solve the adjoint equation $c_u(\overline{u},\overline{z})\trp \overline{\lambda} = - \nabla_u J(\overline{u},\overline{z})$ for $\overline{\lambda}$ (a linear solve) \\
+\textbf{3: } Compute $\nabla_z \hat{J}(\overline{z}) = c_z(\overline{u},\overline{z})\trp \overline{\lambda} + \nabla_z J(\overline{u},\overline{z})$ \\
 \textbf{Return: } $\nabla_z \hat{J}(\overline{z})$
 \end{algorithm}
 
 \begin{table}[!ht]
 \centering
 \begin{tabular}{|l|l|}
-\hline
-Function Name & Mathematical Description \\
-\hline
-$[$val, grad\_u, grad\_z$]$ = Objective(obj,u,z) & Evaluate $J$, $\nabla_u J$, and $\nabla_z J$ \\
-$[$u$]$ = State\_Solve(obj,z) & Solve $c(u,z)=0$ for $u$ \\
-$[$Mv$]$ = c\_u\_Transpose\_Inverse\_Apply(obj,v,u,z) & Compute the product $c_u(u,z)^{-T} v$ \\
-$[$Mv$]$ = c\_z\_Transpose\_Apply(obj,v,u,z) & Compute the product $c_z(u,z)^{T} v$ \\
-\hline
+    \hline
+    Function Signature & Mathematical Description
+    \\ \hline
+    \texttt{[val,grad\_u,grad\_z] = Objective(obj,u,z)}
+    & Evaluate $J$, $\nabla_u J$, and $\nabla_z J$
+    \\
+    \texttt{[u] = State\_Solve(obj,z)}
+    & Solve $c(u,z)=0$ for $u$
+    \\
+    \texttt{[Mv] = c\_u\_Transpose\_Inverse\_Apply(obj,v,u,z)}
+    & Compute the product $c_u(u,z)\invtrp v$
+    \\
+    \texttt{[Mv] = c\_z\_Transpose\_Apply(obj,v,u,z)}
+    & Compute the product $c_z(u,z)\trp v$
+    \\ \hline
 \end{tabular}
-\caption{Summary of pure virtual function in \textit{Constrained\_Optimization} needed to execute Algorithm~\ref{alg:adjoint_gradient}.}
+\caption{Summary of pure virtual function in \texttt{Constrained\_Optimization} needed to execute Algorithm~\ref{alg:adjoint_gradient}.}
 \label{tab:con_opt_pure_virtual_funs_1}
 \end{table}
 
-To compute efficient hessian vector products, Algorithm~\ref{alg:adjoint_hessvec} outlines computation using incremental state and incremental adjoint equations. In the algorithm and throughout this document we will use $\lambda^T c_{u,u}$ and $\nabla_{u,u} J$ to denote the $(u,u)$ hessian of the scalar functions $\lambda^T c$ and $J$, respectively, and similar expressions for the $(u,z)$, $(z,u)$, and $(z,z)$ hessians. Table~\ref{tab:con_opt_pure_virtual_funs_2} summarizes pure virtual functions defined in \textit{Constrained\_Optimization} which must be implemented for a given problem to enable the hessian vector product computation using Algorithm~\ref{alg:adjoint_hessvec}.
+To compute efficient hessian vector products, Algorithm~\ref{alg:adjoint_hessvec} outlines computation using incremental state and incremental adjoint equations. In the algorithm and throughout this document we will use $\lambda\trp c_{u,u}$ and $\nabla_{u,u} J$ to denote the $(u,u)$ hessian of the scalar functions $\lambda\trp c$ and $J$, respectively, and similar expressions for the $(u,z)$, $(z,u)$, and $(z,z)$ hessians. Table~\ref{tab:con_opt_pure_virtual_funs_2} summarizes pure virtual functions defined in \texttt{Constrained\_Optimization} which must be implemented for a given problem to enable the hessian vector product computation using Algorithm~\ref{alg:adjoint_hessvec}.
 
 \begin{algorithm}
 \caption{Adjoint-based hessian vector product calculation}
 \label{alg:adjoint_hessvec}
-\textbf{Input: } $v$, $\overline{u}$, $\overline{z}$, $\overline{\lambda}$\\
-\textbf{1: } Compute $w = c_z(\overline{u},\overline{z}) v$ \\
-\textbf{2: } Solve the incremental state equation $c_u(\overline{u},\overline{z}) \overline{\mu} = - w$ for $\overline{\mu}$ (i.e. a linear solve) \\
-\textbf{3: } Compute $y_J = \nabla_{u,u} J(\overline{u},\overline{z}) \overline{\mu} + \nabla_{u,z} J(\overline{u},\overline{z}) v$ \\
-\textbf{4: } Compute $y_c = \overline{\lambda}^T c_{u,u}(\overline{u},\overline{z}) \overline{\mu} +  \overline{\lambda}^T c_{u,z}(\overline{u},\overline{z}) v$ \\
-\textbf{5: } Solve the incremental adjoint equation $c_u(\overline{u},\overline{z})^T \overline{\gamma} = -(y_J + y_c)$ for $\overline{\gamma}$ (i.e. a linear solve) \\
-\textbf{6: } Compute $x_J= \nabla_{z,u}J(\overline{u},\overline{z}) \overline{\mu} +  \nabla_{z,z}J(\overline{u},\overline{z}) v$\\
-\textbf{6: } Compute $x_c = c_z(\overline{u},\overline{z})^T \overline{\gamma} + \overline{\lambda}^T c_{z,u}(\overline{u},\overline{z}) \overline{\mu} + \overline{\lambda}^T c_{z,z}(\overline{u},\overline{z})v $\\
-\textbf{6: } Compute $\nabla_{z,z} \hat{J}(\overline{z}) v = x_J + x_c$\\
-\textbf{Return: } $\nabla_{z,z} \hat{J}(\overline{z}) v$
+    \textbf{Input: } $v$, $\overline{u}$, $\overline{z}$, $\overline{\lambda}$
+    \\
+    \textbf{1: } Compute $w = c_z(\overline{u},\overline{z}) v$
+    \\
+    \textbf{2: } Solve the incremental state equation $c_u(\overline{u},\overline{z}) \overline{\mu} = - w$ for $\overline{\mu}$ (a linear solve)
+    \\
+    \textbf{3: } Compute $y_J = \nabla_{u,u} J(\overline{u},\overline{z}) \overline{\mu} + \nabla_{u,z} J(\overline{u},\overline{z}) v$
+    \\
+    \textbf{4: } Compute $y_c = \overline{\lambda}\trp c_{u,u}(\overline{u},\overline{z}) \overline{\mu} +  \overline{\lambda}\trp c_{u,z}(\overline{u},\overline{z}) v$
+    \\
+    \textbf{5: } Solve the incremental adjoint equation $c_u(\overline{u},\overline{z})\trp \overline{\gamma} = -(y_J + y_c)$ for $\overline{\gamma}$ (a linear solve)
+    \\
+    \textbf{6: } Compute $x_J= \nabla_{z,u}J(\overline{u},\overline{z}) \overline{\mu} +  \nabla_{z,z}J(\overline{u},\overline{z}) v$
+    \\
+    \textbf{7: } Compute $x_c = c_z(\overline{u},\overline{z})\trp \overline{\gamma} + \overline{\lambda}\trp c_{z,u}(\overline{u},\overline{z}) \overline{\mu} + \overline{\lambda}\trp c_{z,z}(\overline{u},\overline{z})v $
+    \\
+    \textbf{8: } Compute $\nabla_{z,z} \hat{J}(\overline{z}) v = x_J + x_c$
+    \\
+    \textbf{Return: } $\nabla_{z,z} \hat{J}(\overline{z}) v$
 \end{algorithm}
 
 \begin{table}[!ht]
 \centering
 \begin{tabular}{|l|l|}
-\hline
-Function Name & Mathematical Description \\
-\hline
-$[$Mv$]$ = c\_u\_Inverse\_Apply(obj,v,u,z) & Compute the product $c_u(u,z)^{-1} v$ \\
-$[$Mv$]$ = c\_z\_Apply(obj,v,u,z) & Compute the product $c_z(u,z) v$ \\
-$[$Mv$]$ = c\_uu\_Apply(obj,v,u,z,lambda) & Compute the product $\lambda^T c_{u,u}(u,z) v$ \\
-$[$Mv$]$ = c\_uz\_Apply(obj,v,u,z,lambda) & Compute the product $\lambda^T c_{u,z}(u,z) v$ \\
-$[$Mv$]$ = c\_zu\_Apply(obj,v,u,z,lambda) & Compute the product $\lambda^T c_{z,u}(u,z)v$ \\
-$[$Mv$]$ = c\_zz\_Apply(obj,v,u,z,lambda) & Compute the product $\lambda^T c_{z,z}(u,z) v$ \\
-$[$Mv$]$ = Objective\_uu\_Apply(obj,v,u,z) & Compute the product $\nabla_{u,u} J(u,z) v$ \\
-$[$Mv$]$ = Objective\_uz\_Apply(obj,v,u,z) & Compute the product $\nabla_{u,z} J(u,z) v$ \\
-$[$Mv$]$ = Objective\_zu\_Apply(obj,v,u,z) & Compute the product $\nabla_{z,u} J(u,z) v$ \\
-$[$Mv$]$ = Objective\_zz\_Apply(obj,v,u,z) & Compute the product $\nabla_{z,z} J(u,z) v$ \\
-\hline
+    \hline
+    Function Signature & Mathematical Description
+    \\ \hline
+    \texttt{[Mv] = c\_u\_Inverse\_Apply(obj,v,u,z)}
+    & Compute the product $c_u(u,z)^{-1} v$
+    \\
+    \texttt{[Mv] = c\_z\_Apply(obj,v,u,z)}
+    & Compute the product $c_z(u,z) v$
+    \\
+    \texttt{[Mv] = c\_uu\_Apply(obj,v,u,z,lambda)}
+    & Compute the product $\lambda\trp c_{u,u}(u,z) v$
+    \\
+    \texttt{[Mv] = c\_uz\_Apply(obj,v,u,z,lambda)}
+    & Compute the product $\lambda\trp c_{u,z}(u,z) v$
+    \\
+    \texttt{[Mv] = c\_zu\_Apply(obj,v,u,z,lambda)}
+    & Compute the product $\lambda\trp c_{z,u}(u,z)v$
+    \\
+    \texttt{[Mv] = c\_zz\_Apply(obj,v,u,z,lambda)}
+    & Compute the product $\lambda\trp c_{z,z}(u,z) v$
+    \\
+    \texttt{[Mv] = Objective\_uu\_Apply(obj,v,u,z)}
+    & Compute the product $\nabla_{u,u} J(u,z) v$
+    \\
+    \texttt{[Mv] = Objective\_uz\_Apply(obj,v,u,z)}
+    & Compute the product $\nabla_{u,z} J(u,z) v$
+    \\
+    \texttt{[Mv] = Objective\_zu\_Apply(obj,v,u,z)}
+    & Compute the product $\nabla_{z,u} J(u,z) v$
+    \\
+    \texttt{[Mv] = Objective\_zz\_Apply(obj,v,u,z)}
+    & Compute the product $\nabla_{z,z} J(u,z) v$
+    \\ \hline
 \end{tabular}
-\caption{Summary of pure virtual function in \textit{Constrained\_Optimization} needed to execute Algorithm~\ref{alg:adjoint_hessvec}.}
+\caption{Summary of pure virtual function in \texttt{Constrained\_Optimization} needed to execute Algorithm~\ref{alg:adjoint_hessvec}.}
 \label{tab:con_opt_pure_virtual_funs_2}
 \end{table}
 
-We implement Algorithm~\ref{alg:adjoint_gradient} and Algorithm~\ref{alg:adjoint_hessvec} in \textit{Constrained\_Optimization}'s private functions \textit{Jhat} and \textit{Jhat\_hessVec}, respectively,  and interface them with Matlab's solver \textit{fminunc} in the public function \textit{Optimize}. In addition, \textit{Constrained\_Optimization} has the public functions \textit{Finite\_Difference\_Gradient\_Check} and \textit{Finite\_Difference\_Hessian\_Check} to test the accuracy of our calculation of $\nabla_z \hat{J}(z)$ and $\nabla_{z,z} \hat{J}(z)v$.
+We implement Algorithm~\ref{alg:adjoint_gradient} and Algorithm~\ref{alg:adjoint_hessvec} in \texttt{Constrained\_Optimization}'s private functions \texttt{Jhat()} and \texttt{Jhat\_hessVec()}, respectively,  and interface them with MATLAB's solver \texttt{fminunc()} in the public function \texttt{Optimize()}. In addition, \texttt{Constrained\_Optimization} has the public functions \\ \texttt{Finite\_Difference\_Gradient\_Check()} and \texttt{Finite\_Difference\_Hessian\_Check()} to test the accuracy of our calculation of $\nabla_z \hat{J}(z)$ and $\nabla_{z,z} \hat{J}(z)v$.
 
-\section*{Derived Class: \textit{Constrained\_ODE\_Optimization} }
+\section*{Derived Class: \texttt{Constrained\_ODE\_Optimization} }
 We specialize the general optimization problem~\eqref{eqn:opt_prob} and consider the case where $c(u,z)=0$ corresponds to the discretization of a system of ordinary differential equations (ODEs)
 \begin{align*}
 &\frac{du}{dt} = f(u,z,t) \\
@@ -135,48 +182,69 @@ We specialize the general optimization problem~\eqref{eqn:opt_prob} and consider
 \end{align*}
 where $u:[0,T] \to \R^m$, $T>0$, $z \in \R^n$, $f:\R^m \times \R^n \times [0,T]  \to \R^m$, and $h:\R^n \to \R^m$, and the objective function is
 \begin{align*}
-J(u,z) = \int_0^T g(u(t),t) dt + R(z)
+J(u,z) = \int_0^{T} g(u(t),t) dt + R(z)
 \end{align*}
 where $g:\R^m \times \R \to \R$ and $R:\R^n \to \R$ are user specified functions.
 
-To implement ODE constrained optimization, we derives off the base class \textit{Constrained\_Optimization} and implements its pure virtual functions in the subclass \textit{Constrained\_ODE\_Optimization}. The subclass inputs the state dimension $m$, the final time $T$, and the number of time steps $N$, and requires the user to specify the objective function and ODE system through the pure virtual functions summarized in Table~\ref{tab:con_ode_opt_pure_virtual_funs_1}.
+To implement ODE constrained optimization, we derive off the base class \texttt{Constrained\_Optimization} and implement its pure virtual functions in the subclass \texttt{Constrained\_ODE\_Optimization}. The subclass inputs the state dimension $m$, the final time $T$, and the number of time steps $N$, and requires the user to specify the objective function and ODE system through the pure virtual functions summarized in Table~\ref{tab:con_ode_opt_pure_virtual_funs_1}.
 
 \begin{table}[!ht]
 \centering
 \begin{tabular}{|l|l|}
-\hline
-Function Name & Mathematical Description \\
-\hline
-$[$val, grad\_u$]$ = Time\_Instance\_Objective(obj,u,t) & Evaluate $g(u,t)$ and $\nabla_u g(u,t)$ \\
-$[$val,grad\_z$]$ = Regularization\_Objective(obj,z) & Evaluate $R(z)$ and $\nabla_z R(z)$ \\
-$[$f, f\_u, f\_z$]$ = Time\_Instance\_RHS(obj,u,z,t) & Evaluate $f(u,z,t)$, $f_u(u,z,t)$, and $f_z(u,z,t)$ \\
- $[$h, h\_z$]$ = Initial\_Condition(obj,z) & Evaluate $h(z)$ and $h_z(z)$ \\
-$[$Mv$]$ = Time\_Instance\_Objective\_uu\_Apply(obj,v,u,t) & Compute the product $\nabla_{u,u} g(u,t) v$ \\
-$[$Mv$]$ = Regularization\_Objective\_zz\_Apply(obj,v,z) & Compute the product $\nabla_{z,z} R(z) v$ \\
-$[$Mv$]$ = Time\_Instance\_RHS\_uu\_Apply(obj,v,u,z,t,lambda) & Compute the product $\lambda^T f_{u,u}(u,z,t) v$ \\
-$[$Mv$]$  = Time\_Instance\_RHS\_uz\_Apply(obj,v,u,z,t,lambda) & Compute the product $\lambda^T f_{u,z}(u,z,t) v$ \\
-$[$Mv$]$  = Time\_Instance\_RHS\_zu\_Apply(obj,v,u,z,t,lambda) & Compute the product $\lambda^T f_{z,u}(u,z,t) v$ \\
-$[$Mv$]$  = Time\_Instance\_RHS\_zz\_Apply(obj,v,u,z,t,lambda) & Compute the product $\lambda^T f_{z,z}(u,z,t) v$ \\
-$[$Mv$]$  = Initial\_Condition\_zz\_Apply(obj,v,z,lambda) & Compute the product $\lambda^T h_{z,z}(z) v$\\
- \hline
+    \hline
+    Function Signature & Mathematical Description
+    \\ \hline
+    \texttt{[val,grad\_u] = Time\_Instance\_Objective(obj,u,t)}
+    & Evaluate $g(u,t)$ and $\nabla_u g(u,t)$
+    \\
+    \texttt{[val,grad\_z] = Regularization\_Objective(obj,z)}
+    & Evaluate $R(z)$ and $\nabla_z R(z)$
+    \\
+    \texttt{[f,f\_u,f\_z] = Time\_Instance\_RHS(obj,u,z,t)}
+    & Evaluate $f(u,z,t)$, $f_u(u,z,t)$, and $f_z(u,z,t)$
+    \\
+    \texttt{[h, h\_z] = Initial\_Condition(obj,z)}
+    & Evaluate $h(z)$ and $h_z(z)$
+    \\
+    \texttt{[Mv] = Time\_Instance\_Objective\_uu\_Apply(obj,v,u,t)}
+    & Compute the product $\nabla_{u,u} g(u,t) v$
+    \\
+    \texttt{[Mv] = Regularization\_Objective\_zz\_Apply(obj,v,z)}
+    & Compute the product $\nabla_{z,z} R(z) v$
+    \\
+    \texttt{[Mv] = Time\_Instance\_RHS\_uu\_Apply(obj,v,u,z,t,lambda)}
+    & Compute the product $\lambda\trp f_{u,u}(u,z,t) v$
+    \\
+    \texttt{[Mv]  = Time\_Instance\_RHS\_uz\_Apply(obj,v,u,z,t,lambda)}
+    & Compute the product $\lambda\trp f_{u,z}(u,z,t) v$
+    \\
+    \texttt{[Mv]  = Time\_Instance\_RHS\_zu\_Apply(obj,v,u,z,t,lambda)}
+    & Compute the product $\lambda\trp f_{z,u}(u,z,t) v$
+    \\
+    \texttt{[Mv]  = Time\_Instance\_RHS\_zz\_Apply(obj,v,u,z,t,lambda)}
+    & Compute the product $\lambda\trp f_{z,z}(u,z,t) v$
+    \\
+    \texttt{[Mv]  = Initial\_Condition\_zz\_Apply(obj,v,z,lambda)}
+    & Compute the product $\lambda\trp h_{z,z}(z) v$
+    \\ \hline
 \end{tabular}
-\caption{Summary of pure virtual function in \textit{Constrained\_ODE\_Optimization}.}
+\caption{Summary of pure virtual function in \texttt{Constrained\_ODE\_Optimization}.}
 \label{tab:con_ode_opt_pure_virtual_funs_1}
 \end{table}
 
-In order to implement the pure virtual functions from the base class \textit{Constrained\_Optimization} (the combinations of functions in Table~\ref{tab:con_opt_pure_virtual_funs_1} and Table~\ref{tab:con_opt_pure_virtual_funs_2}), we must fix a time discretization scheme and write a finite dimensional optimization problem in the form of~\eqref{eqn:opt_prob}. To this end, let $t_k=T\frac{k-1}{N-1}$, $k=1,2,\dots,N$ be equally spaced nodes in the time interval $[0,T]$ and $u_{i,k}$ denote the value of the $i^{th}$ component of $u(t_k)$, i.e. the $i^{th}$ state variable at the $k^{th}$ time. Concatenation these discrete evaluations yields the state vector $u=(u_1,u_2,\dots,u_N)^T \in \R^{mN}$ where $u_k=(u_{1,k},u_{2,k},\dots,u_{m,k})^T \in \R^{m}$ denotes the state evaluated at time $t_k$. Then applying the backward Euler time integration scheme, we have 
+In order to implement the pure virtual functions from the base class \texttt{Constrained\_Optimization} (the combinations of functions in Table~\ref{tab:con_opt_pure_virtual_funs_1} and Table~\ref{tab:con_opt_pure_virtual_funs_2}), we must fix a time discretization scheme and write a finite dimensional optimization problem in the form of~\eqref{eqn:opt_prob}. To this end, let $t_k=T\frac{k-1}{N-1}$, $k=1,2,\dots,N$ be equally spaced nodes in the time interval $[0,T]$ and $u_{i,k}$ denote the value of the $i^{th}$ component of $u(t_k)$, i.e. the $i^{th}$ state variable at the $k^{th}$ time. Concatenation these discrete evaluations yields the space-time state vector $\u=(u_1,u_2,\dots,u_N)\trp \in \R^{mN}$ where $u_k=(u_{1,k},u_{2,k},\dots,u_{m,k})\trp \in \R^{m}$ denotes the state evaluated at time $t_k$. Then applying the backward Euler time integration scheme, we have
 
 \begin{align}
 \label{eqn:back_euler}
-c(u,z) = 
-\left( \begin{array}{c}
-u_1-h(z) \\ 
-u_2-u_1- \Delta t f(u_2,z,t_2) \\
-u_3-u_2- \Delta t f(u_3,z,t_3) \\
-u_4-u_3- \Delta t f(u_4,z,t_4) \\
-\vdots \\
-u_n-u_{n-1}- \Delta t f(u_N,z,t_N) \\
-\end{array} \right) \in \R^{mN}
+    c(\u,z) =
+    \left(\begin{array}{c}
+        u_1-h(z) \\
+        u_2 - u_1 - \Delta t f(u_2,z,t_2) \\
+        u_3 - u_2 - \Delta t f(u_3,z,t_3) \\
+        u_4 - u_3 - \Delta t f(u_4,z,t_4) \\
+        \vdots \\
+        u_N - u_{N-1} - \Delta t f(u_N,z,t_N) \\
+    \end{array}\right) \in \R^{mN}
 \end{align}
 where $\Delta t = \frac{T}{N-1}$. Applying the trapezoid rule for integration, the discretized objective function is
 \begin{align}
@@ -185,10 +253,10 @@ J(u,z) = \sum\limits_{k=1}^N w_k g(u_k,t_k) + R(z)
 \end{align}
 where $w_k=\Delta T$, $k=2,3,\dots,N-1$, and $w_1=w_N=0.5 \Delta T$, are integration weights. Given an implementation of $g$, $R$, and their derivatives, the pure virtual functions corresponding to $J$ and its derivatives are easily implemented based on~\eqref{eqn:dis_trap_objective}. The pure virtual functions corresponding to $c$ require more careful consideration which we provide below.
 
-To solve the equation $c(u,z)=0$, we exploit the block structure in~\eqref{eqn:back_euler} and solve $m \times m$ systems of equations at each time point sequentially (i.e. execute time integration rather than solving $c(u,z)=0$ as a system of $mN$ coupled equations). However, the structure of $c(u,z)$ will be critical for ensuring that we compute the adjoints correctly. The Jacobian of $c$ with respect to $u$, $c_u(u,z) $, is the $mN \times mN$ matrix
+To solve the equation $c(\u,z)=0$, we exploit the block structure in~\eqref{eqn:back_euler} and solve $m \times m$ systems of equations at each time point sequentially (i.e., perform time integration rather than solving $c(\u,z)=0$ as a system of $mN$ coupled equations). However, the structure of $c(\u,z)$ will be critical for ensuring that we compute the adjoints correctly. The Jacobian of $c$ with respect to $\u$, $c_u(\u,z) $, is the $mN \times mN$ matrix
 \begin{align*}
 \left( \begin{array}{cccccc}
-I_m & 0 & 0 & 0 & \dots & 0 \\ 
+I_m & 0 & 0 & 0 & \dots & 0 \\
 -I_m & I_m - \Delta t f_u(u_2,z,t_2) & 0 & 0 & \dots & 0 \\
 0 & -I_m & I_m - \Delta t f_u(u_3,z,t_3) & 0 & \dots & 0 \\
 0 & 0 & -I_m & I_m - \Delta t f_u(u_4,z,t_4) & \dots & 0 \\
@@ -196,16 +264,16 @@ I_m & 0 & 0 & 0 & \dots & 0 \\
 0 & 0  & \dots & 0 & -I_m & I_m - \Delta t f_u(u_N,z,t_N) \\
 \end{array} \right).
 \end{align*}
-Hence the implementation of $c_u(u,z)^{-T} v$ for the adjoint solve in Algorithm~\ref{alg:adjoint_gradient} must consider the system of linear equations $c_u(u,z)^T x = v$ written as
+Hence the implementation of $c_u(\u,z)\invtrp v$ for the adjoint solve in Algorithm~\ref{alg:adjoint_gradient} must consider the system of linear equations $c_u(\u,z)\trp \x = \v$ written as
 \begin{align*}
 \left( \begin{array}{cccccc}
-I_m & -I_m & 0 & 0 & \dots & 0 \\ 
+I_m & -I_m & 0 & 0 & \dots & 0 \\
 0 & I_m-\Delta t f_u(u_2,z,t_2) & -I_m & 0 & \dots & 0 \\
 0 & 0 & I_m - \Delta t f_u(u_3,z,t_3) & -I_m & \dots & 0 \\
 0 & 0 & 0 & I_m - \Delta t f_u(u_4,z,t_4) & -I_m & \dots  \\
 \vdots & \vdots & \vdots & \vdots & \ddots & \vdots \\
 0 & 0  & \dots & 0 & 0 & I_m - \Delta t f_u(u_N,z,t_N) \\
-\end{array} \right) 
+\end{array} \right)
 \left( \begin{array}{c}
 x_1 \\
 x_2 \\
@@ -222,14 +290,14 @@ v_3 \\
 v_4 \\
 \vdots \\
 v_N \\
-\end{array} \right) 
+\end{array} \right)
 \end{align*}
-and compute $x=c_u(u,z)^{-T} v$ via the time stepping algorithm
+and compute $\x=c_u(\u,z)\invtrp \v$ via the time stepping algorithm
 \begin{align*}
 & x_N = (I_m - \Delta t f_u(u_N,z,t_N))^{-1} v_N \\
 & x_k = (I_m - \Delta t f_u(u_k,z,t_k))^{-1} (v_k + x_{k+1}) \qquad k=N-1,n-2,\dots,2 \\
 & x_1 = v_1 + x_2 .
 \end{align*}
-This ensures that the time discretization of the adjoint equation is consistent with the time integration of the state equation at the discrete level, thus providing an accurate gradient computation. Similar care must be taken when implementing all other matrix vector products and linear solves involving derivatives of $c$.
+This ensures that the time discretization of the adjoint equation is consistent with the time integration of the state equation at the discrete level, thus providing an accurate gradient computation. Similar care must be taken when implementing all other matrix-vector products and linear solves involving derivatives of $c$.
 
 \end{document}
