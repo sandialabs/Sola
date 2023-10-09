@@ -18,7 +18,7 @@ z0 = rand(n,1);
 % % u(1:2:end) \approx exp(t^2)
 % % u(2:2:end) \approx exp(t^3)
 % % z \approx obj.z_time_mesh.^2
-% 
+%
 %%
 u_sol = load('Solution_Example_5.mat','u').u;
 z_sol = load('Solution_Example_5.mat','z').z;
@@ -27,7 +27,11 @@ error = 0;
 error = max(error,norm(u_sol-u));
 error = max(error,norm(z_sol-z));
 if error ~= 0
-   disp('Error in example 5') 
+   disp('Error in example 5')
+   disp('Computed objective:')
+   disp(num2str(obj.Objective(u,z), '%.8e'))
+   disp('Saved objective:')
+   disp(num2str(obj.Objective(u_sol,z_sol), '%.8e'))
 end
 
 % save('Solution_Example_5.mat','u','z','obj')
