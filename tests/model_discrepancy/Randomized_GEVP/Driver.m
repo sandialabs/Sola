@@ -1,6 +1,5 @@
 clear
 close all
-clc
 addpath(genpath('../../../src'))
 rng(1431242)
 
