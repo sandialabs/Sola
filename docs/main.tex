@@ -88,16 +88,16 @@ To facilitate our analysis, we require efficient algorithms to compute the gradi
     \hline
     Function Signature & Mathematical Description
     \\ \hline
-    \texttt{[val,grad\_u,grad\_z] = Objective(obj,u,z)}
+    \texttt{[val,grad\_u,grad\_z] = Objective(u,z)}
     & Evaluate $J$, $\nabla_u J$, and $\nabla_z J$
     \\
-    \texttt{[u] = State\_Solve(obj,z)}
+    \texttt{[u] = State\_Solve(z)}
     & Solve $c(u,z)=0$ for $u$
     \\
-    \texttt{[Mv] = c\_u\_Transpose\_Inverse\_Apply(obj,v,u,z)}
+    \texttt{[Mv] = c\_u\_Transpose\_Inverse\_Apply(v,u,z)}
     & Compute the product $c_u(u,z)\invtrp v$
     \\
-    \texttt{[Mv] = c\_z\_Transpose\_Apply(obj,v,u,z)}
+    \texttt{[Mv] = c\_z\_Transpose\_Apply(v,u,z)}
     & Compute the product $c_z(u,z)\trp v$
     \\ \hline
 \end{tabular}
@@ -137,34 +137,34 @@ To compute efficient hessian vector products, Algorithm~\ref{alg:adjoint_hessvec
     \hline
     Function Signature & Mathematical Description
     \\ \hline
-    \texttt{[Mv] = c\_u\_Inverse\_Apply(obj,v,u,z)}
+    \texttt{[Mv] = c\_u\_Inverse\_Apply(v,u,z)}
     & Compute the product $c_u(u,z)^{-1} v$
     \\
-    \texttt{[Mv] = c\_z\_Apply(obj,v,u,z)}
+    \texttt{[Mv] = c\_z\_Apply(v,u,z)}
     & Compute the product $c_z(u,z) v$
     \\
-    \texttt{[Mv] = c\_uu\_Apply(obj,v,u,z,lambda)}
+    \texttt{[Mv] = c\_uu\_Apply(v,u,z,lambda)}
     & Compute the product $\lambda\trp c_{u,u}(u,z) v$
     \\
-    \texttt{[Mv] = c\_uz\_Apply(obj,v,u,z,lambda)}
+    \texttt{[Mv] = c\_uz\_Apply(v,u,z,lambda)}
     & Compute the product $\lambda\trp c_{u,z}(u,z) v$
     \\
-    \texttt{[Mv] = c\_zu\_Apply(obj,v,u,z,lambda)}
+    \texttt{[Mv] = c\_zu\_Apply(v,u,z,lambda)}
     & Compute the product $\lambda\trp c_{z,u}(u,z)v$
     \\
-    \texttt{[Mv] = c\_zz\_Apply(obj,v,u,z,lambda)}
+    \texttt{[Mv] = c\_zz\_Apply(v,u,z,lambda)}
     & Compute the product $\lambda\trp c_{z,z}(u,z) v$
     \\
-    \texttt{[Mv] = Objective\_uu\_Apply(obj,v,u,z)}
+    \texttt{[Mv] = Objective\_uu\_Apply(v,u,z)}
     & Compute the product $\nabla_{u,u} J(u,z) v$
     \\
-    \texttt{[Mv] = Objective\_uz\_Apply(obj,v,u,z)}
+    \texttt{[Mv] = Objective\_uz\_Apply(v,u,z)}
     & Compute the product $\nabla_{u,z} J(u,z) v$
     \\
-    \texttt{[Mv] = Objective\_zu\_Apply(obj,v,u,z)}
+    \texttt{[Mv] = Objective\_zu\_Apply(v,u,z)}
     & Compute the product $\nabla_{z,u} J(u,z) v$
     \\
-    \texttt{[Mv] = Objective\_zz\_Apply(obj,v,u,z)}
+    \texttt{[Mv] = Objective\_zz\_Apply(v,u,z)}
     & Compute the product $\nabla_{z,z} J(u,z) v$
     \\ \hline
 \end{tabular}
@@ -194,37 +194,37 @@ To implement ODE constrained optimization, we derive off the base class \texttt{
     \hline
     Function Signature & Mathematical Description
     \\ \hline
-    \texttt{[val,grad\_u] = Time\_Instance\_Objective(obj,u,t)}
+    \texttt{[val,grad\_u] = Time\_Instance\_Objective(u,t)}
     & Evaluate $g(u,t)$ and $\nabla_u g(u,t)$
     \\
-    \texttt{[val,grad\_z] = Regularization\_Objective(obj,z)}
+    \texttt{[val,grad\_z] = Regularization\_Objective(z)}
     & Evaluate $R(z)$ and $\nabla_z R(z)$
     \\
-    \texttt{[f,f\_u,f\_z] = Time\_Instance\_RHS(obj,u,z,t)}
+    \texttt{[f,f\_u,f\_z] = Time\_Instance\_RHS(u,z,t)}
     & Evaluate $f(u,z,t)$, $f_u(u,z,t)$, and $f_z(u,z,t)$
     \\
-    \texttt{[h, h\_z] = Initial\_Condition(obj,z)}
+    \texttt{[h, h\_z] = Initial\_Condition(z)}
     & Evaluate $h(z)$ and $h_z(z)$
     \\
-    \texttt{[Mv] = Time\_Instance\_Objective\_uu\_Apply(obj,v,u,t)}
+    \texttt{[Mv] = Time\_Instance\_Objective\_uu\_Apply(v,u,t)}
     & Compute the product $\nabla_{u,u} g(u,t) v$
     \\
-    \texttt{[Mv] = Regularization\_Objective\_zz\_Apply(obj,v,z)}
+    \texttt{[Mv] = Regularization\_Objective\_zz\_Apply(v,z)}
     & Compute the product $\nabla_{z,z} R(z) v$
     \\
-    \texttt{[Mv] = Time\_Instance\_RHS\_uu\_Apply(obj,v,u,z,t,lambda)}
+    \texttt{[Mv] = Time\_Instance\_RHS\_uu\_Apply(v,u,z,t,lambda)}
     & Compute the product $\lambda\trp f_{u,u}(u,z,t) v$
     \\
-    \texttt{[Mv]  = Time\_Instance\_RHS\_uz\_Apply(obj,v,u,z,t,lambda)}
+    \texttt{[Mv]  = Time\_Instance\_RHS\_uz\_Apply(v,u,z,t,lambda)}
     & Compute the product $\lambda\trp f_{u,z}(u,z,t) v$
     \\
-    \texttt{[Mv]  = Time\_Instance\_RHS\_zu\_Apply(obj,v,u,z,t,lambda)}
+    \texttt{[Mv]  = Time\_Instance\_RHS\_zu\_Apply(v,u,z,t,lambda)}
     & Compute the product $\lambda\trp f_{z,u}(u,z,t) v$
     \\
-    \texttt{[Mv]  = Time\_Instance\_RHS\_zz\_Apply(obj,v,u,z,t,lambda)}
+    \texttt{[Mv]  = Time\_Instance\_RHS\_zz\_Apply(v,u,z,t,lambda)}
     & Compute the product $\lambda\trp f_{z,z}(u,z,t) v$
     \\
-    \texttt{[Mv]  = Initial\_Condition\_zz\_Apply(obj,v,z,lambda)}
+    \texttt{[Mv]  = Initial\_Condition\_zz\_Apply(v,z,lambda)}
     & Compute the product $\lambda\trp h_{z,z}(z) v$
     \\ \hline
 \end{tabular}
