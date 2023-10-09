@@ -11,7 +11,7 @@
 % $u(0)=h(z)$
 %
 % where
-% 
+%
 % * $T > 0$
 % * $u(t) \in \mathbf{R}^m$
 % * $z \in \mathbf{R}^n$
@@ -24,18 +24,18 @@
 % $J(u,z)$ corresponds to applying the trapazoid rule to approximate the
 % integral of $g$ in the objective
 classdef Constrained_ODE_Optimization < Constrained_Optimization
-    
+
     %%
-    % Member properties: 
+    % Member properties:
     %
     % * m: the dimension of the state $u(t)$
     % * n: the dimension of the control $z$
     % * $T$: the final time
     % * N: the number of nodes in the time mesh
     % * t_mesh: the time mesh (a vector of length N)
-    % * w: a vector of quadrature weights for time integration 
+    % * w: a vector of quadrature weights for time integration
     % * time_step_solver_options: options set for fsolve in time step
-    properties 
+    properties
         m;
         n;
         T;
@@ -44,18 +44,18 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         w;
         time_step_solver_options;
     end
-    
+
     methods (Abstract, Access = public)
-    
+
         %% Pure virtual functions for gradient computation
-        
+
         %%
         % Input:
         %
         % * u: the state $u(t) \in \mathbf{R}^m$
         % * t: the time in the interval $[0,T]$
         %
-        % Desciption: 
+        % Desciption:
         %
         % * Evaluate the time instance objective and its gradient.
         %
@@ -63,10 +63,10 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         %
         % * val: $g(u(t),t) \in \mathbf{R}$
         % * grad_u: $\nabla_u g(u(t),t) \in \mathbf{R}^m$
-        [val, grad_u] = Time_Instance_Objective(obj,u,t); 
-        
+        [val, grad_u] = Time_Instance_Objective(obj,u,t);
+
         %%
-        % Input: 
+        % Input:
         %
         % * z: the control $z \in \mathbf{R}^n$
         %
@@ -78,10 +78,10 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         %
         % * val: $R(z) \in \mathbf{R}$
         % * grad_z: $\nabla_z R(z) \in \mathbf{R}^n$
-        [val,grad_z] = Regularization_Objective(obj,z); 
-        
+        [val,grad_z] = Regularization_Objective(obj,z);
+
         %%
-        % Input: 
+        % Input:
         %
         % * u: the state $u(t) \in \mathbf{R}^m$
         % * z: the control $z \in \mathbf{R}^n$
@@ -96,25 +96,25 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * f: $f(u(t),z) \in \mathbf{R}^m$
         % * f_u: $f_u(u(t),z,t) \in \mathbf{R}^{m \times m}$
         % * f_z: $f_z(u(t),z,t) \in \mathbf{R}^{m \times n}$
-        [f, f_u, f_z] = Time_Instance_RHS(obj,u,z,t); 
-        
+        [f, f_u, f_z] = Time_Instance_RHS(obj,u,z,t);
+
         %%
         % Input
         %
         % * z: the control $z \in \mathbf{R}^n$
         %
-        % Description: 
+        % Description:
         %
         % * Evaluate the initial condition and its jacobian.
         %
         % Output:
         %
-        % * h: $h(z)\in \mathbf{R}^m$ 
+        % * h: $h(z)\in \mathbf{R}^m$
         % * h_z: $h_z(z)\in \mathbf{R}^{m \times n}$
-        [h, h_z] = Initial_Condition(obj,z); 
-        
+        [h, h_z] = Initial_Condition(obj,z);
+
         %% Pure virtual functions for hessian-vector product computation
-        
+
         %%
         % Input:
         %
@@ -130,22 +130,22 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         %
         % * Mv: $\nabla_{u,u} g(u(t),t)v \in \mathbf{R}^m$
         [Mv] = Time_Instance_Objective_uu_Apply(obj,v,u,t);
-        
+
         %%
         % Input:
         %
         % * v: a direction $v \in \mathbf{R}^n$
         % * z: the control $z \in \mathbf{R}^n$
         %
-        % Description: 
+        % Description:
         %
         % * Evaluate the hessian-vector product.
         %
         % Output:
         %
         % * Mv: $\nabla_{z,z} R(z)v \in \mathbf{R}^n$
-        [Mv] = Regularization_Objective_zz_Apply(obj,v,z); 
-        
+        [Mv] = Regularization_Objective_zz_Apply(obj,v,z);
+
         %%
         % Input:
         %
@@ -163,7 +163,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         %
         % * Mv: $\lambda(t)^T f_{u,u}(u(t),z,t)v \in \mathbf{R}^m$
         [Mv] = Time_Instance_RHS_uu_Apply(obj,v,u,z,t,lambda);
-        
+
         %%
         % Input:
         %
@@ -173,7 +173,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * t: the time in the interval $[0,T]$
         % * lambda: the adjoint state $\lambda(t) \in \mathbf{R}^m$
         %
-        % Description: 
+        % Description:
         %
         % * Evaluate the hessian-vector product.
         %
@@ -181,7 +181,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         %
         % * Mv: $\lambda(t)^T f_{u,z}(u(t),z,t)v \in \mathbf{R}^m$
         [Mv] = Time_Instance_RHS_uz_Apply(obj,v,u,z,t,lambda);
-        
+
         %%
         % Input:
         %
@@ -191,7 +191,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * t: the time in the interval $[0,T]$
         % * lambda: the adjoint state $\lambda(t) \in \mathbf{R}^m$
         %
-        % Description: 
+        % Description:
         %
         % * Evaluate the hessian-vector product.
         %
@@ -199,7 +199,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         %
         % * Mv: $\lambda(t)^T f_{z,u}(u(t),z,t)v \in \mathbf{R}^n$
         [Mv] = Time_Instance_RHS_zu_Apply(obj,v,u,z,t,lambda);
-        
+
         %%
         % Input:
         %
@@ -209,7 +209,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * t: the time in the interval $[0,T]$
         % * lambda: the adjoint state $\lambda(t) \in \mathbf{R}^m$
         %
-        % Description: 
+        % Description:
         %
         % * Evaluate the hessian-vector product.
         %
@@ -217,7 +217,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         %
         % * Mv: $\lambda(t)^T f_{z,z}(u(t),z)v \in \mathbf{R}^n$
         [Mv] = Time_Instance_RHS_zz_Apply(obj,v,u,z,t,lambda);
-        
+
         %%
         % Input:
         %
@@ -225,7 +225,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * z: the control $z \in \mathbf{R}^n$
         % * lambda: the adjoint state $\lambda(t) \in \mathbf{R}^m$
         %
-        % Description: 
+        % Description:
         %
         % * Evaluate the hessian-vector product.
         %
@@ -233,13 +233,13 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         %
         % * Mv: $\lambda(t)^T h_{z,z}(z)v \in \mathbf{R}^n$
         [Mv] = Initial_Condition_zz_Apply(obj,v,z,lambda);
-        
+
     end
-    
+
     methods (Access = public)
-        
+
         %% Instantiation of base class pure virtual functions for gradient computation
-        
+
         %%
         % Input:
         %
@@ -267,13 +267,13 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
             [valk,grad_z] = obj.Regularization_Objective(z);
             val = val + valk;
         end
-        
+
         %%
         % Input:
         %
         % * z: the control $z \in \mathbf{R}^n$
         %
-        % Description: 
+        % Description:
         %
         % * Solve the system of equation (discretized ODE) $c(u,z)=0$ for $u$.
         %
@@ -289,7 +289,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
                u(I) = obj.State_Eq_Time_Step(u(Im),z,obj.t_mesh(k),obj.t_mesh(k-1));
             end
         end
-    
+
         %%
         % Input:
         %
@@ -297,7 +297,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * u: the discretized state $u=(u(t_1),u(t_2),\dots,u(t_N))^T \in \mathbf{R}^{mN}$
         % * z: the control $z \in \mathbf{R}^n$
         %
-        % Description: 
+        % Description:
         %
         % * Solve the system of linear equations $c_u(u,z)^T x = v$ for $x \in \mathbf{R}^{mN}$
         %
@@ -321,7 +321,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
             Im = (obj.m+1):(2*obj.m);
             Mv(I,:) = Mv(Im,:) + v(I,:);
         end
-        
+
         %%
         % Input:
         %
@@ -329,14 +329,14 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * u: the discretized state $u=(u(t_1),u(t_2),\dots,u(t_N))^T \in \mathbf{R}^{mN}$
         % * z: the control $z \in \mathbf{R}^n$
         %
-        % Description: 
+        % Description:
         %
         % * Compute the control jacobian transpose matrix-vector product.
         %
         % Output:
         %
         % * Mv: $c_z(u,z)^Tv \in \mathbf{R}^{n}$
-        function [Mv] = c_z_Transpose_Apply(obj,v,u,z) 
+        function [Mv] = c_z_Transpose_Apply(obj,v,u,z)
             [~, h_z] = obj.Initial_Condition(z);
             Mv = -h_z'*v(1:obj.m,:);
             for k = 2:obj.N
@@ -346,9 +346,9 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
                 Mv = Mv - dt*f_z'*v(I,:);
             end
         end
-        
+
         %% Instantiation of base class pure virtual functions for hessian-vector product computation
-        
+
         %%
         % Input:
         %
@@ -356,14 +356,14 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * u: the discretized state $u=(u(t_1),u(t_2),\dots,u(t_N))^T \in \mathbf{R}^{mN}$
         % * z: the control $z \in \mathbf{R}^n$
         %
-        % Description: 
+        % Description:
         %
         % * Solve the system of linear equations $c_u(u,z) x = v$ for $x \in \mathbf{R}^{mN}$.
         %
         % Output:
         %
         % * Mv: $c_u(u,z)^{-1}v \in \mathbf{R}^{mN}$
-        function [Mv] = c_u_Inverse_Apply(obj,v,u,z) 
+        function [Mv] = c_u_Inverse_Apply(obj,v,u,z)
             num_vecs = size(v,2);
             Mv = zeros(obj.m*obj.N,num_vecs);
             I = 1:obj.m;
@@ -371,11 +371,11 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
             for k = 2:obj.N
                 Im = ((k-2)*obj.m+1):((k-1)*obj.m);
                 I = ((k-1)*obj.m+1):(k*obj.m);
-                dt = obj.t_mesh(k)-obj.t_mesh(k-1); 
+                dt = obj.t_mesh(k)-obj.t_mesh(k-1);
                 Mv(I,:) = obj.Linearized_Time_Step_Solve(v(I,:) + Mv(Im,:),u(I),z,obj.t_mesh(k),dt);
             end
         end
-        
+
         %%
         % Input:
         %
@@ -383,14 +383,14 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * u: the discretized state $u=(u(t_1),u(t_2),\dots,u(t_N))^T \in \mathbf{R}^{mN}$
         % * z: the control $z \in \mathbf{R}^n$
         %
-        % Description: 
+        % Description:
         %
         % * Compute the control jacobian matrix-vector product.
         %
         % Output:
         %
         % * Mv: $c_z(u,z)v \in \mathbf{R}^{mN}$
-        function [Mv] = c_z_Apply(obj,v,u,z) 
+        function [Mv] = c_z_Apply(obj,v,u,z)
             num_vecs = size(v,2);
             Mv = zeros(obj.m*obj.N,num_vecs);
             I = 1:obj.m;
@@ -403,7 +403,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
                 Mv(I,:) = Mv(I,:) - dt*f_z*v;
             end
         end
-        
+
         %%
         % Input:
         %
@@ -412,7 +412,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * z: the control $z \in \mathbf{R}^n$
         % * lambda: the discretized adjoint state $\lambda=(\lambda(t_1),\lambda(t_2),\dots,\lambda(t_N))^T \in \mathbf{R}^{mN}$
         %
-        % Description: 
+        % Description:
         %
         % * Compute the constraint hessian-vector product $\nabla_{u,u} (\lambda^Tc(u,z))v$.
         %
@@ -429,7 +429,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
                 Mv(I,:) = -dt*f_uu;
             end
         end
-        
+
         %%
         % Input:
         %
@@ -445,7 +445,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % Output:
         %
         % * Mv: $\lambda^Tc_{u,z}(u,z)v \in \mathbf{R}^{mN}$
-        function [Mv] = c_uz_Apply(obj,v,u,z,lambda) 
+        function [Mv] = c_uz_Apply(obj,v,u,z,lambda)
             num_vecs = size(v,2);
             Mv = zeros(obj.m*obj.N,num_vecs);
             for k = 2:obj.N
@@ -455,7 +455,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
                 Mv(I,:) = -dt*f_uz;
             end
         end
-        
+
         %%
         % Input:
         %
@@ -464,7 +464,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * z: the control $z \in \mathbf{R}^n$
         % * lambda: the discretized adjoint state $\lambda=(\lambda(t_1),\lambda(t_2),\dots,\lambda(t_N))^T \in \mathbf{R}^{mN}$
         %
-        % Description: 
+        % Description:
         %
         % * Compute the constraint hessian-vector product $\nabla_{z,u} (\lambda^Tc(u,z))v$.
         %
@@ -481,7 +481,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
                 Mv = Mv - dt*f_zu;
             end
         end
-        
+
         %%
         % Input:
         %
@@ -490,14 +490,14 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * z: the control $z \in \mathbf{R}^n$
         % * lambda: the discretized adjoint state $\lambda=(\lambda(t_1),\lambda(t_2),\dots,\lambda(t_N))^T \in \mathbf{R}^{mN}$
         %
-        % Description: 
+        % Description:
         %
         % * Compute the constraint hessian-vector product $\nabla_{z,z} (\lambda^Tc(u,z))v$.
         %
         % Output:
         %
         % * Mv: $\lambda^Tc_{z,z}(u,z)v \in \mathbf{R}^{n}$
-        function [Mv] = c_zz_Apply(obj,v,u,z,lambda) 
+        function [Mv] = c_zz_Apply(obj,v,u,z,lambda)
             Mv = -obj.Initial_Condition_zz_Apply(v,z,lambda(1:obj.m));
             for k = 2:obj.N
                 I = ((k-1)*obj.m+1):(k*obj.m);
@@ -506,7 +506,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
                 Mv = Mv - dt*f_zz;
             end
         end
-        
+
         %%
         % Input:
         %
@@ -514,14 +514,14 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * u: the discretized state $u=(u(t_1),u(t_2),\dots,u(t_N))^T \in \mathbf{R}^{mN}$
         % * z: the control $z \in \mathbf{R}^n$
         %
-        % Description: 
+        % Description:
         %
         % * Compute the objective hessian-vector product.
         %
         % Output:
         %
         % * Mv: $\nabla_{u,u}J(u,z)v \in \mathbf{R}^{mN}$
-        function [Mv] = Objective_uu_Apply(obj,v,u,z) 
+        function [Mv] = Objective_uu_Apply(obj,v,u,z)
             num_vecs = size(v,2);
             Mv = zeros(obj.m*obj.N,num_vecs);
             for k = 1:obj.N
@@ -529,7 +529,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
                Mv(I,:) = obj.w(k)*obj.Time_Instance_Objective_uu_Apply(v(I,:),u(I),obj.t_mesh(k));
             end
         end
-        
+
         %%
         % Input:
         %
@@ -537,18 +537,18 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * u: the discretized state $u=(u(t_1),u(t_2),\dots,u(t_N))^T \in \mathbf{R}^{mN}$
         % * z: the control $z \in \mathbf{R}^n$
         %
-        % Description: 
+        % Description:
         %
         % * Compute the objective hessian-vector product.
         %
         % Output:
         %
         % * Mv: $\nabla_{u,z}J(u,z)v \in \mathbf{R}^{mN}$
-        function [Mv] = Objective_uz_Apply(obj,v,u,z) 
+        function [Mv] = Objective_uz_Apply(obj,v,u,z)
             num_vecs = size(v,2);
             Mv = zeros(obj.m*obj.N,num_vecs);
         end
-        
+
         %%
         % Input:
         %
@@ -556,7 +556,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * u: the discretized state $u=(u(t_1),u(t_2),\dots,u(t_N))^T \in \mathbf{R}^{mN}$
         % * z: the control $z \in \mathbf{R}^n$
         %
-        % Description: 
+        % Description:
         %
         % * Compute the objective hessian-vector product.
         %
@@ -567,7 +567,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
             num_vecs = size(v,2);
             Mv = zeros(obj.n,num_vecs);
         end
-        
+
         %%
         % Input:
         %
@@ -575,19 +575,19 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * u: the discretized state $u=(u(t_1),u(t_2),\dots,u(t_N))^T \in \mathbf{R}^{mN}$
         % * z: the control $z \in \mathbf{R}^n$
         %
-        % Description: 
+        % Description:
         %
         % * Compute the objective hessian-vector product.
         %
         % Output:
         %
         % * Mv: $\nabla_{z,z}J(u,z)v \in \mathbf{R}^{n}$
-        function [Mv] = Objective_zz_Apply(obj,v,u,z) 
+        function [Mv] = Objective_zz_Apply(obj,v,u,z)
             Mv = obj.Regularization_Objective_zz_Apply(v,z);
         end
-        
+
     end
-    
+
     %%
     % Input:
     %
@@ -595,8 +595,8 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
     % * n: the dimension of the control $z$
     % * $T$: the final time
     % * N: the number of nodes in the time mesh
-    % 
-    % Description: 
+    %
+    % Description:
     %
     % * Constructor which sets dimensions and time mesh data structures.
     methods (Access = public)
@@ -611,9 +611,9 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
             obj.w = T*w/sum(w);
             obj.time_step_solver_options = optimoptions('fsolve','Display','none','SpecifyObjectiveGradient',true);
         end
-        
+
         %% Finite difference tests
-        
+
         %%
         % Input:
         %
@@ -621,12 +621,12 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * z: the control $z \in \mathbf{R}^n$
         % * t: the time in the interval $[0,T]$
         %
-        % Description: 
+        % Description:
         %
         % * Finite difference check for $f_u(u,z,t)$.
         %
         % Output:
-        % 
+        %
         % * diffs: vector of finite difference errors
         function [diffs] = Time_Instance_RHS_Jacobian_u_Check(obj,u,z,t)
             [f, f_u] = obj.Time_Instance_RHS(u,z,t);
@@ -650,7 +650,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
             disp(' ')
             end
         end
-        
+
         %%
         % Input:
         %
@@ -663,7 +663,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * Finite difference check for $f_z(u,z,t)$.
         %
         % Output:
-        % 
+        %
         % * diffs: vector of finite difference errors
         function [diffs] = Time_Instance_RHS_Jacobian_z_Check(obj,u,z,t)
             [f, ~, f_z] = obj.Time_Instance_RHS(u,z,t);
@@ -687,7 +687,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
                 disp(' ')
             end
         end
-        
+
         %%
         % Input:
         %
@@ -695,12 +695,12 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * z: the control $z \in \mathbf{R}^n$
         % * t: the time in the interval $[0,T]$
         %
-        % Description: 
+        % Description:
         %
         % * Finite difference check for $f_{u,u}(u,z,t)$.
         %
         % Output:
-        % 
+        %
         % * diffs: vector of finite difference errors
         function [diffs] = Time_Instance_RHS_Hessian_uu_Check(obj,u,z,t)
             v = randn(obj.m,1);
@@ -725,7 +725,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
                 disp(' ')
             end
         end
-        
+
         %%
         % Input:
         %
@@ -733,12 +733,12 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * z: the control $z \in \mathbf{R}^n$
         % * t: the time in the interval $[0,T]$
         %
-        % Description: 
+        % Description:
         %
         % * Finite difference check for $f_{u,z}(u,z,t)$.
         %
         % Output:
-        % 
+        %
         % * diffs: vector of finite difference errors
         function [diffs] = Time_Instance_RHS_Hessian_uz_Check(obj,u,z,t)
             v = randn(obj.n,1);
@@ -763,7 +763,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
                 disp(' ')
             end
         end
-        
+
         %%
         % Input:
         %
@@ -771,12 +771,12 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * z: the control $z \in \mathbf{R}^n$
         % * t: the time in the interval $[0,T]$
         %
-        % Description: 
+        % Description:
         %
         % * Finite difference check for $f_{z,u}(u,z,t)$.
         %
         % Output:
-        % 
+        %
         % * diffs: vector of finite difference errors
         function [diffs] = Time_Instance_RHS_Hessian_zu_Check(obj,u,z,t)
             v = randn(obj.m,1);
@@ -801,7 +801,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
                 disp(' ')
             end
         end
-        
+
         %%
         % Input:
         %
@@ -809,12 +809,12 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * z: the control $z \in \mathbf{R}^n$
         % * t: the time in the interval $[0,T]$
         %
-        % Description: 
+        % Description:
         %
         % * Finite difference check for $f_{z,z}(u,z,t)$.
         %
         % Output:
-        % 
+        %
         % * diffs: vector of finite difference errors
         function [diffs] = Time_Instance_RHS_Hessian_zz_Check(obj,u,z,t)
             v = randn(obj.n,1);
@@ -839,9 +839,9 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
                 disp(' ')
             end
         end
-        
+
     end
-    
+
     %% Private functions
      methods (Access = protected)
 
@@ -853,18 +853,18 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * tk: next time step $t_k$
         % * tdm: previous time step $t_{k-1}$
         %
-        % Description: 
+        % Description:
         %
         % * Advance in time by solving $u_k-u_{k-1} - dt f(u_k,z,t_k)=0$.
         %
         % Output:
-        % 
+        %
         % * uk: the state $u(t_k) \in \mathbf{R}^m$
          function [uk] = State_Eq_Time_Step(obj,ukm,z,tk,tkm)
                dt = tk-tkm;
                uk = fsolve(@(u)obj.Nonlinear_Step(u,ukm,z,tk,dt),ukm,obj.time_step_solver_options);
          end
-         
+
          %%
          % Input:
          %
@@ -886,7 +886,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
             A = eye(obj.m) - dt*f_u;
             Mv = linsolve(A,v);
          end
-         
+
          %%
          % Input:
          %
@@ -908,7 +908,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
              A = eye(obj.m) - dt*f_u';
              Mv = linsolve(A,v);
          end
-         
+
         %%
         % Input:
         %
@@ -918,12 +918,12 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
         % * tk: the time in the interval $[0,T]$
         % * dt: time difference $t_k-t_{k-1}$
         %
-        % Description: 
+        % Description:
         %
         % * Evaluate the residual and jacobian for the system of nonlinear equations $u_k-u_{k-1} - dt f_u(u_k,z,t_k)=0$.
         %
         % Output:
-        % 
+        %
         % * f: value of the residual $u_k-u_{k-1} - dt f(u_k,z,t_k) \in
         % \mathbf{R}^m$
         % * J: value of the $m \times m$ state jacobian of the residual
@@ -933,8 +933,7 @@ classdef Constrained_ODE_Optimization < Constrained_Optimization
             J = eye(obj.m,obj.m);
             J = J - dt*val_u;
          end
-         
-     end
-      
-end
 
+     end
+
+end

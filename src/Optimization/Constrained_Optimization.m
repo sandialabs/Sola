@@ -8,14 +8,14 @@
 %
 % i.e. $$c(S(z),z)=0$ for all $$z$
 %
-% where 
+% where
 %
 % * $u \in \mathbf{R}^{n_u}$
 % * $z \in \mathbf{R}^{n_z}$
 % * $c(u,z) \in \mathbf{R}^{n_u}$
 
 classdef Constrained_Optimization < handle
-     
+
     %%
     % Member properties are the default optimizer settings for iterations and tolerances
     properties
@@ -27,15 +27,15 @@ classdef Constrained_Optimization < handle
         cg_tol;
         verbose;
     end
-    
+
     methods (Abstract, Access = public)
 
          %% Pure virtual functions for gradient computation
-         
+
          %%
          % Input:
          %
-         % * u: the state $u \in \mathbf{R}^{n_u}$ 
+         % * u: the state $u \in \mathbf{R}^{n_u}$
          % * z: the control $z \in \mathbf{R}^{n_z}$
          %
          % Description:
@@ -47,8 +47,8 @@ classdef Constrained_Optimization < handle
          % * $J(u,z) \in \mathbf{R}$
          % * $\nabla_u J(u,z)\in \mathbf{R}^{n_u}$
          % * $\nabla_z J(u,z)\in \mathbf{R}^{n_z}$
-        [val, grad_u, grad_z] = Objective(obj,u,z); 
-        
+        [val, grad_u, grad_z] = Objective(obj,u,z);
+
         %%
         % Input:
         %
@@ -61,210 +61,210 @@ classdef Constrained_Optimization < handle
         % Output:
         %
         % * u: $u=S(z)\in \mathbf{R}^{n_u}$
-        [u] = State_Solve(obj,z); 
-        
+        [u] = State_Solve(obj,z);
+
         %%
         % Input:
         %
         % * v: a direction $v\in \mathbf{R}^{n_u}$
-        % * u: the state $u \in \mathbf{R}^{n_u}$ 
+        % * u: the state $u \in \mathbf{R}^{n_u}$
         % * z: the control $z \in \mathbf{R}^{n_z}$
         %
         % Description:
         %
         % * Solve the linear system $c_u(u,z)^T x = v$ for $x$.
-        % 
+        %
         % Output:
         %
         % * Mv: $c_u(u,z)^{-T}v \in \mathbf{R}^{n_u}$
-        [Mv] = c_u_Transpose_Inverse_Apply(obj,v,u,z); 
-        
+        [Mv] = c_u_Transpose_Inverse_Apply(obj,v,u,z);
+
         %%
         % Input:
         %
         % * v: a direction $v\in \mathbf{R}^{n_u}$
-        % * u: the state $u \in \mathbf{R}^{n_u}$ 
+        % * u: the state $u \in \mathbf{R}^{n_u}$
         % * z: the control $z \in \mathbf{R}^{n_z}$
         %
         % Description:
         %
         % * Compute the constraint jacobian transpose matrix-vector product
-        % 
+        %
         % Output:
         %
         % * Mv: $c_z(u,z)^{T}v \in \mathbf{R}^{n_z}$
-        [Mv] = c_z_Transpose_Apply(obj,v,u,z); 
-        
+        [Mv] = c_z_Transpose_Apply(obj,v,u,z);
+
         %% Pure virtual functions for hessian-vector product computation
-        
+
         %%
         % Input:
         %
         % * v: a direction $v\in \mathbf{R}^{n_u}$
-        % * u: the state $u \in \mathbf{R}^{n_u}$ 
+        % * u: the state $u \in \mathbf{R}^{n_u}$
         % * z: the control $z \in \mathbf{R}^{n_z}$
         %
         % Description:
         %
         % * Solve the linear system $c_u(u,z) x = v$ for $x$.
-        % 
+        %
         % Output:
         %
         % * Mv: $c_u(u,z)^{-1}v \in \mathbf{R}^{n_u}$
-        [Mv] = c_u_Inverse_Apply(obj,v,u,z); 
-        
+        [Mv] = c_u_Inverse_Apply(obj,v,u,z);
+
         %%
         % Input:
         %
         % * v: a direction $v\in \mathbf{R}^{n_z}$
-        % * u: the state $u \in \mathbf{R}^{n_u}$ 
+        % * u: the state $u \in \mathbf{R}^{n_u}$
         % * z: the control $z \in \mathbf{R}^{n_z}$
         %
         % Description:
         %
         % * Compute the constraint jacobian matrix-vector product
-        % 
+        %
         % Output:
         %
         % * Mv: $c_z(u,z)v \in \mathbf{R}^{n_u}$
-        [Mv] = c_z_Apply(obj,v,u,z); 
-        
+        [Mv] = c_z_Apply(obj,v,u,z);
+
         %%
         % Input:
         %
         % * v: a direction $v\in \mathbf{R}^{n_u}$
-        % * u: the state $u \in \mathbf{R}^{n_u}$ 
+        % * u: the state $u \in \mathbf{R}^{n_u}$
         % * z: the control $z \in \mathbf{R}^{n_z}$
         % * lambda: the adjoint state $\lambda \in \mathbf{R}^{n_u}$
         %
         % Description:
         %
         % * Compute the constraint hessian-vector product $\nabla_{u,u} (\lambda^Tc(u,z))v$.
-        % 
+        %
         % Output:
         %
         % * Mv: $\lambda^T c_{u,u}(u,z)v \in \mathbf{R}^{n_u}$
-        [Mv] = c_uu_Apply(obj,v,u,z,lambda); 
-        
+        [Mv] = c_uu_Apply(obj,v,u,z,lambda);
+
         %%
         % Input:
         %
         % * v: a direction $v\in \mathbf{R}^{n_z}$
-        % * u: the state $u \in \mathbf{R}^{n_u}$ 
+        % * u: the state $u \in \mathbf{R}^{n_u}$
         % * z: the control $z \in \mathbf{R}^{n_z}$
         % * lambda: the adjoint state $\lambda \in \mathbf{R}^{n_u}$
         %
         % Description:
         %
         % * Compute the constraint hessian-vector product $\nabla_{u,z} (\lambda^Tc(u,z))v$.
-        % 
+        %
         % Output:
         %
         % * Mv: $\lambda^T c_{u,z}(u,z)v \in \mathbf{R}^{n_u}$
-        [Mv] = c_uz_Apply(obj,v,u,z,lambda); 
-        
+        [Mv] = c_uz_Apply(obj,v,u,z,lambda);
+
         %%
         % Input:
         %
         % * v: a direction $v\in \mathbf{R}^{n_u}$
-        % * u: the state $u \in \mathbf{R}^{n_u}$ 
+        % * u: the state $u \in \mathbf{R}^{n_u}$
         % * z: the control $z \in \mathbf{R}^{n_z}$
         % * lambda: the adjoint state $\lambda \in \mathbf{R}^{n_u}$
         %
         % Description:
         %
         % * Compute the constraint hessian-vector product $\nabla_{z,u} (\lambda^Tc(u,z))v$.
-        % 
+        %
         % Output:
         %
         % * Mv: $\lambda^T c_{z,u}(u,z)v \in \mathbf{R}^{n_z}$
         [Mv] = c_zu_Apply(obj,v,u,z,lambda);
-        
+
         %%
         % Input:
         %
         % * v: a direction $v\in \mathbf{R}^{n_z}$
-        % * u: the state $u \in \mathbf{R}^{n_u}$ 
+        % * u: the state $u \in \mathbf{R}^{n_u}$
         % * z: the control $z \in \mathbf{R}^{n_z}$
         % * lambda: the adjoint state $\lambda \in \mathbf{R}^{n_u}$
         %
         % Description:
         %
         % * Compute the constraint hessian-vector product $\nabla_{z,z} (\lambda^Tc(u,z))v$.
-        % 
+        %
         % Output:
         %
         % * Mv: $\lambda^T c_{z,z}(u,z)v \in \mathbf{R}^{n_z}$
         [Mv] = c_zz_Apply(obj,v,u,z,lambda);
-        
+
         %%
         % Input:
         %
         % * v: a direction $v\in \mathbf{R}^{n_u}$
-        % * u: the state $u \in \mathbf{R}^{n_u}$ 
+        % * u: the state $u \in \mathbf{R}^{n_u}$
         % * z: the control $z \in \mathbf{R}^{n_z}$
         %
         % Description:
         %
         % * Compute the objective hessian-vector product.
-        % 
+        %
         % Output:
         %
         % * Mv: $\nabla_{u,u} J(u,z)v \in \mathbf{R}^{n_u}$
-        [Mv] = Objective_uu_Apply(obj,v,u,z); 
-        
+        [Mv] = Objective_uu_Apply(obj,v,u,z);
+
         %%
         % Input:
         %
         % * v: a direction $v\in \mathbf{R}^{n_z}$
-        % * u: the state $u \in \mathbf{R}^{n_u}$ 
+        % * u: the state $u \in \mathbf{R}^{n_u}$
         % * z: the control $z \in \mathbf{R}^{n_z}$
         %
         % Description:
         %
         % * Compute the objective hessian-vector product.
-        % 
+        %
         % Output:
         %
         % * Mv: $\nabla_{u,z} J(u,z)v \in \mathbf{R}^{n_u}$
-        [Mv] = Objective_uz_Apply(obj,v,u,z); 
-        
+        [Mv] = Objective_uz_Apply(obj,v,u,z);
+
         %%
         % Input:
         %
         % * v: a direction $v\in \mathbf{R}^{n_u}$
-        % * u: the state $u \in \mathbf{R}^{n_u}$ 
+        % * u: the state $u \in \mathbf{R}^{n_u}$
         % * z: the control $z \in \mathbf{R}^{n_z}$
         %
         % Description:
         %
         % * Compute the objective hessian-vector product.
-        % 
+        %
         % Output:
         %
         % * Mv: $\nabla_{z,u} J(u,z)v \in \mathbf{R}^{n_z}$
-        [Mv] = Objective_zu_Apply(obj,v,u,z); 
-        
+        [Mv] = Objective_zu_Apply(obj,v,u,z);
+
         %%
         % Input:
         %
         % * v: a direction $v\in \mathbf{R}^{n_z}$
-        % * u: the state $u \in \mathbf{R}^{n_u}$ 
+        % * u: the state $u \in \mathbf{R}^{n_u}$
         % * z: the control $z \in \mathbf{R}^{n_z}$
         %
         % Description:
         %
         % * Compute the objective hessian-vector product.
-        % 
+        %
         % Output:
         %
         % * Mv: $\nabla_{z,z} J(u,z)v \in \mathbf{R}^{n_z}$
-        [Mv] = Objective_zz_Apply(obj,v,u,z); 
-        
+        [Mv] = Objective_zz_Apply(obj,v,u,z);
+
     end
-    
+
     methods (Access = public)
-        
+
         %%
         % Description:
         %
@@ -278,11 +278,11 @@ classdef Constrained_Optimization < handle
             obj.cg_tol = 10^-4;
             obj.verbose = true;
         end
-      
+
         %% Optimization functions
         %%
         % Input:
-        % 
+        %
         % * z0: initial iterate control $z \in \mathbf{R}^{n_z}$
         %
         % Description:
@@ -297,19 +297,27 @@ classdef Constrained_Optimization < handle
             HessMultFcn = @(hessian_data,v) obj.Jhat_hessVec(hessian_data,v);
             verb = 'iter-detailed';
             if obj.verbose == false
-               verb = 'none'; 
+               verb = 'none';
             end
-            options = optimoptions(@fminunc,'Display',verb,'Algorithm','trust-region','SpecifyObjectiveGradient',true,...
-                                    'OptimalityTolerance',obj.opt_tol,'FunctionTolerance',obj.fun_tol,'MaxIterations',obj.iteration_limit,...
-                                    'StepTolerance',obj.step_tol,'SubproblemAlgorithm','cg','MaxPCGIter',obj.max_cg_iter,...
-                                    'TolPCG',obj.cg_tol,'HessianMultiplyFcn',HessMultFcn);
+            options = optimoptions(@fminunc,...
+                                    'Display',verb,...
+                                    'Algorithm','trust-region',...
+                                    'SpecifyObjectiveGradient',true,...
+                                    'OptimalityTolerance',obj.opt_tol,...
+                                    'FunctionTolerance',obj.fun_tol,...
+                                    'MaxIterations',obj.iteration_limit,...
+                                    'StepTolerance',obj.step_tol,...
+                                    'SubproblemAlgorithm','cg',...
+                                    'MaxPCGIter',obj.max_cg_iter,...
+                                    'TolPCG',obj.cg_tol,...
+                                    'HessianMultiplyFcn',HessMultFcn);
             z = fminunc(@(z)obj.Jhat(z),z0,options);
             u = obj.State_Solve(z);
         end
-        
+
         %%
         % Input:
-        % 
+        %
         % * z: the control $z \in \mathbf{R}^{n_z}$
         %
         % Description:
@@ -329,10 +337,10 @@ classdef Constrained_Optimization < handle
             grad = grad + grad_z;
             hessian_data = [u;z;lambda];
         end
-        
+
         %%
         % Input:
-        % 
+        %
         % * hessian_data: output from Jhat function containing the state $u$, control $z$, and adjoint $\lambda$
         % * v: a direction $v \in \mathbf{R}^{n_z}$
         %
@@ -349,7 +357,7 @@ classdef Constrained_Optimization < handle
             u = hessian_data(1:m);
             z = hessian_data((m+1):(m+p));
             lambda = hessian_data((m+p+1):end);
-            
+
             w = obj.c_z_Apply(v,u,z);
             mu = obj.c_u_Inverse_Apply(-w,u,z);
             yJ = obj.Objective_uu_Apply(mu,u,z) + obj.Objective_uz_Apply(v,u,z);
@@ -359,7 +367,7 @@ classdef Constrained_Optimization < handle
             xc = obj.c_z_Transpose_Apply(gamma,u,z) + obj.c_zu_Apply(mu,u,z,lambda) + obj.c_zz_Apply(v,u,z,lambda);
             Hv = xJ + xc;
         end
-        
+
         %% Finite difference test functions
         %%
         % Input:
@@ -371,7 +379,7 @@ classdef Constrained_Optimization < handle
         % * Finite difference check for $\nabla_{z} \hat{J}(z)$.
         %
         % Output:
-        % 
+        %
         % * diffs: vector of finite difference errors
         function [diffs] = Finite_Difference_Gradient_Check(obj,z)
             [val,grad] = obj.Jhat(z);
@@ -386,7 +394,7 @@ classdef Constrained_Optimization < handle
                 valk = obj.Jhat(z+h(k)*dz);
                 fd_grad(k) = (valk-val)/h(k);
             end
-            
+
             diffs = abs(grad_dz-fd_grad)/abs(grad_dz);
             if obj.verbose
                 disp('Gradient finite difference check')
@@ -396,7 +404,7 @@ classdef Constrained_Optimization < handle
                 disp(' ')
             end
         end
-        
+
         %%
         % Input:
         %
@@ -407,7 +415,7 @@ classdef Constrained_Optimization < handle
         % * Finite difference check for $\nabla_{z,z} \hat{J}(z)$.
         %
         % Output:
-        % 
+        %
         % * diffs: vector of finite difference errors
         function [diffs] = Finite_Difference_Hessian_Check(obj,z)
             [~,grad,hessian_data] = obj.Jhat(z);
@@ -432,7 +440,6 @@ classdef Constrained_Optimization < handle
                 disp(' ')
             end
         end
-        
+
     end
 end
-
