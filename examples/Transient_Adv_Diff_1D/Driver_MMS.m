@@ -3,13 +3,16 @@ close all
 clc
 addpath(genpath('../../src'))
 
-plot_solution = false;
+plot_solution = true;
 
+%% Set up the optimization problem.
 m = 200;
 N = 51;
 T = 1;
 n = N*m;
 adv_diff = Adv_Diff(m,n,T,N);
+
+%% Define a custom control.
 x = adv_diff.x;
 t = adv_diff.t_mesh;
 z0 = zeros(m,N);
@@ -19,21 +22,26 @@ for k = 1:N
 end
 z0 = z0(:);
 
+%% Solve the state equation with the custom control.
 u = adv_diff.State_Solve(z0);
 u_reshape = reshape(u,m,N);
 
+%% Compute the true state solution with the custom control.
 u_true = zeros(m,N);
 for k = 1:N
     tk = t(k);
     u_true(:,k) = tk*cos(2*pi*x);
 end
 
+%% Plot the true and computed state solution.
 if plot_solution
     figure,
     for k = 1:N
         plot(x,u_reshape(:,k),'-',x,u_true(:,k),'--','LineWidth',3)
+        ylim([-1 1]);
         pause(.05)
     end
 end
 
+% Print the error of the computed solution.
 disp(norm(u-u_true(:))/norm(u_true(:)))

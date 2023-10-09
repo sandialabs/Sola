@@ -24,8 +24,9 @@ classdef Adv_Diff_Gaussian_Source < Constrained_ODE_Optimization
         end
 
         function [val,grad_z] = Regularization_Objective(obj,z)
-            val = .5*obj.beta_reg*z'*(kron(diag(obj.time_weights(2:end)),obj.Br'*obj.M*obj.Br)*z);
+            % val = .5*obj.beta_reg*z'*(kron(diag(obj.time_weights(2:end)),obj.Br'*obj.M*obj.Br)*z);
             grad_z = obj.beta_reg*(kron(diag(obj.time_weights(2:end)),obj.Br'*obj.M*obj.Br))*z;
+            val = .5*z'*grad_z;
         end
 
         function [f, f_y, f_z] = Time_Instance_RHS(obj,y,z,t)
@@ -88,31 +89,32 @@ classdef Adv_Diff_Gaussian_Source < Constrained_ODE_Optimization
 
             % Spatial domain
             obj.x = linspace(0,1,m)';
-            h = obj.x(2)-obj.x(1);
+            dx = obj.x(2)-obj.x(1);
 
+            % Mass matrix
             M = diag(4*ones(1,m)) + diag(ones(1,m-1),1) + diag(ones(1,m-1),-1);
             M(1,1) = .5*M(1,1);
             M(end,end) = .5*M(end,end);
-            M = (1/6)*h*M;
+            M = (1/6)*dx*M;
 
+            % Stiffness matrix (diffusion)
             S = diag(2*ones(1,m)) + (-1)*diag(ones(1,m-1),1) + (-1)*diag(ones(1,m-1),-1);
             S(1,1) = .5*S(1,1);
             S(end,end) = .5*S(end,end);
-            S = (1/h)*S;
+            S = (1/dx)*S;
 
+            % Viscosity matrix (advection)
             V = diag(0*ones(1,m)) + (1/2)*diag(ones(1,m-1),1) + (-1/2)*diag(ones(1,m-1),-1);
             V(1,1) = -1/2;
             V(end,end) = 1/2;
 
-            % Need to define A as the spatial discretization
+            % Spatially discretized PDE: M f(y,z) = -Ay + Mz,  A = S + Pe V.
             A = S + Pe*V;
-            % f(y,z) = inv(M)*(-A*y + M*z)
-
             obj.A = A;
             obj.M = M;
             obj.beta_reg = 10^-3;
 
-            % Trapazoid rule for time integration
+            % Trapezoid rule for time integration
             time_weights = ones(N,1);
             time_weights(1) = .5*time_weights(1);
             time_weights(end) = .5*time_weights(end);
@@ -129,6 +131,7 @@ classdef Adv_Diff_Gaussian_Source < Constrained_ODE_Optimization
             B(1,:) = 0*B(1,:);
             B(end,:) = 0*B(end,:);
 
+            % Store control properties.
             obj.B = B;
             obj.Br = Br;
             obj.num_space_control_nodes = num_space_control_nodes;

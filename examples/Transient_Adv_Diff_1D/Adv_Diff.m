@@ -75,33 +75,36 @@ classdef Adv_Diff < Constrained_ODE_Optimization
     end
 
     methods (Access = public)
-        function obj = Adv_Diff(m,n,T,Neumann)
-            obj = obj@Constrained_ODE_Optimization(m,n,T,Neumann);
+        function obj = Adv_Diff(m,n,T,N)
+            obj = obj@Constrained_ODE_Optimization(m,n,T,N);
 
             Pe = 1; % Peclet number
 
             % Spatial domain
             obj.x = linspace(0,1,m)';
-            h = obj.x(2)-obj.x(1);
+            dx = obj.x(2)-obj.x(1);
 
+            % Mass matrix
             M = diag(4*ones(1,m)) + diag(ones(1,m-1),1) + diag(ones(1,m-1),-1);
             M(1,1) = .5*M(1,1);
             M(end,end) = .5*M(end,end);
-            M = (1/6)*h*M;
+            M = (1/6)*dx*M;
 
+            % Stiffness matrix (diffusion)
             S = diag(2*ones(1,m)) + (-1)*diag(ones(1,m-1),1) + (-1)*diag(ones(1,m-1),-1);
             S(1,1) = .5*S(1,1);
             S(end,end) = .5*S(end,end);
-            S = (1/h)*S;
+            S = (1/dx)*S;
 
+            % Viscosity matrix (advection)
             V = diag(0*ones(1,m)) + (1/2)*diag(ones(1,m-1),1) + (-1/2)*diag(ones(1,m-1),-1);
             V(1,1) = -1/2;
             V(end,end) = 1/2;
 
-            % Need to define A as the spatial discretization
+            % Discretized PDE: M f(y,z) = -Ay + Mz, A = S + Pe V.
             A = S + Pe*V;
-            % f(y,z) = inv(M)*(-A*y + M*z)
 
+            % Store properties.
             obj.A = A;
             obj.M = M;
             obj.beta_reg = 10^-5;
