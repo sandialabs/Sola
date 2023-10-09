@@ -11,14 +11,14 @@ obj = Example_4(m,n,T,N);
 obj.verbose = false;
 z0 = rand(n,1)+1;
 
-u0 = rand(m,1)+1;
+y0 = rand(m,1)+1;
 t = rand;
-obj.Time_Instance_RHS_Jacobian_u_Check(u0,z0,t);
-obj.Time_Instance_RHS_Jacobian_z_Check(u0,z0,t);
-obj.Time_Instance_RHS_Hessian_uu_Check(u0,z0,t);
-obj.Time_Instance_RHS_Hessian_uz_Check(u0,z0,t);
-obj.Time_Instance_RHS_Hessian_zu_Check(u0,z0,t);
-obj.Time_Instance_RHS_Hessian_zz_Check(u0,z0,t);
+obj.Time_Instance_RHS_Jacobian_y_Check(y0,z0,t);
+obj.Time_Instance_RHS_Jacobian_z_Check(y0,z0,t);
+obj.Time_Instance_RHS_Hessian_yy_Check(y0,z0,t);
+obj.Time_Instance_RHS_Hessian_yz_Check(y0,z0,t);
+obj.Time_Instance_RHS_Hessian_zy_Check(y0,z0,t);
+obj.Time_Instance_RHS_Hessian_zz_Check(y0,z0,t);
 obj.Finite_Difference_Gradient_Check(z0);
 obj.Finite_Difference_Hessian_Check(z0);
 
@@ -38,7 +38,7 @@ error = 0;
 error = max(error,norm(u_sol-u));
 error = max(error,norm(z_sol-z));
 if error ~= 0
-   disp('Error in example 4') 
+   disp('Error in example 4')
 end
 
 % save('Solution_Example_4.mat','u','z','obj')

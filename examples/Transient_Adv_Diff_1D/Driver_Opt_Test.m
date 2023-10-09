@@ -13,5 +13,3 @@ adv_diff = Adv_Diff_Gaussian_Source(m,n,T,N,num_space_control_nodes);
 z0 = randn(n,1);
 adv_diff.Finite_Difference_Gradient_Check(z0);
 adv_diff.Finite_Difference_Hessian_Check(z0);
-
-
