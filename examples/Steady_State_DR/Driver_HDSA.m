@@ -5,13 +5,15 @@ clc
 addpath(genpath('../../src'))
 load Optimization_Results.mat
 
-obj_lofi = Diff_React(m,diff_coeff,react_coeff,reg_coeff);
-x = obj_lofi.x;
+obj = Diff_React_Objective(m,reg_coeff);
+con_lofi = Diff_React_Constraint(m,diff_coeff,react_coeff);
+opt_lofi = Reduced_Space_Optimization(obj,con_lofi);
+x = con_lofi.x;
 
 %%
 alpha_u = 2^2;
 alpha_z = 1.e-10;
-md_interface = Diff_React_HDSA(obj_lofi,alpha_u,alpha_z);
+md_interface = Diff_React_HDSA(opt_lofi,alpha_u,alpha_z);
 
 %%
 num_prior_samples = 500;
@@ -101,22 +103,23 @@ legend({'Low-fidelity control','High-fidelity control','Update'})
 set(gca,'fontsize', 18)
 
 %%
-obj_hifi = Diff_React_HiFi(obj_lofi);
+con_hifi = Diff_React_HiFi_Constraint(con_lofi);
+opt_hifi = Reduced_Space_Optimization(obj,con_hifi);
 
-u_true_lofi = obj_hifi.State_Solve(z_lofi);
-Jhat_lofi = obj_hifi.Jhat(z_lofi);
+u_true_lofi = con_hifi.State_Solve(z_lofi);
+Jhat_lofi = opt_hifi.Jhat(z_lofi);
 
-u_true_hifi = obj_hifi.State_Solve(z_hifi);
-Jhat_hifi = obj_hifi.Jhat(z_hifi);
+u_true_hifi = con_hifi.State_Solve(z_hifi);
+Jhat_hifi = opt_hifi.Jhat(z_hifi);
 
-u_true_update = obj_hifi.State_Solve(z_update_mean);
-Jhat_update = obj_hifi.Jhat(z_update_mean);
+u_true_update = con_hifi.State_Solve(z_update_mean);
+Jhat_update = opt_hifi.Jhat(z_update_mean);
 
 u_true_update_samples = zeros(m,num_post_samples);
 Jhat_update_samples = zeros(num_post_samples,1);
 for k = 1:num_post_samples
-   u_true_update_samples(:,k) = obj_hifi.State_Solve(z_update_samples(:,k)); 
-   Jhat_update_samples(k) = obj_hifi.Jhat(z_update_samples(:,k));
+   u_true_update_samples(:,k) = con_hifi.State_Solve(z_update_samples(:,k)); 
+   Jhat_update_samples(k) = opt_hifi.Jhat(z_update_samples(:,k));
 end
 
 figure,

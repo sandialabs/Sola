@@ -6,12 +6,14 @@ rng(1432)
 
 suppress_figures = true;
 
-obj_lofi = Diff_React(m,diff_coeff,react_coeff,reg_coeff);
-x = obj_lofi.x;
+obj = Diff_React_Objective(m,reg_coeff);
+con = Diff_React_Constraint(m,diff_coeff,react_coeff);
+opt_lofi = Reduced_Space_Optimization(obj,con);
+x = con.x;
 
 alpha_u = (1.75/1)^2;
 alpha_z = (1/200000)^2;
-md_interface = Diff_React_HDSA(obj_lofi,alpha_u,alpha_z);
+md_interface = Diff_React_HDSA(opt_lofi,alpha_u,alpha_z);
 
 md_update = HDSA_MD_Update(md_interface);
 

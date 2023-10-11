@@ -6,7 +6,7 @@ addpath(genpath('../../src'))
 load('HDSA_Results.mat')
 
 working_path = pwd;
-write_path = '~/Desktop/Model_Discrepancy_Sampling/figures/diff_react';
+write_path = '~/Desktop/junk'; %'~/Desktop/Model_Discrepancy_Sampling/figures/diff_react';
 
 figure,
 hold on
@@ -21,9 +21,9 @@ cd(working_path)
 
 figure,
 hold on
-plot(x,obj_hifi.T,'--','LineWidth',3,'color','magenta')
-plot(x,obj_lofi.State_Solve(z_lofi),'LineWidth',3,'color','green')
-plot(x,obj_hifi.State_Solve(z_lofi),'LineWidth',3,'color','black')
+plot(x,obj.T,'--','LineWidth',3,'color','magenta')
+plot(x,con_lofi.State_Solve(z_lofi),'LineWidth',3,'color','green')
+plot(x,con_hifi.State_Solve(z_lofi),'LineWidth',3,'color','black')
 xlabel('$x$','Interpreter','latex')
 ylabel('State')
 legend({'$T$','$\tilde{S}(\tilde{z})$','$S(\tilde{z})$'},'Interpreter','latex','FontSize',18,'Location','south')
@@ -157,14 +157,14 @@ cd(working_path)
 
 %%
 j = 4;
-u_true_update_4 = obj_hifi.State_Solve(z_update_mean_range{j});
-Jhat_update_4 = obj_hifi.Jhat(z_update_mean_range{j});
+u_true_update_4 = con_hifi.State_Solve(z_update_mean_range{j});
+Jhat_update_4 = opt_hifi.Jhat(z_update_mean_range{j});
 
 u_true_update_samples_4 = zeros(m,num_post_samples);
 Jhat_update_samples_4 = zeros(num_post_samples,1);
 for k = 1:num_post_samples
-   u_true_update_samples_4(:,k) = obj_hifi.State_Solve(z_update_samples_range{j}(:,k)); 
-   Jhat_update_samples_4(k) = obj_hifi.Jhat(z_update_samples_range{j}(:,k));
+   u_true_update_samples_4(:,k) = con_hifi.State_Solve(z_update_samples_range{j}(:,k)); 
+   Jhat_update_samples_4(k) = opt_hifi.Jhat(z_update_samples_range{j}(:,k));
 end
 
 figure,
@@ -200,14 +200,14 @@ cd(working_path)
 
 %%
 j = 11;
-u_true_update_11 = obj_hifi.State_Solve(z_update_mean_range{j});
-Jhat_update_11 = obj_hifi.Jhat(z_update_mean_range{j});
+u_true_update_11 = con_hifi.State_Solve(z_update_mean_range{j});
+Jhat_update_11 = opt_hifi.Jhat(z_update_mean_range{j});
 
 u_true_update_samples_11 = zeros(m,num_post_samples);
 Jhat_update_samples_11 = zeros(num_post_samples,1);
 for k = 1:num_post_samples
-   u_true_update_samples_11(:,k) = obj_hifi.State_Solve(z_update_samples_range{j}(:,k)); 
-   Jhat_update_samples_11(k) = obj_hifi.Jhat(z_update_samples_range{j}(:,k));
+   u_true_update_samples_11(:,k) = con_hifi.State_Solve(z_update_samples_range{j}(:,k)); 
+   Jhat_update_samples_11(k) = opt_hifi.Jhat(z_update_samples_range{j}(:,k));
 end
 
 figure,

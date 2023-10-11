@@ -10,11 +10,11 @@ m = 200;
 N = 51;
 T = 1;
 n = N*m;
-adv_diff = Adv_Diff(m,n,T,N);
+con = Adv_Diff_Constraint(m,n,T,N);
 
 %% Define a custom control.
-x = adv_diff.x;
-t = adv_diff.t_mesh;
+x = con.x;
+t = con.t_mesh;
 z0 = zeros(m,N);
 for k = 1:N
     tk = t(k);
@@ -23,7 +23,7 @@ end
 z0 = z0(:);
 
 %% Solve the state equation with the custom control.
-u = adv_diff.State_Solve(z0);
+u = con.State_Solve(z0);
 u_reshape = reshape(u,m,N);
 
 %% Compute the true state solution with the custom control.

@@ -18,84 +18,84 @@ classdef Diff < Constrained_Optimization
         
         %% Pure virtual functions for gradient computation
         
-        function [val, grad_u, grad_z] = Objective(obj,u,z)
-            val = (1/2)*(u-obj.T)'*obj.M*(u-obj.T) + (1/2)*(obj.reg_coeff)*z'*obj.reg_mat*z;
-            grad_u = obj.M*(u-obj.T);
-            grad_z = (obj.reg_coeff)*obj.reg_mat*z;
+        function [val, grad_u, grad_z] = Objective(this,u,z)
+            val = (1/2)*(u-this.T)'*this.M*(u-this.T) + (1/2)*(this.reg_coeff)*z'*this.reg_mat*z;
+            grad_u = this.M*(u-this.T);
+            grad_z = (this.reg_coeff)*this.reg_mat*z;
         end
         
-        function [u] = State_Solve(obj,z)
-            A = obj.diff_coeff*obj.S + obj.robin_coeff*obj.robin_bc;
-            b = (10^2)*obj.M*z;
+        function [u] = State_Solve(this,z)
+            A = this.diff_coeff*this.S + this.robin_coeff*this.robin_bc;
+            b = (10^2)*this.M*z;
             u = linsolve(A,b);
         end
         
-        function [Mv] = c_u_Transpose_Inverse_Apply(obj,v,u,z)
-            A = obj.diff_coeff*obj.S + obj.robin_coeff*obj.robin_bc;
+        function [Mv] = c_u_Transpose_Inverse_Apply(this,v,u,z)
+            A = this.diff_coeff*this.S + this.robin_coeff*this.robin_bc;
             Mv = linsolve(A',v);
         end
         
-        function [Mv] = c_z_Transpose_Apply(obj,v,u,z)
-            Mv = -(10^2)*obj.M'*v;
+        function [Mv] = c_z_Transpose_Apply(this,v,u,z)
+            Mv = -(10^2)*this.M'*v;
         end
         
-        function [Mv] = c_u_Inverse_Apply(obj,v,u,z)
-            A = obj.diff_coeff*obj.S + obj.robin_coeff*obj.robin_bc;
+        function [Mv] = c_u_Inverse_Apply(this,v,u,z)
+            A = this.diff_coeff*this.S + this.robin_coeff*this.robin_bc;
             Mv = linsolve(A,v);
         end
         
-        function [Mv] = c_z_Apply(obj,v,u,z)
-            Mv = -(10^2)*obj.M*v;
+        function [Mv] = c_z_Apply(this,v,u,z)
+            Mv = -(10^2)*this.M*v;
         end
         
-        function [Mv] = c_uu_Apply(obj,v,u,z,lambda)
-            Mv = zeros(obj.m,1);
+        function [Mv] = c_uu_Apply(this,v,u,z,lambda)
+            Mv = zeros(this.m,1);
         end
         
-        function [Mv] = c_uz_Apply(obj,v,u,z,lambda)
-            Mv = zeros(obj.m,1);
+        function [Mv] = c_uz_Apply(this,v,u,z,lambda)
+            Mv = zeros(this.m,1);
         end
         
-        function [Mv] = c_zu_Apply(obj,v,u,z,lambda)
-            Mv = zeros(obj.m,1);
+        function [Mv] = c_zu_Apply(this,v,u,z,lambda)
+            Mv = zeros(this.m,1);
         end
         
-        function [Mv] = c_zz_Apply(obj,v,u,z,lambda)
-            Mv = zeros(obj.m,1);
+        function [Mv] = c_zz_Apply(this,v,u,z,lambda)
+            Mv = zeros(this.m,1);
         end
         
-        function [Mv] = Objective_uu_Apply(obj,v,u,z)
-            Mv = obj.M*v;
+        function [Mv] = Objective_uu_Apply(this,v,u,z)
+            Mv = this.M*v;
         end
         
-        function [Mv] = Objective_uz_Apply(obj,v,u,z)
-            Mv = zeros(obj.m,1);
+        function [Mv] = Objective_uz_Apply(this,v,u,z)
+            Mv = zeros(this.m,1);
         end
         
-        function [Mv] = Objective_zu_Apply(obj,v,u,z)
-            Mv = zeros(obj.m,1);
+        function [Mv] = Objective_zu_Apply(this,v,u,z)
+            Mv = zeros(this.m,1);
         end
         
-        function [Mv] = Objective_zz_Apply(obj,v,u,z)
-            Mv = obj.reg_coeff*obj.reg_mat*v;
+        function [Mv] = Objective_zz_Apply(this,v,u,z)
+            Mv = this.reg_coeff*this.reg_mat*v;
         end
         
     end
     
     methods (Access = public)
         
-        function obj = Diff(adv_diff)
-            obj = obj@Constrained_Optimization();
-            obj.m = adv_diff.m;
-            obj.x = adv_diff.x;
-            obj.T = adv_diff.T;
-            obj.reg_coeff = adv_diff.reg_coeff;
-            obj.diff_coeff = adv_diff.diff_coeff;
-            obj.robin_coeff = adv_diff.robin_coeff;
-            obj.M = adv_diff.M;
-            obj.S = adv_diff.S;
-            obj.robin_bc = adv_diff.robin_bc;
-            obj.reg_mat = adv_diff.reg_mat;
+        function this = Diff(adv_diff)
+            this = this@Constrained_Optimization();
+            this.m = adv_diff.m;
+            this.x = adv_diff.x;
+            this.T = adv_diff.T;
+            this.reg_coeff = adv_diff.reg_coeff;
+            this.diff_coeff = adv_diff.diff_coeff;
+            this.robin_coeff = adv_diff.robin_coeff;
+            this.M = adv_diff.M;
+            this.S = adv_diff.S;
+            this.robin_bc = adv_diff.robin_bc;
+            this.reg_mat = adv_diff.reg_mat;
         end
         
     end

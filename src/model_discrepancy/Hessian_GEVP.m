@@ -11,40 +11,40 @@ classdef Hessian_GEVP < Randomized_GEVP
     
     methods (Access = public)
         
-        function [vec_out] = Apply_Operator(obj,vec_in)
-            vec_out = obj.md_interface.Apply_RS_Hessian(vec_in,obj.z_opt);
+        function [vec_out] = Apply_Operator(this,vec_in)
+            vec_out = this.md_interface.Apply_RS_Hessian(vec_in,this.z_opt);
         end
         
-        function [vec_out] = Apply_Weighting_Operator(obj,vec_in)
-            vec_out = (1/obj.normalization_coeff)*obj.md_interface.Apply_W_z(vec_in);
+        function [vec_out] = Apply_Weighting_Operator(this,vec_in)
+            vec_out = (1/this.normalization_coeff)*this.md_interface.Apply_W_z(vec_in);
         end
         
-        function [vec_out] = Apply_Weighting_Operator_Inverse(obj,vec_in)
-           vec_out = obj.normalization_coeff*obj.md_interface.Apply_W_z_Inverse(vec_in);
+        function [vec_out] = Apply_Weighting_Operator_Inverse(this,vec_in)
+           vec_out = this.normalization_coeff*this.md_interface.Apply_W_z_Inverse(vec_in);
         end
                
-        function [vec_out] = Apply_Weighting_Operator_Inverse_Factor(obj,vec_in)
-            vec_out = sqrt(obj.normalization_coeff)*obj.md_interface.Apply_W_z_Inverse_Factor(vec_in);
+        function [vec_out] = Apply_Weighting_Operator_Inverse_Factor(this,vec_in)
+            vec_out = sqrt(this.normalization_coeff)*this.md_interface.Apply_W_z_Inverse_Factor(vec_in);
         end
         
     end
     
     methods
-        function obj = Hessian_GEVP(md_interface,z_opt)
-            obj@Randomized_GEVP(z_opt);
-            obj.z_opt = z_opt;
-            obj.md_interface = md_interface;
-            obj.is_computed = false;
-            obj.normalization_coeff = md_interface.Apply_W_z(z_opt)'*z_opt;
+        function this = Hessian_GEVP(md_interface,z_opt)
+            this@Randomized_GEVP(z_opt);
+            this.z_opt = z_opt;
+            this.md_interface = md_interface;
+            this.is_computed = false;
+            this.normalization_coeff = md_interface.Apply_W_z(z_opt)'*z_opt;
         end
    
-        function [] = Compute_Hessian_GEVP(obj,num_evals,oversampling)
-            [obj.evecs,obj.evals] = obj.Compute_GEVP(num_evals, oversampling);
-            obj.is_computed = true;
+        function [] = Compute_Hessian_GEVP(this,num_evals,oversampling)
+            [this.evecs,this.evals] = this.Compute_GEVP(num_evals, oversampling);
+            this.is_computed = true;
         end
         
-       function [z_out] = Apply_Projected_RS_Hessian_Inverse(obj,z_in)
-            z_out = obj.evecs*diag(1./obj.evals)*obj.evecs'*z_in;
+       function [z_out] = Apply_Projected_RS_Hessian_Inverse(this,z_in)
+            z_out = this.evecs*diag(1./this.evals)*this.evecs'*z_in;
        end
         
     end

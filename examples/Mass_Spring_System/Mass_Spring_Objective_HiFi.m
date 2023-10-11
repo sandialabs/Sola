@@ -1,0 +1,60 @@
+ classdef Mass_Spring_Objective_HiFi < Dynamic_Objective
+
+    properties
+        reg_coeff;
+        P_z;
+    end
+
+    methods
+
+        function this = Mass_Spring_Objective_HiFi(T,N)
+            m = 4;
+            n = 1;
+            this = this@Dynamic_Objective(m,n,T,N);
+            
+            this.reg_coeff = 1.e-6;
+
+            P_z = eye(N);
+            P_z = P_z(:,2:end);
+            P_z(1,1) = 1;
+            this.P_z = P_z;
+        end
+
+        function [w] = Temporal_Weights(this,t)
+            w = (this.t_mesh-t)/(this.t_mesh(2)-this.t_mesh(1));
+            Im = intersect(find(w<=0),find(abs(w)<=1));
+            Ip = intersect(find(w>0),find(abs(w)<=1));
+            w(abs(w)>1) = 0;
+            w(Im) = 1+w(Im);
+            w(Ip) = 1-w(Ip);
+        end
+
+        function [val] = target(this,t)
+            val = 5*t.^2;
+        end
+
+        function [val, grad_y] = Time_Instance_Objective(this,y,t)
+            val = 0.5*(y(1) - this.target(t)).^2;
+            grad_y = zeros(4,1);
+            grad_y(1) = y(1)-this.target(t);
+        end
+
+        function [val,grad_z] = Regularization_Objective(this,z)
+            val = 0.5*this.reg_coeff*(this.w'*(this.P_z*z).^2);
+            grad_z = this.reg_coeff*this.P_z'*(this.w.*(this.P_z*z));
+        end
+
+        function [Mv] = Time_Instance_Objective_yy_Apply(this,v,y,t)
+            Mv = zeros(size(v));
+            Mv(1,:) = v(1,:);
+        end
+
+        function [Mv] = Regularization_Objective_zz_Apply(this,v,z)
+            Mv = this.reg_coeff*this.P_z'*diag(this.w)*this.P_z*v;
+        end
+
+    end
+
+
+
+end

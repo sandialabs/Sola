@@ -10,10 +10,13 @@ x = adv_diff.pde_meshing.x;
 y = adv_diff.pde_meshing.y;
 M = adv_diff.pde_meshing.M;
 m = length(x);
+obj = Adv_Diff_Objective(adv_diff,reg_coeff);
+con = Adv_Diff_Constraint(adv_diff);
+opt = Reduced_Space_Optimization(obj,con);
 
 alpha_u = 2^2;
 alpha_z = 1.e-8; 
-md_interface = Adv_Diff_HDSA(adv_diff_opt,alpha_u,alpha_z);
+md_interface = Adv_Diff_HDSA(opt,alpha_u,alpha_z);
 
 %%
 num_prior_samples = 10;
@@ -85,46 +88,46 @@ md_update.Compute_Hessian_GEVP(num_evals,oversampling);
 
 %%
 [z_update_mean_1,z_update_samples_1] = md_update.Posterior_Update_Samples();
-I = find(x > adv_diff_opt.control_xlim(1));
-I = intersect(I,find(x < adv_diff_opt.control_xlim(2)));
-I = intersect(I,find(y > adv_diff_opt.control_ylim(1)));
-I = intersect(I,find(y < adv_diff_opt.control_ylim(2)));
-tmp = adv_diff_opt.Map_z_vec_to_mesh(z_lofi);
+I = find(x > opt.obj.control_xlim(1));
+I = intersect(I,find(x < opt.obj.control_xlim(2)));
+I = intersect(I,find(y > opt.obj.control_ylim(1)));
+I = intersect(I,find(y < opt.obj.control_ylim(2)));
+tmp = opt.obj.Map_z_vec_to_mesh(z_lofi);
 zmin = min(tmp(I));
 zmax = max(tmp(I));
-tmp = adv_diff_opt.Map_z_vec_to_mesh(z_update_mean_1);
+tmp = opt.obj.Map_z_vec_to_mesh(z_update_mean_1);
 zmin = min([zmin;tmp(I)]);
 zmax = max([zmax;tmp(I)]);
 
 name = 'Low-fidelity control';
-adv_diff.pde_meshing.Plot_Field(adv_diff_opt.Map_z_vec_to_mesh(z_lofi),name)
-xlim(adv_diff_opt.control_xlim)
-ylim(adv_diff_opt.control_ylim)
+adv_diff.pde_meshing.Plot_Field(opt.obj.Map_z_vec_to_mesh(z_lofi),name)
+xlim(opt.obj.control_xlim)
+ylim(opt.obj.control_ylim)
 caxis([zmin,zmax])
 
 name = 'Updated control mean';
-adv_diff.pde_meshing.Plot_Field(adv_diff_opt.Map_z_vec_to_mesh(z_update_mean_1),name)
-xlim(adv_diff_opt.control_xlim)
-ylim(adv_diff_opt.control_ylim)
+adv_diff.pde_meshing.Plot_Field(opt.obj.Map_z_vec_to_mesh(z_update_mean_1),name)
+xlim(opt.obj.control_xlim)
+ylim(opt.obj.control_ylim)
 caxis([zmin,zmax])
 
 name = 'Updated control standard deviation';
-adv_diff.pde_meshing.Plot_Field(std(adv_diff_opt.Map_z_vec_to_mesh(z_update_samples_1),[],2),name)
-xlim(adv_diff_opt.control_xlim)
-ylim(adv_diff_opt.control_ylim)
+adv_diff.pde_meshing.Plot_Field(std(opt.obj.Map_z_vec_to_mesh(z_update_samples_1),[],2),name)
+xlim(opt.obj.control_xlim)
+ylim(opt.obj.control_ylim)
 
 %%
-u_lofi = nonlinear_adv_diff.State_Solve(adv_diff_opt.Map_z_vec_to_mesh(z_lofi));
-u_update_mean_1 = nonlinear_adv_diff.State_Solve(adv_diff_opt.Map_z_vec_to_mesh(z_update_mean_1));
+u_lofi = nonlinear_adv_diff.State_Solve(opt.obj.Map_z_vec_to_mesh(z_lofi));
+u_update_mean_1 = nonlinear_adv_diff.State_Solve(opt.obj.Map_z_vec_to_mesh(z_update_mean_1));
 
-val_lofi = adv_diff_opt.Objective(u_lofi,z_lofi);
-val_update_1 = adv_diff_opt.Objective(u_update_mean_1,z_update_mean_1);
+val_lofi = opt.obj.J(u_lofi,z_lofi);
+val_update_1 = opt.obj.J(u_update_mean_1,z_update_mean_1);
 
 u_update_samples_1 = zeros(m,num_post_samples);
 val_update_samples_1 = zeros(num_post_samples,1);
 for k = 1:num_post_samples
-   u_update_samples_1(:,k) = nonlinear_adv_diff.State_Solve(adv_diff_opt.Map_z_vec_to_mesh(z_update_samples_1(:,k)));
-   val_update_samples_1(k) = adv_diff_opt.Objective(u_update_samples_1(:,k),z_update_samples_1(:,k));
+   u_update_samples_1(:,k) = nonlinear_adv_diff.State_Solve(opt.obj.Map_z_vec_to_mesh(z_update_samples_1(:,k)));
+   val_update_samples_1(k) = opt.obj.J(u_update_samples_1(:,k),z_update_samples_1(:,k));
 end
 
 disp(['Objective at low-fidelity solution = ',num2str(val_lofi)])
@@ -137,46 +140,46 @@ md_update.Compute_Hessian_GEVP(num_evals,oversampling);
 
 %%
 [z_update_mean_2,z_update_samples_2] = md_update.Posterior_Update_Samples();
-I = find(x > adv_diff_opt.control_xlim(1));
-I = intersect(I,find(x < adv_diff_opt.control_xlim(2)));
-I = intersect(I,find(y > adv_diff_opt.control_ylim(1)));
-I = intersect(I,find(y < adv_diff_opt.control_ylim(2)));
-tmp = adv_diff_opt.Map_z_vec_to_mesh(z_lofi);
+I = find(x > opt.obj.control_xlim(1));
+I = intersect(I,find(x < opt.obj.control_xlim(2)));
+I = intersect(I,find(y > opt.obj.control_ylim(1)));
+I = intersect(I,find(y < opt.obj.control_ylim(2)));
+tmp = opt.obj.Map_z_vec_to_mesh(z_lofi);
 zmin = min(tmp(I));
 zmax = max(tmp(I));
-tmp = adv_diff_opt.Map_z_vec_to_mesh(z_update_mean_2);
+tmp = opt.obj.Map_z_vec_to_mesh(z_update_mean_2);
 zmin = min([zmin;tmp(I)]);
 zmax = max([zmax;tmp(I)]);
 
 name = 'Low-fidelity control';
-adv_diff.pde_meshing.Plot_Field(adv_diff_opt.Map_z_vec_to_mesh(z_lofi),name)
-xlim(adv_diff_opt.control_xlim)
-ylim(adv_diff_opt.control_ylim)
+adv_diff.pde_meshing.Plot_Field(opt.obj.Map_z_vec_to_mesh(z_lofi),name)
+xlim(opt.obj.control_xlim)
+ylim(opt.obj.control_ylim)
 caxis([zmin,zmax])
 
 name = 'Updated control mean';
-adv_diff.pde_meshing.Plot_Field(adv_diff_opt.Map_z_vec_to_mesh(z_update_mean_2),name)
-xlim(adv_diff_opt.control_xlim)
-ylim(adv_diff_opt.control_ylim)
+adv_diff.pde_meshing.Plot_Field(opt.obj.Map_z_vec_to_mesh(z_update_mean_2),name)
+xlim(opt.obj.control_xlim)
+ylim(opt.obj.control_ylim)
 caxis([zmin,zmax])
 
 name = 'Updated control standard deviation';
-adv_diff.pde_meshing.Plot_Field(std(adv_diff_opt.Map_z_vec_to_mesh(z_update_samples_2),[],2),name)
-xlim(adv_diff_opt.control_xlim)
-ylim(adv_diff_opt.control_ylim)
+adv_diff.pde_meshing.Plot_Field(std(opt.obj.Map_z_vec_to_mesh(z_update_samples_2),[],2),name)
+xlim(opt.obj.control_xlim)
+ylim(opt.obj.control_ylim)
 
 %%
-u_lofi = nonlinear_adv_diff.State_Solve(adv_diff_opt.Map_z_vec_to_mesh(z_lofi));
-u_update_mean_2 = nonlinear_adv_diff.State_Solve(adv_diff_opt.Map_z_vec_to_mesh(z_update_mean_2));
+u_lofi = nonlinear_adv_diff.State_Solve(opt.obj.Map_z_vec_to_mesh(z_lofi));
+u_update_mean_2 = nonlinear_adv_diff.State_Solve(opt.obj.Map_z_vec_to_mesh(z_update_mean_2));
 
-val_lofi = adv_diff_opt.Objective(u_lofi,z_lofi);
-val_update_2 = adv_diff_opt.Objective(u_update_mean_2,z_update_mean_2);
+val_lofi = opt.obj.J(u_lofi,z_lofi);
+val_update_2 = opt.obj.J(u_update_mean_2,z_update_mean_2);
 
 u_update_samples_2 = zeros(m,num_post_samples);
 val_update_samples_2 = zeros(num_post_samples,1);
 for k = 1:num_post_samples
-   u_update_samples_2(:,k) = nonlinear_adv_diff.State_Solve(adv_diff_opt.Map_z_vec_to_mesh(z_update_samples_2(:,k)));
-   val_update_samples_2(k) = adv_diff_opt.Objective(u_update_samples_2(:,k),z_update_samples_2(:,k));
+   u_update_samples_2(:,k) = nonlinear_adv_diff.State_Solve(opt.obj.Map_z_vec_to_mesh(z_update_samples_2(:,k)));
+   val_update_samples_2(k) = opt.obj.J(u_update_samples_2(:,k),z_update_samples_2(:,k));
 end
 
 disp(['Objective at low-fidelity solution = ',num2str(val_lofi)])

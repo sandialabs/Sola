@@ -17,11 +17,13 @@ diff_react_hifi = Diff_React_Hifi(mesh);
 m = length(x);
 
 reg_coeff = 1.e-4;
-diff_react_opt = Diff_React_Opt(diff_react_lofi,reg_coeff);
+obj = Diff_React_Objective(diff_react_lofi,reg_coeff);
+con = Diff_React_Constraint(diff_react_lofi);
+opt = Reduced_Space_Optimization(obj,con);
 
 alpha_u = (2/3)^2;
 alpha_z = (1/50000)^2; %(1/200000)^2;
-md_interface = Diff_React_HDSA(diff_react_opt,alpha_u,alpha_z);
+md_interface = Diff_React_HDSA(opt,alpha_u,alpha_z);
 
 %%
 num_prior_samples = 100;
@@ -138,8 +140,8 @@ end
 u_lofi = diff_react_hifi.State_Solve(diff_react_hifi.Map_z_to_Control_Fun(z_lofi));
 u_update_mean = diff_react_hifi.State_Solve(diff_react_hifi.Map_z_to_Control_Fun(z_update_mean));
 
-val_lofi = diff_react_opt.Objective(u_lofi,z_lofi);
-val_update = diff_react_opt.Objective(u_update_mean,z_update_mean);
+val_lofi = obj.J(u_lofi,z_lofi);
+val_update = obj.J(u_update_mean,z_update_mean);
 
 disp(['Objective at low-fidelity solution = ',num2str(val_lofi)])
 disp(['Objective at mean update solution = ',num2str(val_update)])

@@ -2,9 +2,9 @@ clear
 close all
 clc
 
-lofi_mms_test = false;
+lofi_mms_test = true;
 hifi_mms_test = true;
-test_fun_to_z_mapping = false;
+test_fun_to_z_mapping = true;
 
 if lofi_mms_test
     h = 2.^(-1:-1:-5);

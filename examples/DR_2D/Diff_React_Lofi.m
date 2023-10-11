@@ -8,7 +8,7 @@ classdef Diff_React_Lofi < handle
     end
     
     methods
-        function obj = Diff_React_Lofi(pde_meshing)
+        function this = Diff_React_Lofi(pde_meshing)
             model = createpde;
             model.Geometry = pde_meshing.model.Geometry;
             
@@ -18,21 +18,21 @@ classdef Diff_React_Lofi < handle
             model.BoundaryConditions = pde_meshing.model.BoundaryConditions;
             model.Mesh = pde_meshing.model.Mesh;
             FEM = assembleFEMatrices(model,'domain');
-            obj.A = FEM.K+FEM.A;
-            obj.M = pde_meshing.M;
-            obj.pde_meshing = pde_meshing;
+            this.A = FEM.K+FEM.A;
+            this.M = pde_meshing.M;
+            this.pde_meshing = pde_meshing;
         end
         
-        function [u] = State_Solve(obj,z)
-           u = obj.A\(obj.M*z); 
+        function [u] = State_Solve(this,z)
+           u = this.A\(this.M*z); 
         end
         
-        function [J_u] = State_Jacobian(obj)
-           J_u = obj.A; 
+        function [J_u] = State_Jacobian(this)
+           J_u = this.A; 
         end
         
-        function [J_z] = Control_Jacobian(obj)
-            J_z = -obj.M;
+        function [J_z] = Control_Jacobian(this)
+            J_z = -this.M;
         end
 
     end

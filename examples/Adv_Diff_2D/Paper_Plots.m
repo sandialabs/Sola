@@ -6,10 +6,10 @@ addpath(genpath('../../src'))
 load('HDSA_Results.mat')
 
 working_path = pwd;
-write_path = '~/Desktop/Model_Discrepancy_Sampling/figures/adv_diff';
+write_path = '~/Desktop/junk'; %'~/Desktop/Model_Discrepancy_Sampling/figures/adv_diff';
 
 name = 'Low-fidelity state';
-u_lofi = adv_diff.State_Solve(adv_diff_opt.Map_z_vec_to_mesh(z_lofi));
+u_lofi = adv_diff.State_Solve(opt.con.Map_z_vec_to_mesh(z_lofi));
 adv_diff.pde_meshing.Plot_Field(u_lofi,name)
 xlabel('$x$','Interpreter','latex')
 ylabel('$y$','Interpreter','latex')
@@ -20,9 +20,9 @@ saveas(gca,'lofi_state','epsc')
 cd(working_path)
 
 name = 'Low-fidelity control';
-adv_diff.pde_meshing.Plot_Field(adv_diff_opt.Map_z_vec_to_mesh(z_lofi),name)
-xlim(adv_diff_opt.control_xlim)
-ylim(adv_diff_opt.control_ylim)
+adv_diff.pde_meshing.Plot_Field(opt.con.Map_z_vec_to_mesh(z_lofi),name)
+xlim(opt.obj.control_xlim)
+ylim(opt.obj.control_ylim)
 xlabel('$x$','Interpreter','latex')
 ylabel('$y$','Interpreter','latex')
 title('$f(\tilde{z})$','Interpreter','latex')
@@ -32,7 +32,7 @@ saveas(gca,'lofi_source','epsc')
 cd(working_path)
 
 name = 'High-fidelity state';
-u_hifi = nonlinear_adv_diff.State_Solve(adv_diff_opt.Map_z_vec_to_mesh(z_lofi));
+u_hifi = nonlinear_adv_diff.State_Solve(opt.con.Map_z_vec_to_mesh(z_lofi));
 adv_diff.pde_meshing.Plot_Field(u_hifi,name)
 xlabel('$x$','Interpreter','latex')
 ylabel('$y$','Interpreter','latex')
@@ -43,9 +43,9 @@ saveas(gca,'hifi_state','epsc')
 cd(working_path)
 
 name = 'Updated control mean';
-adv_diff.pde_meshing.Plot_Field(adv_diff_opt.Map_z_vec_to_mesh(z_update_mean_1),name)
-xlim(adv_diff_opt.control_xlim)
-ylim(adv_diff_opt.control_ylim)
+adv_diff.pde_meshing.Plot_Field(opt.con.Map_z_vec_to_mesh(z_update_mean_1),name)
+xlim(opt.obj.control_xlim)
+ylim(opt.obj.control_ylim)
 caxis([zmin,zmax])
 xlabel('$x$','Interpreter','latex')
 ylabel('$y$','Interpreter','latex')
@@ -57,9 +57,9 @@ cd(working_path)
 
 
 name = 'Updated control standard deviation';
-adv_diff.pde_meshing.Plot_Field(std(adv_diff_opt.Map_z_vec_to_mesh(z_update_samples_1),[],2),name)
-xlim(adv_diff_opt.control_xlim)
-ylim(adv_diff_opt.control_ylim)
+adv_diff.pde_meshing.Plot_Field(std(opt.con.Map_z_vec_to_mesh(z_update_samples_1),[],2),name)
+xlim(opt.obj.control_xlim)
+ylim(opt.obj.control_ylim)
 xlabel('$x$','Interpreter','latex')
 ylabel('$y$','Interpreter','latex')
 title('$f(z)$ Posterior Pointwise Standard Deviation','Interpreter','latex')
@@ -69,9 +69,9 @@ saveas(gca,'std_source_update_1','epsc')
 cd(working_path)
 
 name = 'Updated control mean';
-adv_diff.pde_meshing.Plot_Field(adv_diff_opt.Map_z_vec_to_mesh(z_update_mean_2),name)
-xlim(adv_diff_opt.control_xlim)
-ylim(adv_diff_opt.control_ylim)
+adv_diff.pde_meshing.Plot_Field(opt.con.Map_z_vec_to_mesh(z_update_mean_2),name)
+xlim(opt.obj.control_xlim)
+ylim(opt.obj.control_ylim)
 caxis([zmin,zmax])
 xlabel('$x$','Interpreter','latex')
 ylabel('$y$','Interpreter','latex')
@@ -83,9 +83,9 @@ cd(working_path)
 
 
 name = 'Updated control standard deviation';
-adv_diff.pde_meshing.Plot_Field(std(adv_diff_opt.Map_z_vec_to_mesh(z_update_samples_2),[],2),name)
-xlim(adv_diff_opt.control_xlim)
-ylim(adv_diff_opt.control_ylim)
+adv_diff.pde_meshing.Plot_Field(std(opt.con.Map_z_vec_to_mesh(z_update_samples_2),[],2),name)
+xlim(opt.obj.control_xlim)
+ylim(opt.obj.control_ylim)
 xlabel('$x$','Interpreter','latex')
 ylabel('$y$','Interpreter','latex')
 title('$f(z)$ Posterior Pointwise Standard Deviation','Interpreter','latex')

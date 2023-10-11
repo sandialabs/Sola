@@ -7,13 +7,16 @@ load Optimization_Results.mat
 
 suppress_figures = false;
 
-obj_hifi = Adv_Diff(m,diff_coeff,vel_coeff,robin_coeff,reg_coeff);
-obj_lofi = Diff(obj_hifi);
-x = obj_lofi.x;
+obj = Adv_Diff_Objective(m,reg_coeff);
+con_hifi = Adv_Diff_Constraint(m,diff_coeff,vel_coeff,robin_coeff);
+con_lofi = Diff_Constraint(con_hifi);
+opt_hifi = Reduced_Space_Optimization(obj,con_hifi);
+opt_lofi = Reduced_Space_Optimization(obj,con_lofi);
+x = con_lofi.x;
 
 alpha_u = (1/2)^2;
 alpha_z = (1/100)^2;
-md_interface = Diff_HDSA(obj_lofi,alpha_u,alpha_z);
+md_interface = Diff_HDSA(opt_lofi,alpha_u,alpha_z);
 
 %%
 num_prior_samples = 100;

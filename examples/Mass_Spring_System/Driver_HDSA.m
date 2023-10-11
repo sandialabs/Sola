@@ -7,14 +7,18 @@ load Optimization_Results.mat
 rng(2451423)
 
 N = length(z_lofi)+1;
-obj_hifi = Mass_Spring_Coupled(T,N);
-obj_lofi = Mass_Spring_LoFi(obj_hifi);
-t = obj_hifi.t_mesh;
+obj_hifi = Mass_Spring_Objective_HiFi(T,N);
+obj_lofi = Mass_Spring_Objective_LoFi(T,N);
+con_hifi = Mass_Spring_Coupled(T,N);
+con_lofi = Mass_Spring_LoFi(con_hifi);
+opt_hifi = Reduced_Space_Optimization(obj_hifi,con_hifi);
+opt_lofi = Reduced_Space_Optimization(obj_lofi,con_lofi);
+t = con_hifi.t_mesh;
 
 %%
 alpha_u = 1.e4;
 alpha_z = 1.e-10;
-md_interface = Mass_Spring_HDSA(obj_lofi,alpha_u,alpha_z);
+md_interface = Mass_Spring_HDSA(opt_lofi,alpha_u,alpha_z);
 
 %%
 num_prior_samples = 500;
@@ -160,10 +164,10 @@ set(gca,'fontsize', 18)
 %%
 Jhat_update_samples = zeros(num_post_samples,1);
 for k = 1:num_post_samples
-   Jhat_update_samples(k) = obj_hifi.Jhat(z_update_samples(:,k));
+   Jhat_update_samples(k) = opt_hifi.Jhat(z_update_samples(:,k));
 end
-Jhat_hifi = obj_hifi.Jhat(z_hifi);
-Jhat_lofi = obj_hifi.Jhat(z_lofi);
-Jhat_update = obj_hifi.Jhat(z_update_mean);
+Jhat_hifi = opt_hifi.Jhat(z_hifi);
+Jhat_lofi = opt_hifi.Jhat(z_lofi);
+Jhat_update = opt_hifi.Jhat(z_update_mean);
 
 save('HDSA_Results.mat')

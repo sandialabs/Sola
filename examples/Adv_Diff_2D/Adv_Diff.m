@@ -11,11 +11,11 @@ classdef Adv_Diff < handle
     end
     
     methods
-        function obj = Adv_Diff(pde_meshing, diff_coeff, adv_coeff)
+        function this = Adv_Diff(pde_meshing, diff_coeff, adv_coeff)
             model = createpde;
             model.Geometry = pde_meshing.model.Geometry;
-            obj.diff_coeff = diff_coeff;
-            obj.adv_coeff = adv_coeff;
+            this.diff_coeff = diff_coeff;
+            this.adv_coeff = adv_coeff;
             
             vel_field = @(x,y) adv_coeff*[ 1 + 0*x ; 1 + 0*y];
             fCoef = @(region,state) diag(vel_field(region.x,region.y)'*[state.ux; state.uy])';
@@ -31,27 +31,27 @@ classdef Adv_Diff < handle
                 FEM = assembleFEMatrices(model,'domain',state);
                 Adv_Op(:,k) = FEM.F;
             end
-            obj.A = FEM.K + FEM.A + sparse(Adv_Op);
-            obj.bnd_nodes = unique(union(find(pde_meshing.x==-1),find(pde_meshing.y==-1)));
-            obj.A(obj.bnd_nodes,:) = 0;
-            obj.A = obj.A + sparse(obj.bnd_nodes,obj.bnd_nodes,ones(length(obj.bnd_nodes),1),m,m);
-            obj.M = pde_meshing.M;
-            obj.pde_meshing = pde_meshing;
+            this.A = FEM.K + FEM.A + sparse(Adv_Op);
+            this.bnd_nodes = unique(union(find(pde_meshing.x==-1),find(pde_meshing.y==-1)));
+            this.A(this.bnd_nodes,:) = 0;
+            this.A = this.A + sparse(this.bnd_nodes,this.bnd_nodes,ones(length(this.bnd_nodes),1),m,m);
+            this.M = pde_meshing.M;
+            this.pde_meshing = pde_meshing;
         end
         
-        function [u] = State_Solve(obj,z)
-           rhs = obj.M*z;
-           rhs(obj.bnd_nodes) = 0; 
-           u = obj.A\rhs; 
+        function [u] = State_Solve(this,z)
+           rhs = this.M*z;
+           rhs(this.bnd_nodes) = 0; 
+           u = this.A\rhs; 
         end
         
-        function [J_u] = State_Jacobian(obj)
-           J_u = obj.A; 
+        function [J_u] = State_Jacobian(this)
+           J_u = this.A; 
         end
         
-        function [J_z] = Control_Jacobian(obj)
-            J_z = -obj.M;
-            J_z(obj.bnd_nodes,:) = 0;
+        function [J_z] = Control_Jacobian(this)
+            J_z = -this.M;
+            J_z(this.bnd_nodes,:) = 0;
         end
 
     end

@@ -20,8 +20,8 @@ saveas(gca,'lofi_forcing','epsc')
 cd(working_path)
 
 T = obj_hifi.target(t);
-u_low = obj_lofi.State_Solve(z_lofi);
-u_high = obj_hifi.State_Solve(z_lofi);
+u_low = con_lofi.State_Solve(z_lofi);
+u_high = con_hifi.State_Solve(z_lofi);
 figure,
 hold on
 plot(t,T,':','LineWidth',3,'color','magenta')
@@ -36,7 +36,7 @@ cd(write_path)
 saveas(gca,'states_at_lofi_forcing','epsc')
 cd(working_path)
 
-u_true_update = obj_hifi.State_Solve(z_update_mean);
+u_true_update = con_hifi.State_Solve(z_update_mean);
 figure,
 hold on
 plot(t(2:end),z_lofi,'color','black','LineWidth',3)
@@ -58,10 +58,10 @@ cd(working_path)
 
 u_true_update_samples = zeros(length(u_high),num_post_samples);
 for k = 1:num_post_samples
-   u_true_update_samples(:,k) = obj_hifi.State_Solve(z_update_samples(:,k)); 
+   u_true_update_samples(:,k) = con_hifi.State_Solve(z_update_samples(:,k)); 
 end
 
-u_high_high = obj_hifi.State_Solve(z_hifi);
+u_high_high = con_hifi.State_Solve(z_hifi);
 figure,
 hold on
 plot(t,u_high(1:4:end),'LineWidth',3,'color','black')

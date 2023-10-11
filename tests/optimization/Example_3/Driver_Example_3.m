@@ -7,12 +7,14 @@ m = 3;
 n = 3;
 T = .05;
 N = 10^2;
-obj = Example_3(m,n,T,N);
-obj.verbose = false;
+obj = Example_3_Objective(m,n,T,N);
+con = Example_3_Constraint(m,n,T,N);
+opt = Reduced_Space_Optimization(obj,con);
+opt.verbose = false;
 z0 = rand(n,1)+1;
-obj.Finite_Difference_Gradient_Check(z0);
-obj.Finite_Difference_Hessian_Check(z0);
-[u,z] = obj.Optimize(z0);
+opt.Finite_Difference_Gradient_Check(z0);
+opt.Finite_Difference_Hessian_Check(z0);
+[u,z] = opt.Optimize(z0);
 
 % The optimal solution should be
 % u(1:3:end) \approx exp(t)

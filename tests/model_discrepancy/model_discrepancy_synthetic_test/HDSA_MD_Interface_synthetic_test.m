@@ -12,102 +12,102 @@ classdef HDSA_MD_Interface_synthetic_test < HDSA_MD_Interface
     
     methods (Access = public)
 
-        function [u_out] = Apply_W_d(obj,u_in)
-            u_out = obj.W_d*u_in;
+        function [u_out] = Apply_W_d(this,u_in)
+            u_out = this.W_d*u_in;
         end
         
-        function [z_out] = Apply_W_z_Inverse(obj,z_in)
-           z_out = linsolve(obj.W_z,z_in); 
+        function [z_out] = Apply_W_z_Inverse(this,z_in)
+           z_out = linsolve(this.W_z,z_in); 
         end
         
-        function [z_out] = Apply_W_z_Inverse_Factor(obj,z_in)
-            R = chol(obj.W_z);
+        function [z_out] = Apply_W_z_Inverse_Factor(this,z_in)
+            R = chol(this.W_z);
             z_out = linsolve(R,z_in);
         end
         
-        function [u_out] = Apply_W_u_Plus_scalar_W_d_Inverse(obj,u_in,scalar)
-            u_out = linsolve(obj.W_u + scalar*obj.W_d,u_in);
+        function [u_out] = Apply_W_u_Plus_scalar_W_d_Inverse(this,u_in,scalar)
+            u_out = linsolve(this.W_u + scalar*this.W_d,u_in);
         end
         
-        function [u_out] = Apply_W_u_Plus_scalar_W_d_Inverse_Factor(obj,u_in,scalar)
-           R = chol(obj.W_u+scalar*obj.W_d);
+        function [u_out] = Apply_W_u_Plus_scalar_W_d_Inverse_Factor(this,u_in,scalar)
+           R = chol(this.W_u+scalar*this.W_d);
            u_out = linsolve(R,u_in);
         end
         
-        function [u_out] = Apply_W_u_Inverse(obj,u_in)
-            u_out = linsolve(obj.W_u,u_in);
+        function [u_out] = Apply_W_u_Inverse(this,u_in)
+            u_out = linsolve(this.W_u,u_in);
         end
         
-        function [u_out] = Apply_W_u_Inverse_Factor(obj,u_in)
-            R = chol(obj.W_u);
+        function [u_out] = Apply_W_u_Inverse_Factor(this,u_in)
+            R = chol(this.W_u);
             u_out = linsolve(R,u_in);
         end
         
-        function [z_out] = Apply_Solution_Operator_z_Jacobian_Transpose(obj,u_in,z)
+        function [z_out] = Apply_Solution_Operator_z_Jacobian_Transpose(this,u_in,z)
             z_out = 3*diag(z.^2)*u_in;
         end
             
         % This implementation assumes that it is evaluated at the optimal z so that 
         % the adjoint=0, a more general impl a term multiplied by the adjoint variable
-        function [z_out] = Apply_RS_Hessian(obj,z_in,z)
+        function [z_out] = Apply_RS_Hessian(this,z_in,z)
             tmp1 = 3*diag(z.^2)*z_in;
-            tmp2 = obj.M*tmp1;
+            tmp2 = this.M*tmp1;
             z_out = 3*diag(z.^2)*tmp2;
         end
         
-        function [grad_u] = Misfit_Gradient(obj,u,z)
-            grad_u = obj.M*(u-(1+obj.x).^3);
+        function [grad_u] = Misfit_Gradient(this,u,z)
+            grad_u = this.M*(u-(1+this.x).^3);
         end
         
-        function [u_out] = Apply_Misfit_Hessian(obj,u_in,u,z)
-            u_out = obj.M*u_in;
+        function [u_out] = Apply_Misfit_Hessian(this,u_in,u,z)
+            u_out = this.M*u_in;
         end
         
-        function [u_opt] = Load_Optimal_u(obj)
-            u_opt = (1+obj.x).^3;
+        function [u_opt] = Load_Optimal_u(this)
+            u_opt = (1+this.x).^3;
         end
         
-        function [z_opt] = Load_Optimal_z(obj)
-            z_opt = 1+obj.x;
+        function [z_opt] = Load_Optimal_z(this)
+            z_opt = 1+this.x;
         end
         
-        function [Z] = Load_Z_Data(obj)
-            Z = zeros(obj.m,2);
-            Z(:,1) = 1 + obj.x;
-            Z(:,2) = obj.x + obj.x.^2;
+        function [Z] = Load_Z_Data(this)
+            Z = zeros(this.m,2);
+            Z(:,1) = 1 + this.x;
+            Z(:,2) = this.x + this.x.^2;
         end
         
-        function [D] = Load_d_Data(obj)
-            Z = obj.Load_Z_Data();
+        function [D] = Load_d_Data(this)
+            Z = this.Load_Z_Data();
             D = .2*(Z.^3);
         end
     end
     
     methods
-        function obj = HDSA_MD_Interface_synthetic_test(m)
-            obj.m = m;
-            obj.x = linspace(0,1,m)';
+        function this = HDSA_MD_Interface_synthetic_test(m)
+            this.m = m;
+            this.x = linspace(0,1,m)';
             
-            h = obj.x(2)-obj.x(1);
+            h = this.x(2)-this.x(1);
             M = diag(4*ones(1,m)) + diag(ones(1,m-1),1) + diag(ones(1,m-1),-1);
             M(1,1) = .5*M(1,1);
             M(end,end) = .5*M(end,end);
             M = (1/6)*h*M;
-            obj.M = M;
+            this.M = M;
             
             S = diag(2*ones(1,m)) + (-1)*diag(ones(1,m-1),1) + (-1)*diag(ones(1,m-1),-1);
             S(1,1) = .5*S(1,1);
             S(end,end) = .5*S(end,end);
             S = (1/h)*S;
-            obj.S = S;
+            this.S = S;
             
             E_d = (1.e-6)*S + M;
             E_u = (2.0)*( (5.e-2)*S + M );
             E_z = (1.e2)*( (1.e-2)*S + M );
             
-            obj.W_d = E_d'*linsolve(M,E_d);
-            obj.W_u = E_u'*linsolve(M,E_u);
-            obj.W_z = E_z'*linsolve(M,E_z);
+            this.W_d = E_d'*linsolve(M,E_d);
+            this.W_u = E_u'*linsolve(M,E_u);
+            this.W_z = E_z'*linsolve(M,E_z);
         end
         
     end

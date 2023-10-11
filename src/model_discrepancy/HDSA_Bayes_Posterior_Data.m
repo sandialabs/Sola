@@ -24,56 +24,56 @@ classdef HDSA_Bayes_Posterior_Data < handle
     end
     
     methods
-        function obj = HDSA_Bayes_Posterior_Data()
+        function this = HDSA_Bayes_Posterior_Data()
 
         end
         
-        function [] = Compute_Posterior_Data(obj, md_interface, alpha_d_in, u_opt, z_opt, num_samples)
-            obj.alpha_d = alpha_d_in;
-            obj.num_samples = num_samples;
-            obj.Z = md_interface.Load_Z_Data();
-            obj.D = md_interface.Load_d_Data();
-            obj.N = size(obj.D,2);
-            obj.state_grad = md_interface.Misfit_Gradient(u_opt,z_opt);
+        function [] = Compute_Posterior_Data(this, md_interface, alpha_d_in, u_opt, z_opt, num_samples)
+            this.alpha_d = alpha_d_in;
+            this.num_samples = num_samples;
+            this.Z = md_interface.Load_Z_Data();
+            this.D = md_interface.Load_d_Data();
+            this.N = size(this.D,2);
+            this.state_grad = md_interface.Misfit_Gradient(u_opt,z_opt);
             
-            obj.W_z_inv_Z = md_interface.Apply_W_z_Inverse(obj.Z);
-            obj.W_z_inv_z_opt = md_interface.Apply_W_z_Inverse(z_opt);
-            obj.G = (1+obj.W_z_inv_z_opt'*z_opt) - obj.Z'*obj.W_z_inv_z_opt - obj.W_z_inv_z_opt'*obj.Z + obj.Z'*obj.W_z_inv_Z;
-            [obj.g_vecs,obj.Mu] = eig(obj.G);
+            this.W_z_inv_Z = md_interface.Apply_W_z_Inverse(this.Z);
+            this.W_z_inv_z_opt = md_interface.Apply_W_z_Inverse(z_opt);
+            this.G = (1+this.W_z_inv_z_opt'*z_opt) - this.Z'*this.W_z_inv_z_opt - this.W_z_inv_z_opt'*this.Z + this.Z'*this.W_z_inv_Z;
+            [this.g_vecs,this.Mu] = eig(this.G);
             
-            W_d_Y = md_interface.Apply_W_d(obj.D);
-            obj.u_ell = md_interface.Apply_W_u_Inverse(W_d_Y);
-            obj.u_i_ell = cell(obj.N,1);
-            W_d_u_ell = md_interface.Apply_W_d(obj.u_ell);
-            for i = 1:obj.N
-                obj.u_i_ell{i} = (1/obj.alpha_d)*md_interface.Apply_W_u_Plus_scalar_W_d_Inverse(W_d_u_ell,obj.Mu(i,i)/obj.alpha_d);
+            W_d_Y = md_interface.Apply_W_d(this.D);
+            this.u_ell = md_interface.Apply_W_u_Inverse(W_d_Y);
+            this.u_i_ell = cell(this.N,1);
+            W_d_u_ell = md_interface.Apply_W_d(this.u_ell);
+            for i = 1:this.N
+                this.u_i_ell{i} = (1/this.alpha_d)*md_interface.Apply_W_u_Plus_scalar_W_d_Inverse(W_d_u_ell,this.Mu(i,i)/this.alpha_d);
             end
             
-            obj.a_ell = zeros(obj.N,1);
-            obj.b_i_ell = zeros(obj.N,obj.N);
-            for ell = 1:obj.N
-                obj.a_ell(ell) = 1 - obj.W_z_inv_z_opt'*(obj.Z(:,ell)-z_opt);
-                for i = 1:obj.N
-                    obj.b_i_ell(i,ell) = (obj.Z*obj.g_vecs(:,i))'*(obj.W_z_inv_Z(:,ell)-obj.W_z_inv_z_opt) + sum(obj.g_vecs(:,i))*obj.a_ell(ell);
+            this.a_ell = zeros(this.N,1);
+            this.b_i_ell = zeros(this.N,this.N);
+            for ell = 1:this.N
+                this.a_ell(ell) = 1 - this.W_z_inv_z_opt'*(this.Z(:,ell)-z_opt);
+                for i = 1:this.N
+                    this.b_i_ell(i,ell) = (this.Z*this.g_vecs(:,i))'*(this.W_z_inv_Z(:,ell)-this.W_z_inv_z_opt) + sum(this.g_vecs(:,i))*this.a_ell(ell);
                 end
             end
             
-            if obj.num_samples > 0
+            if this.num_samples > 0
                 
-                obj.ui_hat = cell(obj.N,1);
-                m = size(obj.u_ell,1);
-                for i = 1:obj.N
-                    Omega = randn(m,obj.num_samples);
-                    obj.ui_hat{i} = (1/sqrt(obj.alpha_d))*md_interface.Apply_W_u_Plus_scalar_W_d_Inverse_Factor(Omega,obj.Mu(i,i)/obj.alpha_d);
+                this.ui_hat = cell(this.N,1);
+                m = size(this.u_ell,1);
+                for i = 1:this.N
+                    Omega = randn(m,this.num_samples);
+                    this.ui_hat{i} = (1/sqrt(this.alpha_d))*md_interface.Apply_W_u_Plus_scalar_W_d_Inverse_Factor(Omega,this.Mu(i,i)/this.alpha_d);
                 end
             
-                Omega = randn(m,obj.num_samples);
-                obj.u_breve = md_interface.Apply_W_u_Inverse_Factor(Omega);
+                Omega = randn(m,this.num_samples);
+                this.u_breve = md_interface.Apply_W_u_Inverse_Factor(Omega);
                 
-                obj.state_grad_W_u_inv_state_grad = md_interface.Apply_W_u_Inverse(obj.state_grad)'*obj.state_grad;
+                this.state_grad_W_u_inv_state_grad = md_interface.Apply_W_u_Inverse(this.state_grad)'*this.state_grad;
                 n = length(z_opt);
-                Omega = randn(n,obj.num_samples);
-                obj.zbreve = md_interface.Apply_W_z_Inverse_Factor(Omega);
+                Omega = randn(n,this.num_samples);
+                this.zbreve = md_interface.Apply_W_z_Inverse_Factor(Omega);
                 
             end
             

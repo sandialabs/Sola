@@ -6,18 +6,22 @@ addpath(genpath('../../src'))
 m = 200;
 diff_coeff = 1;
 vel_coeff = 1/2;
-robin_coeff = 3/2; 
+robin_coeff = 2; 
 reg_coeff = 10;
-obj_hifi = Adv_Diff(m,diff_coeff,vel_coeff,robin_coeff,reg_coeff);
-obj_lofi = Diff(obj_hifi);
+obj = Adv_Diff_Objective(m,reg_coeff);
+con_hifi = Adv_Diff_Constraint(m,diff_coeff,vel_coeff,robin_coeff);
+con_lofi = Diff_Constraint(con_hifi);
+opt_hifi = Reduced_Space_Optimization(obj,con_hifi);
+opt_lofi = Reduced_Space_Optimization(obj,con_lofi);
+x = con_hifi.x;
 
 z0 = rand(m,1);
-[u_hifi,z_hifi] = obj_hifi.Optimize(z0);
-[u_lofi,z_lofi] = obj_lofi.Optimize(z0);
+[u_hifi,z_hifi] = opt_hifi.Optimize(z0);
+[u_lofi,z_lofi] = opt_lofi.Optimize(z0);
 
-x = obj_hifi.x;
-T = obj_hifi.T;
-u = obj_hifi.State_Solve(z_lofi);
+x = con_hifi.x;
+T = obj.T;
+u = con_hifi.State_Solve(z_lofi);
 ymax = 1.1*max([u_lofi;u_hifi;u;T]);
 
 figure,
@@ -56,9 +60,9 @@ Z = zeros(m,2);
 Z(:,1) = z_lofi;
 Z(:,2) = ones(m,1);
 
-Y = zeros(m,2);
-for k = 1:size(Y,2)
-    Y(:,k) = obj_hifi.State_Solve(Z(:,k)) - obj_lofi.State_Solve(Z(:,k));
+D = zeros(m,2);
+for k = 1:size(D,2)
+    D(:,k) = con_hifi.State_Solve(Z(:,k)) - con_lofi.State_Solve(Z(:,k));
 end
 
-save('Optimization_Results.mat','m','diff_coeff','vel_coeff','robin_coeff','reg_coeff','z_lofi','z_hifi','u_lofi','Z','Y')
+save('Optimization_Results.mat','m','diff_coeff','vel_coeff','robin_coeff','reg_coeff','z_lofi','z_hifi','u_lofi','Z','D')

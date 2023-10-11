@@ -1,7 +1,7 @@
 %%
 clear
 close all
-addpath(genpath('../../src'))
+addpath(genpath('../../../src'))
 rng(1234423)
 
 suppress_figures = true;
@@ -11,14 +11,17 @@ diff_coeff = 1;
 vel_coeff = 1/2;
 robin_coeff = 2; 
 reg_coeff = 10;
-obj_hifi = Adv_Diff(m,diff_coeff,vel_coeff,robin_coeff,reg_coeff);
-obj_lofi = Diff(obj_hifi);
-x = obj_hifi.x;
+obj = Adv_Diff_Objective(m,reg_coeff);
+con_hifi = Adv_Diff_Constraint(m,diff_coeff,vel_coeff,robin_coeff);
+con_lofi = Diff_Constraint(obj,con_hifi);
+opt_hifi = Reduced_Space_Optimization(obj,con_hifi);
+opt_lofi = Reduced_Space_Optimization(obj,con_lofi);
+x = con_hifi.x;
 
 %%
 alpha_u = 1/(2^2);
 alpha_z = 1/(600^2);
-md_interface = HDSA_Abesa_MD_Interface_Elliptic_Prior_PDE_Test_Prob(obj_lofi,alpha_u,alpha_z);
+md_interface = HDSA_Sabl_MD_Interface_Elliptic_Prior_PDE_Test_Prob(opt_lofi,alpha_u,alpha_z);
 
 %%
 num_prior_samples = 100;

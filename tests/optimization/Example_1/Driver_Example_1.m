@@ -7,21 +7,23 @@ rng(1342)
 
 %%
 % Instantiate the Example_1 object
-obj = Example_1();
-obj.verbose = false;
+obj = Example_1_Objective();
+con = Example_1_Constraint();
+opt = Reduced_Space_Optimization(obj,con);
+opt.verbose = false;
 
 %%
 % Generate a random control and execute finite difference tests
 z0 = rand(2,1)+1;
-obj.Finite_Difference_Gradient_Check(z0);
-obj.Finite_Difference_Hessian_Check(z0);
+opt.Finite_Difference_Gradient_Check(z0);
+opt.Finite_Difference_Hessian_Check(z0);
 
 %%
 % Execute optimization
 % The optimal solution should be
 % u = ( 7  1  4)
 % z = (8  8)
-[u,z] = obj.Optimize(z0);
+[u,z] = opt.Optimize(z0);
 
 %%
 u_sol = load('Solution_Example_1.mat','u').u;
