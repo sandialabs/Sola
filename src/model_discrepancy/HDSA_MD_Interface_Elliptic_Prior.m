@@ -98,15 +98,8 @@ classdef HDSA_MD_Interface_Elliptic_Prior < HDSA_MD_Interface
         % Factorize W_z^{-1} = F*F^T, function gives z_out = F*z_in
         % This function must be implemented to enable posterior update sampling
         function [z_out] = Apply_W_z_Inverse_Factor(this,z_in)
-            n = size(z_in,1);
-            d = size(z_in,2);
-            tmp = zeros(n,d);
-            A = @(v) this.Apply_M_z(v);
-            G = speye(n);
-            tol = 1.e-8;
-            for k = 1:d
-                tmp(:,k) = krylov_sqrt(A,G,z_in(:,k),n,tol);
-            end
+            mass_mat_sqrt = M_z_Sqrt(this);
+            tmp = mass_mat_sqrt.Matrix_Sqrt_Apply(z_in);
             z_out = sqrt(this.alpha_z)*this.Apply_E_z_Inverse(tmp);
         end
         
