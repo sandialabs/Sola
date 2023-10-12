@@ -5,6 +5,7 @@
 .vscode/
 *#
 __pycache__/
+docs/build
 
 ### Boilerplate latex ignore file:
 ## Latex Ignore:
