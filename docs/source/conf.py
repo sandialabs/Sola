@@ -17,12 +17,12 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'SABL'
-copyright = '2023, Joseph Hart, Shane McQuarrie, Bart van Bloemen Waanders'
-author = 'Joseph Hart, Shane McQuarrie, Bart van Bloemen Waanders'
+project = "Outer Loop"
+copyright = "2023, Joseph Hart, Shane McQuarrie, Bart van Bloemen Waanders"
+author = "Joseph Hart, Shane McQuarrie, Bart van Bloemen Waanders"
 
 # The full version, including alpha/beta/rc tags
-release = '0.0.1'
+release = "0.0.1"
 
 
 # -- General configuration ---------------------------------------------------
@@ -32,10 +32,11 @@ release = '0.0.1'
 # ones.
 extensions = [
     "myst_parser",
+    "sphinx_copybutton",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -47,10 +48,19 @@ exclude_patterns = []
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_rtd_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
+
+
+# -- Extensions --------------------------------------------------------------
+
+myst_enable_extensions = [
+    "amsmath",
+    "colon_fence",
+    "dollarmath",
+    "replacements",
+]

@@ -1,20 +1,25 @@
-.. SABL documentation master file, created by
-   sphinx-quickstart on Thu Oct 12 15:10:00 2023.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+Outer-loop Toolbox
+==================
 
-Welcome to SABL's documentation!
-================================
+This is the beginning of the documentation for our project.
+
+.. toctree::
+
+   fundamentals
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: MATLAB: SABL
 
+   sabl/about
+   sabl/anatomy
+   sabl/example1
 
+.. toctree::
+   :maxdepth: 2
+   :caption: C++: MrHyDE
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   mrhyde/about
+   mrhyde/primer
+   mrhyde/anatomy
+   mrhyde/example1
