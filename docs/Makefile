@@ -15,10 +15,6 @@ help:
 .PHONY: help Makefile
 
 
-main.pdf:
-	latexmk -pdf main.tex
-
-
 requirements:
 	pip-compile .requirements.in
 
