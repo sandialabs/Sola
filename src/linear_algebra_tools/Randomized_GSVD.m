@@ -13,8 +13,6 @@ classdef Randomized_GSVD < handle
 
         [vec_out] = Apply_Operator_Transpose(this,vec_in);
         
-        [vec_out] = Apply_Input_Weighting_Operator(this,vec_in);
-        
         [vec_out] = Apply_Input_Weighting_Operator_Inverse(this,vec_in);
         
         [vec_out] = Apply_Output_Weighting_Operator(this,vec_in);
@@ -65,9 +63,7 @@ classdef Randomized_GSVD < handle
         
         function [Q,WQ] = CholQR(this,Z,type)
             [Q_Z,~] = qr(Z,0);
-            if strcmp(type,'input_weighting')
-                W_Q_Z = this.Apply_Input_Weighting_Operator(Q_Z);
-            elseif strcmp(type,'input_weighting_inverse')
+            if strcmp(type,'input_weighting_inverse')
                 W_Q_Z = this.Apply_Input_Weighting_Operator_Inverse(Q_Z);
             elseif strcmp(type,'output_weighting')
                 W_Q_Z = this.Apply_Output_Weighting_Operator(Q_Z);

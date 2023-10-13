@@ -13,6 +13,12 @@ classdef Inf_Dim_Prior_Model < Prior_Model
         
         [z_out] = Laplacian_Like_Transpose_Apply(this,z_in);
         
+        [z_out] = Laplacian_Like_Inverse_Apply(this,z_in);
+        
+        [z_out] = Laplacian_Like_Transpose_Inverse_Apply(this,z_in);
+
+        [z_out] = Mass_Matrix_Apply(this,z_in);
+        
         [z_out] = Mass_Matrix_Inverse_Apply(this,z_in);
         
         [z_prior_mean] = Get_Prior_Mean(this);

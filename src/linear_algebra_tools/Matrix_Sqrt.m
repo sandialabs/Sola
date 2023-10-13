@@ -24,11 +24,11 @@ classdef Matrix_Sqrt < handle
             G = speye(n);
             tol = 1.e-8;
             for k = 1:d
-                vec_out(:,k) = krylov_sqrt(A,G,vec_in(:,k),n,tol);
+                vec_out(:,k) = this.krylov_sqrt(A,G,vec_in(:,k),n,tol);
             end
         end
         
-        function [x12,relres] = krylov_sqrt(A,G,b,maxiter,tol,varargin)
+        function [x12,relres] = krylov_sqrt(this,A,G,b,maxiter,tol,varargin)
             % This function computes A^{1/2}b using Lanczos approach
             % described in Algorithm 2.2 of
             %   "Quantifying Uncertainties in Bayesian Linear Inverse Problems using
@@ -42,7 +42,7 @@ classdef Matrix_Sqrt < handle
             %         tol - tolerance for stopping
             %    varargin - test {'True', 'False'} Optional parameter to verify accuracy of Lanczos relationships
             
-            if nargin > 5
+            if nargin > 6
                 test = varargin{1};
             else
                 test = 'False';

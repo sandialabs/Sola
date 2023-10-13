@@ -68,4 +68,20 @@ if test_model_discrepancy
     
 end
 
+test_bayesian_inversion = true;
+
+if test_bayesian_inversion
+    cd bayesian_inversion/
+    
+    cd Example_1/
+    Driver
+    cd ..
+    
+    cd Poisson/
+    Driver_Opt
+    cd ..
+    
+    cd ..
+end
+
 clear

@@ -1,7 +1,7 @@
-classdef Likelihood_Model_Example_1 < Likelihood_Model
+classdef Poisson_Likelihood_Model < Likelihood_Model
     
     properties
-    
+        d;
     end
     
      methods (Access = public)
@@ -11,19 +11,23 @@ classdef Likelihood_Model_Example_1 < Likelihood_Model
          end
          
          function [d_out] = Observation_Operator_Apply(this,u_in)
-             d_out = u_in;
+            d_out = u_in;
          end
-         
+             
          function [u_out] = Observation_Operator_Transpose_Apply(this,d_in)
-             u_out = d_in;
+            u_out = d_in;
          end
          
          function [d] = Get_Observed_Data(this)
-             d = load('Observed_Data.mat','d').d;
+            d = this.d;
          end
+             
+     end
+     
+     methods (Access = public)
          
-         function this = Likelihood_Model_Example_1()
-
+         function this = Poisson_Likelihood_Model(con)
+            this.d = con.State_Solve(2*con.diff_coeff*ones(con.m,1));
          end
          
      end

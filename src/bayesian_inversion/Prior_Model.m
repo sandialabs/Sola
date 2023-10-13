@@ -4,7 +4,7 @@ classdef Prior_Model < handle
     % model and a linear observation operator 
     
     properties
-        z_prior_mean;
+
     end
     
      methods (Abstract, Access = public)
@@ -18,13 +18,14 @@ classdef Prior_Model < handle
      methods (Access = public)
          
          function this = Prior_Model()
-            this.z_prior_mean = this.Get_Prior_Mean();
+
          end
          
-          function [val,grad_z] = Regularization(this,z)
-            z_tmp1 = this.Prior_Precision_Apply(z-this.z_prior_mean);
-            val = 0.5*(z_tmp1'*(z-this.z_prior_mean));
-            grad_z = z_tmp1;
+         function [val,grad_z] = Regularization(this,z)
+             tmp1 = z-this.Get_Prior_Mean();
+             tmp2 = this.Prior_Precision_Apply(tmp1);
+             val = 0.5*(tmp2'*tmp1);
+             grad_z = tmp2;
          end
          
          function [Mv] = Regularization_HessVec(this,v)

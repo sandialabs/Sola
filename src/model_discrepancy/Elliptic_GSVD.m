@@ -13,11 +13,7 @@ classdef Elliptic_GSVD < Randomized_GSVD
         function [vec_out] = Apply_Operator_Transpose(this,vec_in)
             vec_out = this.md_interface_elliptic_prior.Apply_E_u_Inverse_Transpose(vec_in);
         end
-        
-        function [vec_out] = Apply_Input_Weighting_Operator(this,vec_in)
-            vec_out = this.md_interface_elliptic_prior.Apply_M_u_Inverse(vec_in);
-        end
-        
+                
         function [vec_out] = Apply_Input_Weighting_Operator_Inverse(this,vec_in)
             vec_out = this.md_interface_elliptic_prior.Apply_M_u(vec_in);
         end
