@@ -1,39 +1,54 @@
-%%
-% Clear workspace and add path
+%% Clear workspace and add path.
 clear
 close all
-addpath('../../../src/Optimization/')
+clc
+addpath('../../../src/optimization/')
 rng(1342)
 
-%%
-% Instantiate the Example_1 object
-obj = Example_1_Objective();
-con = Example_1_Constraint();
-opt = Reduced_Space_Optimization(obj,con);
-opt.verbose = false;
 
-%%
-% Generate a random control and execute finite difference tests
-z0 = rand(2,1)+1;
+%% Instantiate the optimization problem.
+constants = [7; 1; 4; 8; 8];
+obj = Example_1_Objective(constants);
+con = Example_1_Constraint();
+opt = Reduced_Space_Optimization(obj, con);
+
+
+%% Run finite difference checks.
+opt.verbose = false;
+z0 = rand(2, 1) + 1;
 opt.Finite_Difference_Gradient_Check(z0);
 opt.Finite_Difference_Hessian_Check(z0);
 
-%%
-% Execute optimization
-% The optimal solution should be
-% u = ( 7  1  4)
-% z = (8  8)
-[u,z] = opt.Optimize(z0);
 
-%%
-u_sol = load('Solution_Example_1.mat','u').u;
-z_sol = load('Solution_Example_1.mat','z').z;
+%% Do the optimization.
+[u, z] = opt.Optimize(z0);
 
-error = 0;
-error = max(error,norm(u_sol-u));
-error = max(error,norm(z_sol-z));
-if error ~= 0
-   disp('Error in example 1') 
+
+%% Compare solution to the truth and report discrepancies.
+% The optimal solution is u = (a1  a2  a3), z = (a4  a5).
+u_sol = constants(1:3);
+z_sol = constants(4:5);
+
+err = 0;
+err = max(err, norm(u_sol - u));
+err = max(err, norm(z_sol - z));
+if err > 1e-12
+    disp('Error in example 1')
+    disp(err)
+    disp('')
+    disp('Calculated state')
+    disp(u);
+    disp('Calculated control')
+    disp(z);
+    disp('Calculated objective value')
+    [val, gradu, gradz] = obj.J(u, z);
+    disp(val)
+    disp('')
+    disp('True state')
+    disp(u_sol)
+    disp('True control')
+    disp(z_sol)
+    disp('Objective value at true solution')
+    [val, gradu, gradz] = obj.J(u_sol, z_sol);
+    disp(val)
 end
-
-% save('Solution_Example_1.mat','u','z','obj')

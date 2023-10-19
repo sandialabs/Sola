@@ -1,17 +1,19 @@
-Outer-loop Toolbox
-==================
-
-This is the beginning of the documentation for our project.
+WOLF: Waanders Outer-Loop Framework
+===================================
 
 .. toctree::
+   :maxdepth: 2
 
+   overview
    fundamentals
+   notation
 
 .. toctree::
    :maxdepth: 2
    :caption: MATLAB: SABL
 
    sabl/about
+   sabl/installation
    sabl/anatomy
    sabl/example1
 
@@ -20,6 +22,7 @@ This is the beginning of the documentation for our project.
    :caption: C++: MrHyDE
 
    mrhyde/about
+   mrhyde/installation
    mrhyde/primer
    mrhyde/anatomy
    mrhyde/example1

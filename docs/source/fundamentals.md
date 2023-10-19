@@ -1,22 +1,32 @@
 # Fundamentals
 
-
 :::{warning}
 This page is under construction!
 :::
 
+This page lists the mathematical prerequisites for reading this documentation and working in WOLF.
+The exposition here is not thorough---our goal is to quickly cover a few select basics and give references for further reading.
 
-This page is a crash course on several mathematical topics that are prerequisites to understanding everything that is going on in our framework.
+## Ordinary Differential Equations
 
-Here is some math.
+### Numerical Solutions by Integrating in Time
 
-$$
-    f(x) = 100
-$$
+## Partial Differential Equations
 
-Here is a code block (with a copy button!)
+### Spatial Discretization
 
-```matlab
-x = [ 1 ; 2 ; 3];
-xnorm = sqrt(x'*x);
-```
+### Integrating in Time
+
+## Optimization
+
+### Gradients
+
+### Hessians
+
+### Adjoints
+
+## Numerical Linear Algebra
+
+### Singular Value Decomposition
+
+### Randomized Methods
