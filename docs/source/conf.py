@@ -1,15 +1,18 @@
-# Configuration file for the Sphinx documentation builder.
-#
-# This file only contains a selection of the most common options. For a full
-# list see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
+# conf.py
+"""
+Configuration file for the Sphinx documentation builder.
+
+This file only contains a selection of the most common options.
+For a full list see the documentation:
+https://www.sphinx-doc.org/en/master/usage/configuration.html.
+"""
 
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
+
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
@@ -17,9 +20,12 @@
 
 # -- Project information -----------------------------------------------------
 
-project = "Outer Loop"
-copyright = "2023, Joseph Hart, Shane McQuarrie, Bart van Bloemen Waanders"
-author = "Joseph Hart, Shane McQuarrie, Bart van Bloemen Waanders"
+import time
+
+
+project = "WOLF"
+copyright = f"{time.strftime('%Y')} Sandia National Laboratories"
+author = "Joseph Hart, Shane McQuarrie, and Bart van Bloemen Waanders"
 
 # The full version, including alpha/beta/rc tags
 release = "0.0.1"
@@ -27,16 +33,17 @@ release = "0.0.1"
 
 # -- General configuration ---------------------------------------------------
 
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
+# Add any Sphinx extension module names here, as strings.
 extensions = [
-    "myst_parser",
-    "sphinx_copybutton",
+    "myst_parser",                      # Write content in Markdown.
+    "sphinx_copybutton",                # Copy code blocks.
+    "sphinx_proof",                     # Theorems, algorithms, etc.
+    "sphinx_tippy",                     # Previews when hovering over links.
+    "sphinx_togglebutton",              # Dropdowns.
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ["_templates"]
+# templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -46,21 +53,33 @@ exclude_patterns = []
 
 # -- Options for HTML output -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-html_theme = "sphinx_rtd_theme"
+# The theme to use for HTML and HTML Help pages.
+html_theme = "sphinx_book_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+html_css_files = [
+    "colors.css",                       # Explicit text coloring.
+    "rightalign.css",                   # Right align equation labels.
+    "tippy.css",                        # Correct theme for link previews.
+]
+
+# Explicit text coloring (ignoring theme).
+rst_prolog = """
+.. include:: <s5defs.txt>
+
+"""
 
 
 # -- Extensions --------------------------------------------------------------
 
 myst_enable_extensions = [
-    "amsmath",
-    "colon_fence",
-    "dollarmath",
-    "replacements",
+    "amsmath",                          # parse amsmath directly (align, etc.)
+    "attrs_block",                      # label and reference paragraphs, etc.
+    "colon_fence",                      # parse ::: delimiters.
+    "dollarmath",                       # Parse $ and $$ encapsulated math.
+    "replacements",                     # Convert (c) to ©, etc.
 ]
+myst_dmath_double_inline = True         # $$ OK if no newline before and after.

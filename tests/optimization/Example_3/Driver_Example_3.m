@@ -1,6 +1,6 @@
 clear
 close all
-addpath('../../../src/Optimization/')
+addpath('../../../src/optimization/')
 rng(132)
 
 m = 3;
@@ -30,7 +30,7 @@ error = 0;
 error = max(error,norm(u_sol-u));
 error = max(error,norm(z_sol-z));
 if error ~= 0
-   disp('Error in example 3') 
+   disp('Error in example 3')
 end
 
 % save('Solution_Example_3.mat','u','z','obj')

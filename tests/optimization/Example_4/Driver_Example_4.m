@@ -1,6 +1,6 @@
 clear
 close all
-addpath('../../../src/Optimization/')
+addpath('../../../src/optimization/')
 rng(89234)
 
 m = 3;
