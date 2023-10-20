@@ -15,6 +15,10 @@ classdef Prior_Model_Example_1 < Prior_Model
             z_prior_mean = 8*ones(2,1); 
          end
          
+         function [z_out] = Prior_Covariance_Factor_Apply(this,z_in)
+            z_out = z_in; 
+         end
+         
          function this = Prior_Model_Example_1()
 
          end

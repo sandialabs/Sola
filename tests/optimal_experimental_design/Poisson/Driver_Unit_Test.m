@@ -2,8 +2,10 @@
 clear
 close all
 clc
-addpath(genpath('../../src'))
+addpath(genpath('../../../src'))
 rng(1423435)
+
+print_output = false;
 
 m = 200;
 diff_coeff = 1;
@@ -15,7 +17,7 @@ likelihood = Poisson_Likelihood_Model(sigma,obs_vec,m);
 prior = Poisson_Prior_Model(con);
 
 num_trace_samples = 1000;
-reguarlization_coeff = 1.e-4;
+reguarlization_coeff = 1.e-1;
 linear_oed = Linear_OED(likelihood,prior,con,num_trace_samples,reguarlization_coeff);
 
 max_error = 0;
@@ -35,7 +37,9 @@ forward_approx = U*Sigma*V'*prior_precision;
 tmp = linsolve(con.A,con.B);
 forward = tmp(obs_vec,:);
 error = norm(forward-forward_approx);
-disp(['error = ',num2str(error)]) 
+if print_output
+    disp(['error = ',num2str(error)])
+end
 max_error = max(max_error,error);
 
 %%
@@ -44,7 +48,9 @@ w = round(rand(length(obs_vec),1));
 Minv = prior.Mass_Matrix_Inverse_Apply(eye(m));
 rank = min(length(find(w~=0)),length(obs_vec));
 error = norm(evecs'*Minv*evecs - eye(rank));
-disp(['error = ',num2str(error)]) 
+if print_output
+    disp(['error = ',num2str(error)])
+end
 max_error = max(max_error,error);
 
 %%
@@ -53,7 +59,9 @@ misfit_hessian_approx = Minv*evecs*diag(evals)*evecs'*Minv;
 Ftilde = (1/likelihood.sigma)*forward*prior.Laplacian_Like_Inverse_Apply(eye(m));
 misfit_hessian = Ftilde'*diag(w)*Ftilde;
 error = norm(misfit_hessian - misfit_hessian_approx);
-disp(['error = ',num2str(error)]) 
+if print_output
+    disp(['error = ',num2str(error)])
+end
 max_error = max(max_error,error);
 
 %%
@@ -66,7 +74,9 @@ z0 = randn(m,1);
 [~,~,hessian_data] = bayes_inv.opt.Jhat(z0);
 H = bayes_inv.opt.Jhat_hessVec(hessian_data,eye(m));
 error = norm(H-H_approx);
-disp(['error = ',num2str(error)]) 
+if print_output
+    disp(['error = ',num2str(error)])
+end
 max_error = max(max_error,error);
 
 %%
@@ -75,12 +85,16 @@ Hinv_v_approx = linear_oed.Compute_Inverse_Hessian_Matvec(v,evecs,evals);
 
 Hinv_v = linsolve(H,v);
 error = norm(Hinv_v - Hinv_v_approx);
-disp(['error = ',num2str(error)]) 
+if print_output
+    disp(['error = ',num2str(error)])
+end
 max_error = max(max_error,error);
 
 
 %%
-disp(['Max error = ',num2str(max_error)])
+if print_output
+    disp(['error = ',num2str(error)])
+end
 
 %%
 w = rand(length(obs_vec),1);
@@ -94,10 +108,12 @@ for k = 1:M
    val_k = linear_oed.Posterior_Trace_Objective(w + h(k)*dw);
    fd(k) = (val_k-val)/h(k);
 end
-disp('Finite difference step sizes (log10)')
-disp(log10(h)')
-disp('Finite difference errors (log10)')
-disp(log10(abs(fd-grad'*dw)'))
+if print_output
+    disp('Finite difference step sizes (log10)')
+    disp(log10(h)')
+    disp('Finite difference errors (log10)')
+    disp(log10(abs(fd-grad'*dw)'))
+end
 
 %%
 w = rand(length(obs_vec),1);
@@ -111,7 +127,13 @@ for k = 1:M
    val_k = linear_oed.OED_Objective(w + h(k)*dw);
    fd(k) = (val_k-val)/h(k);
 end
-disp('Finite difference step sizes')
-disp(log10(h)')
-disp('Finite difference errors (log10)')
-disp(log10(abs(fd-grad'*dw)'))
+if print_output
+    disp('Finite difference step sizes')
+    disp(log10(h)')
+    disp('Finite difference errors (log10)')
+    disp(log10(abs(fd-grad'*dw)'))
+end
+
+if error > 1.e-9
+   disp('Error in optimal experimental design Poisson example') 
+end

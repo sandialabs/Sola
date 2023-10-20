@@ -20,6 +20,13 @@ classdef Linear_OED < handle
         forward_operator_sing_vecs_output;
         forward_operator_sing_vals;
         forward_operator_rank;
+        
+        
+        opt_tol;
+        fun_tol;
+        iteration_limit;
+        step_tol;
+        verbose;
     end
     
     methods (Access = public)
@@ -45,6 +52,12 @@ classdef Linear_OED < handle
             this.trace_samples = mass_mat_sqrt.Matrix_Sqrt_Apply(omega);
             this.num_trace_samples = num_trace_samples;
             this.reguarlization_coeff = reguarlization_coeff;
+            
+            this.opt_tol = 10^-8;
+            this.fun_tol = 10^-6;
+            this.iteration_limit = 10^3;
+            this.step_tol = 10^-6;
+            this.verbose = true;
         end
         
         function [sing_vals] = Compute_Forward_Operator_GSVD(this,num_sing_vals, oversampling, num_subspace_iters)
@@ -99,7 +112,26 @@ classdef Linear_OED < handle
            grad = 1 + 0*w;
         end
         
-     end
+        function [w] = Optimize_Design(this)
+            w0 = rand(this.d_dim,1);
+            lb = zeros(this.d_dim,1);
+            ub = ones(this.d_dim,1);
+            verb = 'iter-detailed';
+            if this.verbose == false
+                verb = 'none';
+            end
+            options = optimoptions(@fmincon,...
+                'Display',verb,...
+                'Algorithm','interior-point',...
+                'SpecifyObjectiveGradient',true,...
+                'OptimalityTolerance',this.opt_tol,...
+                'FunctionTolerance',this.fun_tol,...
+                'MaxIterations',this.iteration_limit,...
+                'StepTolerance',this.step_tol);
+            w = fmincon(@(w)this.OED_Objective(w),w0,[],[],[],[],lb,ub,[],options);
+        end
+        
+    end
      
 end
 

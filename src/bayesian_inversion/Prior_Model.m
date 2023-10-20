@@ -13,6 +13,10 @@ classdef Prior_Model < handle
          
          [z_prior_mean] = Get_Prior_Mean(this);
          
+         % Assume that the prior covariance is factorized as 
+         % Gamma = L*L^T, this function computes z_out = L*z_in
+         [z_out] = Prior_Covariance_Factor_Apply(this,z_in);
+         
      end
      
      methods (Access = public)
@@ -32,6 +36,11 @@ classdef Prior_Model < handle
              Mv = this.Prior_Precision_Apply(v);
          end
          
+         function [Z_prior] = Compute_Prior_Samples(this,num_samps)
+            z_prior_mean = this.Get_Prior_Mean(); 
+            Omega = randn(length(z_prior_mean),num_samps);
+            Z_prior = this.Prior_Covariance_Factor_Apply(Omega) + z_prior_mean;
+         end
          
      end
      

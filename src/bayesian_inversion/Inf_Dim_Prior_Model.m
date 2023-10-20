@@ -4,7 +4,7 @@ classdef Inf_Dim_Prior_Model < Prior_Model
     % model and a linear observation operator
     
     properties
-        
+        mass_mat_sqrt;
     end
     
     methods (Abstract, Access = public)
@@ -28,7 +28,7 @@ classdef Inf_Dim_Prior_Model < Prior_Model
     methods (Access = public)
         
         function this = Inf_Dim_Prior_Model()
-            
+            this.mass_mat_sqrt = Mass_Matrix_Sqrt(this);
         end
         
         function [z_out] = Prior_Precision_Apply(this,z_in)
@@ -37,7 +37,10 @@ classdef Inf_Dim_Prior_Model < Prior_Model
             z_out = this.Laplacian_Like_Transpose_Apply(tmp2);
         end
         
-        
+        function [z_out] = Prior_Covariance_Factor_Apply(this,z_in)
+            tmp = this.mass_mat_sqrt.Matrix_Sqrt_Apply(z_in);
+            z_out = this.Laplacian_Like_Inverse_Apply(tmp);
+        end
         
     end
     
