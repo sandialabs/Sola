@@ -1,4 +1,4 @@
-classdef Darcy_Constraint < Constraint
+classdef Thermal_Constraint < Constraint
     
     
     properties
@@ -131,7 +131,7 @@ classdef Darcy_Constraint < Constraint
             D_diff(this.m,:) = 0*D_diff(this.m,:);
         end
         
-        function this = Darcy_Constraint(m)
+        function this = Thermal_Constraint(m)
             this = this@Constraint();
             
             this.m = m;

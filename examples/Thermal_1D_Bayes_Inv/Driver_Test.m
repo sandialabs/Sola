@@ -4,12 +4,12 @@ clc
 addpath(genpath('../../src'))
 
 m = 50;
-con = Darcy_Constraint(m);
+con = Thermal_Constraint(m);
 x = con.x;
 
-jacobian_check = false;
-mms_check = false;
-grid_refinement_check = false;
+jacobian_check = true;
+mms_check = true;
+grid_refinement_check = true;
 finite_diff_check = true;
 
 if jacobian_check
@@ -36,7 +36,7 @@ if grid_refinement_check
     N = length(m_mesh);
     error = zeros(N,1);
     for k = 1:N
-        con_k = Darcy_Constraint(m_mesh(k));
+        con_k = Thermal_Constraint(m_mesh(k));
         x = con_k.x;
         z = x.^2;
         con_k.forcing = (10^-3)*(6*x.^2 - 2*x);
@@ -49,8 +49,8 @@ if grid_refinement_check
 end
 
 if finite_diff_check
-    likelihood = Darcy_Likelihood_Model(m);
-    prior = Darcy_Prior_Model(con);
+    likelihood = Thermal_Likelihood_Model(m);
+    prior = Thermal_Prior_Model(con);
     bayes_inv = Bayesian_Inversion(likelihood,prior,con);
     z0 = randn(m,1);
     diffs = bayes_inv.opt.Finite_Difference_Gradient_Check(z0);

@@ -1,4 +1,4 @@
-classdef Darcy_Likelihood_Model < Likelihood_Model
+classdef Thermal_Likelihood_Model < Likelihood_Model
     
     properties
         sigma;
@@ -30,9 +30,9 @@ classdef Darcy_Likelihood_Model < Likelihood_Model
      
      methods (Access = public)
          
-         function this = Darcy_Likelihood_Model(m)
+         function this = Thermal_Likelihood_Model(m)
             this.sigma = 5.e-1;
-            this.obs_vec = round(linspace(1,m,20));
+            this.obs_vec = round(linspace(1,m,10));
             this.m = m;
          end
          

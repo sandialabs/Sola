@@ -1,4 +1,4 @@
-classdef Darcy_Prior_Model < Inf_Dim_Prior_Model
+classdef Thermal_Prior_Model < Inf_Dim_Prior_Model
     
     
     properties
@@ -39,9 +39,9 @@ classdef Darcy_Prior_Model < Inf_Dim_Prior_Model
     
     methods (Access = public)
         
-        function this = Darcy_Prior_Model(con)
+        function this = Thermal_Prior_Model(con)
            this.con = con; 
-           this.L = (.5)*( (5.e-2)*con.S + con.M );
+           this.L = (.5)*( (4.e-2)*con.S + con.M );
         end
         
         
