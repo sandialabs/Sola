@@ -22,8 +22,8 @@ classdef Darcy_Likelihood_Model < Likelihood_Model
          end
          
          function [d] = Get_Observed_Data(this)
-            u_true = load('Obs_Data.mat','u_true').u_true;
-            d = u_true(this.obs_vec);
+            u_data = load('Obs_Data.mat','u_data').u_data;
+            d = u_data(this.obs_vec);
          end
              
      end
@@ -31,8 +31,8 @@ classdef Darcy_Likelihood_Model < Likelihood_Model
      methods (Access = public)
          
          function this = Darcy_Likelihood_Model(m)
-            this.sigma = 1.e-2;
-            this.obs_vec = 1:m; %round(linspace(round(m/10),round(m-m/10),20));
+            this.sigma = 5.e-1;
+            this.obs_vec = round(linspace(1,m,20));
             this.m = m;
          end
          

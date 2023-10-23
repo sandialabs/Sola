@@ -17,14 +17,19 @@ if plot_prior_samples
     plot(con.x,Z_prior)
 end
 
-z0 = prior.Get_Prior_Mean();
+%z0 = prior.Get_Prior_Mean();
+z0 = load('Obs_Data.mat','z_true').z_true;
+bayes_inv.opt.z_lb = zeros(m,1);
+bayes_inv.opt.max_cg_iter = 500;
 [u_map,z_map] = bayes_inv.Compute_MAP_Point(z0);
 
 figure,
 hold on
 u_true = load('Obs_Data.mat','u_true').u_true;
+u_data = load('Obs_Data.mat','u_data').u_data;
 plot(con.x,u_map,'LineWidth',3)
 plot(con.x,u_true,'--','LineWidth',3)
+plot(con.x(likelihood.obs_vec),u_data(likelihood.obs_vec),'o','MarkerSize',10)
 title('State')
 legend({'MAP Estimate','Truth'})
 set(gca,'fontsize', 18)

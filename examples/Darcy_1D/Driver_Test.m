@@ -7,9 +7,16 @@ m = 50;
 con = Darcy_Constraint(m);
 x = con.x;
 
+jacobian_check = false;
 mms_check = false;
 grid_refinement_check = false;
 finite_diff_check = true;
+
+if jacobian_check
+   u = randn(m,1);
+   z = randn(m,1);
+   [diffs_z,jacobian_z_transpose_check,diffs_u,jacobian_u_transpose_check,solve_res] = con.Finite_Difference_Constraint_Check(u,z);
+end
 
 if mms_check
     z = x.^2;
@@ -21,7 +28,7 @@ if mms_check
     hold on
     plot(x,u,'LineWidth',3)
     plot(x,y,'--','LineWidth',3)
-    disp(['Error = ',num2str(error)])
+    disp(['MMS error = ',num2str(error)])
 end
 
 if grid_refinement_check

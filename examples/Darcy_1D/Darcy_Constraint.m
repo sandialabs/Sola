@@ -19,6 +19,12 @@ classdef Darcy_Constraint < Constraint
             u = linsolve(D,f);
         end
         
+        function [c] = c(this,u,z)
+            D = this.Assembly(z);
+            f = this.B*this.forcing + this.dirichlet_bc;
+            c = D*u - f;
+        end
+        
         function [Mv] = c_u_Transpose_Inverse_Apply(this,v,u,z)
             D = this.Assembly(z);
             Mv = linsolve(D',v);
@@ -99,7 +105,7 @@ classdef Darcy_Constraint < Constraint
             D(1,1) = 1;
             D(this.m,this.m) = 1;
         end
-        
+
         function [D_diff] = Assembly_z_Jacobian(this,u)
             D_diff = zeros(this.m,this.m);
             h = this.x(2)-this.x(1);
