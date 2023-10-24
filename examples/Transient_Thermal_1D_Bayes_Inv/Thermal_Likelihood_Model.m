@@ -34,7 +34,7 @@ classdef Thermal_Likelihood_Model < Likelihood_Model
          
          function this = Thermal_Likelihood_Model(m,N)
             this.sigma = 5.0;
-            this.obs_vec = round(linspace(1,m,10));
+            this.obs_vec = round(linspace(1,m,15));
             this.space_time_obs_vec = zeros(length(this.obs_vec),N);
             for k = 1:N
                 this.space_time_obs_vec(:,k) = this.obs_vec + (k-1)*m;
