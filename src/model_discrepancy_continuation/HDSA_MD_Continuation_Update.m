@@ -50,13 +50,15 @@ classdef HDSA_MD_Continuation_Update < handle
         end
         
         function [Btheta_n] = Apply_B(this,u_n,z_n,t_n)
+            delta = this.Discrepancy_Evaluation(z_n,t_n);
+            
             u_tmp1 = this.Apply_Discrepancy_theta_Jacobian(z_n);
-            u_tmp2 = this.md_continuation_interface.md_interface.Apply_Misfit_Hessian(u_tmp1,u_n,z_n);
+            u_tmp2 = this.md_continuation_interface.md_interface.Apply_Misfit_Hessian(u_tmp1,u_n+delta,z_n);
             z_tmp1 = this.md_continuation_interface.md_interface.Apply_Solution_Operator_z_Jacobian_Transpose(u_tmp2,z_n);
             
             z_tmp2 = this.Apply_Discrepancy_z_Jacobian_transpose(u_tmp2,t_n);
             
-            state_grad = this.md_continuation_interface.md_interface.Misfit_Gradient(u_n,z_n);
+            state_grad = this.md_continuation_interface.md_interface.Misfit_Gradient(u_n+delta,z_n);
             z_tmp3 = this.Apply_Discrepancy_z_theta_Hessian(state_grad);
             
             Btheta_n = z_tmp1 + z_tmp2 + z_tmp3;
@@ -66,7 +68,7 @@ classdef HDSA_MD_Continuation_Update < handle
             z_out = 0*z_in;
             for k = 1:size(z_in,2)
                 tol = 1.e-7;
-                max_iter = length(z_n);
+                max_iter = length(z_n)+5;
                 [z_out(:,k),flag,relres,iter,resvec] = pcg(@(x)this.Apply_Parameterized_RS_Hessian(x,u_n,z_n,t_n),z_in(:,k),tol,max_iter);
                 if flag~=0
                     disp('CG did not converge')
@@ -75,26 +77,42 @@ classdef HDSA_MD_Continuation_Update < handle
         end
         
         function [z_out] = Apply_Parameterized_RS_Hessian(this,z_in,u_n,z_n,t_n)
+            delta = this.Discrepancy_Evaluation(z_n,t_n);
+            
             z_out = this.md_continuation_interface.md_interface.Apply_RS_Hessian(z_in,z_n);
             
             u_tmp1 = this.Apply_Discrepancy_z_Jacobian(z_in,t_n);
-            u_tmp2 = this.md_continuation_interface.md_interface.Apply_Misfit_Hessian(u_tmp1,u_n,z_n);
+            u_tmp2 = this.md_continuation_interface.md_interface.Apply_Misfit_Hessian(u_tmp1,u_n+delta,z_n);
             z_out = z_out + this.md_continuation_interface.md_interface.Apply_Solution_Operator_z_Jacobian_Transpose(u_tmp2,z_n);
             
             z_out = z_out + this.Apply_Discrepancy_z_Jacobian_transpose(u_tmp2,t_n);
             
             u_tmp3 = this.md_continuation_interface.Apply_Solution_Operator_Jacobian(z_in,z_n);
-            u_tmp4 = this.md_continuation_interface.md_interface.Apply_Misfit_Hessian(u_tmp3,u_n,z_n);
+            u_tmp4 = this.md_continuation_interface.md_interface.Apply_Misfit_Hessian(u_tmp3,u_n+delta,z_n);
             z_out = z_out + this.Apply_Discrepancy_z_Jacobian_transpose(u_tmp4,t_n);
+        end
+        
+        function [u_out] = Discrepancy_Evaluation(this,z_n,t_n)
+            N = this.post_data.N;
+            u_out = 0*this.u_opt;
+            for ell = 1:N
+                coeff = this.post_data.a_ell(ell) + z_n'*this.W_z_inv_Z_minus_z_opt(:,ell);
+                u_out = u_out + coeff*this.post_data.u_ell(:,ell);
+                for i = 1:N
+                    coeff = this.post_data.b_i_ell(i,ell)*(this.si(i) + z_n'*this.W_z_inv_yi(:,i));
+                    u_out = u_out - coeff*this.post_data.u_i_ell{i}(:,ell);
+                end
+            end
+            u_out = (t_n/this.post_data.alpha_d)*u_out;
         end
         
         function [u_out] = Apply_Discrepancy_z_Jacobian(this,z_in,t_n)
             N = this.post_data.N;
             u = 0*this.u_opt;
             for ell = 1:N
-                u = u + ((this.post_data.W_z_inv_Z(:,ell)-this.post_data.W_z_inv_z_opt)'*z_in)*this.post_data.u_ell(:,ell);
+                u = u + this.post_data.u_ell(:,ell)*((this.post_data.W_z_inv_Z(:,ell)-this.post_data.W_z_inv_z_opt)'*z_in);
                 for i = 1:N
-                    u = u - this.post_data.b_i_ell(i,ell)*((this.post_data.W_z_inv_Z*this.post_data.g_vecs(:,i)-sum(this.post_data.g_vecs(:,i))*this.post_data.W_z_inv_z_opt)'*z_in)*this.post_data.u_i_ell{i}(:,ell);
+                    u = u - this.post_data.u_i_ell{i}(:,ell)*this.post_data.b_i_ell(i,ell)*((this.post_data.W_z_inv_Z*this.post_data.g_vecs(:,i)-sum(this.post_data.g_vecs(:,i))*this.post_data.W_z_inv_z_opt)'*z_in);
                 end
             end
 
@@ -137,6 +155,7 @@ classdef HDSA_MD_Continuation_Update < handle
                     z_out = z_out - this.post_data.b_i_ell(i,ell)*(u'*this.post_data.u_i_ell{i}(:,ell))*(this.post_data.W_z_inv_Z*this.post_data.g_vecs(:,i)-sum(this.post_data.g_vecs(:,i))*this.post_data.W_z_inv_z_opt);
                 end
             end
+            z_out = (1/this.post_data.alpha_d)*z_out;
         end
         
     end
