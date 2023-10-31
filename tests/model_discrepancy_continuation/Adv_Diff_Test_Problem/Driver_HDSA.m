@@ -7,7 +7,7 @@ rng(1234423)
 
 m = 200;
 diff_coeff = 1;
-vel_coeff = 1;
+vel_coeff = 5;
 robin_coeff = 2; 
 reg_coeff = 10;
 obj = Adv_Diff_Objective(m,reg_coeff);
@@ -24,11 +24,13 @@ md_interface = HDSA_Sabl_MD_Interface_Elliptic_Prior_PDE_Test_Prob(opt_lofi,alph
 md_continuation_interface = HDSA_Sabl_MD_Continuation_Interface(md_interface,con_lofi);
 
 %%
-continuation_step_sweep = 1:5;
+continuation_step_sweep = [1,3,7,12,20];
 p = length(continuation_step_sweep);
 u = cell(p,1);
 z = cell(p,1);
 
+error = zeros(p,1);
+z_hifi = load('z_hifi.mat').z_hifi;
 for k = 1:p
     num_continuation_steps = continuation_step_sweep(k);
     md_update = HDSA_MD_Continuation_Update(md_continuation_interface,num_continuation_steps);
@@ -36,10 +38,10 @@ for k = 1:p
     num_post_samples = 100;
     md_update.Compute_Posterior_Data(alpha_d,num_post_samples);
     [u{k},z{k}] = md_update.Posterior_Update_Mean();
+    error(k) = sqrt((z{k}(:,end) - z_hifi)'*con_lofi.M*(z{k}(:,end) - z_hifi))/sqrt(z_hifi'*con_lofi.M*z_hifi);
 end
 
 %%
-z_hifi = load('z_hifi.mat').z_hifi;
 figure,
 hold on
 plot(x,md_update.z_opt,'color','black','LineWidth',3)
@@ -49,7 +51,7 @@ lg{1} = 'Low-fidelity solution';
 lg{2} = 'High-fidelity solution';
 for k = 1:p
     plot(x,z{k}(:,end),'--','LineWidth',3)
-    lg{k+2} = [num2str(k),' step posterior mean update'];
+    lg{k+2} = [num2str(continuation_step_sweep(k)),' step posterior mean update'];
 end
 legend(lg)
 

@@ -5,7 +5,7 @@ addpath(genpath('../../../src'))
 
 m = 200;
 diff_coeff = 1;
-vel_coeff = 1;
+vel_coeff = 5;
 robin_coeff = 2; 
 reg_coeff = 10;
 obj = Adv_Diff_Objective(m,reg_coeff);
@@ -41,9 +41,15 @@ set(gca, 'FontSize', 24); set(gcf, 'Color', 'White');
 
 u_opt = u_lofi;
 z_opt = z_lofi;
-Z = zeros(m,2);
+
+N = 5;
+Z = zeros(m,N);
 Z(:,1) = z_lofi;
-Z(:,2) = mean(z_lofi)*ones(m,1);
+E = (10^-2)*con_lofi.S + con_lofi.M;
+for k = 2:N
+    tmp = linsolve(E,randn(m,1)).^2;
+    Z(:,k) = mean(z_lofi)*tmp/mean(tmp);
+end
 D = con_hifi.State_Solve(Z) - con_lofi.State_Solve(Z);
 
 save('u_opt.mat','u_opt')
