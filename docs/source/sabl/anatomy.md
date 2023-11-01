@@ -44,13 +44,13 @@ To represent a particular objective function with the `Objective` class, define 
 :align: center
 :name: tab:objective_abstract
 
-| Function Signature | Mathematical Description |
-| :----------------- | :----------------------- |
+| Function Signature                | Mathematical Description         |
+| :-------------------------------- | :------------------------------- |
 | `[val, grad_u, grad_z] = J(u, z)` | Evaluate $J(u,z)$, $\nabla_u J(u,z)$, and $\nabla_z J(u,z)$ |
-| `[Mv] = J_uu_Apply(v, u, z)` | Compute $\nabla_{u,u} J(u, z) v$ |
-| `[Mv] = J_uz_Apply(v, u, z)` | Compute $\nabla_{u,z} J(u, z) v$ |
-| `[Mv] = J_zu_Apply(v, u, z)` | Compute $\nabla_{z,u} J(u, z) v$ |
-| `[Mv] = J_zz_Apply(v, u, z)` | Compute $\nabla_{z,z} J(u, z) v$ |
+| `[Mv] = J_uu_Apply(v, u, z)`      | Compute $\nabla_{u,u} J(u, z) v$ |
+| `[Mv] = J_uz_Apply(v, u, z)`      | Compute $\nabla_{u,z} J(u, z) v$ |
+| `[Mv] = J_zu_Apply(v, u, z)`      | Compute $\nabla_{z,u} J(u, z) v$ |
+| `[Mv] = J_zz_Apply(v, u, z)`      | Compute $\nabla_{z,z} J(u, z) v$ |
 :::
 
 :::{danger}
@@ -66,10 +66,10 @@ In addition to the methods listed in [Table 1](tab:objective_abstract), the `Obj
 :align: center
 :name: tab:objective_checkers
 
-| Function Signature | Mathematical Description |
-| :----------------- | :----------------------- |
-| `Finite_Difference_Gradient_Check(u, z)` | Check gradients of $J$ |
-| `Finite_Difference_Hessian_Check(u, z)` | Check Hessian-vector products of $J$ |
+| Function Signature                       | Mathematical Description             |
+| :--------------------------------------- | :----------------------------------- |
+| `Finite_Difference_Gradient_Check(u, z)` | Check gradients of $J$               |
+| `Finite_Difference_Hessian_Check(u, z)`  | Check Hessian-vector products of $J$ |
 :::
 
 (sabl:optimization-template)=
@@ -118,13 +118,13 @@ To represent a particular set of constraints with the `Constraint` class, define
 :align: center
 :name: tab:constraint_abstract
 
-| Function Signature                    | Mathematical Description |
-| :------------------------------------ | :----------------------- |
+| Function Signature                    | Mathematical Description             |
+| :------------------------------------ | :----------------------------------- |
 | `[u] = State_Solve(z)`                | Given $z$, solve $c(u, z)=0$ for $u$ |
-| `[Mv] = c_u_Transpose_Inverse_Apply(v, u, z)` | Compute the $c_u(u, z)^{-\mathsf{T}} v$ |
-| `[Mv] = c_z_Transpose_Apply(v, u, z)` | Compute the $c_z(u, z)^{\mathsf{T}} v$ |
-| `[Mv] = c_u_Inverse_Apply(v, u, z)`   | Compute the $c_u(u, z)^{-1} v$ |
-| `[Mv] = c_z_Apply(v, u, z)`           | Compute the $c_z(u, z) v$ |
+| `[Mv] = c_u_Transpose_Inverse_Apply(v, u, z)` | Compute $c_u(u, z)^{-\mathsf{T}} v$ |
+| `[Mv] = c_z_Transpose_Apply(v, u, z)` | Compute $c_z(u, z)^{\mathsf{T}} v$   |
+| `[Mv] = c_u_Inverse_Apply(v, u, z)`   | Compute $c_u(u, z)^{-1} v$           |
+| `[Mv] = c_z_Apply(v, u, z)`           | Compute $c_z(u, z) v$                |
 :::
 
 :::{danger}
@@ -137,12 +137,12 @@ The following methods are also required **unless** `Gauss_Newton_Hess` is set to
 :align: center
 :name: tab:constraint_fullhessian
 
-| Function Signature                    | Mathematical Description |
-| :------------------------------------ | :----------------------- |
-| `[Mv] = c_uu_Apply(v, u, z, lambda)`  | Compute the $\lambda^{\mathsf{T}} c_{u, u}(u, z) v$ |
-| `[Mv] = c_uz_Apply(v, u, z, lambda)`  | Compute the $\lambda^{\mathsf{T}} c_{u, z}(u, z) v$ |
-| `[Mv] = c_zu_Apply(v, u, z, lambda)`  | Compute the $\lambda^{\mathsf{T}} c_{z, u}(u, z) v$ |
-| `[Mv] = c_zz_Apply(v, u, z, lambda)`  | Compute the $\lambda^{\mathsf{T}} c_{z, z}(u, z) v$ |
+| Function Signature                   | Mathematical Description                        |
+| :----------------------------------- | :---------------------------------------------- |
+| `[Mv] = c_uu_Apply(v, u, z, lambda)` | Compute $\lambda^{\mathsf{T}} c_{u, u}(u, z) v$ |
+| `[Mv] = c_uz_Apply(v, u, z, lambda)` | Compute $\lambda^{\mathsf{T}} c_{u, z}(u, z) v$ |
+| `[Mv] = c_zu_Apply(v, u, z, lambda)` | Compute $\lambda^{\mathsf{T}} c_{z, u}(u, z) v$ |
+| `[Mv] = c_zz_Apply(v, u, z, lambda)` | Compute $\lambda^{\mathsf{T}} c_{z, z}(u, z) v$ |
 :::
 
 (sabl:constraint-template)=
@@ -173,8 +173,8 @@ classdef MyConstraint < Constraint
             error('c_z_Apply() not implemented');
         end
 
-        % The following methods may be deleted if using
-        % Gauss_Newton_Hess=true in the Reduced_Space_Optimization.
+        % The following methods are used if Gauss_Newton_Hess=false
+        % in the Reduced_Space_Optimization (this is the default).
         function [Mv] = c_uu_Apply(this, v, u, z, lambda)
             error('c_uu_Apply() not implemented');
         end
@@ -206,12 +206,12 @@ Unlike the previous classes, the user does not need to subclass `Reduced_Space_O
 :align: center
 :name: tab:optimization_methods
 
-| Function Signature                    | Mathematical Description |
-| :------------------------------------ | :----------------------- |
+| Function Signature                     | Mathematical Description                        |
+| :------------------------------------- | :---------------------------------------------- |
 | `Reduced_Space_Optimization(obj, con)` | Constructor taking an objective and constraints |
-| `[u, z] = Optimize(z0)` | Solve the optimization problem with an initial control guess |
-| `Finite_Difference_Gradient_Check(z)` | Compare `Jhat()` to finite differences |
-| `Finite_Difference_Hessian_Check(z)` | Compare `Jhat_hessVec()` to finite differences |
+| `[u, z] = Optimize(z0)`   | Solve the optimization problem with an initial control guess |
+| `Finite_Difference_Gradient_Check(z)`  | Compare `Jhat()` to finite differences          |
+| `Finite_Difference_Hessian_Check(z)`   | Compare `Jhat_hessVec()` to finite differences  |
 :::
 
 ### Time-Dependent Objective
