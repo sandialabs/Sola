@@ -173,7 +173,7 @@ classdef Example_1_Objective < Objective
         end
 
         function [val, grad_u, grad_z] = J(this, u, z)
-            u1z1_minus_a1a4 = (u(1)*z(1)) - (this.a(1)*this.a(4));
+            u1z1_minus_a1a4 = (u(1) * z(1)) - (this.a(1) * this.a(4));
 
             % Calculate the value of J(u, z).
             val = sum((u - this.a(1:3)).^2);
@@ -181,12 +181,12 @@ classdef Example_1_Objective < Objective
             val = val + u1z1_minus_a1a4^2;
 
             % Calculate the u gradient of J.
-            grad_u = 2*(u - this.a(1:3));
-            grad_u(1) = grad_u(1) + 2*u1z1_minus_a1a4*z(1);
+            grad_u = 2 * (u - this.a(1:3));
+            grad_u(1) = grad_u(1) + 2 * u1z1_minus_a1a4 * z(1);
 
             % Calculate the z gradient of J.
-            grad_z = 2*(z - this.a(4:5));
-            grad_z(1) = grad_z(1) + 2*u1z1_minus_a1a4*u(1);
+            grad_z = 2 * (z - this.a(4:5));
+            grad_z(1) = grad_z(1) + 2 * u1z1_minus_a1a4 * u(1);
         end
 
         function [Mv] = J_uu_Apply(this, v, u, z)
@@ -196,18 +196,19 @@ classdef Example_1_Objective < Objective
 
         function [Mv] = J_uz_Apply(this, v, u, z)
             Mv = zeros(length(u), size(v, 2));
-            Mv(1, :) = (4*u(1)*z(1) - 2*this.a(1)*this.a(4)) .* v(1, :);
+            Mv(1, :) = (4 * u(1) * z(1) - 2 * this.a(1) * this.a(4)) .* v(1, :);
         end
 
         function [Mv] = J_zu_Apply(this, v, u, z)
             Mv = zeros(length(z), size(v, 2));
-            Mv(1, :) = (4*u(1)*z(1) - 2*this.a(1)*this.a(4)) .* v(1, :);
+            Mv(1, :) = (4 * u(1) * z(1) - 2 * this.a(1) * this.a(4)) .* v(1, :);
         end
 
         function [Mv] = J_zz_Apply(this, v, u, z)
             Mv = 2 * v;
             Mv(1, :) = Mv(1, :) * (1 + u(1)^2);
         end
+
     end
 end
 ```
@@ -219,7 +220,7 @@ If `v` were always a column vector, the following implementation would be valid:
 ```matlab
 function [Mv] = J_uz_Apply(this, v, u, z)
     Mv = zeros(length(u), 1);
-    Mv(1) = (4*u(1)*z(1) - 2*this.a(1)*this.a(4)) * v(1);
+    Mv(1) = (4 * u(1) * z(1) - 2 * this.a(1) * this.a(4)) * v(1);
 end
 ```
 
@@ -229,7 +230,7 @@ Compare the above code carefully with the correct implementation.
 ```matlab
 function [Mv] = J_uz_Apply(this, v, u, z)
     Mv = zeros(length(u), size(v, 2));
-    Mv(1, :) = (4*u(1)*z(1) - 2*this.a(1)*this.a(4)) .* v(1, :);
+    Mv(1, :) = (4 * u(1) * z(1) - 2 * this.a(1) * this.a(4)) .* v(1, :);
 end
 ```
 
@@ -478,48 +479,49 @@ classdef Example_1_Constraint < Constraint
 
         function [u] = State_Solve(this, z)
             u2 = z(2) / z(1);
-            u = [ z(1) - u2; u2; z(2)^(2/3) ];
+            u = [z(1) - u2; u2; z(2)^(2 / 3)];
         end
 
         function [Mv] = c_u_Transpose_Inverse_Apply(this, v, u, z)
-            Mv = [ v(1, :);
-                   (v(2, :) - v(1, :))/z(1);
-                   v(3, :) / (3 * u(3)^2) ];
+            Mv = [v(1, :)
+                  (v(2, :) - v(1, :)) / z(1)
+                  v(3, :) / (3 * u(3)^2)];
         end
 
         function [Mv] = c_z_Transpose_Apply(this, lambda, u, z)
-            Mv = [ -lambda(1, :) + lambda(2, :) * u(2);
-                   -lambda(2, :) - 2*lambda(3, :) * z(2) ];
+            Mv = [-lambda(1, :) + lambda(2, :) * u(2)
+                  -lambda(2, :) - 2 * lambda(3, :) * z(2)];
         end
 
         function [Mv] = c_u_Inverse_Apply(this, lambda, u, z)
             Mv2 = lambda(2, :) / z(1);
-            Mv = [ lambda(1, :) - Mv2;
-                   Mv2;
-                   lambda(3, :) / (3 * u(3)^2) ];
+            Mv = [lambda(1, :) - Mv2
+                  Mv2
+                  lambda(3, :) / (3 * u(3)^2)];
         end
 
         function [Mv] = c_z_Apply(this, v, u, z)
-            Mv = [ -v(1, :);
-                   v(1, :) * u(2) - v(2, :);
-                   -2*v(2, :) * z(2) ];
+            Mv = [-v(1, :)
+                  v(1, :) * u(2) - v(2, :)
+                  -2 * v(2, :) * z(2)];
         end
 
         function [Mv] = c_uu_Apply(this, lambda, u, z, v)
-            Mv = [ 0; 0; 6 * lambda(3) * u(3) * v(3)];
+            Mv = [0; 0; 6 * lambda(3) * u(3) * v(3)];
         end
 
         function [Mv] = c_uz_Apply(this, lambda, u, z, v)
-            Mv = [ 0; lambda(2)*v(1); 0];
+            Mv = [0; lambda(2) * v(1); 0];
         end
 
         function [Mv] = c_zu_Apply(this, lambda, u, z, v)
-            Mv = [ 0; lambda(1) * v(2) ];
+            Mv = [0; lambda(1) * v(2)];
         end
 
         function [Mv] = c_zz_Apply(this, lambda, u, z, v)
-            Mv = [ 0; -2 * lambda(2) * v(2) ];
+            Mv = [0; -2 * lambda(2) * v(2)];
         end
+
     end
 end
 ```
@@ -532,11 +534,10 @@ Save the following in a new file called `Example_1_Driver.m`.
 
 ```matlab
 %% Clear workspace and add the SABL optimization source path.
-clear
-close all
-clc
-addpath('~/SABL/src/optimization/')             % MODIFY THIS TO MATCH YOUR PATH TO SABL.
-
+clear;
+close all;
+clc;
+addpath('~/SABL/src/optimization/');             % MODIFY THIS TO MATCH YOUR PATH TO SABL.
 
 %% Instantiate the optimization problem.
 obj = Example_1_Objective(7, 1, 4, 8, 8);

@@ -100,6 +100,7 @@ classdef MyObjective < Objective
         function [Mv] = J_zz_Apply(this, v, u, z)
             error('J_zz_Apply() not implemented');
         end
+
     end
 end
 ```
@@ -157,7 +158,7 @@ classdef MyConstraint < Constraint
         end
 
         function [Mv] = c_u_Inverse_Apply(this, v, u, z)
-           error('c_u_Inverse_Apply() not implemented');
+            error('c_u_Inverse_Apply() not implemented');
         end
 
         function [Mv] = c_z_Apply(this, v, u, z)
@@ -179,6 +180,7 @@ classdef MyConstraint < Constraint
         function [Mv] = c_zz_Apply(this, v, u, z, lambda)
             error('c_zz_Apply() not implemented');
         end
+
     end
 end
 ```

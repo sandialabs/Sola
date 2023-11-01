@@ -22,13 +22,22 @@ pip install miss_hit
 
 ### Usage
 
+Use the following commands to format the MATLAB source code.
+
 ```bash
 mh_style            # List style problems in detail without changing any files.
 mh_style --brief    # List style problems briefly without changing any files.
 mh_style --fix      # Fix style problems, overwriting offending files.
 ```
 
-To do ensure proper formatting before committing changes, install a git `pre-commit` hook with the following command.
+The following will format MATLAB code blocks in the documentation.
+
+```bash
+cd docs
+python3 format_code_blocks.py
+```
+
+To ensure proper formatting before committing changes, install a git `pre-commit` hook with the following command.
 
 ```bash
 cp .pre-commit-formatting-hook .git/hooks/pre-commit
@@ -36,4 +45,9 @@ cp .pre-commit-formatting-hook .git/hooks/pre-commit
 
 Now `git commit` automatically runs the formatter and cleans the code.
 A commit is **aborted** if the formatter makes any changes; in this case, review / add the changes and commit again.
-Note that code blocks in the documentation are not automatically formatted (yet) -- be responsible!
+
+To run the formatter without a commit:
+
+```bash
+./.pre-commit-formatting-hook
+```

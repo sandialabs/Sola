@@ -1,18 +1,26 @@
 #!/usr/bin/env bash
 
+function check_result() {
+    # Exit with a failure code if the last command failed.
+    if [[ $? -ne 0 ]]; then
+        echo -e "\nFormatter made changes, COMMIT ABORTED\n"
+        exit 1
+    fi
+}
+
 # Check the formatter is installed.
 if ! command -v mh_style &> /dev/null; then
     echo "mh_style not be found, run 'make install'"
     exit 1
 fi
 
-# Run the formatter.
-mh_style --fix --brief
-RESULT=$?
+# Run the formatter for the source code.
+mh_style --fix --brief &> /dev/null
+check_result
 
-# Report the results.
-if [[ ${RESULT} -ne 0 ]]; then
-    echo -e "\nFormatter made changes, COMMIT ABORTED\n"
-    exit 1
-fi
+# Run the formatter for the documentation.
+cd docs
+python format_code_blocks.py
+check_result
+
 exit 0
