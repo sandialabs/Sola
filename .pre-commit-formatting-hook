@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+# Check the formatter is installed.
+if ! command -v mh_style &> /dev/null; then
+    echo "mh_style not be found, run 'make install'"
+    exit 1
+fi
+
+# Run the formatter.
+mh_style --fix --brief
+RESULT=$?
+
+# Report the results.
+if [[ ${RESULT} -ne 0 ]]; then
+    echo -e "\nFormatter made changes, COMMIT ABORTED\n"
+    exit 1
+fi
+exit 0
