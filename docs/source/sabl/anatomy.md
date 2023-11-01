@@ -10,8 +10,8 @@ This page describes the software design paradigm of SABL.
 SABL defines the following MATLAB classes.
 
 - [`Objective`](sabl:optimization-objective), representing $J(u,z)$.
-- [`Constraint`](sabl:optimization-constraints), representing $c(u,z)$.
-- [`Reduced_Space_Optimization`](sabl:optimizer-class), representing $\min_{u,z}J(u,z)$ subject to $c(u,z) = 0$.
+- [`Constraint`](sabl:optimization-constraints), representing $c(u,z)$ and $S:u\mapsto z$ such that $c(S(z),z) = 0$.
+- [`Reduced_Space_Optimization`](sabl:optimizer-class), representing $\min_{z}J(S(z),z)$.
 
 The user must define subclasses of `Objective` and `Constraint`, implement their abstract methods, and use `Reduced_Space_Optimization.Optimize()` to solve an optimization problem.
 <!-- For time-dependent problems, the specialized  -->
@@ -47,19 +47,20 @@ To represent a particular objective function with the `Objective` class, define 
 | Function Signature | Mathematical Description |
 | :----------------- | :----------------------- |
 | `[val, grad_u, grad_z] = J(u, z)` | Evaluate $J(u,z)$, $\nabla_u J(u,z)$, and $\nabla_z J(u,z)$ |
-| `[Mv] = J_uu_Apply(v, u, z)` | Compute the product $\nabla_{u,u} J(u, z) v$ |
-| `[Mv] = J_uz_Apply(v, u, z)` | Compute the product $\nabla_{u,z} J(u, z) v$ |
-| `[Mv] = J_zu_Apply(v, u, z)` | Compute the product $\nabla_{z,u} J(u, z) v$ |
-| `[Mv] = J_zz_Apply(v, u, z)` | Compute the product $\nabla_{z,z} J(u, z) v$ |
+| `[Mv] = J_uu_Apply(v, u, z)` | Compute $\nabla_{u,u} J(u, z) v$ |
+| `[Mv] = J_uz_Apply(v, u, z)` | Compute $\nabla_{u,z} J(u, z) v$ |
+| `[Mv] = J_zu_Apply(v, u, z)` | Compute $\nabla_{z,u} J(u, z) v$ |
+| `[Mv] = J_zz_Apply(v, u, z)` | Compute $\nabla_{z,z} J(u, z) v$ |
 :::
 
 :::{danger}
 Because of how MATLAB's `fminunc()` function is designed, the `J_xx_Apply()` functions must be implemented in a _vectorized_ fashion, i.e., assuming that `v` is a matrix where each column is a test direction.
+This is demonstrated in the examples.
 :::
 
 #### Objective Verification
 
-In addition to the functions listed in [Table 1](tab:objective_abstract), the `Objective` class is equipped with the following methods to verify the consistency between the objective function itself and its gradient and Hessian functions.
+In addition to the methods listed in [Table 1](tab:objective_abstract), the `Objective` class is equipped with the following methods to verify the consistency between the objective function itself and its gradient and Hessian functions.
 
 :::{table} Verification functions in the `Objective` class.
 :align: center
@@ -105,14 +106,12 @@ classdef MyObjective < Objective
 end
 ```
 
+The finite difference checks of [Table 2](tab:objective_checkers) are inherited automatically.
+
 (sabl:optimization-constraints)=
 ### Optimization Constraints
 
-:::{attention}
-The rest of this page is under construction, please check back later.
-:::
-
-The `Constraint` class encodes the constraint function $c(u, z) = 0$, its derivatives, and the solution operator $S:z\mapsto u$.
+The `Constraint` class encodes the constraint function $c(u, z) = 0$, its derivatives, and the solution operator $S:z\mapsto u$ satisfying $c(S(z), z) = 0$ for all $z$.
 To represent a particular set of constraints with the `Constraint` class, define a new class that inherits from `Constraint` and implements the abstract methods listed in [Table 3](tab:constraint_abstract).
 
 :::{table} Abstract methods of the `Constraint` class.
@@ -122,19 +121,28 @@ To represent a particular set of constraints with the `Constraint` class, define
 | Function Signature                    | Mathematical Description |
 | :------------------------------------ | :----------------------- |
 | `[u] = State_Solve(z)`                | Given $z$, solve $c(u, z)=0$ for $u$ |
-| `[Mv] = c_u_Transpose_Inverse_Apply(v, u, z)` | Compute the product $c_u(u, z)^{-\mathsf{T}} v$ |
-| `[Mv] = c_z_Transpose_Apply(v, u, z)` | Compute the product $c_z(u, z)^{\mathsf{T}} v$ |
-| `[Mv] = c_u_Inverse_Apply(v, u, z)`   | Compute the product $c_u(u, z)^{-1} v$ |
-| `[Mv] = c_z_Apply(v, u, z)`           | Compute the product $c_z(u, z) v$ |
-| `[Mv] = c_uu_Apply(v, u, z, lambda)`  | Compute the product $\lambda^{\mathsf{T}} c_{u, u}(u, z) v$ |
-| `[Mv] = c_uz_Apply(v, u, z, lambda)`  | Compute the product $\lambda^{\mathsf{T}} c_{u, z}(u, z) v$ |
-| `[Mv] = c_zu_Apply(v, u, z, lambda)`  | Compute the product $\lambda^{\mathsf{T}} c_{z, u}(u, z) v$ |
-| `[Mv] = c_zz_Apply(v, u, z, lambda)`  | Compute the product $\lambda^{\mathsf{T}} c_{z, z}(u, z) v$ |
+| `[Mv] = c_u_Transpose_Inverse_Apply(v, u, z)` | Compute the $c_u(u, z)^{-\mathsf{T}} v$ |
+| `[Mv] = c_z_Transpose_Apply(v, u, z)` | Compute the $c_z(u, z)^{\mathsf{T}} v$ |
+| `[Mv] = c_u_Inverse_Apply(v, u, z)`   | Compute the $c_u(u, z)^{-1} v$ |
+| `[Mv] = c_z_Apply(v, u, z)`           | Compute the $c_z(u, z) v$ |
 :::
 
 :::{danger}
 Because of how MATLAB's `fminunc()` function is designed, the `c_x_XXX()` methods (e.g., `c_z_Apply()`) must be implemented in a _vectorized_ fashion, i.e., assuming that `v` is a matrix where each column is a test direction.
-The `c_xx_Apply()` methods may assume that `v` is a column vector.
+:::
+
+The following methods are also required **unless** `Gauss_Newton_Hess` is set to `true` in the `Reduced_Space_Optimization`.
+
+:::{table} Methods of the `Constraint` class required for Gauss--Newton minimization.
+:align: center
+:name: tab:constraint_fullhessian
+
+| Function Signature                    | Mathematical Description |
+| :------------------------------------ | :----------------------- |
+| `[Mv] = c_uu_Apply(v, u, z, lambda)`  | Compute the $\lambda^{\mathsf{T}} c_{u, u}(u, z) v$ |
+| `[Mv] = c_uz_Apply(v, u, z, lambda)`  | Compute the $\lambda^{\mathsf{T}} c_{u, z}(u, z) v$ |
+| `[Mv] = c_zu_Apply(v, u, z, lambda)`  | Compute the $\lambda^{\mathsf{T}} c_{z, u}(u, z) v$ |
+| `[Mv] = c_zz_Apply(v, u, z, lambda)`  | Compute the $\lambda^{\mathsf{T}} c_{z, z}(u, z) v$ |
 :::
 
 (sabl:constraint-template)=
@@ -165,6 +173,8 @@ classdef MyConstraint < Constraint
             error('c_z_Apply() not implemented');
         end
 
+        % The following methods may be deleted if using
+        % Gauss_Newton_Hess=true in the Reduced_Space_Optimization.
         function [Mv] = c_uu_Apply(this, v, u, z, lambda)
             error('c_uu_Apply() not implemented');
         end
