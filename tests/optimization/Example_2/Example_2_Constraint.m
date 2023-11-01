@@ -13,44 +13,45 @@ classdef Example_2_Constraint < Dynamic_Constraint
 
     methods (Access = public)
 
-        function [f, f_y, f_z] = Time_Instance_RHS(this,y,z,t)
+        function [f, f_y, f_z] = Time_Instance_RHS(this, y, z, t)
             f = y;
             f_y = eye(2);
-            f_z = zeros(2,2);
+            f_z = zeros(2, 2);
         end
 
-        function [h, h_z] = Initial_Condition(this,z)
+        function [h, h_z] = Initial_Condition(this, z)
             h = z;
             h_z = eye(2);
         end
 
-        function [Mv] = Time_Instance_RHS_yy_Apply(this,v,y,z,t,lambda)
-            Mv = 0*v;
+        function [Mv] = Time_Instance_RHS_yy_Apply(this, v, y, z, t, lambda)
+            Mv = 0 * v;
         end
 
-        function [Mv] = Time_Instance_RHS_yz_Apply(this,v,y,z,t,lambda)
-            num_vecs = size(v,2);
-            Mv = zeros(this.m,num_vecs);
+        function [Mv] = Time_Instance_RHS_yz_Apply(this, v, y, z, t, lambda)
+            num_vecs = size(v, 2);
+            Mv = zeros(this.m, num_vecs);
         end
 
-        function [Mv] = Time_Instance_RHS_zy_Apply(this,v,y,z,t,lambda)
-            num_vecs = size(v,2);
-            Mv = zeros(length(z),num_vecs);
+        function [Mv] = Time_Instance_RHS_zy_Apply(this, v, y, z, t, lambda)
+            num_vecs = size(v, 2);
+            Mv = zeros(length(z), num_vecs);
         end
 
-        function [Mv] = Time_Instance_RHS_zz_Apply(this,v,y,z,t,lambda)
-            Mv = 0*v;
+        function [Mv] = Time_Instance_RHS_zz_Apply(this, v, y, z, t, lambda)
+            Mv = 0 * v;
         end
 
-        function [Mv] = Initial_Condition_zz_Apply(this,v,z,lambda)
-            Mv = 0*z;
+        function [Mv] = Initial_Condition_zz_Apply(this, v, z, lambda)
+            Mv = 0 * z;
         end
 
     end
 
     methods (Access = public)
-        function this = Example_2_Constraint(m,n,T,N)
-            this = this@Dynamic_Constraint(m,n,T,N);
+
+        function this = Example_2_Constraint(m, n, T, N)
+            this = this@Dynamic_Constraint(m, n, T, N);
         end
 
     end
