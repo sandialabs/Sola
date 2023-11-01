@@ -1,12 +1,21 @@
 #!/usr/bin/env bash
 
+BoldBlack='\033[1;30m'       # Bold black
+OnGreen='\033[42m'        # Green background
+OnRed='\033[41m'          # Red background
+ColorOff='\033[0m'        # Text Reset
+
+
 function check_result() {
     # Exit with a failure code if the last command failed.
     if [[ $? -ne 0 ]]; then
+        echo -e "${BoldBlack}${OnRed}failed!${ColorOff}"
         echo -e "\nFormatter made changes, COMMIT ABORTED\n"
         exit 1
     fi
+    echo -e "${BoldBlack}${OnGreen}passed!${ColorOff}"
 }
+
 
 # Check the formatter is installed.
 if ! command -v mh_style &> /dev/null; then
@@ -14,9 +23,13 @@ if ! command -v mh_style &> /dev/null; then
     exit 1
 fi
 
+echo -n "Checking source code................."
+
 # Run the formatter for the source code.
 mh_style --fix --brief &> /dev/null
 check_result
+
+echo -en "Checking documentation code blocks..."
 
 # Run the formatter for the documentation.
 cd docs
