@@ -1,18 +1,39 @@
 #!/usr/bin/env bash
 
+BoldBlack='\033[1;30m'       # Bold black
+OnGreen='\033[42m'        # Green background
+OnRed='\033[41m'          # Red background
+ColorOff='\033[0m'        # Text Reset
+
+
+function check_result() {
+    # Exit with a failure code if the last command failed.
+    if [[ $? -ne 0 ]]; then
+        echo -e "${BoldBlack}${OnRed}failed!${ColorOff}"
+        echo -e "\nFormatter made changes, COMMIT ABORTED\n"
+        exit 1
+    fi
+    echo -e "${BoldBlack}${OnGreen}passed!${ColorOff}"
+}
+
+
 # Check the formatter is installed.
 if ! command -v mh_style &> /dev/null; then
     echo "mh_style not be found, run 'make install'"
     exit 1
 fi
 
-# Run the formatter.
-mh_style --fix --brief
-RESULT=$?
+echo -n "Checking source code................."
 
-# Report the results.
-if [[ ${RESULT} -ne 0 ]]; then
-    echo -e "\nFormatter made changes, COMMIT ABORTED\n"
-    exit 1
-fi
+# Run the formatter for the source code.
+mh_style --fix --brief &> /dev/null
+check_result
+
+echo -en "Checking documentation code blocks..."
+
+# Run the formatter for the documentation.
+cd docs
+python format_code_blocks.py
+check_result
+
 exit 0

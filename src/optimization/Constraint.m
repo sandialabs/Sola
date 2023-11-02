@@ -53,10 +53,9 @@ classdef Constraint < handle
         % u: the state u in R^{n_u}
         % z: the control z in R^{n_z}
         % Output:
-        % c: c(u, z)v in R^{n_u}
+        % c: c(u, z) in R^{n_u}
         function [c] = c(this, u, z)
-            disp('Error: c is not implemented');
-            c = 'Not Implemented';
+            Mv = error('c() not implemented');
         end
 
         % Input:
@@ -67,8 +66,7 @@ classdef Constraint < handle
         % Output:
         % Mv: lambda^T c_{u, u}(u, z)v in R^{n_u}
         function [Mv] = c_uu_Apply(this, v, u, z, lambda)
-            disp('Error: c_uu is not implemented');
-            Mv = 'Not Implemented';
+            Mv = error('c_uu_Apply() not implemented');
         end
 
         % Input:
@@ -79,8 +77,7 @@ classdef Constraint < handle
         % Output:
         % Mv: lambda^T c_{u, z}(u, z)v in R^{n_u}
         function [Mv] = c_uz_Apply(this, v, u, z, lambda)
-            disp('Error: c_uz is not implemented');
-            Mv = 'Not Implemented';
+            Mv = error('c_uz_Apply() not implemented');
         end
 
         % Input:
@@ -91,8 +88,7 @@ classdef Constraint < handle
         % Output:
         % Mv: lambda^T c_{z, u}(u, z)v in R^{n_z}
         function [Mv] = c_zu_Apply(this, v, u, z, lambda)
-            disp('Error: c_zu is not implemented');
-            Mv = 'Not Implemented';
+            Mv = error('c_zu_Apply() not implemented');
         end
 
         % Input:
@@ -103,8 +99,7 @@ classdef Constraint < handle
         % Output:
         % Mv: lambda^T c_{z, z}(u, z)v in R^{n_z}
         function [Mv] = c_zz_Apply(this, v, u, z, lambda)
-            disp('Error: c_zz is not implemented');
-            Mv = 'Not Implemented';
+            Mv = error('c_zz_Apply() not implemented');
         end
 
     end
