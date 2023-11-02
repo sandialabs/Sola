@@ -1,26 +1,24 @@
 clear;
 close all;
+addpath(genpath('../../src/'));
 clc;
 
 m = 50;
 n = m;
-T = 10;
-N = 100;
 
-con = Thermal_Constraint(m, n, T, N);
-z_true = (1.e-2) * (2 + cos(3 * pi * con.x));
+ballistic_data = load('~/Documents/alpha/examples/Ballistic_2DOF/Forward_Solve_Data.mat');
 
-forcings = cell(4, 1);
-forcings{1} = @(x, t) (1 + 0 * t) * exp(-100 * (x - 0.5).^2);
-forcings{2} = @(x, t) (1 + .5 * sin(2 * pi * t / T)) * exp(-100 * (x - 0.5).^2);
-forcings{3} = @(x, t) (1 + t / T) * exp(-100 * (x - 0.5).^2);
-forcings{4} = @(x, t) (1 + t.^2 / T^2) * exp(-100 * (x - 0.5).^2);
-
-p = length(forcings);
+p = length(ballistic_data.f);
 posterior_uncertainty = zeros(p, 1);
 
 for k = 1:p
-    forcing = forcings{k};
+    T = ballistic_data.t{k}(end);
+    N = length(ballistic_data.t{k});
+
+    con = Thermal_Constraint(m, n, T, N);
+    z_true = (1.e-2) * (2 + cos(3 * pi * con.x));
+
+    forcing = @(x, t) interp1(ballistic_data.t{k}, ballistic_data.f{k}, t) * (x.^2);
     Generate_Obs_Data(con, z_true, forcing);
 
     con.forcing = load('Obs_Data.mat', 'forcing').forcing;
