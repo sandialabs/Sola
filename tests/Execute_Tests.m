@@ -25,4 +25,11 @@ if test_bayesian_inversion
     cd ..;
 end
 
+test_automatic_differentiation = true;
+if test_automatic_differentiation
+    cd automatic_differentiation/;
+    Execute_Tests;
+    cd ..;
+end
+
 clear;
