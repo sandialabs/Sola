@@ -1,27 +1,32 @@
-classdef Thermal_Constraint_AD < Constraint_AD
+classdef Thermal_Constraint_AD < Dynamic_Constraint_AD
 
     properties
-        m
         x
-        dirichlet_bc
         M
+        Minv
         S
         forcing
-        B
         nodes_to_coll_points
     end
 
     methods (Access = public)
 
-        function [c] = c_AD(this, u, z)
+        function [f] = Time_Instance_RHS_AD(this, y, z, t)
             D = this.Assembly(z);
-            f = this.B * this.forcing + this.dirichlet_bc;
-            c = D * u - f;
+            f = -this.Minv * D * y + (10^3) * this.forcing(this.x, t);
+        end
+
+        function [h] = Initial_Condition_AD(this, z)
+            h = ones(this.m, 1);
         end
 
     end
 
     methods (Access = public)
+
+        function [val] = Forcing_Function(this, x, t)
+            val = this.forcing(x, t);
+        end
 
         function [D] = Assembly(this, z)
             h = this.x(2) - this.x(1);
@@ -29,14 +34,11 @@ classdef Thermal_Constraint_AD < Constraint_AD
             diff_x = reshape(z_coll, 2, this.m - 1);
             s = sum(diff_x, 1);
             D = diag(([0, s] + [s, 0]) * (1 / h) / 2) + (-1) * diag(s, 1) * (1 / h) / 2 + (-1) * diag(s, -1) * (1 / h) / 2;
-            D(1, :) = double(1:this.m == 1);
-            D(this.m, :) = double(1:this.m == this.m);
         end
 
-        function this = Thermal_Constraint_AD(m)
-            this = this@Constraint_AD(m, m);
+        function this = Thermal_Constraint_AD(m, n, T, N)
+            this = this@Dynamic_Constraint_AD(m, n, T, N);
 
-            this.m = m;
             this.x = linspace(0, 1, m)';
 
             h = this.x(2) - this.x(1);
@@ -63,22 +65,15 @@ classdef Thermal_Constraint_AD < Constraint_AD
             M = (1 / 6) * h * M;
             this.M = M;
 
+            this.Minv = inv(this.M);
+
             S = diag(2 * ones(1, m)) + (-1) * diag(ones(1, m - 1), 1) + (-1) * diag(ones(1, m - 1), -1);
             S(1, 1) = .5 * S(1, 1);
             S(end, end) = .5 * S(end, end);
             S = (1 / h) * S;
             this.S = S;
 
-            this.dirichlet_bc = zeros(m, 1);
-            this.dirichlet_bc(1) = 0;
-            this.dirichlet_bc(m) = 0;
-
-            this.forcing = this.x.^2;
-
-            B = (10^3) * this.M;
-            B(1, :) = 0 * B(1, :);
-            B(end, :) = 0 * B(end, :);
-            this.B = B;
+            this.forcing = @(x, t) this.x.^2;
 
         end
 

@@ -4,100 +4,129 @@ classdef Constraint_AD < Constraint
         n_u
         n_z
         u_current
-        c_uu_zero
-        c_uz_zero
-        c_zz_zero
+        z_current
+        lambda_current
+        Jac_current
+        is_Jac_updated
+        Hess_current
+        is_Hess_updated
+        Hess_zero
         verbose
     end
 
     methods (Abstract, Access = public)
 
-        [c] = constraint_residual(this, u, z)
+        [c] = c_AD(this, u, z)
 
     end
 
     methods (Access = public)
 
         function [u] = State_Solve(this, z)
+
             u = this.u_current;
-            res = this.constraint_residual(u, z);
-            res_norm = norm(res);
+            res = this.c_AD(u, z);
 
-            if res_norm > 1.e-12
-                J_u = AD_u_constraint_residual_Jac(this, u, z);
+            if norm(res) > 1.e-12
+                J = Jac_c_AD_Jac(this, [u; z]);
+                J_u = J(:, 1:this.n_u);
                 u = u - J_u \ res;
+
+                res = this.c_AD(u, z);
+                res_norm = norm(res);
+                if res_norm > 1.e-12
+                    % Execute nonlinear solve to determine the state
+                    options = optimoptions('fsolve', 'Display', 'none', 'OptimalityTolerance', 1.e-14, 'SpecifyObjectiveGradient', true, 'CheckGradients', false);
+                    u = fsolve(@(u)this.Nonlinear_Solver_Evaluation(u, z), u, options);
+                end
+
+                this.u_current = u;
+                this.z_current = z;
+                this.is_Jac_updated = false;
+                this.is_Hess_updated = false;
             end
 
-            res = this.constraint_residual(u, z);
-            res_norm = norm(res);
-            if res_norm > 1.e-12
-                % Execute nonlinear solve to determine the state
-                options = optimoptions('fsolve', 'Display', 'none', 'OptimalityTolerance', 1.e-14, 'SpecifyObjectiveGradient', true, 'CheckGradients', false);
-                u = fsolve(@(u)this.Nonlinear_Solver_Evaluation(u, z), u, options);
-            end
+        end
 
-            this.u_current = u;
+        function [] = Update_Jacobian(this, u, z)
+            if (norm(z - this.z_current) ~= 0) || (norm(u - this.u_current) ~= 0) || (~this.is_Jac_updated)
+                this.u_current = u;
+                this.z_current = z;
+                this.Jac_current = Jac_c_AD_Jac(this, [u; z]);
+                this.is_Jac_updated = true;
+            end
+        end
+
+        function [] = Update_Hessian(this, u, z, lambda)
+            if (norm(z - this.z_current) ~= 0) || (norm(u - this.u_current) ~= 0) || (norm(lambda - this.lambda_current) ~= 0) || (~this.is_Jac_updated)
+                this.u_current = u;
+                this.z_current = z;
+                this.lambda_current = lambda;
+                this.Hess_current = Hess_c_AD_Hes(this, [u; z], lambda);
+                this.is_Hess_updated = true;
+            end
         end
 
         function [res, J_u] = Nonlinear_Solver_Evaluation(this, u, z)
-            [J_u, res] = AD_u_constraint_residual_Jac(this, u, z);
+            [J, res] = Jac_c_AD_Jac(this, [u; z]);
+            J_u = J(:, 1:this.n_u);
         end
 
         function [Mv] = c_u_Transpose_Inverse_Apply(this, v, u, z)
-            J_u = AD_u_constraint_residual_Jac(this, u, z);
-            Mv = J_u' \ v;
+            this.Update_Jacobian(u, z);
+            Mv = this.Jac_current(:, 1:this.n_u)' \ v;
         end
 
         function [Mv] = c_z_Transpose_Apply(this, v, u, z)
-            J_z = AD_z_constraint_residual_Jac(this, u, z);
-            Mv = J_z' * v;
+            this.Update_Jacobian(u, z);
+            Mv = this.Jac_current(:, (this.n_u + 1):end)' * v;
         end
 
         function [Mv] = c_u_Inverse_Apply(this, v, u, z)
-            J_u = AD_u_constraint_residual_Jac(this, u, z);
-            Mv = J_u \ v;
+            this.Update_Jacobian(u, z);
+            Mv = this.Jac_current(:, 1:this.n_u) \ v;
         end
 
         function [Mv] = c_z_Apply(this, v, u, z)
-            J_z = AD_z_constraint_residual_Jac(this, u, z);
-            Mv = J_z * v;
+            this.Update_Jacobian(u, z);
+            Mv = this.Jac_current(:, (this.n_u + 1):end) * v;
         end
 
         function [c] = c(this, u, z)
-            c = this.constraint_residual(u, z);
+            c = this.c_AD(u, z);
         end
 
         function [Mv] = c_uu_Apply(this, v, u, z, lambda)
-            if ~this.c_uu_zero
-                M = AD_uu_constraint_residual_Hes(this, u, z, lambda);
-                Mv = M * v;
+            if ~this.Hess_zero
+                this.Update_Hessian(u, z, lambda);
+                Mv = this.Hess_current(1:this.n_u, 1:this.n_u) * v;
             else
                 Mv = 0 * v;
             end
         end
 
         function [Mv] = c_uz_Apply(this, v, u, z, lambda)
-            if ~this.c_uz_zero
-                M = AD_uz_constraint_residual_Hes(this, [u; z], lambda);
-                Mv = M(1:this.n_u, (this.n_u + 1):end) * v;
+            if ~this.Hess_zero
+                this.Update_Hessian(u, z, lambda);
+                Mv = this.Hess_current(1:this.n_u, (this.n_u + 1):end) * v;
             else
                 Mv = 0 * u;
             end
         end
 
         function [Mv] = c_zu_Apply(this, v, u, z, lambda)
-            if ~this.c_uz_zero
-                M = AD_uz_constraint_residual_Hes(this, [u; z], lambda);
-                Mv = M((this.n_u + 1):end, 1:this.n_u) * v;
+            if ~this.Hess_zero
+                this.Update_Hessian(u, z, lambda);
+                Mv = this.Hess_current((this.n_u + 1):end, 1:this.n_u) * v;
             else
                 Mv = 0 * z;
             end
         end
 
         function [Mv] = c_zz_Apply(this, v, u, z, lambda)
-            if ~this.c_zz_zero
-                M = AD_zz_constraint_residual_Hes(this, u, z, lambda);
-                Mv = M * v;
+            if ~this.Hess_zero
+                this.Update_Hessian(u, z, lambda);
+                Mv = this.Hess_current((this.n_u + 1):end, (this.n_u + 1):end) * v;
             else
                 Mv = 0 * v;
             end
@@ -110,10 +139,14 @@ classdef Constraint_AD < Constraint
         function this = Constraint_AD(n_u, n_z)
             this.n_u = n_u;
             this.n_z = n_z;
-            this.u_current = zeros(this.n_u, 1);
-            this.c_uu_zero = false;
-            this.c_uz_zero = false;
-            this.c_zz_zero = false;
+            this.u_current = inf * ones(this.n_u, 1);
+            this.z_current = inf * ones(this.n_z, 1);
+            this.lambda_current = inf * ones(this.n_u, 1);
+            this.Jac_current = inf * ones(this.n_u, this.n_u + this.n_z);
+            this.is_Jac_updated = false;
+            this.Hess_current = inf * ones(this.n_u + this.n_z, this.n_u + this.n_z);
+            this.is_Hess_updated = false;
+            this.Hess_zero = false;
             this.verbose = true;
         end
 
@@ -130,11 +163,11 @@ classdef Constraint_AD < Constraint
             z = randn(this.n_z, 1);
             lambda = randn(this.n_u, 1);
             try
-                [~, cold] = AD_u_constraint_residual_Jac(this, u, z);
+                [~, cold] = Jac_c_AD_Jac(this, [u; z]);
             catch
                 cold = zeros(this.n_u, 1);
             end
-            ccurrent = this.constraint_residual(u, z);
+            ccurrent = this.c_AD(u, z);
             if norm(cold - ccurrent) > 10^-15
                 if this.verbose
                     disp('Detected change in constraint');
@@ -143,76 +176,24 @@ classdef Constraint_AD < Constraint
                 options = adigatorOptions();
                 options.overwrite = 1;
                 options.echo = 0;
-                gu = adigatorCreateDerivInput([length(u), 1], 'u'); % Create Deriv Input
-                try
-                    genout = adigatorGenJacFile('AD_u_constraint_residual', {this, gu, z}, options);
-                catch
-                    if this.verbose
-                        disp('constraint u jacobian is zero');
-                    end
-                end
-
-                gz = adigatorCreateDerivInput([length(z), 1], 'z'); % Create Deriv Input
-                try
-                    genout = adigatorGenJacFile('AD_z_constraint_residual', {this, u, gz}, options);
-                catch
-                    if this.verbose
-                        disp('constraint z jacobian is zero');
-                    end
-                end
-
-                try
-                    genout = adigatorGenHesFile('AD_uu_constraint_residual', {this, gu, z, lambda}, options);
-                catch
-                    if this.verbose
-                        disp('constraint uu hessian is zero');
-                    end
-                end
-
-                try
-                    genout = adigatorGenHesFile('AD_zz_constraint_residual', {this, u, gz, lambda}, options);
-                catch
-                    if this.verbose
-                        disp('constraint zz hessian is zero');
-                    end
-                end
-
                 guz = adigatorCreateDerivInput([length(u) + length(z), 1], 'uz'); % Create Deriv Input
                 try
-                    genout = adigatorGenHesFile('AD_uz_constraint_residual', {this, guz, lambda}, options);
+                    genout = adigatorGenJacFile('Jac_c_AD', {this, guz}, options);
                 catch
                     if this.verbose
-                        disp('constraint uz hessian is zero');
+                        disp('constraint jacobian is zero');
                     end
                 end
 
-            end
-
-            try
-                AD_uu_constraint_residual_Hes(this, u, z, lambda);
-            catch
-                if this.verbose
-                    disp('constraint uu hessian is zero');
+                try
+                    genout = adigatorGenHesFile('Hess_c_AD', {this, guz, lambda}, options);
+                catch
+                    if this.verbose
+                        disp('constraint hessian is zero');
+                    end
+                    this.Hess_zero = true;
                 end
-                this.c_uu_zero = true;
-            end
 
-            try
-                AD_zz_constraint_residual_Hes(this, u, z, lambda);
-            catch
-                if this.verbose
-                    disp('constraint zz hessian is zero');
-                end
-                this.c_zz_zero = true;
-            end
-
-            try
-                AD_uz_constraint_residual_Hes(this, [u; z], lambda);
-            catch
-                if this.verbose
-                    disp('constraint uz hessian is zero');
-                end
-                this.c_uz_zero = true;
             end
 
             cd ..;

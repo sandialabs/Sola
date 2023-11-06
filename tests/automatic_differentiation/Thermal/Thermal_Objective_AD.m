@@ -6,7 +6,7 @@ classdef Thermal_Objective_AD < Objective_AD
 
     methods (Access = public)
 
-        function [val] = J_val(this, u, z)
+        function [val] = J_AD(this, u, z)
             val = (1 / 2) * u' * this.con.M * u + (1 / 2) * z' * this.con.S * z;
         end
 

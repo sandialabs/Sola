@@ -8,35 +8,35 @@ classdef Objective_AD < Objective
 
     methods (Abstract, Access = public)
 
-        [val] = J_val(this, u, z)
+        [val] = J_AD(this, u, z)
 
     end
 
     methods (Access = public)
 
         function [val, grad_u, grad_z] = J(this, u, z)
-            [grad, val] = AD_grad_J_val_Jac(this, [u; z]);
+            [grad, val] = grad_J_AD_Jac(this, [u; z]);
             grad_u = grad(1:this.n_u)';
             grad_z = grad((this.n_u + 1):end)';
         end
 
         function [Mv] = J_uu_Apply(this, v, u, z)
-            H = AD_Hess_J_val_Hes(this, [u; z]);
+            H = Hess_J_AD_Hes(this, [u; z]);
             Mv = H(1:this.n_u, 1:this.n_u) * v;
         end
 
         function [Mv] = J_uz_Apply(this, v, u, z)
-            H = AD_Hess_J_val_Hes(this, [u; z]);
+            H = Hess_J_AD_Hes(this, [u; z]);
             Mv = H(1:this.n_u, (this.n_u + 1):end) * v;
         end
 
         function [Mv] = J_zu_Apply(this, v, u, z)
-            H = AD_Hess_J_val_Hes(this, [u; z]);
+            H = Hess_J_AD_Hes(this, [u; z]);
             Mv = H((this.n_u + 1):end, 1:this.n_u) * v;
         end
 
         function [Mv] = J_zz_Apply(this, v, u, z)
-            H = AD_Hess_J_val_Hes(this, [u; z]);
+            H = Hess_J_AD_Hes(this, [u; z]);
             Mv = H((this.n_u + 1):end, (this.n_u + 1):end) * v;
         end
 
@@ -62,11 +62,11 @@ classdef Objective_AD < Objective
             u = randn(this.n_u, 1);
             z = randn(this.n_z, 1);
             try
-                [~, valold] = AD_grad_J_val_Jac(this, [u; z]);
+                [~, valold] = grad_J_AD_Jac(this, [u; z]);
             catch
                 valold = 0;
             end
-            valcurrent = this.J_val(u, z);
+            valcurrent = this.J_AD(u, z);
             if norm(valold - valcurrent) > 10^-15
                 if this.verbose
                     disp('Detected change in objective');
@@ -77,7 +77,7 @@ classdef Objective_AD < Objective
                 options.echo = 0;
                 guz = adigatorCreateDerivInput([length(u) + length(z), 1], 'uz'); % Create Deriv Input
                 try
-                    genout = adigatorGenJacFile('AD_grad_J_val', {this, guz}, options);
+                    genout = adigatorGenJacFile('grad_J_AD', {this, guz}, options);
                 catch
                     if this.verbose
                         disp('objective gradient is zero');
@@ -85,7 +85,7 @@ classdef Objective_AD < Objective
                 end
 
                 try
-                    genout = adigatorGenHesFile('AD_Hess_J_val', {this, guz}, options);
+                    genout = adigatorGenHesFile('Hess_J_AD', {this, guz}, options);
                 catch
                     if this.verbose
                         disp('objective Hessian is zero');
