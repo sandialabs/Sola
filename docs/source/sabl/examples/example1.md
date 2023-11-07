@@ -1,14 +1,16 @@
-# Example 1: System of ODEs
+# 1: Optimization Constrained by a Nonlinear System of Equations
 
-This example considers a simple [constrained optimization problem](../problems/optimization) of the form
+This example considers a simple [constrained optimization problem](../../problems/optimization) of the form
 
 $$
 \begin{aligned}
     \min_{u,z} ~& J(u,z)
     \\
-    s.t. ~~& c(u,z) = 0.
+    s.t. ~~& c(u,z) = 0
 \end{aligned}
 $$
+
+where the state $u$ and control $z$ are a finite-dimensional vectors and the constraint $c(u,z)$ represents a nonlinear system of equations.
 
 We will implement subclasses of [`Objective`](sabl:optimization-objective) and [`Constraint`](sabl:optimization-constraints) and show how to solve the optimization problem with a [`Reduced_Space_Optimization`](sabl:optimizer-class).
 
@@ -319,6 +321,12 @@ $$
     \end{array}\right).
 \end{aligned}
 $$
+
+:::{tip}
+In this simple problem, we are able to construct the solution operator $S$ by analytically solving the constraint equations for the state variables.
+For a more complicated system of equations, $S$ might include, e.g., using Newton's method to solve the equations numerically.
+Evaluating the solution operator is typically the computational bottleneck in outer-loop problems, especially when $S$ represents solving a partial differential equation.
+:::
 
 Next, we calculate the derivatives of $c$.
 We start with $c_u$ and $c_z$, which are Jacobian matrices.

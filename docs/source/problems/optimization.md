@@ -1,31 +1,33 @@
 # Constrained Optimization
 
-The prototypical outer-loop problem is constrained optimization.
-WOLF addresses constrained optimization problems of the form
+The prototypical outer-loop problem is constrained optimization where solving the constraints incurs a significant computational cost.
+WOLF addresses constrained optimization problems that can be written as follows.
 
 $$
 \begin{aligned}
     \min_{u,z} ~& J(u,z)
     \\
-    s.t. ~~& c(u,z) = 0
+    s.t. ~~& c(u,z) = 0.
 \end{aligned}
-$$ (overview:opt_prob)
+$$ (optimization:problem)
 
 Here, $u$ indicates the state variable, $z$ is the control variable, $J$ is the objective function, and $c$ specifies the constraints.
 If $c(u,z)=0$ admits a unique solution for any given $z$, then there exists a solution operator $S(z)$ such that $c(S(z),z)=0$ for all possible controls $z$.
-In this case, {eq}`overview:opt_prob` can be formulated as an equivalent _unconstrained_ optimization problem
+In this case, {eq}`optimization:problem` can be formulated as an equivalent _unconstrained_ optimization problem
 
 ::::{margin}
 :::{note}
-The minimization problem {eq}`overview:rs_opt_prob` is said to be in _reduced space_ because the optimization is over the space of possible controls only, not the joint space of possible states and controls.
+The minimization problem {eq}`optimization:problem_reduced` is said to be in _reduced space_ because the optimization is over the space of possible controls only, not the joint space of possible states and controls.
 :::
 ::::
 
 $$
     \min_{z} \hat{J}(z)=J(S(z),z).
-$$ (overview:rs_opt_prob)
+$$ (optimization:problem_reduced)
 
-Note that {eq}`overview:opt_prob` and {eq}`overview:rs_opt_prob` may be posed as infinite-dimensional optimizations over function spaces, but the state and control must be discretized to do any computation.
+The state and control may be finite-dimensional vectors, or they may be functions of space and/or time.
+In the latter case, {eq}`optimization:problem` and {eq}`optimization:problem_reduced` may be posed as infinite-dimensional optimizations over function spaces.
+However, the state and control must be discretized (represented with finitely many numbers) to do any computation.
 After discretization, we have finite-dimensional state and control vectors
 
 $$
@@ -35,7 +37,6 @@ $$
 $$
 
 where $n_{u}\in\mathbb{R}$ is the state dimension and $n_{z}\in\mathbb{R}$ is the control dimension.
-
 With these dimensions, we have
 
 $$
@@ -55,7 +56,7 @@ In problems where the constraints are described by a partial differential equati
 
 ## Adjoint-based Optimization
 
-The unconstrained problem {eq}`overview:rs_opt_prob` can be solved with off-the-shelf minimizers as long as the gradient $\nabla_z \hat{J}(z)\in\mathbb{R}^{n_{z}}$ and Hessian-vector products $v\mapsto \nabla_{z,z} \hat{J}(z) v$ can be computed efficiently.
+The unconstrained problem {eq}`optimization:problem_reduced` can be solved with off-the-shelf minimizers as long as the gradient $\nabla_z \hat{J}(z)\in\mathbb{R}^{n_{z}}$ and Hessian-vector products $v\mapsto \nabla_{z,z} \hat{J}(z) v$ can be computed efficiently.
 {prf:ref}`alg:adjoint_gradient` shows how to efficiently calculate the gradient by utilizing adjoint-based derivative formulas.
 Similarly, {prf:ref}`alg:adjoint_hessvec` shows how to compute Hessian-vector products using incremental state and incremental adjoint equations, which avoids explicitly forming the (very large) Hessian matrix $\nabla_{z,z}\hat{J}(z)\in\mathbb{R}^{n_{z}\times n_{z}}$.
 
@@ -119,10 +120,59 @@ The steps marked with an asterisk are where this approach differs from {prf:ref}
 These algorithms are implemented in [SABL](../sabl/anatomy.md) and [MrHyDE](../mrhyde/anatomy).
 Examples 1--**TODO** deal with constrained optimization.
 
-## Time-dependent Problems
+## Differential Equation Constraints
+
+We are particularly interested in problems where the state $u$ is the solution of an ordinary or partial differential equation.
+In this case, the constraints $c(u, z) = 0$ describe the differential equation and the solution mapping $S:z\mapsto u$ means solving the differential equation with the specified control profile.
+In steady-state problems, the computational state consists of the spatial discretization of the analytical state $u$;
+in time-dependent problems, the computational state includes the spatial discretization of the analytical state _at each time_ in the temporal discretization.
+For example, suppose the state $u(x,t)$ is to be computed at spatial points $x_{1},\ldots,x_{m}$ and temporal points $t_{1},\ldots,t_{N}$.
+Then the full computational state approximates the vector
+
+$$
+\begin{align*}
+    \left(\begin{array}{c}
+        u(x_{1},t_{1}) \\ u(x_{2},t_{1}) \\ \vdots \\ u(x_{m},t_{1}) \\
+        u(x_{1},t_{2}) \\ u(x_{2},t_{2}) \\ \vdots \\ u(x_{m},t_{2}) \\
+        \vdots \\
+        u(x_{1},t_{N}) \\ u(x_{2},t_{N}) \\ \vdots \\ u(x_{m},t_{N})
+    \end{array}\right)
+    \in \mathbb{R}^{n_{u}}
+\end{align*}
+$$
+
+and the computational state dimension is $n_{u} = mN$.
+Depending on the problem, the control may be similarly represented as vector with values for space and time.
+
+The following ODE-constrained optimization problem is a common occurrence of {eq}`optimization:problem` for scientific problems.
+
+$$
+\begin{align*}
+    \min_{y,z} ~& \int_{0}^{T} g(y(t),t) dt + R(z)
+    \\
+    s.t. ~~& \frac{dy}{dt} = f(y(t), z, t), ~~ y(0) = h(z)
+\end{align*}
+$$
+
+where $T>0$ is the final time, $y$ is the differential equation state, and
+
+$$
+\begin{align*}
+    y &: [0,T] \to \mathbb{R}^m,
+    &
+    f &: \mathbb{R}^m \times \mathbb{R}^{n_{z}} \times [0,T]  \to \mathbb{R}^m,
+    &
+    h &: \mathbb{R}^{n_{z}} \to \mathbb{R}^m.
+\end{align*}
+$$
+
+In this setting, the full optimization state $u$ consists of the ODE state $y(t)$ evaluated at all monitored times $t$.
+
+:::{admonition} TODO
+Need to clarify the difference between the infinite-dimensional (function analytic) setting and the finite-dimensional (computational) setting.
+Perhaps use $u$ for the _state_ $\mathbf{u}$ for the _computational state_? If so, we can write $u = y$ but $\mathbf{u} = (\mathbf{y}_{1}^{\mathsf{T}}~\cdots~\mathbf{y}_{N}^{\mathsf{T}})^{\mathsf{T}}$ where $\mathbf{y}_{j}$ approximates $(u(x_{1}, t_{j})~\cdots~u(x_{m}, t_{j}))^{\mathsf{T}}$.
+:::
 
 :::{warning}
 The rest of this page is under construction, please check back later.
 :::
-
-We are particularly interested in problems where the state $u$ represents the state of an ordinary or partial differential equation and described by the constraints $c(u, z) = 0$.

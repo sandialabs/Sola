@@ -28,7 +28,12 @@ copyright = f"{time.strftime('%Y')} Sandia National Laboratories"
 author = "Joseph Hart, Shane McQuarrie, and Bart van Bloemen Waanders"
 
 # The full version, including alpha/beta/rc tags
-release = ""
+release = "0.0.1"
+
+html_title = "🐺 WOLF"
+html_short_title = "WOLF"
+# html_logo = None
+html_favicon = "../img/favicon.png"
 
 
 # -- General configuration ---------------------------------------------------

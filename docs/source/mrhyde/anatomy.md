@@ -1,9 +1,15 @@
 # Code Structure
 
+These pages describe the software design paradigm of [MrHyDE](./about).
 
-:::{warning}
-This page is under construction!
-:::
+## Contents
 
+```{eval-rst}
+.. toctree::
+   :maxdepth: 1
 
-This is where we detail the basic code anatomy of MrHyDE (for what we need).
+   anatomy/optimization
+   anatomy/bayesinversion
+   anatomy/oed
+   anatomy/hdsa
+```

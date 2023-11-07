@@ -1,8 +1,8 @@
 classdef Example_3_Constraint < Dynamic_Constraint
 
-    % Solve the optimiation problem
+    % Solve the optimization problem
     % min_{z} J(S(z),z) = int_0^T g(S(z)(t))dt + R(z)
-    % where S(z) solves the odinary differential equation
+    % where S(z) solves the ordinary differential equation
     % dy/dt = [y3/y2, 2*y1, 3*y1*y2]
     % y(0) = [z_1^2 , z_2^3, z_3^4]
     % g(y) = (y_1-exp(t))^2 + (y_2-exp(2*t))^2 + (y_3-exp(3*t))^2

@@ -51,3 +51,7 @@ To run the formatter without a commit:
 ```bash
 ./.pre-commit-formatting-hook
 ```
+
+## References
+
+[Wolf](https://icons8.com/icon/37544/werewolf) icon by [Icons8](https://icons8.com).

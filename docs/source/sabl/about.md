@@ -1,9 +1,5 @@
 # About SABL
 
-:::{caution}
-This page is under construction!
-:::
-
 SABL is the **S**andbox for **A**djoint-**b**ased outer **L**oop analysis, a MATLAB framework for prototyping outer-loop problems.
 
 :::{admonition} Why MATLAB?
@@ -11,4 +7,4 @@ Unlike open-source projects, new releases of MATLAB are guaranteed to be backwar
 In other words, code that functions today will still function 20 years from now.
 :::
 
-To get started with SABL, read the [Code Structure](./anatomy.md) summary or jump straight into [Example 1](./example1.md).
+To get started with SABL, read the [Code Structure](./anatomy.md) summaries or jump straight into [Example 1](./examples/example1.md).
