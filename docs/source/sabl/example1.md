@@ -1,6 +1,6 @@
 # Example 1: System of ODEs
 
-This example considers a simple [constrained optimization problem](../optimization) of the form
+This example considers a simple [constrained optimization problem](../problems/optimization) of the form
 
 $$
 \begin{aligned}

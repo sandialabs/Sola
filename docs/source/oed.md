@@ -1,3 +1,0 @@
-# Optimal Experimental Design
-
-TODO

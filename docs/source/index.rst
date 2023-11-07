@@ -12,15 +12,15 @@ This project includes documentation and tutorials for two separate software ecos
 
 This project shows how to use SABL and MrHyDE to solve the following types of problems.
 
-- :doc:`Constrained Optimization <./optimization>`, including PDE-constrained optimization.
-- :doc:`Bayesian Inversion <./bayesinversion>`.
-- :doc:`Optimal Experimental Design (OED) <./oed>`.
-- :doc:`Hyper-differential Sensitivity Analysis (HDSA) <./hdsa>`.
+- :doc:`Constrained Optimization <./problems/optimization>`, including PDE-constrained optimization.
+- :doc:`Bayesian Inversion <./problems/bayesinversion>`.
+- :doc:`Optimal Experimental Design (OED) <./problems/oed>`.
+- :doc:`Hyper-differential Sensitivity Analysis (HDSA) <./problems/hdsa>`.
 
 .. important::
    This documentation is aimed at advanced undergraduates and graduate students with some MATLAB experience and light familiarity with C++.
    The goal is to lower the barrier to entry for large-scale high-performance computing tasks using sophisticated software libraries.
-   See the [Fundamentals](./fundamentals) page for the necessary mathematical background and references to materials for getting up to speed.
+   See the [Fundamentals](./appendix/fundamentals) page for the necessary mathematical background and references to materials for getting up to speed.
 
 Contents
 --------
@@ -29,10 +29,10 @@ Contents
    :maxdepth: 1
    :caption: Outer-loop Problems
 
-   optimization
-   bayesinversion
-   oed
-   hdsa
+   problems/optimization
+   problems/bayesinversion
+   problems/oed
+   problems/hdsa
 
 .. toctree::
    :maxdepth: 1
@@ -57,5 +57,6 @@ Contents
    :maxdepth: 2
    :caption: Appendix
 
-   fundamentals
-   notation
+   appendix/fundamentals
+   appendix/notation
+   appendix/contributing

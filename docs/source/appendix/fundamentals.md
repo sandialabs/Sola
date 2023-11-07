@@ -1,7 +1,7 @@
 # Fundamentals
 
 :::{warning}
-This page is under construction!
+This page is under construction, please check back later.
 :::
 
 This page lists the mathematical prerequisites for reading this documentation and working in WOLF.

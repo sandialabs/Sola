@@ -116,7 +116,7 @@ The steps marked with an asterisk are where this approach differs from {prf:ref}
 **Return**: $\nabla_{z,z} \hat{J}(\overline{z}) v \in \mathbb{R}^{n_{z}}$
 :::
 
-These algorithms are implemented in [SABL](./sabl/anatomy) and [MrHyDE](./mrhyde/anatomy).
+These algorithms are implemented in [SABL](../sabl/anatomy.md) and [MrHyDE](../mrhyde/anatomy).
 Examples 1--**TODO** deal with constrained optimization.
 
 ## Time-dependent Problems
