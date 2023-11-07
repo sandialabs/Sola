@@ -28,18 +28,18 @@ copyright = f"{time.strftime('%Y')} Sandia National Laboratories"
 author = "Joseph Hart, Shane McQuarrie, and Bart van Bloemen Waanders"
 
 # The full version, including alpha/beta/rc tags
-release = "0.0.1"
+release = ""
 
 
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings.
 extensions = [
-    "myst_parser",                      # Write content in Markdown.
-    "sphinx_copybutton",                # Copy code blocks.
-    "sphinx_proof",                     # Theorems, algorithms, etc.
-    "sphinx_tippy",                     # Previews when hovering over links.
-    "sphinx_togglebutton",              # Dropdowns.
+    "myst_parser",  # Write content in Markdown.
+    "sphinx_copybutton",  # Copy code blocks.
+    "sphinx_proof",  # Theorems, algorithms, etc.
+    "sphinx_tippy",  # Previews when hovering over links.
+    "sphinx_togglebutton",  # Dropdowns.
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -61,9 +61,9 @@ html_theme = "sphinx_book_theme"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 html_css_files = [
-    "colors.css",                       # Explicit text coloring.
-    "rightalign.css",                   # Right align equation labels.
-    "tippy.css",                        # Correct theme for link previews.
+    "colors.css",  # Explicit text coloring.
+    "rightalign.css",  # Right align equation labels.
+    "tippy.css",  # Correct theme for link previews.
 ]
 
 # Explicit text coloring (ignoring theme).
@@ -76,10 +76,10 @@ rst_prolog = """
 # -- Extensions --------------------------------------------------------------
 
 myst_enable_extensions = [
-    "amsmath",                          # parse amsmath directly (align, etc.)
-    "attrs_block",                      # label and reference paragraphs, etc.
-    "colon_fence",                      # parse ::: delimiters.
-    "dollarmath",                       # Parse $ and $$ encapsulated math.
-    "replacements",                     # Convert (c) to ©, etc.
+    "amsmath",  # parse amsmath directly (align, etc.)
+    "attrs_block",  # label and reference paragraphs, etc.
+    "colon_fence",  # parse ::: delimiters.
+    "dollarmath",  # Parse $ and $$ encapsulated math.
+    "replacements",  # Convert (c) to ©, etc.
 ]
-myst_dmath_double_inline = True         # $$ OK if no newline before and after.
+myst_dmath_double_inline = True  # $$ OK if no newline before and after.

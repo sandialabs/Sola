@@ -1,21 +1,4 @@
-# Project Overview
-
-WOLF is the **W**aanders **O**uter-**L**oop **F**ramework for iteratively solving large-scale problems such as optimization problems constrained by partial differential equations.
-This project includes documentation and tutorials for two separate packages:
-
-1. The **S**andbox for **A**djoint-**B**ased outer **L**oop analysis ([SABL](./sabl/about)), a [MATLAB](https://www.mathworks.com/products/matlab.html) framework designed for prototyping outer-loop problems.
-2. The **M**ulti-**r**esolution **Hy**bridizable **D**ifferential **E**quations solver ([MrHyDE](./mrhyde/about)), a powerful [C++](https://cplusplus.com/) package for solving partial differential equations at scale.
-
-This project shows how to use SABL and MrHyDE to solve the following types of problems.
-
-:::{important}
-This documentation is aimed at advanced undergraduates and graduate students with some MATLAB experience and light familiarity with C++.
-The goal is to lower the barrier to entry for large-scale high-performance computing tasks using sophisticated software libraries.
-See the [Fundamentals](./fundamentals) page for the necessary mathematical background and references to materials for getting up to speed.
-:::
-
-(overview:optimization)=
-## Constrained Optimization
+# Constrained Optimization
 
 The prototypical outer-loop problem is constrained optimization.
 WOLF addresses constrained optimization problems of the form
@@ -70,7 +53,7 @@ $$
 where $n_{c}$ is the number of equations needed to express the constraints (typically $n_{c} = n_{u}$).
 In problems where the constraints are described by a partial differential equation, the state dimension $n_{u}$ and/or the control dimension $n_{z}$ can be very large.
 
-### Adjoint-based Optimization
+## Adjoint-based Optimization
 
 The unconstrained problem {eq}`overview:rs_opt_prob` can be solved with off-the-shelf minimizers as long as the gradient $\nabla_z \hat{J}(z)\in\mathbb{R}^{n_{z}}$ and Hessian-vector products $v\mapsto \nabla_{z,z} \hat{J}(z) v$ can be computed efficiently.
 {prf:ref}`alg:adjoint_gradient` shows how to efficiently calculate the gradient by utilizing adjoint-based derivative formulas.
@@ -136,16 +119,10 @@ The steps marked with an asterisk are where this approach differs from {prf:ref}
 These algorithms are implemented in [SABL](./sabl/anatomy) and [MrHyDE](./mrhyde/anatomy).
 Examples 1--**TODO** deal with constrained optimization.
 
-### Time-dependent Problems
+## Time-dependent Problems
 
 :::{warning}
 The rest of this page is under construction, please check back later.
 :::
 
 We are particularly interested in problems where the state $u$ represents the state of an ordinary or partial differential equation and described by the constraints $c(u, z) = 0$.
-
-## Bayesian Inversion
-
-## Optimal Experimental Design (OED)
-
-## Hyper-differential Sensitivity Analysis (HDSA)
