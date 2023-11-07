@@ -1,0 +1,7 @@
+function [] = Generate_Obs_Data(con, z_true, forcing)
+    con.forcing = forcing;
+    con.AD_Initialization();
+    u_true = con.State_Solve(z_true);
+    u_data = u_true .* (1 + 0.01 * randn(size(u_true)));
+    save('Obs_Data.mat', 'u_data', 'u_true', 'z_true', 'forcing');
+end

@@ -7,9 +7,7 @@ classdef Constraint_AD < Constraint
         z_current
         lambda_current
         Jac_current
-        is_Jac_updated
         Hess_current
-        is_Hess_updated
         Hess_zero
         verbose
     end
@@ -39,31 +37,24 @@ classdef Constraint_AD < Constraint
                     options = optimoptions('fsolve', 'Display', 'none', 'OptimalityTolerance', 1.e-14, 'SpecifyObjectiveGradient', true, 'CheckGradients', false);
                     u = fsolve(@(u)this.Nonlinear_Solver_Evaluation(u, z), u, options);
                 end
-
-                this.u_current = u;
-                this.z_current = z;
-                this.is_Jac_updated = false;
-                this.is_Hess_updated = false;
             end
 
         end
 
         function [] = Update_Jacobian(this, u, z)
-            if (norm(z - this.z_current) ~= 0) || (norm(u - this.u_current) ~= 0) || (~this.is_Jac_updated)
+            if (norm(z - this.z_current) ~= 0) || (norm(u - this.u_current) ~= 0)
                 this.u_current = u;
                 this.z_current = z;
                 this.Jac_current = Jac_c_AD_Jac(this, [u; z]);
-                this.is_Jac_updated = true;
             end
         end
 
         function [] = Update_Hessian(this, u, z, lambda)
-            if (norm(z - this.z_current) ~= 0) || (norm(u - this.u_current) ~= 0) || (norm(lambda - this.lambda_current) ~= 0) || (~this.is_Jac_updated)
+            if (norm(z - this.z_current) ~= 0) || (norm(u - this.u_current) ~= 0) || (norm(lambda - this.lambda_current) ~= 0)
                 this.u_current = u;
                 this.z_current = z;
                 this.lambda_current = lambda;
                 this.Hess_current = Hess_c_AD_Hes(this, [u; z], lambda);
-                this.is_Hess_updated = true;
             end
         end
 
@@ -143,9 +134,7 @@ classdef Constraint_AD < Constraint
             this.z_current = inf * ones(this.n_z, 1);
             this.lambda_current = inf * ones(this.n_u, 1);
             this.Jac_current = inf * ones(this.n_u, this.n_u + this.n_z);
-            this.is_Jac_updated = false;
             this.Hess_current = inf * ones(this.n_u + this.n_z, this.n_u + this.n_z);
-            this.is_Hess_updated = false;
             this.Hess_zero = false;
             this.verbose = true;
         end
