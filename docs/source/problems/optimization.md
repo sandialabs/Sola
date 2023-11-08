@@ -162,6 +162,8 @@ $$
     &
     f &: \mathbb{R}^m \times \mathbb{R}^{n_{z}} \times [0,T]  \to \mathbb{R}^m,
     &
+    G &: \mathbb{R}^{m} \times [0, T] \to \mathbb{R}
+    &
     h &: \mathbb{R}^{n_{z}} \to \mathbb{R}^m.
 \end{align*}
 $$

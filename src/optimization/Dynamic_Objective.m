@@ -69,8 +69,7 @@ classdef Dynamic_Objective < Objective
         end
 
         function [Mv] = J_uu_Apply(this, v, u, z)
-            num_vecs = size(v, 2);
-            Mv = zeros(this.m * this.N, num_vecs);
+            Mv = zeros(this.m * this.N, size(v, 2));
             for k = 1:this.N
                 I = ((k - 1) * this.m + 1):(k * this.m);          % y_{k} = u(I)
                 Mv(I, :) = this.w(k) * this.Time_Instance_Objective_yy_Apply(v(I, :), u(I), this.t_mesh(k));
@@ -78,13 +77,11 @@ classdef Dynamic_Objective < Objective
         end
 
         function [Mv] = J_uz_Apply(this, v, u, z)
-            num_vecs = size(v, 2);
-            Mv = zeros(this.m * this.N, num_vecs);
+            Mv = zeros(this.m * this.N, size(v, 2));
         end
 
         function [Mv] = J_zu_Apply(this, v, u, z)
-            num_vecs = size(v, 2);
-            Mv = zeros(this.n, num_vecs);
+            Mv = zeros(this.n, size(v, 2));
         end
 
         function [Mv] = J_zz_Apply(this, v, u, z)

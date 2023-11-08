@@ -30,7 +30,7 @@ author = "Joseph Hart, Shane McQuarrie, and Bart van Bloemen Waanders"
 # The full version, including alpha/beta/rc tags
 release = "0.0.1"
 
-html_title = "🐺 WOLF"
+html_title = "WOLF 🐺"
 html_short_title = "WOLF"
 # html_logo = None
 html_favicon = "../img/favicon.png"
@@ -77,7 +77,6 @@ rst_prolog = """
 
 """
 
-
 # -- Extensions --------------------------------------------------------------
 
 myst_enable_extensions = [
@@ -88,3 +87,12 @@ myst_enable_extensions = [
     "replacements",  # Convert (c) to ©, etc.
 ]
 myst_dmath_double_inline = True  # $$ OK if no newline before and after.
+
+mathjax3_config = {
+    "tex": {
+        "macros": {
+            "trp": r"{^{\mathsf{T}}}",
+            "RR": r"\mathbb{R}",
+        }
+    }
+}
