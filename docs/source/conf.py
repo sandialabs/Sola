@@ -87,7 +87,9 @@ myst_enable_extensions = [
     "replacements",  # Convert (c) to ©, etc.
 ]
 myst_dmath_double_inline = True  # $$ OK if no newline before and after.
+suppress_warnings = ["myst.domains"]  # Suppress warning for using sphinx_proof
 
+# LaTeX macros.
 mathjax3_config = {
     "tex": {
         "macros": {

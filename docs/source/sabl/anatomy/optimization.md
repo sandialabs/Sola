@@ -48,7 +48,7 @@ The abstract `Objective` class is a template for representing an objective funct
 
 ### Abstract Objective Methods
 
-To represent a particular objective function with the `Objective` class, define a new class that inherits from `Objective` and implements the abstract methods listed below in [Table 1](tab:objective_abstract).
+To represent a particular objective function with the `Objective` class, define a new class that inherits from `Objective` and implements the abstract methods listed in [Table 1](tab:objective_abstract).
 
 :::{table} Abstract methods of the `Objective` class.
 :align: center
@@ -64,7 +64,7 @@ To represent a particular objective function with the `Objective` class, define 
 :::
 
 :::{danger}
-Because of how MATLAB's `fminunc()` function is designed, the `J_xx_Apply()` functions must be implemented in a _vectorized_ fashion, i.e., assuming that `v` is a matrix where each column is a test direction.
+Because of how MATLAB's [`fminunc()`](https://www.mathworks.com/help/optim/ug/fminunc.html) is designed, the `J_xx_Apply()` functions must be implemented in a _vectorized_ fashion, i.e., assuming that `v` is a matrix where each column is a test direction.
 This is demonstrated in the examples.
 :::
 
@@ -111,7 +111,10 @@ Because the derivatives of $J$ can be described in terms of the functions $g$ an
 | `[Mv] = Regularization_Objective_zz_Apply(v, z)`   | Compute the product $\nabla_{\!z,z} R(z) v$       |
 :::
 
-A `Dynamic_Objective` object takes the following arguments in its constructor.
+### Objective Constructor
+
+The `Objective` class takes no arguments in the constructor.
+However, the `Dynamic_Objective` class needs user-provided information to define the discretization of the time integral. [Table 3](tab:dynamicobjective_constructor) lists the arguments for the constructor.
 
 :::{table} Constructor arguments of the `Dynamic_Objective` class.
 :align: center
@@ -127,7 +130,7 @@ A `Dynamic_Objective` object takes the following arguments in its constructor.
 
 ### Objective Verification
 
-In addition to the methods listed in [Table 1](tab:objective_abstract), the `Objective` class is equipped with the following methods to verify the consistency between the objective function itself and its gradient and Hessian functions.
+The `Objective` class (and any class that inherits from it) is equipped with the following methods to verify the consistency between the objective function itself and its gradient and Hessian functions.
 
 :::{table} Verification functions in the `Objective` class.
 :align: center
@@ -145,7 +148,7 @@ In addition to the methods listed in [Table 1](tab:objective_abstract), the `Obj
 The following template can be used to start a new `Objective` subclass.
 
 ```matlab
-classdef MyObjective < Objective
+classdef My_Objective < Objective
 
     methods (Access = public)
 
@@ -173,11 +176,10 @@ classdef MyObjective < Objective
 end
 ```
 
-The finite difference checks of [Table 2](tab:objective_checkers) are inherited automatically.
 The following template can be used for a new `DynamicObjective` subclass.
 
 ```matlab
-classdef MyObjective < Dynamic_Objective
+classdef My_Dynamic_Objective < Dynamic_Objective
 
     methods (Access = public)
 
@@ -205,7 +207,10 @@ end
 ## Optimization Constraints
 
 The `Constraint` class encodes the constraint function $c(u, z) = 0$, its derivatives, and the solution operator $S:z\mapsto u$ satisfying $c(S(z), z) = 0$ for all $z$.
-To represent a particular set of constraints with the `Constraint` class, define a new class that inherits from `Constraint` and implements the abstract methods listed in [Table 3](tab:constraint_abstract).
+
+### Abstract Constraint Methods
+
+To represent a particular set of constraints with the `Constraint` class, define a new class that inherits from `Constraint` and implements the abstract methods listed in [Table 5](tab:constraint_abstract).
 
 :::{table} Abstract methods of the `Constraint` class.
 :align: center
@@ -221,10 +226,10 @@ To represent a particular set of constraints with the `Constraint` class, define
 :::
 
 :::{danger}
-Because of how MATLAB's `fminunc()` function is designed, the `c_x_XXX()` methods (e.g., `c_z_Apply()`) must be implemented in a _vectorized_ fashion, i.e., assuming that `v` is a matrix where each column is a test direction.
+Because of how MATLAB's [`fminunc()`](https://www.mathworks.com/help/optim/ug/fminunc.html) is designed, the `c_x_XXX()` methods (e.g., `c_z_Apply()`) must be implemented in a _vectorized_ fashion, i.e., assuming that `v` is a matrix where each column is a test direction.
 :::
 
-The following methods are also required **unless** `Gauss_Newton_Hess` is set to `true` in the `Reduced_Space_Optimization`.
+The following methods are also required **unless** `Gauss_Newton_Hess` is set to `true` in the `Reduced_Space_Optimization`, which uses {prf:ref}`alg:adjoint_gaussnewton` in place of {prf:ref}`alg:adjoint_hessvec`.
 
 :::{table} Methods of the `Constraint` class required for Gauss--Newton minimization.
 :align: center
@@ -238,11 +243,88 @@ The following methods are also required **unless** `Gauss_Newton_Hess` is set to
 | `[Mv] = c_zz_Apply(v, u, z, lambda)` | Compute $\lambda\trp c_{z, z}(u, z) v$ |
 :::
 
+(sabl:optimization-dynamicconstraint)=
+### Time-Dependent Differential Constraints
+
+The `Dynamic_Constraint` class inherits from `Constraint` and is designed to encode constraints represented as a system of ordinary differential equations (possibly a spatially discretized partial differential equation), i.e.,
+
+$$
+\begin{align*}
+    \frac{\textup{d}}{\textup{d}t}y(t) = f(y(t), z, t),
+    \qquad
+    y(0) = h(z).
+\end{align*}
+$$
+
+Because the derivatives of the constraint can be described in terms of the functions $f$ and $h$, specific instances of `Dynamic_Objective` must implement methods describing $f$, $h$, and their derivatives instead of the methods in [Table 5](tab:constraint_abstract) and [Table 6](tab:constraint_fullhessian).
+
+:::{table} Abstract methods of the `DynamicConstraint` class.
+:align: center
+:name: tab:dynamicconstraint_abstract
+
+| Function Signature                               | Mathematical Description             |
+| :----------------------------------------------- | :----------------------------------- |
+| `[f, f_y, f_z] = Time_Instance_RHS(y, z, t)`     | Evaluate $f(y(t),z,t)$, $\nabla_{\!y}f$, and $\nabla_{\!z}f$ |
+| `[h, h_z] = Initial_Condition(z)`                | Evaluate $h(z)$ and $\nabla_{\!z}h(z)$ |
+| `Time_Instance_RHS_yy_Apply(v, y, z, t, lambda)` | Compute $\lambda\trp \nabla_{\!yy}f(y(t), z) v$ |
+| `Time_Instance_RHS_yz_Apply(v, y, z, t, lambda)` | Compute $\lambda\trp \nabla_{\!yz}f(y(t), z) v$ |
+| `Time_Instance_RHS_zy_Apply(v, y, z, t, lambda)` | Compute $\lambda\trp \nabla_{\!zy}f(y(t), z) v$ |
+| `Time_Instance_RHS_zz_Apply(v, y, z, t, lambda)` | Compute $\lambda\trp \nabla_{\!zz}f(y(t), z) v$ |
+| `Initial_Condition_zz_Apply(v, z, lambda)`       | Compute $\lambda\trp\nabla_{\!z}h(z) v$ |
+:::
+
+### Constraint Constructor
+
+The `Constraint` class takes no arguments in the constructor.
+However, the `Dynamic_Constraint` class needs user-provided information to define the time integration scheme. [Table 8](tab:dynamicconstraint_constructor) lists the arguments for the constructor.
+
+:::{table} Constructor arguments of the `Dynamic_Objective` class.
+:align: center
+:name: tab:dynamicconstraint_constructor
+
+| Argument | Description                                                     |
+| :------- | :-------------------------------------------------------------- |
+| `m`      | Dimension of the state variable at each time step               |
+| `n`      | Dimension of the control variable at each time step             |
+| `T`      | Final time $T$, the upper limit of the integral                 |
+| `N`      | Number of points in the temporal discretization of the integral |
+:::
+
+### Constraint Verification
+
+The `Constraint` class (and any class that inherits from it) is equipped with the following methods to verify the consistency between the objective function itself and its gradient and Hessian functions.
+However, these methods require implementing the method `[c] = c(this, u, z)` to explicitly construct the constraints.
+
+:::{table} Verification functions in the `Constraint` class.
+:align: center
+:name: tab:constraint_checkers
+
+| Function Signature                       | Mathematical Description             |
+| :--------------------------------------- | :----------------------------------- |
+| `Finite_Difference_Constraint_Check(u, z)` | Check gradients of $c$             |
+:::
+
+:::{table} Verification functions in the `Dynamic_Constraint` class.
+:align: left
+:name: tab:dynamicconstraint_checkers
+
+| Function Signature                            | Mathematical Description |
+| :-------------------------------------------- | :----------------------- |
+| `Time_Instance_RHS_Jacobian_y_Check(y, z, t)` | Check $\nabla_{\!y}f$    |
+| `Time_Instance_RHS_Jacobian_z_Check(y, z, t)` | Check $\nabla_{\!z}f$    |
+| `Time_Instance_RHS_Hessian_yy_Check(y, z, t)` | Check $\nabla_{\!yy}f$   |
+| `Time_Instance_RHS_Hessian_yz_Check(y, z, t)` | Check $\nabla_{\!yy}f$   |
+| `Time_Instance_RHS_Hessian_zy_Check(y, z, t)` | Check $\nabla_{\!yy}f$   |
+| `Time_Instance_RHS_Hessian_zz_Check(y, z, t)` | Check $\nabla_{\!yy}f$   |
+:::
+
 (sabl:constraint-template)=
-### Constraint Template
+### Constraint Templates
+
+The following template can be used to start a new `Constraint` subclass.
 
 ```matlab
-classdef MyConstraint < Constraint
+classdef My_Constraint < Constraint
 
     methods (Access = public)
 
@@ -288,11 +370,53 @@ classdef MyConstraint < Constraint
 end
 ```
 
+The following template can be used for a new `DynamicConstraint` subclass.
+
+```matlab
+classdef My_Dynamic_Constraint < Dynamic_Constraint
+
+    methods (Abstract, Access = public)
+
+        function [f, f_y, f_z] = Time_Instance_RHS(this, y, z, t)
+            error('Time_Instance_RHS() not implemented');
+        end
+
+        function [h, h_z] = Initial_Condition(this, z)
+            error('Initial_ConditionApply() not implemented');
+        end
+
+        function [Mv] = Time_Instance_RHS_yy_Apply(this, v, y, z, t, lambda)
+            error('Time_Instance_RHS_yy_Apply() not implemented');
+        end
+
+        function [Mv] = Time_Instance_RHS_yz_Apply(this, v, y, z, t, lambda)
+            error('Time_Instance_RHS_yz_Apply() not implemented');
+        end
+
+        function [Mv] = Time_Instance_RHS_zy_Apply(this, v, y, z, t, lambda)
+            error('Time_Instance_RHS_zy_Apply() not implemented');
+        end
+
+        function [Mv] = Time_Instance_RHS_zz_Apply(this, v, y, z, t, lambda)
+            error('Time_Instance_RHS_zz_Apply() not implemented');
+        end
+
+        function [Mv] = Initial_Condition_zz_Apply(this, v, z, lambda)
+            error('Initial_Condition_zz_Apply() not implemented');
+        end
+
+    end
+end
+```
+
 (sabl:optimizer-class)=
 ## Optimizer Class
 
 The `Reduced_Space_Optimization` class combines an `Objective` and a `Constraint` to represent and solve an optimization problem of the form {eq}`sabl:opt_prob`.
-The private methods `Jhat()` and `Jhat_hessVec()` use the methods of the objective and constraint to implement {prf:ref}`alg:adjoint_gradient` and {prf:ref}`alg:adjoint_hessvec`.
+
+### Solving the Optimization Problem
+
+The private methods `Jhat()` and `Jhat_hessVec()` use the methods of the objective and constraint to implement {prf:ref}`alg:adjoint_gradient` and {prf:ref}`alg:adjoint_hessvec`/{prf:ref}`alg:adjoint_gaussnewton`.
 Unlike the previous classes, the user does not need to subclass `Reduced_Space_Optimization`---it is ready to be used as is.
 
 :::{table} Public methods of the `Reduced_Space_Optimization` class.
@@ -307,19 +431,37 @@ Unlike the previous classes, the user does not need to subclass `Reduced_Space_O
 | `Finite_Difference_Hessian_Check(z)`   | Compare `Jhat_hessVec()` to finite differences  |
 :::
 
-(sabl:optimization-dynamicconstraint)=
-## Time-Dependent Differential Constraints
+### Customizing the Optimization
 
-:::{warning}
-The rest of this page is under construction, please check back later.
+After instantiating a `Reduced_Space_Optimization` object, the optimization routine can be customized by setting the object attributes.
+The options are listed in the following table, most of which correspond to an option for MATLAB's [`fminunc()`](https://www.mathworks.com/help/optim/ug/fminunc.html) or [`fmincon()`](https://www.mathworks.com/help/optim/ug/fmincon.html).
+
+:::{table} Attributes of the `Reduced_Space_Optimization` class for customizing optimization.
+:align: center
+:name: tab:optimization_attributes
+
+| Attribute           | Description                                       | `fminunc()` argument  | Default value |
+| :------------------ | :------------------------------------------------ | :-------------------- | :------------ |
+| `Gauss_Newton_Hess` | Use the Gauss-Newton approximation of the Hessian ({prf:ref}`alg:adjoint_gaussnewton`) | | `false`       |
+| `use_trust_region`  | Use trust region for the optimization             |                       | `true`        |
+| `z_lb`              | Lower bounds for control                          |                       | `[]`          |
+| `z_ub`              | Upper bounds for control                          |                       | `[]`          |
+| `opt_tol`           | Optimality tolerance                              | `OptimalityTolerance` | `10^-8`       |
+| `fun_tol`           | Function tolerance                                | `FunctionTolerance`   | `10^-6`       |
+| `iteration_limit`   | Maximum number of iterations                      | `MaxIterations`       | `1000`        |
+| `step_tol`          | Step tolerance                                    | `StepTolerance`       | `10^-6`       |
+| `max_cg_iter`       | Maximum number of conjugate gradient iterations   | `MaxPCGIter`          | `50`          |
+| `cg_tol`            | Conjugate gradient tolerance                      | `TolPCG`              | `10^-4`       |
+| `verbose`           | Print optimization info at each iteration         | `Display`             | `true` (`'iter-detailed'`) |
 :::
 
-The `Dynamic_Constraint` class inherits from `Constraint` and is designed to encode constraints represented as a system of ordinary differential equations (possibly a spatially discretized partial differential equation), i.e.,
+The following code is an example of how to do this.
 
-$$
-\begin{align*}
-    \frac{\textup{d}}{\textup{d}t}y(t) = f(y(t), z, t),
-    \qquad
-    y(0) = h(z).
-\end{align*}
-$$
+```matlab
+opt = Reduced_Space_Optimization(obj, con);
+opt.iteration_limit = 200;
+opt.Gauss_Newton_Hess = true;
+opt.use_trust_region = false;
+opt.verbose = false;
+[u_solution, z_solution] = opt.Optimize(z0);
+```

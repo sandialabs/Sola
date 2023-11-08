@@ -12,19 +12,19 @@ classdef Reduced_Space_Optimization < handle
 
     % Member properties are the default optimizer settings for iterations and tolerances
     properties
-        obj
-        con
-        opt_tol
-        fun_tol
-        iteration_limit
-        step_tol
-        max_cg_iter
-        cg_tol
-        verbose
-        Gauss_Newton_Hess
-        use_trust_region
-        z_lb
-        z_ub
+        obj                 % Objective
+        con                 % Constraint
+        opt_tol             % Optimality tolerance
+        fun_tol             % Function tolerance
+        iteration_limit     % Maximum number of iterations
+        step_tol            % Step tolerance
+        max_cg_iter         % Maximum number of conjugate gradient iterations
+        cg_tol              % Conjugate gradient tolerance
+        verbose             % Verbosity
+        Gauss_Newton_Hess   % Use Gauss-Newton approximation of the Hessian
+        use_trust_region    % Use trust region for the optimization
+        z_lb                % Lower bounds for control
+        z_ub                % Upper bounds for control
     end
 
     methods (Access = public)
