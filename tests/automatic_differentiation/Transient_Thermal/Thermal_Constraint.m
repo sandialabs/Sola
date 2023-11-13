@@ -17,8 +17,8 @@ classdef Thermal_Constraint < Dynamic_Constraint
         end
 
         function [h, h_z] = Initial_Condition(this, z)
-            h = ones(this.m, 1);
-            h_z = zeros(this.m, this.m);
+            h = ones(this.n_y, 1);
+            h_z = zeros(this.n_y, this.n_y);
         end
 
         function [Mv] = Time_Instance_RHS_yy_Apply(this, v, y, z, t, lambda)
@@ -26,7 +26,7 @@ classdef Thermal_Constraint < Dynamic_Constraint
         end
 
         function [Mv] = Time_Instance_RHS_yz_Apply(this, v, y, z, t, lambda)
-            Mv = zeros(this.m, size(v, 2));
+            Mv = zeros(this.n_y, size(v, 2));
             for k = 1:size(v, 2)
                 D = this.Assembly(z);
                 D_pert = this.Assembly(z + v(:, k));
@@ -35,7 +35,7 @@ classdef Thermal_Constraint < Dynamic_Constraint
         end
 
         function [Mv] = Time_Instance_RHS_zy_Apply(this, v, y, z, t, lambda)
-            Mv = zeros(this.m, size(v, 2));
+            Mv = zeros(this.n_y, size(v, 2));
             for k = 1:size(v, 2)
                 D_diff = this.Assembly_z_Jacobian(y);
                 D_diff_pert = this.Assembly_z_Jacobian(y + v(:, k));
@@ -65,8 +65,8 @@ classdef Thermal_Constraint < Dynamic_Constraint
 
         function [D] = Assembly(this, z)
             h = this.x(2) - this.x(1);
-            x1 = (0:(this.m - 2)) * h + (h / 2) * (-1 / sqrt(3) + 1);
-            x2 = (0:(this.m - 2)) * h + (h / 2) * (1 / sqrt(3) + 1);
+            x1 = (0:(this.n_y - 2)) * h + (h / 2) * (-1 / sqrt(3) + 1);
+            x2 = (0:(this.n_y - 2)) * h + (h / 2) * (1 / sqrt(3) + 1);
             diff_x = this.Diffusion_Coeff([x1; x2], z);
 
             s = sum(diff_x, 1);
@@ -74,16 +74,16 @@ classdef Thermal_Constraint < Dynamic_Constraint
 
             %             phi_down_dot = -[1;1]/h;
             %             phi_up_dot = [1;1]/h;
-            %             diff_x1 = diff_x(1:(this.m-1));
-            %             diff_x2 = diff_x(this.m:end);
-            %             D = zeros(this.m,this.m);
-            %             for i = 1:this.m
+            %             diff_x1 = diff_x(1:(this.n_y-1));
+            %             diff_x2 = diff_x(this.n_y:end);
+            %             D = zeros(this.n_y,this.n_y);
+            %             for i = 1:this.n_y
             %                 if i > 1
             %                     perm = [diff_x1(i-1) ; diff_x2(i-1)];
             %                     D(i-1,i) = (h/2)*sum(phi_up_dot.*phi_down_dot.*perm);
             %                     D(i,i) = (h/2)*sum(phi_up_dot.*phi_up_dot.*perm);
             %                 end
-            %                 if i < this.m
+            %                 if i < this.n_y
             %                     perm = [diff_x1(i) ; diff_x2(i)];
             %                     D(i,i) = D(i,i) + (h/2)*sum(phi_down_dot.*phi_down_dot.*perm);
             %                     D(i+1,i) = (h/2)*sum(phi_up_dot.*phi_down_dot.*perm);
@@ -97,20 +97,20 @@ classdef Thermal_Constraint < Dynamic_Constraint
             d = [-(1 / 2) * up(1); (1 / 2) * up(1:end - 1) - (1 / 2) * up(2:end); (1 / 2) * up(end)];
             D_diff = diag(d) + (-1 / 2) * diag(up, 1) + (1 / 2) * diag(up, -1);
 
-            %             D_diff = zeros(this.m,this.m);
+            %             D_diff = zeros(this.n_y,this.n_y);
             %             x1 = (h/2)*(-1/sqrt(3) + 1);
             %             x2 = (h/2)*(1/sqrt(3) + 1);
             %             phi_down = [x2;x1]/h;
             %             phi_up = [x1;x2]/h;
             %             phi_down_dot = -[1;1]/h;
             %             phi_up_dot = [1;1]/h;
-            %             for i = 1:this.m
+            %             for i = 1:this.n_y
             %                 if i > 1
             %                     u_prime = u(i-1)*phi_down_dot + u(i)*phi_up_dot;
             %                     D_diff(i-1,i) = (h/2)*sum(phi_up.*phi_down_dot.*u_prime);
             %                     D_diff(i,i) = (h/2)*sum(phi_up.*phi_up_dot.*u_prime);
             %                 end
-            %                 if i < this.m
+            %                 if i < this.n_y
             %                     u_prime = u(i)*phi_down_dot + u(i+1)*phi_up_dot;
             %                     D_diff(i,i) = D_diff(i,i) + (h/2)*sum(phi_down.*phi_down_dot.*u_prime);
             %                     D_diff(i+1,i) = (h/2)*sum(phi_down.*phi_up_dot.*u_prime);

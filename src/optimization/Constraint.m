@@ -5,101 +5,96 @@ classdef Constraint < handle
 
     methods (Abstract, Access = public)
 
-        function [u] = State_Solve(this, z)
-            % *Abstract method.*
-            % Given :math:`\z`, solve the constraint equation
-            % :math:`\c(\u,\z)=\0` for :math:`\u`, i.e., compute
-            % :math:`\u = \S(\z)`.
-            %
-            % Parameters
-            % ----------
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            %
-            % Returns
-            % -------
-            % u
-            %   State :math:`\u = \S(\z) \in \R^{n_u}`.
-        end
+        [u] = State_Solve(this, z)
+        % *Abstract method.*
+        % Given :math:`\z`, solve the constraint equation
+        % :math:`\c(\u,\z)=\0` for :math:`\u`, i.e., compute
+        % :math:`\u = \S(\z)`.
+        %
+        % Parameters
+        % ----------
+        % z
+        %   Control :math:`\z\in\R^{n_z}`.
+        %
+        % Returns
+        % -------
+        % u
+        %   State :math:`\u = \S(\z) \in \R^{n_u}`.
 
-        function [Mv] = c_u_Transpose_Inverse_Apply(this, v, u, z)
-            % *Abstract method.*
-            % Compute the Jacobian-vector product :math:`c_u(\u,\z)\invtrp\v`,
-            % i.e., solve :math:`c_u(\u,\z)\trp\bflambda = \v`
-            % for :math:`\bflambda`.
-            %
-            % Parameters
-            % ----------
-            % v
-            %   Search direction :math:`\v\in\R^{n_u}`.
-            % u
-            %   State :math:`\u\in\R^{n_u}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            %
-            % Returns
-            % -------
-            % Mv : vector
-            %   Jacobian-vector product :math:`c_u(\u,\z)\invtrp\v\in\R^{n_u}`.
-        end
+        [Mv] = c_u_Transpose_Inverse_Apply(this, v, u, z)
+        % *Abstract method.*
+        % Compute the Jacobian-vector product :math:`c_u(\u,\z)\invtrp\v`,
+        % i.e., solve :math:`c_u(\u,\z)\trp\bflambda = \v`
+        % for :math:`\bflambda`.
+        %
+        % Parameters
+        % ----------
+        % v
+        %   Search direction :math:`\v\in\R^{n_u}`.
+        % u
+        %   State :math:`\u\in\R^{n_u}`.
+        % z
+        %   Control :math:`\z\in\R^{n_z}`.
+        %
+        % Returns
+        % -------
+        % Mv : vector
+        %   Jacobian-vector product :math:`c_u(\u,\z)\invtrp\v\in\R^{n_u}`.
 
-        function [Mv] = c_z_Transpose_Apply(this, v, u, z)
-            % *Abstract method.*
-            % Compute the Jacobian-vector product :math:`c_z(\u,\z)\trp\v`.
-            %
-            % Parameters
-            % ----------
-            % v
-            %   Search direction :math:`\v\in\R^{n_u}`.
-            % u
-            %   State :math:`\u\in\R^{n_u}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            %
-            % Returns
-            % -------
-            % Mv : vector
-            %   Jacobian-vector product :math:`c_z(\u,\z)\trp\v\in\R^{n_z}`.
-        end
+        [Mv] = c_z_Transpose_Apply(this, v, u, z)
+        % *Abstract method.*
+        % Compute the Jacobian-vector product :math:`c_z(\u,\z)\trp\v`.
+        %
+        % Parameters
+        % ----------
+        % v
+        %   Search direction :math:`\v\in\R^{n_u}`.
+        % u
+        %   State :math:`\u\in\R^{n_u}`.
+        % z
+        %   Control :math:`\z\in\R^{n_z}`.
+        %
+        % Returns
+        % -------
+        % Mv : vector
+        %   Jacobian-vector product :math:`c_z(\u,\z)\trp\v\in\R^{n_z}`.
 
-        function [Mv] = c_u_Inverse_Apply(this, v, u, z)
-            % *Abstract method.*
-            % Compute the Jacobian-vector product :math:`c_u(\u,\z)^{-1}\v`,
-            % i.e., solve :math:`c_u(\u,\z)\bfmu = \v` for :math:`\bfmu`.
-            %
-            % Parameters
-            % ----------
-            % v
-            %   Search direction :math:`\v\in\R^{n_u}`.
-            % u
-            %   State :math:`\u\in\R^{n_u}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            %
-            % Returns
-            % -------
-            % Mv : vector
-            %   Jacobian-vector product :math:`c_u(\u,\z)^{-1}\v\in\R^{n_u}`.
-        end
+        [Mv] = c_u_Inverse_Apply(this, v, u, z)
+        % *Abstract method.*
+        % Compute the Jacobian-vector product :math:`c_u(\u,\z)^{-1}\v`,
+        % i.e., solve :math:`c_u(\u,\z)\bfmu = \v` for :math:`\bfmu`.
+        %
+        % Parameters
+        % ----------
+        % v
+        %   Search direction :math:`\v\in\R^{n_u}`.
+        % u
+        %   State :math:`\u\in\R^{n_u}`.
+        % z
+        %   Control :math:`\z\in\R^{n_z}`.
+        %
+        % Returns
+        % -------
+        % Mv : vector
+        %   Jacobian-vector product :math:`c_u(\u,\z)^{-1}\v\in\R^{n_u}`.
 
-        function [Mv] = c_z_Apply(this, v, u, z)
-            % *Abstract method.*
-            % Compute the Jacobian-vector product :math:`c_z(\u,\z)\v`.
-            %
-            % Parameters
-            % ----------
-            % v
-            %   Search direction :math:`\v\in\R^{n_z}`.
-            % u
-            %   State :math:`\u\in\R^{n_u}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            %
-            % Returns
-            % -------
-            % Mv : vector
-            %   Jacobian-vector product :math:`c_z(\u,\z)\v\in\R^{n_u}`.
-        end
+        [Mv] = c_z_Apply(this, v, u, z)
+        % *Abstract method.*
+        % Compute the Jacobian-vector product :math:`c_z(\u,\z)\v`.
+        %
+        % Parameters
+        % ----------
+        % v
+        %   Search direction :math:`\v\in\R^{n_z}`.
+        % u
+        %   State :math:`\u\in\R^{n_u}`.
+        % z
+        %   Control :math:`\z\in\R^{n_z}`.
+        %
+        % Returns
+        % -------
+        % Mv : vector
+        %   Jacobian-vector product :math:`c_z(\u,\z)\v\in\R^{n_u}`.
 
     end
 

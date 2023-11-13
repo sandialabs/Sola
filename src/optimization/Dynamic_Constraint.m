@@ -46,162 +46,155 @@ classdef Dynamic_Constraint < Constraint
 
     methods (Abstract, Access = public)
 
-        function [f, f_y, f_z] = Time_Instance_RHS(this, y, z, t)
-            % *Abstract method.*
-            % Evaluate the ODE function :math:`\f(\y,\z,t)` and its Jacobians
-            % :math:`\f_{y}(\y,\z,t)` and :math:`\f_{z}(\y,\z,t)`.
-            %
-            % Parameters
-            % ----------
-            % y
-            %   Differential equation state :math:`\y\in\R^{n_y}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            % t
-            %   Time :math:`t`.
-            %
-            % Returns
-            % -------
-            % f : vector
-            %   Function value :math:`\f(\y,\z,t)\in\R^{n_y}`.
-            % f_y : matrix
-            %   Function Jacobian :math:`\f_{y}(\y,\z,t)\in\R^{n_y \times n_y}`.
-            % f_z : matrix
-            %   Function Jacobian :math:`\f_{z}(\y,\z,t)\in\R^{n_y \times n_z}`.
-        end
+        [f, f_y, f_z] = Time_Instance_RHS(this, y, z, t)
+        % *Abstract method.*
+        % Evaluate the ODE function :math:`\f(\y,\z,t)` and its Jacobians
+        % :math:`\f_{y}(\y,\z,t)` and :math:`\f_{z}(\y,\z,t)`.
+        %
+        % Parameters
+        % ----------
+        % y
+        %   Differential equation state :math:`\y\in\R^{n_y}`.
+        % z
+        %   Control :math:`\z\in\R^{n_z}`.
+        % t
+        %   Time :math:`t`.
+        %
+        % Returns
+        % -------
+        % f : vector
+        %   Function value :math:`\f(\y,\z,t)\in\R^{n_y}`.
+        % f_y : matrix
+        %   Function Jacobian :math:`\f_{y}(\y,\z,t)\in\R^{n_y \times n_y}`.
+        % f_z : matrix
+        %   Function Jacobian :math:`\f_{z}(\y,\z,t)\in\R^{n_y \times n_z}`.
 
-        function [h, h_z] = Initial_Condition(this, z)
-            % *Abstract method.*
-            % Evaluate the ODE initial condition :math:`\h(\z)` and its Jacobian :math:`\h_{z}(\z)`.
-            %
-            % Parameters
-            % ----------
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            %
-            % Returns
-            % -------
-            % h : vector
-            %   Function value :math:`\h(\z)\in\R^{n_y}`.
-            % h_z : matrix
-            %   Function Jacobian :math:`\h_{z}(\z)\in\R^{n_y \times n_z}`.
-        end
+        [h, h_z] = Initial_Condition(this, z)
+        % *Abstract method.*
+        % Evaluate the ODE initial condition :math:`\h(\z)` and its Jacobian :math:`\h_{z}(\z)`.
+        %
+        % Parameters
+        % ----------
+        % z
+        %   Control :math:`\z\in\R^{n_z}`.
+        %
+        % Returns
+        % -------
+        % h : vector
+        %   Function value :math:`\h(\z)\in\R^{n_y}`.
+        % h_z : matrix
+        %   Function Jacobian :math:`\h_{z}(\z)\in\R^{n_y \times n_z}`.
 
-        function [Mv] = Time_Instance_RHS_yy_Apply(this, v, y, z, t, lambda)
-            % *Abstract method.*
-            % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{y,y}(\y,\z,t)\v`.
-            %
-            % Parameters
-            % ----------
-            % v
-            %   Search direction :math:`\v\in\R^{n_y}`.
-            % y
-            %   Differential equation state :math:`\y\in\R^{n_y}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            % t
-            %   Time :math:`t`.
-            % lambda
-            %   Adjoint (of :math:`\y`) :math:`\bflambda\in\R^{n_y}`.
-            %
-            % Returns
-            % -------
-            % Mv : vector
-            %   Vector-Hessian-vector product
-            % :math:`\bflambda\trp \f_{y,y}(\y,\z,t)\v\in\R^{n_y}`.
-        end
+        [Mv] = Time_Instance_RHS_yy_Apply(this, v, y, z, t, lambda)
+        % *Abstract method.*
+        % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{y,y}(\y,\z,t)\v`.
+        %
+        % Parameters
+        % ----------
+        % v
+        %   Search direction :math:`\v\in\R^{n_y}`.
+        % y
+        %   Differential equation state :math:`\y\in\R^{n_y}`.
+        % z
+        %   Control :math:`\z\in\R^{n_z}`.
+        % t
+        %   Time :math:`t`.
+        % lambda
+        %   Adjoint (of :math:`\y`) :math:`\bflambda\in\R^{n_y}`.
+        %
+        % Returns
+        % -------
+        % Mv : vector
+        %   Vector-Hessian-vector product
+        % :math:`\bflambda\trp \f_{y,y}(\y,\z,t)\v\in\R^{n_y}`.
 
-        function [Mv] = Time_Instance_RHS_yz_Apply(this, v, y, z, t, lambda)
-            % *Abstract method.*
-            % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{y,z}(\y,\z,t)\v`.
-            %
-            % Parameters
-            % ----------
-            % v
-            %   Search direction :math:`\v\in\R^{n_z}`.
-            % y
-            %   Differential equation state :math:`\y\in\R^{n_y}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            % t
-            %   Time :math:`t`.
-            % lambda
-            %   Adjoint (of :math:`\y`) :math:`\bflambda\in\R^{n_y}`.
-            %
-            % Returns
-            % -------
-            % Mv : vector
-            %   Vector-Hessian-vector product
-            % :math:`\bflambda\trp \f_{y,z}(\y,\z,t)\v\in\R^{n_y}`.
-        end
+        [Mv] = Time_Instance_RHS_yz_Apply(this, v, y, z, t, lambda)
+        % *Abstract method.*
+        % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{y,z}(\y,\z,t)\v`.
+        %
+        % Parameters
+        % ----------
+        % v
+        %   Search direction :math:`\v\in\R^{n_z}`.
+        % y
+        %   Differential equation state :math:`\y\in\R^{n_y}`.
+        % z
+        %   Control :math:`\z\in\R^{n_z}`.
+        % t
+        %   Time :math:`t`.
+        % lambda
+        %   Adjoint (of :math:`\y`) :math:`\bflambda\in\R^{n_y}`.
+        %
+        % Returns
+        % -------
+        % Mv : vector
+        %   Vector-Hessian-vector product
+        % :math:`\bflambda\trp \f_{y,z}(\y,\z,t)\v\in\R^{n_y}`.
 
-        function [Mv] = Time_Instance_RHS_zy_Apply(this, v, y, z, t, lambda)
-            % *Abstract method.*
-            % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{z,y}(\y,\z,t)\v`.
-            %
-            % Parameters
-            % ----------
-            % v
-            %   Search direction :math:`\v\in\R^{n_y}`.
-            % y
-            %   Differential equation state :math:`\y\in\R^{n_y}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            % t
-            %   Time :math:`t`.
-            % lambda
-            %   Adjoint (of :math:`\y`) :math:`\bflambda\in\R^{n_y}`.
-            %
-            % Returns
-            % -------
-            % Mv : vector
-            %   Vector-Hessian-vector product
-            % :math:`\bflambda\trp \f_{z,y}(\y,\z,t)\v\in\R^{n_z}`.
-        end
+        [Mv] = Time_Instance_RHS_zy_Apply(this, v, y, z, t, lambda)
+        % *Abstract method.*
+        % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{z,y}(\y,\z,t)\v`.
+        %
+        % Parameters
+        % ----------
+        % v
+        %   Search direction :math:`\v\in\R^{n_y}`.
+        % y
+        %   Differential equation state :math:`\y\in\R^{n_y}`.
+        % z
+        %   Control :math:`\z\in\R^{n_z}`.
+        % t
+        %   Time :math:`t`.
+        % lambda
+        %   Adjoint (of :math:`\y`) :math:`\bflambda\in\R^{n_y}`.
+        %
+        % Returns
+        % -------
+        % Mv : vector
+        %   Vector-Hessian-vector product
+        % :math:`\bflambda\trp \f_{z,y}(\y,\z,t)\v\in\R^{n_z}`.
 
-        function [Mv] = Time_Instance_RHS_zz_Apply(this, v, y, z, t, lambda)
-            % *Abstract method.*
-            % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{z,z}(\y,\z,t)\v`.
-            %
-            % Parameters
-            % ----------
-            % v
-            %   Search direction :math:`\v\in\R^{n_z}`.
-            % y
-            %   Differential equation state :math:`\y\in\R^{n_y}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            % t
-            %   Time :math:`t`.
-            % lambda
-            %   Adjoint (of :math:`\y`) :math:`\bflambda\in\R^{n_y}`.
-            %
-            % Returns
-            % -------
-            % Mv : vector
-            %   Vector-Hessian-vector product
-            % :math:`\bflambda\trp \f_{z,z}(\y,\z,t)\v\in\R^{n_z}`.
-        end
+        [Mv] = Time_Instance_RHS_zz_Apply(this, v, y, z, t, lambda)
+        % *Abstract method.*
+        % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{z,z}(\y,\z,t)\v`.
+        %
+        % Parameters
+        % ----------
+        % v
+        %   Search direction :math:`\v\in\R^{n_z}`.
+        % y
+        %   Differential equation state :math:`\y\in\R^{n_y}`.
+        % z
+        %   Control :math:`\z\in\R^{n_z}`.
+        % t
+        %   Time :math:`t`.
+        % lambda
+        %   Adjoint (of :math:`\y`) :math:`\bflambda\in\R^{n_y}`.
+        %
+        % Returns
+        % -------
+        % Mv : vector
+        %   Vector-Hessian-vector product
+        % :math:`\bflambda\trp \f_{z,z}(\y,\z,t)\v\in\R^{n_z}`.
 
-        function [Mv] = Initial_Condition_zz_Apply(this, v, z, lambda)
-            % *Abstract method.*
-            % Compute the vector-Jacobian-vector product :math:`\bflambda\trp \h_{z}(\z)\v`.
-            %
-            % Parameters
-            % ----------
-            % v
-            %   Search direction :math:`\v\in\R^{n_z}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            % lambda
-            %   Adjoint (of :math:`\y`) :math:`\bflambda\in\R^{n_y}`.
-            %
-            % Returns
-            % -------
-            % Mv : vector
-            %   Vector-Jacobian-vector product
-            % :math:`\bflambda\trp \h_{z}(\z)\v\in\R^{n_z}`
-        end
+        [Mv] = Initial_Condition_zz_Apply(this, v, z, lambda)
+        % *Abstract method.*
+        % Compute the vector-Jacobian-vector product :math:`\bflambda\trp \h_{z}(\z)\v`.
+        %
+        % Parameters
+        % ----------
+        % v
+        %   Search direction :math:`\v\in\R^{n_z}`.
+        % z
+        %   Control :math:`\z\in\R^{n_z}`.
+        % lambda
+        %   Adjoint (of :math:`\y`) :math:`\bflambda\in\R^{n_y}`.
+        %
+        % Returns
+        % -------
+        % Mv : vector
+        %   Vector-Jacobian-vector product
+        % :math:`\bflambda\trp \h_{z}(\z)\v\in\R^{n_z}`
 
     end
 

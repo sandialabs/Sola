@@ -9,103 +9,99 @@ classdef Objective < handle
 
     methods (Abstract, Access = public)
 
-        function [val, grad_u, grad_z] = J(this, u, z)
-            % *Abstract method.*
-            % Evaluate the objective function :math:`J(\u,\z)` and its
-            % gradients :math:`\grad{u}J(\u,\z)` and :math:`\grad{z}J(\u,\z)`.
-            %
-            % Parameters
-            % ----------
-            % u
-            %   State :math:`\u\in\R^{n_u}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            %
-            % Returns
-            % -------
-            % val : double
-            %   Objective value :math:`J(\u,\z)`.
-            % grad_u : vector
-            %   Objective gradient :math:`\grad{u}J(\u,\z)`.
-            % grad_z : vector
-            %   Objective gradient :math:`\grad{z}J(\u,\z)`.
-        end
+        [val, grad_u, grad_z] = J(this, u, z)
+        % *Abstract method.*
+        % Evaluate the objective function :math:`J(\u,\z)` and its
+        % gradients :math:`\grad{u}J(\u,\z)` and :math:`\grad{z}J(\u,\z)`.
+        %
+        % Parameters
+        % ----------
+        % u
+        %   State :math:`\u\in\R^{n_u}`.
+        % z
+        %   Control :math:`\z\in\R^{n_z}`.
+        %
+        % Returns
+        % -------
+        % val : double
+        %   Objective value :math:`J(\u,\z)`.
+        % grad_u : vector
+        %   Objective gradient :math:`\grad{u}J(\u,\z)`.
+        % grad_z : vector
+        %   Objective gradient :math:`\grad{z}J(\u,\z)`.
 
-        function [Mv] = J_uu_Apply(this, v, u, z)
-            % *Abstract method.*
-            % Compute :math:`\grad{u,u}J(\u,\z)\v`.
-            %
-            % Parameters
-            % ----------
-            % v
-            %   Search direction :math:`\v\in\R^{n_u}`.
-            % u
-            %   State :math:`\u\in\R^{n_u}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            %
-            % Returns
-            % -------
-            % Mv : vector
-            %   Gradient-vector product :math:`\grad{u,u}J(\u,\z)\v\in\R^{n_u}`.
-        end
+        [Mv] = J_uu_Apply(this, v, u, z)
+        % *Abstract method.*
+        % Compute :math:`\grad{u,u}J(\u,\z)\v`.
+        %
+        % Parameters
+        % ----------
+        % v
+        %   Search direction :math:`\v\in\R^{n_u}`.
+        % u
+        %   State :math:`\u\in\R^{n_u}`.
+        % z
+        %   Control :math:`\z\in\R^{n_z}`.
+        %
+        % Returns
+        % -------
+        % Mv : vector
+        %   Gradient-vector product :math:`\grad{u,u}J(\u,\z)\v\in\R^{n_u}`.
 
-        function [Mv] = J_uz_Apply(this, v, u, z)
-            % *Abstract method.*
-            % Compute :math:`\grad{u,z}J(\u,\z)\v`.
-            %
-            % Parameters
-            % ----------
-            % v
-            %   Search direction :math:`\v\in\R^{n_z}`.
-            % u
-            %   State :math:`\u\in\R^{n_u}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            %
-            % Returns
-            % -------
-            % Mv : vector
-            %   Gradient-vector product :math:`\grad{u,z}J(\u,\z)\v\in\R^{n_u}`.
-        end
+        [Mv] = J_uz_Apply(this, v, u, z)
+        % *Abstract method.*
+        % Compute :math:`\grad{u,z}J(\u,\z)\v`.
+        %
+        % Parameters
+        % ----------
+        % v
+        %   Search direction :math:`\v\in\R^{n_z}`.
+        % u
+        %   State :math:`\u\in\R^{n_u}`.
+        % z
+        %   Control :math:`\z\in\R^{n_z}`.
+        %
+        % Returns
+        % -------
+        % Mv : vector
+        %   Gradient-vector product :math:`\grad{u,z}J(\u,\z)\v\in\R^{n_u}`.
 
-        function [Mv] = J_zu_Apply(this, v, u, z)
-            % *Abstract method.*
-            % Compute :math:`\grad{z,u}J(\u,\z)\v`.
-            %
-            % Parameters
-            % ----------
-            % v
-            %   Search direction :math:`\v\in\R^{n_u}`.
-            % u
-            %   State :math:`\u\in\R^{n_u}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            %
-            % Returns
-            % -------
-            % Mv : vector
-            %   Gradient-vector product :math:`\grad{z,u}J(\u,\z)\v\in\R^{n_z}`.
-        end
+        % function [Mv] = J_zu_Apply(this, v, u, z)
+        [Mv] = J_zu_Apply(this, v, u, z)
+        % *Abstract method.*
+        % Compute :math:`\grad{z,u}J(\u,\z)\v`.
+        %
+        % Parameters
+        % ----------
+        % v
+        %   Search direction :math:`\v\in\R^{n_u}`.
+        % u
+        %   State :math:`\u\in\R^{n_u}`.
+        % z
+        %   Control :math:`\z\in\R^{n_z}`.
+        %
+        % Returns
+        % -------
+        % Mv : vector
+        %   Gradient-vector product :math:`\grad{z,u}J(\u,\z)\v\in\R^{n_z}`.
 
-        function [Mv] = J_zz_Apply(this, v, u, z)
-            % *Abstract method.*
-            % Compute :math:`\grad{z,z}J(\u,\z)\v`.
-            %
-            % Parameters
-            % ----------
-            % v
-            %   Search direction :math:`\v\in\R^{n_z}`.
-            % u
-            %   State :math:`\u\in\R^{n_u}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            %
-            % Returns
-            % -------
-            % Mv : vector
-            %   Gradient-vector product :math:`\grad{z,z}J(\u,\z)\v\in\R^{n_z}`.
-        end
+        [Mv] = J_zz_Apply(this, v, u, z)
+        % *Abstract method.*
+        % Compute :math:`\grad{z,z}J(\u,\z)\v`.
+        %
+        % Parameters
+        % ----------
+        % v
+        %   Search direction :math:`\v\in\R^{n_z}`.
+        % u
+        %   State :math:`\u\in\R^{n_u}`.
+        % z
+        %   Control :math:`\z\in\R^{n_z}`.
+        %
+        % Returns
+        % -------
+        % Mv : vector
+        %   Gradient-vector product :math:`\grad{z,z}J(\u,\z)\v\in\R^{n_z}`.
 
     end
 

@@ -17,7 +17,7 @@ classdef Thermal_Constraint_AD < Dynamic_Constraint_AD
         end
 
         function [h] = Initial_Condition_AD(this, z)
-            h = ones(this.m, 1);
+            h = ones(this.n_y, 1);
         end
 
     end
@@ -31,7 +31,7 @@ classdef Thermal_Constraint_AD < Dynamic_Constraint_AD
         function [D] = Assembly(this, z)
             h = this.x(2) - this.x(1);
             z_coll = this.nodes_to_coll_points * z;
-            diff_x = reshape(z_coll, 2, this.m - 1);
+            diff_x = reshape(z_coll, 2, this.n_y - 1);
             s = sum(diff_x, 1);
             D = diag(([0, s] + [s, 0]) * (1 / h) / 2) + (-1) * diag(s, 1) * (1 / h) / 2 + (-1) * diag(s, -1) * (1 / h) / 2;
         end

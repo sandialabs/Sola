@@ -29,79 +29,75 @@ classdef Dynamic_Objective < Objective
 
     methods (Abstract, Access = public)
 
-        function [val, grad_y] = Time_Instance_Objective(this, y, t)
-            % *Abstract method.*
-            % Evaluate the integrand :math:`g(\y,t)`
-            % and its gradient :math:`\grad{y}g(\y,t)`.
-            %
-            % Parameters
-            % ----------
-            % y
-            %   Differential equation state :math:`\y\in\R^{n_y}`.
-            % t
-            %   Time :math:`t`.
-            %
-            % Returns
-            % -------
-            % val : double
-            %   Function value :math:`g(\y,t)\in\R`.
-            % grad_y : vector
-            %   Function gradient :math:`\grad{y}g(\y,t)\in\R^{n_y}`.
-        end
+        [val, grad_y] = Time_Instance_Objective(this, y, t)
+        % *Abstract method.*
+        % Evaluate the integrand :math:`g(\y,t)`
+        % and its gradient :math:`\grad{y}g(\y,t)`.
+        %
+        % Parameters
+        % ----------
+        % y
+        %   Differential equation state :math:`\y\in\R^{n_y}`.
+        % t
+        %   Time :math:`t`.
+        %
+        % Returns
+        % -------
+        % val : double
+        %   Function value :math:`g(\y,t)\in\R`.
+        % grad_y : vector
+        %   Function gradient :math:`\grad{y}g(\y,t)\in\R^{n_y}`.
 
-        function [val, grad_z] = Regularization_Objective(this, z)
-            % *Abstract method.*
-            % Evaluate the regularization term :math:`R(\z)`
-            % and its gradient :math:`\grad{z}R(\z)`.
-            %
-            % Parameters
-            % ----------
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            %
-            % Returns
-            % -------
-            % val : double
-            %   Function value :math:`R(\z)\in\R`.
-            % grad_y : vector
-            %   Function gradient :math:`\grad{z}R(\z)\in\R^{n_z}`.
-        end
+        [val, grad_z] = Regularization_Objective(this, z)
+        % *Abstract method.*
+        % Evaluate the regularization term :math:`R(\z)`
+        % and its gradient :math:`\grad{z}R(\z)`.
+        %
+        % Parameters
+        % ----------
+        % z
+        %   Control :math:`\z\in\R^{n_z}`.
+        %
+        % Returns
+        % -------
+        % val : double
+        %   Function value :math:`R(\z)\in\R`.
+        % grad_y : vector
+        %   Function gradient :math:`\grad{z}R(\z)\in\R^{n_z}`.
 
-        function [Mv] = Time_Instance_Objective_yy_Apply(this, v, y, t)
-            % *Abstract method.*
-            % Compute the Hessian-vector product :math:`\grad{y,y}g(\y, t)\v`.
-            %
-            % Parameters
-            % ----------
-            % v
-            %   Search direction :math:`\v\in\R^{n_y}`.
-            % y
-            %   Differential equation state :math:`\y\in\R^{n_y}`.
-            % t
-            %   Time :math:`t`.
-            %
-            % Returns
-            % -------
-            % Mv : vector
-            %   Hessian-vector product :math:`\grad{y,y}g(\y, t)\v\in\R^{n_y}`
-        end
+        [Mv] = Time_Instance_Objective_yy_Apply(this, v, y, t)
+        % *Abstract method.*
+        % Compute the Hessian-vector product :math:`\grad{y,y}g(\y, t)\v`.
+        %
+        % Parameters
+        % ----------
+        % v
+        %   Search direction :math:`\v\in\R^{n_y}`.
+        % y
+        %   Differential equation state :math:`\y\in\R^{n_y}`.
+        % t
+        %   Time :math:`t`.
+        %
+        % Returns
+        % -------
+        % Mv : vector
+        %   Hessian-vector product :math:`\grad{y,y}g(\y, t)\v\in\R^{n_y}`
 
-        function [Mv] = Regularization_Objective_zz_Apply(this, v, z)
-            % *Abstract method.*
-            % Compute the Hessian-vector product :math:`\grad{z,z}R(\z)\v`.
-            %
-            % Parameters
-            % ----------
-            % v
-            %   Search direction :math:`\v\in\R^{n_z}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            %
-            % Returns
-            % -------
-            % Mv : vector
-            %   Hessian-vector product :math:`\grad{z,z}R(\z)\v\in\R^{n_z}`
-        end
+        [Mv] = Regularization_Objective_zz_Apply(this, v, z)
+        % *Abstract method.*
+        % Compute the Hessian-vector product :math:`\grad{z,z}R(\z)\v`.
+        %
+        % Parameters
+        % ----------
+        % v
+        %   Search direction :math:`\v\in\R^{n_z}`.
+        % z
+        %   Control :math:`\z\in\R^{n_z}`.
+        %
+        % Returns
+        % -------
+        % Mv : vector
+        %   Hessian-vector product :math:`\grad{z,z}R(\z)\v\in\R^{n_z}`
 
     end
 
