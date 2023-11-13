@@ -50,12 +50,12 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
             if isempty(time_index)
                 [Jac, Fun] = Jac_Time_Instance_RHS_AD_Jac(this, [y; z], t);
                 f = Fun;
-                f_y = Jac(:, 1:this.m);
-                f_z = Jac(:, (this.m + 1):end);
+                f_y = Jac(:, 1:this.n_y);
+                f_z = Jac(:, (this.n_y + 1):end);
             else
                 f = this.f_current(:, time_index);
-                f_y = this.Jac_current(:, 1:this.m, time_index);
-                f_z = this.Jac_current(:, (this.m + 1):end, time_index);
+                f_y = this.Jac_current(:, 1:this.n_y, time_index);
+                f_z = this.Jac_current(:, (this.n_y + 1):end, time_index);
             end
         end
 
@@ -72,9 +72,9 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
             time_index = this.Update_Hessian(y, z, t, lambda);
             if isempty(time_index)
                 M = Hess_Time_Instance_RHS_AD_Hes(this, [y; z], t, lambda);
-                Mv = M(1:this.m, 1:this.m) * v;
+                Mv = M(1:this.n_y, 1:this.n_y) * v;
             else
-                Mv = this.Hess_current(1:this.m, 1:this.m, time_index) * v;
+                Mv = this.Hess_current(1:this.n_y, 1:this.n_y, time_index) * v;
             end
         end
 
@@ -82,9 +82,9 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
             time_index = this.Update_Hessian(y, z, t, lambda);
             if isempty(time_index)
                 M = Hess_Time_Instance_RHS_AD_Hes(this, [y; z], t, lambda);
-                Mv = M(1:this.m, (this.m + 1):end) * v;
+                Mv = M(1:this.n_y, (this.n_y + 1):end) * v;
             else
-                Mv = this.Hess_current(1:this.m, (this.m + 1):end, time_index) * v;
+                Mv = this.Hess_current(1:this.n_y, (this.n_y + 1):end, time_index) * v;
             end
         end
 
@@ -92,9 +92,9 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
             time_index = this.Update_Hessian(y, z, t, lambda);
             if isempty(time_index)
                 M = Hess_Time_Instance_RHS_AD_Hes(this, [y; z], t, lambda);
-                Mv = M((this.m + 1):end, 1:this.m) * v;
+                Mv = M((this.n_y + 1):end, 1:this.n_y) * v;
             else
-                Mv = this.Hess_current((this.m + 1):end, 1:this.m, time_index) * v;
+                Mv = this.Hess_current((this.n_y + 1):end, 1:this.n_y, time_index) * v;
             end
         end
 
@@ -102,9 +102,9 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
             time_index = this.Update_Hessian(y, z, t, lambda);
             if isempty(time_index)
                 M = Hess_Time_Instance_RHS_AD_Hes(this, [y; z], t, lambda);
-                Mv = M((this.m + 1):end, (this.m + 1):end) * v;
+                Mv = M((this.n_y + 1):end, (this.n_y + 1):end) * v;
             else
-                Mv = this.Hess_current((this.m + 1):end, (this.m + 1):end, time_index) * v;
+                Mv = this.Hess_current((this.n_y + 1):end, (this.n_y + 1):end, time_index) * v;
             end
         end
 
@@ -120,21 +120,21 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
     end
 
     % Input:
-    % m: the dimension of the ODE state y(t)
-    % n: the dimension of the control z
+    % n_y: the dimension of the ODE state y(t)
+    % n_z: the dimension of the control z
     % T: the final time
-    % N: the number of nodes in the time mesh
+    % n_t: the number of nodes in the time mesh
     methods (Access = public)
 
-        function this = Dynamic_Constraint_AD(m, n, T, N)
-            this@Dynamic_Constraint(m, n, T, N);
+        function this = Dynamic_Constraint_AD(n_y, n_z, T, n_t)
+            this@Dynamic_Constraint(n_y, n_z, T, n_t);
 
-            this.yt_current = inf * ones(m, N);
-            this.z_current = inf * ones(n, N);
-            this.lambdat_current = inf * ones(m, N);
-            this.f_current = inf * ones(m, N);
-            this.Jac_current = inf * ones(m, m + n, N);
-            this.Hess_current = inf * ones(m + n, m + n, N);
+            this.yt_current = inf * ones(n_y, n_t);
+            this.z_current = inf * ones(n_z, n_t);
+            this.lambdat_current = inf * ones(n_y, n_t);
+            this.f_current = inf * ones(n_y, n_t);
+            this.Jac_current = inf * ones(n_y, n_y + n_z, n_t);
+            this.Hess_current = inf * ones(n_y + n_z, n_y + n_z, n_t);
         end
 
         function [] = AD_Initialization(this)
@@ -146,14 +146,14 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
             cd AdiGator_Files;
 
             % Test if any functions have changed
-            y = randn(this.m, 1);
-            z = randn(this.n, 1);
+            y = randn(this.n_y, 1);
+            z = randn(this.n_z, 1);
             t = rand;
-            lambda = randn(this.m, 1);
+            lambda = randn(this.n_y, 1);
             try
                 [~, fold] = Jac_Time_Instance_RHS_AD_Jac(this, [y; z], t);
             catch
-                fold = zeros(this.m, 1);
+                fold = zeros(this.n_y, 1);
             end
             fcurrent = this.Time_Instance_RHS_AD(y, z, t);
             if norm(fold - fcurrent) > 10^-15
@@ -188,7 +188,7 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
             try
                 [~, icold] = Jac_Initial_Condition_AD_Jac(this, z);
             catch
-                icold = zeros(this.m, 1);
+                icold = zeros(this.n_y, 1);
             end
             iccurrent = this.Initial_Condition_AD(z);
             if norm(icold - iccurrent) > 10^-15

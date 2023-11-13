@@ -39,12 +39,12 @@ classdef Dynamic_Objective_AD < Dynamic_Objective
     methods (Access = public)
 
         % Input:
-        % m: the dimension of the ODE state y(t)
-        % n: the dimension of the control z
+        % n_y: the dimension of the ODE state y(t)
+        % n_z: the dimension of the control z
         % T: the final time
-        % N: the number of nodes in the time mesh
-        function this = Dynamic_Objective_AD(m, n, T, N)
-            this@Dynamic_Objective(m, n, T, N);
+        % n_t: the number of nodes in the time mesh
+        function this = Dynamic_Objective_AD(n_y, n_z, T, n_t)
+            this@Dynamic_Objective(n_y, n_z, T, n_t);
             this.verbose = true;
         end
 
@@ -57,8 +57,8 @@ classdef Dynamic_Objective_AD < Dynamic_Objective
             cd AdiGator_Files;
 
             % Test if any functions have changed
-            y = randn(this.m, 1);
-            z = randn(this.n, 1);
+            y = randn(this.n_y, 1);
+            z = randn(this.n_z, 1);
             t = rand;
             try
                 [~, valold] = grad_Time_Instance_Objective_AD_Jac(this, y, t);

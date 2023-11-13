@@ -1,8 +1,8 @@
-# Examples
+# Tutorials
 
 ```{eval-rst}
 .. toctree::
    :maxdepth: 1
 
-   examples/example1
+   tutorials/example1
 ```

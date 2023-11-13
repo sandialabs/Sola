@@ -4,15 +4,15 @@ This example considers a [constrained optimization problem](../../problems/optim
 
 $$
 \begin{aligned}
-    \min_{u,z} ~& J(u,z)
+    \min_{\u,\z} ~& J(\u,\z)
     \\
-    s.t. ~~& c(u,z) = 0
+    s.t. ~~& \c(\u,\z) = 0
 \end{aligned}
 $$
 
-where the state $u$ is the solution of a steady-state partial differential equation.
+where the state $\u$ is the solution of a steady-state partial differential equation.
 
-We will implement subclasses of [`Objective`](sabl:optimization-objective) and [`Constraint`](sabl:optimization-constraints) and show how to solve the optimization problem with a [`Reduced_Space_Optimization`](sabl:optimizer-class).
+We will implement subclasses of {class}`Objective` and {class}`Constraint` and show how to solve the optimization problem with a {class}`Reduced_Space_Optimization`.
 
 ## Problem Statement
 

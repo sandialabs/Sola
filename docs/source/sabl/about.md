@@ -7,4 +7,4 @@ Unlike open-source projects, new releases of MATLAB are guaranteed to be backwar
 In other words, code that functions today will still function 20 years from now.
 :::
 
-To get started with SABL, read the [Code Structure](./anatomy.md) summaries or jump straight into [Example 1](./examples/example1.md).
+To get started with SABL, read the [Guides](./guides) or jump straight into [Tutorial 1](./tutorials/example1).

@@ -24,21 +24,19 @@ classdef Example_2_Objective < Dynamic_Objective
         end
 
         function [Mv] = Time_Instance_Objective_yy_Apply(this, v, y, t)
-            A = 2 * eye(2);
-            Mv = A * v;
+            Mv = 2 * eye(2) * v;
         end
 
         function [Mv] = Regularization_Objective_zz_Apply(this, v, z)
-            A = 2 * eye(2);
-            Mv = A * v;
+            Mv = 2 * eye(2) * v;
         end
 
     end
 
     methods (Access = public)
 
-        function this = Example_2_Objective(m, n, T, N)
-            this = this@Dynamic_Objective(m, n, T, N);
+        function this = Example_2_Objective(n_y, n_z, T, n_t)
+            this = this@Dynamic_Objective(n_y, n_z, T, n_t);
         end
 
     end

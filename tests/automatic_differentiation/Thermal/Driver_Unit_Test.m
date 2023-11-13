@@ -5,20 +5,20 @@ rng(12);
 
 print_output = false;
 
-m = 50;
-con = Thermal_Constraint(m);
-con_AD = Thermal_Constraint_AD(m);
+n_y = 50;
+con = Thermal_Constraint(n_y);
+con_AD = Thermal_Constraint_AD(n_y);
 con_AD.verbose = print_output;
 evalc('con_AD.AD_Initialization()');
 
 obj = Thermal_Objective(con);
-obj_AD = Thermal_Objective_AD(m, m, con);
+obj_AD = Thermal_Objective_AD(n_y, n_y, con);
 obj_AD.verbose = print_output;
 evalc('obj_AD.AD_Initialization()');
 
-u = randn(m, 1);
-z = randn(m, 1);
-v = randn(m, 1);
+u = randn(n_y, 1);
+z = randn(n_y, 1);
+v = randn(n_y, 1);
 
 error = 0;
 
@@ -112,7 +112,7 @@ if print_output
     disp(['Error = ', num2str(local_error)]);
 end
 
-lambda = randn(m, 1);
+lambda = randn(n_y, 1);
 Mv = con.c_uu_Apply(v, u, z, lambda);
 Mv_AD = con_AD.c_uu_Apply(v, u, z, lambda);
 local_error = norm(Mv - Mv_AD);
@@ -121,7 +121,7 @@ if print_output
     disp(['Error = ', num2str(local_error)]);
 end
 
-lambda = randn(m, 1);
+lambda = randn(n_y, 1);
 Mv = con.c_uz_Apply(v, u, z, lambda);
 Mv_AD = con_AD.c_uz_Apply(v, u, z, lambda);
 local_error = norm(Mv - Mv_AD);
@@ -130,7 +130,7 @@ if print_output
     disp(['Error = ', num2str(local_error)]);
 end
 
-lambda = randn(m, 1);
+lambda = randn(n_y, 1);
 Mv = con.c_zu_Apply(v, u, z, lambda);
 Mv_AD = con_AD.c_zu_Apply(v, u, z, lambda);
 local_error = norm(Mv - Mv_AD);
@@ -139,7 +139,7 @@ if print_output
     disp(['Error = ', num2str(local_error)]);
 end
 
-lambda = randn(m, 1);
+lambda = randn(n_y, 1);
 Mv = con.c_zz_Apply(v, u, z, lambda);
 Mv_AD = con_AD.c_zz_Apply(v, u, z, lambda);
 local_error = norm(Mv - Mv_AD);

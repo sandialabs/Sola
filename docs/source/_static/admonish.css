@@ -1,0 +1,17 @@
+div.admonition.abstract {
+    border-color: rgb(254, 181, 13);
+}
+
+div.admonition.abstract>.admonition-title:before {
+    background-color: rgb(255, 248, 230)
+}
+
+div.admonition.abstract>.admonition-title:after {
+    color: rgb(254, 181, 13);
+    content: "\f1c9";
+    /* fa-regular fa-file-code */
+}
+
+div.admonition.abstract>.admonition-title {
+    color: rgb(26, 30, 37);
+}

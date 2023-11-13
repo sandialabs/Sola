@@ -3,25 +3,22 @@ close all;
 addpath('../../../src/optimization/');
 rng(89234);
 
-m = 3;
-n = 3;
+n_y = 3;
+n_z = 3;
 T = .05;
-N = 10^2;
-obj = Example_4_Objective(m, n, T, N);
-con = Example_4_Constraint(m, n, T, N);
+n_t = 10^2;
+
+obj = Example_4_Objective(n_y, n_z, T, n_t);
+con = Example_4_Constraint(n_y, n_z, T, n_t);
 opt = Reduced_Space_Optimization(obj, con);
 con.verbose = false;
 opt.verbose = false;
-z0 = rand(n, 1) + 1;
 
-y0 = rand(m, 1) + 1;
+z0 = rand(n_z, 1) + 1;
+y0 = rand(n_y, 1) + 1;
 t = rand;
-con.Time_Instance_RHS_Jacobian_y_Check(y0, z0, t);
-con.Time_Instance_RHS_Jacobian_z_Check(y0, z0, t);
-con.Time_Instance_RHS_Hessian_yy_Check(y0, z0, t);
-con.Time_Instance_RHS_Hessian_yz_Check(y0, z0, t);
-con.Time_Instance_RHS_Hessian_zy_Check(y0, z0, t);
-con.Time_Instance_RHS_Hessian_zz_Check(y0, z0, t);
+con.Time_Instance_RHS_Jacobian_Check(y0, z0, t);
+con.Time_Instance_RHS_Hessian_Check(y0, z0, t);
 opt.Finite_Difference_Gradient_Check(z0);
 opt.Finite_Difference_Hessian_Check(z0);
 

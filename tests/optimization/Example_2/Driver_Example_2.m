@@ -3,14 +3,16 @@ close all;
 addpath('../../../src/optimization/');
 rng(142534);
 
-m = 2;
-n = 2;
+n_y = 2;
+n_z = 2;
 T = .1;
-N = 10^2;
-obj = Example_2_Objective(m, n, T, N);
-con = Example_2_Constraint(m, n, T, N);
+n_t = 10^2;
+
+obj = Example_2_Objective(n_y, n_z, T, n_t);
+con = Example_2_Constraint(n_y, n_z, T, n_t);
 opt = Reduced_Space_Optimization(obj, con);
 opt.verbose = false;
+
 z0 = randn(2, 1);
 opt.Finite_Difference_Gradient_Check(z0);
 opt.Finite_Difference_Hessian_Check(z0);
