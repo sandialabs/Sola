@@ -90,12 +90,17 @@ classdef HDSA_MD_Interface_Elliptic_Prior < HDSA_MD_Interface
         end
 
         function [u_out] = Apply_W_d(this, u_in)
-            if ~this.is_transient
+            if ~this.is_transient || (size(u_in, 1) < this.m)
                 tmp1 = this.Apply_E_d(u_in);
                 tmp2 = this.Apply_M_u_Inverse(tmp1);
                 u_out = this.Apply_E_d_Transpose(tmp2);
             else
-                u_out = 0;
+                u_tmp = reshape(u_in, this.opt.con.n_y, this.opt.con.n_t);
+                u_tmp = u_tmp * this.transient_prior_cov.E_td;
+                tmp1 = this.Apply_E_d(u_tmp);
+                tmp2 = this.Apply_M_u_Inverse(tmp1);
+                u_out = this.Apply_E_d_Transpose(tmp2);
+                u_out = u_out(:);
             end
         end
 
@@ -126,7 +131,13 @@ classdef HDSA_MD_Interface_Elliptic_Prior < HDSA_MD_Interface
                 K = (this.sing_vals.^2) ./ (1 + this.alpha_u * scalar * this.sing_vals.^2);
                 u_out = this.alpha_u * this.sing_vecs_output * diag(K) * this.sing_vecs_output' * u_in;
             else
-                u_out = 0;
+                u_tmp = reshape(u_in, this.opt.con.n_y, this.opt.con.n_t);
+                u_tmp = this.sing_vecs_output' * u_tmp * this.transient_prior_cov.E_td_inv_evecs;
+                aleph = (this.sing_vals.^2) * this.transient_prior_cov.evals';
+                aleph = aleph ./ (1 + this.alpha_u * scalar * aleph);
+                u_tmp = u_tmp .* aleph;
+                u_tmp = this.sing_vecs_output * u_tmp * this.transient_prior_cov.E_td_inv_evecs';
+                u_out = this.alpha_u * u_tmp(:);
             end
         end
 
@@ -134,7 +145,10 @@ classdef HDSA_MD_Interface_Elliptic_Prior < HDSA_MD_Interface
             if ~this.is_transient
                 u_out = this.alpha_u * this.sing_vecs_output * diag(this.sing_vals.^2) * this.sing_vecs_output' * u_in;
             else
-                u_out = 0;
+                u_tmp = reshape(u_in, this.opt.con.n_y, this.opt.con.n_t);
+                u_tmp = u_tmp * this.transient_prior_cov.E_td_inv_evecs * diag(this.transient_prior_cov.evals) * this.transient_prior_cov.E_td_inv_evecs';
+                u_out = this.alpha_u * this.sing_vecs_output * diag(this.sing_vals.^2) * this.sing_vecs_output' * u_tmp;
+                u_out = u_out(:);
             end
         end
 
@@ -145,7 +159,11 @@ classdef HDSA_MD_Interface_Elliptic_Prior < HDSA_MD_Interface
                 r = length(this.sing_vals);
                 u_out = sqrt(this.alpha_u) * this.sing_vecs_output * diag(this.sing_vals) * u_in(1:r, :);
             else
-                u_out = 0;
+                r = length(this.sing_vals);
+                u_tmp = reshape(u_in, this.opt.con.n_y, this.opt.con.n_t);
+                u_tmp = u_tmp * diag(sqrt(this.transient_prior_cov.evals)) * this.transient_prior_cov.E_td_inv_evecs';
+                u_out = sqrt(this.alpha_u) * this.sing_vecs_output * diag(this.sing_vals) * u_tmp(1:r, :);
+                u_out = u_out(:);
             end
         end
 
@@ -157,7 +175,12 @@ classdef HDSA_MD_Interface_Elliptic_Prior < HDSA_MD_Interface
                 r = length(this.sing_vals);
                 u_out = sqrt(this.alpha_u) * this.sing_vecs_output * diag(sqrt(K)) * u_in(1:r, :);
             else
-                u_out = 0;
+                u_tmp = reshape(u_in, this.opt.con.n_y, this.opt.con.n_t);
+                aleph = (this.sing_vals.^2) * this.transient_prior_cov.evals';
+                aleph = aleph ./ (1 + this.alpha_u * scalar * aleph);
+                u_tmp = u_tmp .* sqrt(aleph);
+                u_tmp = this.sing_vecs_output * u_tmp * this.transient_prior_cov.E_td_inv_evecs';
+                u_out = sqrt(this.alpha_u) * u_tmp(:);
             end
         end
 

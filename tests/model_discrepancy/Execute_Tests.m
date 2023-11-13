@@ -21,3 +21,7 @@ cd ..;
 cd Randomized_GEVP/;
 Driver;
 cd ..;
+
+cd Transient_Test_Problem/;
+Driver_Unit_Test;
+cd ..;

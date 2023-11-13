@@ -8,6 +8,7 @@ classdef HDSA_Transient_Prior_Covariance < handle
         E_td
         evecs
         evals
+        E_td_inv_evecs
     end
 
     methods
@@ -24,6 +25,7 @@ classdef HDSA_Transient_Prior_Covariance < handle
         function [] = Compute_Time_Covariance_GEVP(this, num_evals, oversampling)
             gevp = Time_Covariance_GEVP(this.E_tu, this.E_td);
             [this.evecs, this.evals] = gevp.Compute_GEVP(num_evals, oversampling);
+            this.E_td_inv_evecs = this.E_td \ this.evecs;
         end
 
     end
