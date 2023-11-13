@@ -23,7 +23,7 @@ classdef Hessian_GEVP < Randomized_GEVP
             vec_out = this.normalization_coeff * this.md_interface.Apply_W_z_Inverse(vec_in);
         end
 
-        function [vec_out] = Apply_Weighting_Operator_Inverse_Factor(this, vec_in)
+        function [vec_out] = Apply_Weighting_Operator_Preconditioner_Factor(this, vec_in)
             vec_out = sqrt(this.normalization_coeff) * this.md_interface.Apply_W_z_Inverse_Factor(vec_in);
         end
 

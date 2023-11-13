@@ -42,8 +42,12 @@ classdef HDSA_Sabl_MD_Interface_Elliptic_Prior < HDSA_MD_Interface_Elliptic_Prio
 
     methods
 
-        function this = HDSA_Sabl_MD_Interface_Elliptic_Prior(opt, alpha_u, alpha_z)
-            this@HDSA_MD_Interface_Elliptic_Prior(alpha_u, alpha_z);
+        function this = HDSA_Sabl_MD_Interface_Elliptic_Prior(opt, alpha_u, alpha_z, transient_prior_cov)
+            switch nargin
+                case 3
+                    transient_prior_cov = [];
+            end
+            this@HDSA_MD_Interface_Elliptic_Prior(alpha_u, alpha_z, transient_prior_cov);
             this.opt = opt;
             this.z_current = this.Load_Optimal_z();
             [~, ~, this.hessian_data] = this.opt.Jhat(this.z_current);

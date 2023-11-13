@@ -6,6 +6,8 @@ classdef HDSA_MD_Interface_Elliptic_Prior < HDSA_MD_Interface
         sing_vals
         alpha_u
         alpha_z
+        is_transient
+        transient_prior_cov
     end
 
     methods (Abstract, Access = public)
@@ -50,9 +52,20 @@ classdef HDSA_MD_Interface_Elliptic_Prior < HDSA_MD_Interface
 
     methods
 
-        function this = HDSA_MD_Interface_Elliptic_Prior(alpha_u, alpha_z)
+        function this = HDSA_MD_Interface_Elliptic_Prior(alpha_u, alpha_z, transient_prior_cov)
             this.alpha_u = alpha_u;
             this.alpha_z = alpha_z;
+            switch nargin
+                case 2
+                    this.is_transient = false;
+                case 3
+                    if isempty(transient_prior_cov)
+                        this.is_transient = false;
+                    else
+                        this.is_transient = true;
+                        this.transient_prior_cov = transient_prior_cov;
+                    end
+            end
         end
 
         % This function must be implemented to enable Hessian GEVP
@@ -77,9 +90,13 @@ classdef HDSA_MD_Interface_Elliptic_Prior < HDSA_MD_Interface
         end
 
         function [u_out] = Apply_W_d(this, u_in)
-            tmp1 = this.Apply_E_d(u_in);
-            tmp2 = this.Apply_M_u_Inverse(tmp1);
-            u_out = this.Apply_E_d_Transpose(tmp2);
+            if ~this.is_transient
+                tmp1 = this.Apply_E_d(u_in);
+                tmp2 = this.Apply_M_u_Inverse(tmp1);
+                u_out = this.Apply_E_d_Transpose(tmp2);
+            else
+                u_out = 0;
+            end
         end
 
         function [z_out] = Apply_W_z_Inverse(this, z_in)
@@ -105,27 +122,43 @@ classdef HDSA_MD_Interface_Elliptic_Prior < HDSA_MD_Interface
         end
 
         function [u_out] = Apply_W_u_Plus_scalar_W_d_Inverse(this, u_in, scalar)
-            K = (this.sing_vals.^2) ./ (1 + this.alpha_u * scalar * this.sing_vals.^2);
-            u_out = this.alpha_u * this.sing_vecs_output * diag(K) * this.sing_vecs_output' * u_in;
+            if ~this.is_transient
+                K = (this.sing_vals.^2) ./ (1 + this.alpha_u * scalar * this.sing_vals.^2);
+                u_out = this.alpha_u * this.sing_vecs_output * diag(K) * this.sing_vecs_output' * u_in;
+            else
+                u_out = 0;
+            end
         end
 
         function [u_out] = Apply_W_u_Inverse(this, u_in)
-            u_out = this.alpha_u * this.sing_vecs_output * diag(this.sing_vals.^2) * this.sing_vecs_output' * u_in;
+            if ~this.is_transient
+                u_out = this.alpha_u * this.sing_vecs_output * diag(this.sing_vals.^2) * this.sing_vecs_output' * u_in;
+            else
+                u_out = 0;
+            end
         end
 
         % Factorize W_u^{-1}=F*F^T, function gives u_out=F*u_in
         % This function must be implemented to enable posterior update sampling
         function [u_out] = Apply_W_u_Inverse_Factor(this, u_in)
-            r = length(this.sing_vals);
-            u_out = sqrt(this.alpha_u) * this.sing_vecs_output * diag(this.sing_vals) * u_in(1:r, :);
+            if ~this.is_transient
+                r = length(this.sing_vals);
+                u_out = sqrt(this.alpha_u) * this.sing_vecs_output * diag(this.sing_vals) * u_in(1:r, :);
+            else
+                u_out = 0;
+            end
         end
 
         % Factorize (W_u+scalar*W_d)^{-1}=F*F^T, function gives u_out=F*u_in
         % This function must be implemented to enable posterior update sampling
         function [u_out] = Apply_W_u_Plus_scalar_W_d_Inverse_Factor(this, u_in, scalar)
-            K = (this.sing_vals.^2) ./ (1 + this.alpha_u * scalar * this.sing_vals.^2);
-            r = length(this.sing_vals);
-            u_out = sqrt(this.alpha_u) * this.sing_vecs_output * diag(sqrt(K)) * u_in(1:r, :);
+            if ~this.is_transient
+                K = (this.sing_vals.^2) ./ (1 + this.alpha_u * scalar * this.sing_vals.^2);
+                r = length(this.sing_vals);
+                u_out = sqrt(this.alpha_u) * this.sing_vecs_output * diag(sqrt(K)) * u_in(1:r, :);
+            else
+                u_out = 0;
+            end
         end
 
         function [] = Compute_Elliptic_GSVD(this, num_sing_vals, oversampling, num_subspace_iters, u_vec)
