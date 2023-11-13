@@ -29,13 +29,11 @@ classdef Example_2_Constraint < Dynamic_Constraint
         end
 
         function [Mv] = Time_Instance_RHS_yz_Apply(this, v, y, z, t, lambda)
-            num_vecs = size(v, 2);
-            Mv = zeros(this.m, num_vecs);
+            Mv = zeros(this.n_y, size(v, 2));
         end
 
         function [Mv] = Time_Instance_RHS_zy_Apply(this, v, y, z, t, lambda)
-            num_vecs = size(v, 2);
-            Mv = zeros(length(z), num_vecs);
+            Mv = zeros(length(z), size(v, 2));
         end
 
         function [Mv] = Time_Instance_RHS_zz_Apply(this, v, y, z, t, lambda)
@@ -50,8 +48,8 @@ classdef Example_2_Constraint < Dynamic_Constraint
 
     methods (Access = public)
 
-        function this = Example_2_Constraint(m, n, T, N)
-            this = this@Dynamic_Constraint(m, n, T, N);
+        function this = Example_2_Constraint(n_y, n_z, T, n_t)
+            this = this@Dynamic_Constraint(n_y, n_z, T, n_t);
         end
 
     end

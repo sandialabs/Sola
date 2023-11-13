@@ -1,31 +1,20 @@
 # conf.py
-"""
-Configuration file for the Sphinx documentation builder.
+"""Configuration file for the Sphinx documentation builder.
 
 This file only contains a selection of the most common options.
 For a full list see the documentation:
 https://www.sphinx-doc.org/en/master/usage/configuration.html.
 """
 
-# -- Path setup --------------------------------------------------------------
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import time
 
 
 # -- Project information -----------------------------------------------------
 
-import time
-
-
 project = "WOLF"
 copyright = f"{time.strftime('%Y')} Sandia National Laboratories"
-author = "Joseph Hart, Shane McQuarrie, and Bart van Bloemen Waanders"
+author = "Joseph Hart, Shane A. McQuarrie, and Bart van Bloemen Waanders"
 
 # The full version, including alpha/beta/rc tags
 release = "0.0.1"
@@ -45,6 +34,9 @@ extensions = [
     "sphinx_proof",  # Theorems, algorithms, etc.
     "sphinx_tippy",  # Previews when hovering over links.
     "sphinx_togglebutton",  # Dropdowns.
+    "sphinxcontrib.matlab",  # MATLAB API generation.
+    "sphinx.ext.autodoc",  # API generation.
+    "sphinx.ext.napoleon",  # Better docstring formatting.
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -60,12 +52,22 @@ exclude_patterns = []
 
 # The theme to use for HTML and HTML Help pages.
 html_theme = "sphinx_book_theme"
+html_theme_options = {
+    "path_to_docs": "docs/",
+    "home_page_in_toc": True,
+    "repository_url": "https://cee-gitlab.sandia.gov/joshart/sabl",
+    # "use_issues_button": True,    # Not supported for GitLab
+    "use_download_button": False,
+    "use_fullscreen_button": True,
+    "use_repository_button": True,
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 html_css_files = [
+    "admonish.css",  # Custom admonition :class: abstract
     "colors.css",  # Explicit text coloring.
     "rightalign.css",  # Right align equation labels.
     "tippy.css",  # Correct theme for link previews.
@@ -94,7 +96,35 @@ mathjax3_config = {
     "tex": {
         "macros": {
             "trp": r"{^{\mathsf{T}}}",
+            "invtrp": r"{^{-\mathsf{T}}}",
+            "grad": [r"\nabla_{\!#1}\,", 1],
+            "c": r"\mathbf{c}",
+            "f": r"\mathbf{f}",
+            "g": r"\mathbf{g}",
+            "h": r"\mathbf{h}",
+            "u": r"\mathbf{u}",
+            "v": r"\mathbf{v}",
+            "w": r"\mathbf{w}",
+            "x": r"\mathbf{x}",
+            "y": r"\mathbf{y}",
+            "z": r"\mathbf{z}",
+            "S": r"\mathbf{S}",
+            "0": r"\mathbf{0}",
+            "J": r"\mathcal{J}",
+            "R": r"\mathbb{R}",
             "RR": r"\mathbb{R}",
+            "bflambda": r"\boldsymbol{\lambda}",
+            "bfmu": r"\boldsymbol{\mu}",
+            "bfgamma": r"\boldsymbol{\gamma}",
         }
     }
 }
+
+# MATLAB API generation.
+autodoc_member_order = "bysource"
+matlab_auto_link = "basic"
+matlab_class_signature = True
+matlab_short_links = True
+matlab_show_property_default_value = True
+matlab_src_dir = os.path.abspath(os.path.join("..", "..", "src"))
+primary_domain = "mat"

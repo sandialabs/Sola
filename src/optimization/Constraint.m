@@ -1,104 +1,222 @@
-% Define the constraint function c(u, z) where
-% u in R^{n_u}
-% z in R^{n_z}
-% c(u, z) in R^{n_u}
-
 classdef Constraint < handle
+    % Define a constraint function :math:`\c(\u, \z)\to\R^{n_u}` where
+    % :math:`\u \in \R^{n_u}` is the state and
+    % :math:`\z \in \R^{n_z}` is the control.
 
     methods (Abstract, Access = public)
 
-        % Input:
-        % z: the control z in R^{n_z}
-        % Output:
-        % u: u = S(z) in R^{n_u}
-        [u] = State_Solve(this, z)
+        function [u] = State_Solve(this, z)
+            % *Abstract method.*
+            % Given :math:`\z`, solve the constraint equation
+            % :math:`\c(\u,\z)=\0` for :math:`\u`, i.e., compute
+            % :math:`\u = \S(\z)`.
+            %
+            % Parameters
+            % ----------
+            % z
+            %   Control :math:`\z\in\R^{n_z}`.
+            %
+            % Returns
+            % -------
+            % u
+            %   State :math:`\u = \S(\z) \in \R^{n_u}`.
+        end
 
-        % Input:
-        % v: a direction v in R^{n_u}
-        % u: the state u in R^{n_u}
-        % z: the control z in R^{n_z}
-        % Output:
-        % Mv: c_u(u, z)^{-T}v in R^{n_u}
-        [Mv] = c_u_Transpose_Inverse_Apply(this, v, u, z)
+        function [Mv] = c_u_Transpose_Inverse_Apply(this, v, u, z)
+            % *Abstract method.*
+            % Compute the Jacobian-vector product :math:`c_u(\u,\z)\invtrp\v`,
+            % i.e., solve :math:`c_u(\u,\z)\trp\bflambda = \v`
+            % for :math:`\bflambda`.
+            %
+            % Parameters
+            % ----------
+            % v
+            %   Search direction :math:`\v\in\R^{n_u}`.
+            % u
+            %   State :math:`\u\in\R^{n_u}`.
+            % z
+            %   Control :math:`\z\in\R^{n_z}`.
+            %
+            % Returns
+            % -------
+            % Mv : vector
+            %   Jacobian-vector product :math:`c_u(\u,\z)\invtrp\v\in\R^{n_u}`.
+        end
 
-        % Input:
-        % v: a direction v in R^{n_u}
-        % u: the state u in R^{n_u}
-        % z: the control z in R^{n_z}
-        % Output:
-        % Mv: c_z(u, z)^{T}v in R^{n_z}
-        [Mv] = c_z_Transpose_Apply(this, v, u, z)
+        function [Mv] = c_z_Transpose_Apply(this, v, u, z)
+            % *Abstract method.*
+            % Compute the Jacobian-vector product :math:`c_z(\u,\z)\trp\v`.
+            %
+            % Parameters
+            % ----------
+            % v
+            %   Search direction :math:`\v\in\R^{n_u}`.
+            % u
+            %   State :math:`\u\in\R^{n_u}`.
+            % z
+            %   Control :math:`\z\in\R^{n_z}`.
+            %
+            % Returns
+            % -------
+            % Mv : vector
+            %   Jacobian-vector product :math:`c_z(\u,\z)\trp\v\in\R^{n_z}`.
+        end
 
-        % Input:
-        % v: a direction v in R^{n_u}
-        % u: the state u in R^{n_u}
-        % z: the control z in R^{n_z}
-        % Output:
-        % Mv: c_u(u, z)^{-1}v in R^{n_u}
-        [Mv] = c_u_Inverse_Apply(this, v, u, z)
+        function [Mv] = c_u_Inverse_Apply(this, v, u, z)
+            % *Abstract method.*
+            % Compute the Jacobian-vector product :math:`c_u(\u,\z)^{-1}\v`,
+            % i.e., solve :math:`c_u(\u,\z)\bfmu = \v` for :math:`\bfmu`.
+            %
+            % Parameters
+            % ----------
+            % v
+            %   Search direction :math:`\v\in\R^{n_u}`.
+            % u
+            %   State :math:`\u\in\R^{n_u}`.
+            % z
+            %   Control :math:`\z\in\R^{n_z}`.
+            %
+            % Returns
+            % -------
+            % Mv : vector
+            %   Jacobian-vector product :math:`c_u(\u,\z)^{-1}\v\in\R^{n_u}`.
+        end
 
-        % Input:
-        % v: a direction v in R^{n_z}
-        % u: the state u in R^{n_u}
-        % z: the control z in R^{n_z}
-        % Output:
-        % Mv: c_z(u, z)v in R^{n_u}
-        [Mv] = c_z_Apply(this, v, u, z)
+        function [Mv] = c_z_Apply(this, v, u, z)
+            % *Abstract method.*
+            % Compute the Jacobian-vector product :math:`c_z(\u,\z)\v`.
+            %
+            % Parameters
+            % ----------
+            % v
+            %   Search direction :math:`\v\in\R^{n_z}`.
+            % u
+            %   State :math:`\u\in\R^{n_u}`.
+            % z
+            %   Control :math:`\z\in\R^{n_z}`.
+            %
+            % Returns
+            % -------
+            % Mv : vector
+            %   Jacobian-vector product :math:`c_z(\u,\z)\v\in\R^{n_u}`.
+        end
 
     end
 
     methods (Access = public)
 
-        % Input:
-        % u: the state u in R^{n_u}
-        % z: the control z in R^{n_z}
-        % Output:
-        % c: c(u, z) in R^{n_u}
         function [c] = c(this, u, z)
+            % *Semi-abstract method.*
+            % Constraint :math:`\c(\u,\z)`. This method is only used for
+            % finite difference checks and automatic differentiation.
+            %
+            % Parameters
+            % ----------
+            % u
+            %   State :math:`\u\in\R^{n_u}`.
+            % z
+            %   Control :math:`\z\in\R^{n_z}`.
+            %
+            % Returns
+            % -------
+            % Mv : vector
+            %   Constraint :math:`\c(\u,\z)\in\R^{n_u}`.
             Mv = error('c() not implemented');
         end
 
-        % Input:
-        % v: a direction v in R^{n_u}
-        % u: the state u in R^{n_u}
-        % z: the control z in R^{n_z}
-        % lambda: the adjoint state lambda in R^{n_u}
-        % Output:
-        % Mv: lambda^T c_{u, u}(u, z)v in R^{n_u}
         function [Mv] = c_uu_Apply(this, v, u, z, lambda)
+            % *Semi-abstract method.*
+            % Compute the vector-Hessian-vector product
+            % :math:`\bflambda\trp c_{u,u}(\u,\z)\v`.
+            %
+            % Parameters
+            % ----------
+            % v
+            %   Search direction :math:`\v\in\R^{n_u}`.
+            % u
+            %   State :math:`\u\in\R^{n_u}`.
+            % z
+            %   Control :math:`\z\in\R^{n_z}`.
+            % lambda
+            %   Adjoint :math:`\bflambda\in\R^{n_u}`.
+            %
+            % Returns
+            % -------
+            % Mv : vector
+            %   Vector-Hessian-vector product
+            %   :math:`\bflambda\trp c_{u,u}(\u,\z)\v\in\R^{n_u}`.
             Mv = error('c_uu_Apply() not implemented');
         end
 
-        % Input:
-        % v: a direction v in R^{n_z}
-        % u: the state u in R^{n_u}
-        % z: the control z in R^{n_z}
-        % lambda: the adjoint state lambda in R^{n_u}
-        % Output:
-        % Mv: lambda^T c_{u, z}(u, z)v in R^{n_u}
         function [Mv] = c_uz_Apply(this, v, u, z, lambda)
+            % *Semi-abstract method.*
+            % Compute the vector-Hessian-vector product
+            % :math:`\bflambda\trp c_{u,z}(\u,\z)\v`.
+            %
+            % Parameters
+            % ----------
+            % v
+            %   Search direction :math:`\v\in\R^{n_z}`.
+            % u
+            %   State :math:`\u\in\R^{n_u}`.
+            % z
+            %   Control :math:`\z\in\R^{n_z}`.
+            % lambda
+            %   Adjoint :math:`\bflambda\in\R^{n_u}`.
+            %
+            % Returns
+            % -------
+            % Mv : vector
+            %   Vector-Hessian-vector product
+            %   :math:`\bflambda\trp c_{u,z}(\u,\z)\v\in\R^{n_u}`.
             Mv = error('c_uz_Apply() not implemented');
         end
 
-        % Input:
-        % v: a direction v in R^{n_u}
-        % u: the state u in R^{n_u}
-        % z: the control z in R^{n_z}
-        % lambda: the adjoint state lambda in R^{n_u}
-        % Output:
-        % Mv: lambda^T c_{z, u}(u, z)v in R^{n_z}
         function [Mv] = c_zu_Apply(this, v, u, z, lambda)
+            % *Semi-abstract method.*
+            % Compute the vector-Hessian-vector product
+            % :math:`\bflambda\trp c_{z,u}(\u,\z)\v`.
+            %
+            % Parameters
+            % ----------
+            % v
+            %   Search direction :math:`\v\in\R^{n_u}`.
+            % u
+            %   State :math:`\u\in\R^{n_u}`.
+            % z
+            %   Control :math:`\z\in\R^{n_z}`.
+            % lambda
+            %   Adjoint :math:`\bflambda\in\R^{n_u}`.
+            %
+            % Returns
+            % -------
+            % Mv : vector
+            %   Vector-Hessian-vector product
+            %   :math:`\bflambda\trp c_{z,u}(\u,\z)\v\in\R^{n_z}`.
             Mv = error('c_zu_Apply() not implemented');
         end
 
-        % Input:
-        % * v: a direction v in R^{n_z}
-        % * u: the state u in R^{n_u}
-        % * z: the control z in R^{n_z}
-        % * lambda: the adjoint state lambda in R^{n_u}
-        % Output:
-        % Mv: lambda^T c_{z, z}(u, z)v in R^{n_z}
         function [Mv] = c_zz_Apply(this, v, u, z, lambda)
+            % *Semi-abstract method.*
+            % Compute the vector-Hessian-vector product
+            % :math:`\bflambda\trp c_{z,z}(\u,\z)\v`.
+            %
+            % Parameters
+            % ----------
+            % v
+            %   Search direction :math:`\v\in\R^{n_z}`.
+            % u
+            %   State :math:`\u\in\R^{n_u}`.
+            % z
+            %   Control :math:`\z\in\R^{n_z}`.
+            % lambda
+            %   Adjoint :math:`\bflambda\in\R^{n_u}`.
+            %
+            % Returns
+            % -------
+            % Mv : vector
+            %   Vector-Hessian-vector product
+            %   :math:`\bflambda\trp c_{z,z}(\u,\z)\v\in\R^{n_z}`.
             Mv = error('c_zz_Apply() not implemented');
         end
 
@@ -111,6 +229,41 @@ classdef Constraint < handle
         end
 
         function [diffs_z, jacobian_z_transpose_check, diffs_u, jacobian_u_transpose_check, solve_res] = Finite_Difference_Constraint_Check(this, u, z)
+            % Check the implementation of the following via finite differences.
+            %
+            % * :meth:`c_z_Apply()` for :math:`\c_z(\u,\z)\v`.
+            % * :meth:`c_u_Inverse_Apply()` for :math:`\c_u(\u,\z)^{-1}\v`.
+            %
+            % Also check that the following functions are consistent.
+            %
+            % * :meth:`c_z_Apply()` and :meth:`c_z_Transpose_Apply()`.
+            % * :meth:`c_u_Inverse_Apply()` and :meth:`c_u_Transpose_Inverse_Apply()`.
+            %
+            % Finally, check that :meth:`State_Solve()` and :meth:`c()` are inverses.
+            %
+            % Note
+            % ----
+            % This check requires :meth:`c()` to be implemented.
+            %
+            % Parameters
+            % ----------
+            % u
+            %   State :math:`\mathbf{u} \in \mathbb{R}^{n_u}`.
+            % z
+            %   Control :math:`\mathbf{z} \in \mathbb{R}^{n_z}`.
+            %
+            % Returns
+            % -------
+            % diffs_z : vector
+            %   Finite difference errors for :math:`\c_z(\u, \z)\v`.
+            % jacobian_z_transpose_check : double
+            %   Error from comparing :math:`\c_z(\u,\z)\trp\v` with :math:`\c_z(\u,\z)\v`.
+            % diffs_u : vector
+            %   Finite difference errors for :math:`\c_u(\u, \z)\v`.
+            % jacobian_u_transpose_check : double
+            %   Error from comparing :math:`\c_u(\u,\z)\invtrp\v` with :math:`\c_u(\u,\z)^{-1}\v`.
+            % solve_res : double
+            %   Error from comparing :math:`\S(\z)` with :math:`\c(\u, \z)`.
 
             % c_z_Apply check
             c = this.c(u, z);

@@ -21,7 +21,7 @@ classdef Example_5_Constraint < Dynamic_Constraint
             zt = w' * z;
             f = [2 * t * y(1); 3 * t^2 * y(2) + t^2 - zt];
             f_y = [2 * t, 0; 0, 3 * t^2];
-            f_z = zeros(2, this.n);
+            f_z = zeros(2, this.n_z);
             f_z(2, :) = -w';
         end
 
@@ -32,42 +32,42 @@ classdef Example_5_Constraint < Dynamic_Constraint
 
         function [Mv] = Time_Instance_RHS_yy_Apply(this, v, y, z, t, lambda)
             num_vecs = size(v, 2);
-            Mv = zeros(this.m, num_vecs);
+            Mv = zeros(this.n_y, num_vecs);
         end
 
         function [Mv] = Time_Instance_RHS_yz_Apply(this, v, y, z, t, lambda)
             num_vecs = size(v, 2);
-            Mv = zeros(this.m, num_vecs);
+            Mv = zeros(this.n_y, num_vecs);
         end
 
         function [Mv] = Time_Instance_RHS_zy_Apply(this, v, y, z, t, lambda)
             num_vecs = size(v, 2);
-            Mv = zeros(this.n, num_vecs);
+            Mv = zeros(this.n_z, num_vecs);
         end
 
         function [Mv] = Time_Instance_RHS_zz_Apply(this, v, y, z, t, lambda)
             num_vecs = size(v, 2);
-            Mv = zeros(this.n, num_vecs);
+            Mv = zeros(this.n_z, num_vecs);
         end
 
         function [Mv] = Initial_Condition_zz_Apply(this, v, z, lambda)
             num_vecs = size(v, 2);
-            Mv = zeros(this.n, num_vecs);
+            Mv = zeros(this.n_z, num_vecs);
         end
 
     end
 
     methods (Access = public)
 
-        function this = Example_5_Constraint(m, n, T, N)
-            this = this@Dynamic_Constraint(m, n, T, N);
-            this.z_time_mesh = linspace(0, T, n + 1)';
+        function this = Example_5_Constraint(n_y, n_z, T, n_t)
+            this = this@Dynamic_Constraint(n_y, n_z, T, n_t);
+            this.z_time_mesh = linspace(0, T, n_z + 1)';
             this.z_time_mesh = this.z_time_mesh(2:end);
 
-            weights = ones(this.n + 1, 1);
+            weights = ones(this.n_z + 1, 1);
             weights(1) = .5;
             weights(end) = .5;
-            weights = this.T * weights / sum(weights);
+            weights = this.t_mesh(end) * weights / sum(weights);
             weights = weights(2:end);
             this.weights = weights;
             this.beta_reg = 10^-4;

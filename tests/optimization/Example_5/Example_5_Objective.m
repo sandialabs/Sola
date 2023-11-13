@@ -41,12 +41,12 @@ classdef Example_5_Objective < Dynamic_Objective
 
     methods (Access = public)
 
-        function this = Example_5_Objective(m, n, T, N)
-            this = this@Dynamic_Objective(m, n, T, N);
-            this.z_time_mesh = linspace(0, T, n + 1)';
+        function this = Example_5_Objective(n_y, n_z, T, n_t)
+            this = this@Dynamic_Objective(n_y, n_z, T, n_t);
+            this.z_time_mesh = linspace(0, T, n_z + 1)';
             this.z_time_mesh = this.z_time_mesh(2:end);
 
-            weights = ones(this.n + 1, 1);
+            weights = ones(this.n_z + 1, 1);
             weights(1) = .5;
             weights(end) = .5;
             weights = T * weights / sum(weights);

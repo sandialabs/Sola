@@ -3,25 +3,34 @@ close all;
 addpath('../../../src/optimization/');
 rng(132);
 
-m = 2;
+%% Set up problem.
+
+n_y = 2;
 T = .1;
-N = 5 * 10^2;
-n = N - 1;
-obj = Example_5_Objective(m, n, T, N);
-con = Example_5_Constraint(m, n, T, N);
+n_t = 5 * 10^2;
+n_z = n_t - 1;
+
+obj = Example_5_Objective(n_y, n_z, T, n_t);
+con = Example_5_Constraint(n_y, n_z, T, n_t);
 opt = Reduced_Space_Optimization(obj, con);
 opt.verbose = false;
-z0 = rand(n, 1);
-% obj.Finite_Difference_Gradient_Check(z0);
-% obj.Finite_Difference_Hessian_Check(z0);
+
+%% Finite difference checks.
+
+z0 = rand(n_z, 1);
+% u0 = rand(n_y * n_t, 1);
+% obj.Finite_Difference_Gradient_Check(u0, z0);
+% obj.Finite_Difference_Hessian_Check(u0, z0);
+
 [u, z] = opt.Optimize(z0);
+
+%% Check against saved solution.
 
 % % The optimal solution should be
 % % u(1:2:end) \approx exp(t^2)
 % % u(2:2:end) \approx exp(t^3)
 % % z \approx obj.z_time_mesh.^2
-%
-%%
+
 u_sol = load('Solution_Example_5.mat', 'u').u;
 z_sol = load('Solution_Example_5.mat', 'z').z;
 

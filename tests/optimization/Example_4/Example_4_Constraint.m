@@ -8,10 +8,6 @@ classdef Example_4_Constraint < Dynamic_Constraint
     % g(y) = (y_1-exp(t))^2 + (y_2-exp(2*t))^2 + (y_3-exp(3*t))^2
     % R(z) = (z_1-1)^2 + (z_2-1)^2 + (z_3-1)^2
 
-    properties
-
-    end
-
     methods (Access = public)
 
         function [f, f_y, f_z] = Time_Instance_RHS(this, y, z, t)
@@ -50,14 +46,6 @@ classdef Example_4_Constraint < Dynamic_Constraint
 
         function [Mv] = Initial_Condition_zz_Apply(this, v, z, lambda)
             Mv = 0 * v;
-        end
-
-    end
-
-    methods (Access = public)
-
-        function this = Example_4_Constraint(m, n, T, N)
-            this = this@Dynamic_Constraint(m, n, T, N);
         end
 
     end

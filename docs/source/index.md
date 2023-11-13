@@ -16,7 +16,7 @@ This project shows how to use SABL and MrHyDE to solve the following types of pr
 - [Hyper-differential Sensitivity Analysis (HDSA)](./problems/hdsa).
 
 :::{important}
-This documentation is aimed at advanced undergraduates and graduate students with some MATLAB experience and light familiarity with C++.
+This project is designed for advanced undergraduates and graduate students with some MATLAB experience and light familiarity with C++.
 The goal is to lower the barrier to entry for large-scale high-performance computing tasks using sophisticated software libraries.
 See the [Fundamentals](./appendix/fundamentals) page for the necessary mathematical background and references to materials for getting up to speed.
 :::
@@ -39,8 +39,9 @@ See the [Fundamentals](./appendix/fundamentals) page for the necessary mathemati
 
    sabl/about
    sabl/installation
-   sabl/anatomy
-   sabl/examples
+   sabl/guides
+   sabl/tutorials
+   sabl/api
 
 .. toctree::
    :maxdepth: 1
@@ -49,8 +50,8 @@ See the [Fundamentals](./appendix/fundamentals) page for the necessary mathemati
    mrhyde/about
    mrhyde/installation
    mrhyde/primer
-   mrhyde/anatomy
-   mrhyde/examples
+   mrhyde/guides
+   mrhyde/tutorials
 
 .. toctree::
    :maxdepth: 2

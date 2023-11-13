@@ -8,10 +8,6 @@ classdef Example_3_Constraint < Dynamic_Constraint
     % g(y) = (y_1-exp(t))^2 + (y_2-exp(2*t))^2 + (y_3-exp(3*t))^2
     % R(z) = (z_1-1)^2 + (z_2-1)^2 + (z_3-1)^2
 
-    properties
-
-    end
-
     methods (Access = public)
 
         function [f, f_y, f_z] = Time_Instance_RHS(this, y, z, t)
@@ -31,18 +27,15 @@ classdef Example_3_Constraint < Dynamic_Constraint
         end
 
         function [Mv] = Time_Instance_RHS_yz_Apply(this, v, y, z, t, lambda)
-            num_vecs = size(v, 2);
-            Mv = zeros(this.m, num_vecs);
+            Mv = zeros(this.n_y, size(v, 2));
         end
 
         function [Mv] = Time_Instance_RHS_zy_Apply(this, v, y, z, t, lambda)
-            num_vecs = size(v, 2);
-            Mv = zeros(length(z), num_vecs);
+            Mv = zeros(length(z), size(v, 2));
         end
 
         function [Mv] = Time_Instance_RHS_zz_Apply(this, v, y, z, t, lambda)
-            num_vecs = size(v, 2);
-            Mv = zeros(length(z), num_vecs);
+            Mv = zeros(length(z), size(v, 2));
         end
 
         function [Mv] = Initial_Condition_zz_Apply(this, v, z, lambda)
@@ -54,8 +47,8 @@ classdef Example_3_Constraint < Dynamic_Constraint
 
     methods (Access = public)
 
-        function this = Example_3_Constraint(m, n, T, N)
-            this = this@Dynamic_Constraint(m, n, T, N);
+        function this = Example_3_Constraint(n_y, n_z, T, n_t)
+            this = this@Dynamic_Constraint(n_y, n_z, T, n_t);
         end
 
     end

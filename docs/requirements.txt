@@ -70,6 +70,7 @@ pygments==2.16.1
     #   accessible-pygments
     #   pydata-sphinx-theme
     #   sphinx
+    #   sphinxcontrib-matlabdomain
 pyproject-hooks==1.0.0
     # via build
 pyyaml==6.0.1
@@ -95,6 +96,7 @@ sphinx==6.2.1
     #   sphinxcontrib-applehelp
     #   sphinxcontrib-devhelp
     #   sphinxcontrib-htmlhelp
+    #   sphinxcontrib-matlabdomain
     #   sphinxcontrib-qthelp
     #   sphinxcontrib-serializinghtml
 sphinx-book-theme==1.0.1
@@ -117,6 +119,8 @@ sphinxcontrib-htmlhelp==2.0.4
     # via sphinx
 sphinxcontrib-jsmath==1.0.1
     # via sphinx
+sphinxcontrib-matlabdomain==0.20.2
+    # via -r requirements.in
 sphinxcontrib-qthelp==1.0.6
     # via sphinx
 sphinxcontrib-serializinghtml==1.1.9

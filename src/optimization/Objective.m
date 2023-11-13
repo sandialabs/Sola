@@ -1,52 +1,111 @@
-% Define the objective function J(u, z) where
-% $u \in R^{n_u}$
-% $z \in R^{n_z}$
-% $J(u, z) \in R$
-
 classdef Objective < handle
+    % Define a scalar-valued objective function
+    %
+    % .. math:: J(\u, \z) \to \R
+    %
+    % where
+    % :math:`\u \in \R^{n_u}` is the state and
+    % :math:`\z \in \R^{n_z}` is the control.
 
     methods (Abstract, Access = public)
 
-        % Input:
-        % u: the state u in R^{n_u}
-        % z: the control z \in R^{n_z}
-        % Output:
-        % val: J(u, z) in R
-        % grad_u: \nabla_u J(u, z) in R^{n_u}
-        % grad_z: \nabla_z J(u, z) in R^{n_z}
-        [val, grad_u, grad_z] = J(this, u, z)
+        function [val, grad_u, grad_z] = J(this, u, z)
+            % *Abstract method.*
+            % Evaluate the objective function :math:`J(\u,\z)` and its
+            % gradients :math:`\grad{u}J(\u,\z)` and :math:`\grad{z}J(\u,\z)`.
+            %
+            % Parameters
+            % ----------
+            % u
+            %   State :math:`\u\in\R^{n_u}`.
+            % z
+            %   Control :math:`\z\in\R^{n_z}`.
+            %
+            % Returns
+            % -------
+            % val : double
+            %   Objective value :math:`J(\u,\z)`.
+            % grad_u : vector
+            %   Objective gradient :math:`\grad{u}J(\u,\z)`.
+            % grad_z : vector
+            %   Objective gradient :math:`\grad{z}J(\u,\z)`.
+        end
 
-        % Input:
-        % v: a direction v in R^{n_u}
-        % u: the state u in R^{n_u}
-        % z: the control z in R^{n_z}
-        % Output:
-        % Mv: \nabla_{u, u} J(u, z)v in R^{n_u}
-        [Mv] = J_uu_Apply(this, v, u, z)
+        function [Mv] = J_uu_Apply(this, v, u, z)
+            % *Abstract method.*
+            % Compute :math:`\grad{u,u}J(\u,\z)\v`.
+            %
+            % Parameters
+            % ----------
+            % v
+            %   Search direction :math:`\v\in\R^{n_u}`.
+            % u
+            %   State :math:`\u\in\R^{n_u}`.
+            % z
+            %   Control :math:`\z\in\R^{n_z}`.
+            %
+            % Returns
+            % -------
+            % Mv : vector
+            %   Gradient-vector product :math:`\grad{u,u}J(\u,\z)\v\in\R^{n_u}`.
+        end
 
-        % Input:
-        % v: a direction v in R^{n_z}
-        % u: the state u in R^{n_u}
-        % z: the control z in R^{n_z}
-        % Output:
-        % Mv: \nabla_{u, z} J(u, z)v in R^{n_u}
-        [Mv] = J_uz_Apply(this, v, u, z)
+        function [Mv] = J_uz_Apply(this, v, u, z)
+            % *Abstract method.*
+            % Compute :math:`\grad{u,z}J(\u,\z)\v`.
+            %
+            % Parameters
+            % ----------
+            % v
+            %   Search direction :math:`\v\in\R^{n_z}`.
+            % u
+            %   State :math:`\u\in\R^{n_u}`.
+            % z
+            %   Control :math:`\z\in\R^{n_z}`.
+            %
+            % Returns
+            % -------
+            % Mv : vector
+            %   Gradient-vector product :math:`\grad{u,z}J(\u,\z)\v\in\R^{n_u}`.
+        end
 
-        % Input:
-        % v: a direction v in R^{n_u}
-        % u: the state u in R^{n_u}
-        % z: the control z in R^{n_z}
-        % Output
-        % Mv: \nabla_{z, u} J(u, z)v in R^{n_z}
-        [Mv] = J_zu_Apply(this, v, u, z)
+        function [Mv] = J_zu_Apply(this, v, u, z)
+            % *Abstract method.*
+            % Compute :math:`\grad{z,u}J(\u,\z)\v`.
+            %
+            % Parameters
+            % ----------
+            % v
+            %   Search direction :math:`\v\in\R^{n_u}`.
+            % u
+            %   State :math:`\u\in\R^{n_u}`.
+            % z
+            %   Control :math:`\z\in\R^{n_z}`.
+            %
+            % Returns
+            % -------
+            % Mv : vector
+            %   Gradient-vector product :math:`\grad{z,u}J(\u,\z)\v\in\R^{n_z}`.
+        end
 
-        % Input:
-        % v: a direction v in R^{n_z}
-        % u: the state u in R^{n_u}
-        % z: the control z in R^{n_z}
-        % Output
-        % Mv: \nabla_{z, z} J(u, z)v in R^{n_z}
-        [Mv] = J_zz_Apply(this, v, u, z)
+        function [Mv] = J_zz_Apply(this, v, u, z)
+            % *Abstract method.*
+            % Compute :math:`\grad{z,z}J(\u,\z)\v`.
+            %
+            % Parameters
+            % ----------
+            % v
+            %   Search direction :math:`\v\in\R^{n_z}`.
+            % u
+            %   State :math:`\u\in\R^{n_u}`.
+            % z
+            %   Control :math:`\z\in\R^{n_z}`.
+            %
+            % Returns
+            % -------
+            % Mv : vector
+            %   Gradient-vector product :math:`\grad{z,z}J(\u,\z)\v\in\R^{n_z}`.
+        end
 
     end
 
@@ -58,13 +117,22 @@ classdef Objective < handle
 
         % Finite difference test functions
 
-        % Input:
-        % u: the control u in R^{n_u}
-        % z: the control z in R^{n_z}
-        % Output:
-        % diffs_u: vector of finite difference errors for u gradient
-        % diffs_z: vector of finite difference errors for z gradient
         function [diffs_u, diffs_z] = Finite_Difference_Gradient_Check(this, u, z)
+            % Check the implementation of :meth:`J()` via finite differences.
+            %
+            % Parameters
+            % ----------
+            % u
+            %   State :math:`\u \in \R^{n_u}`.
+            % z
+            %   Control :math:`\z \in \R^{n_z}`.
+            %
+            % Returns
+            % -------
+            % diffs_u : vector
+            %   Finite difference errors for :math:`\grad{u}J(\u,\z)`.
+            % diffs_z : vector
+            %   Finite difference errors for :math:`\grad{z}J(\u,\z)`.
             [val, grad_u, grad_z] = this.J(u, z);
 
             h = 10.^(-2:-1:-6);
@@ -106,22 +174,39 @@ classdef Objective < handle
 
         end
 
-        % Input:
-        % u: the control u in R^{n_u}
-        % z: the control z in R^{n_z}
-        % Output:
-        % diffs_uu: vector of finite difference errors for uu hessian
-        % diffs_uz: vector of finite difference errors for uz hessian
-        % diffs_zu: vector of finite difference errors for zu hessian
-        % diffs_zz: vector of finite difference errors for zz hessian
         function [diffs_uu, diffs_uz, diffs_zu, diffs_zz] = Finite_Difference_Hessian_Check(this, u, z)
-            [~, grad_u, grad_z] = this.J(u, z);
+            % Check the implementation of the following via finite differences.
+            %
+            % * :meth:`J_uu_Apply()` for :math:`\grad{u,u}J(\u,\z)`.
+            % * :meth:`J_uz_Apply()` for :math:`\grad{u,z}J(\u,\z)`.
+            % * :meth:`J_zu_Apply()` for :math:`\grad{z,u}J(\u,\z)`.
+            % * :meth:`J_zz_Apply()` for :math:`\grad{z,z}J(\u,\z)`.
+            %
+            % Parameters
+            % ----------
+            % u
+            %   State :math:`\mathbf{u} \in \mathbb{R}^{n_u}`.
+            % z
+            %   Control :math:`\mathbf{z} \in \mathbb{R}^{n_z}`.
+            %
+            % Returns
+            % -------
+            % diffs_uu : vector
+            %   Finite difference errors for :math:`\grad{u,u}J(\u,\z)`.
+            % diffs_uz : vector
+            %   Finite difference errors for :math:`\grad{u,z}J(\u,\z)`.
+            % diffs_zu : vector
+            %   Finite difference errors for :math:`\grad{z,u}J(\u,\z)`.
+            % diffs_zz : vector
+            %   Finite difference errors for :math:`\grad{z,z}J(\u,\z)`.
 
+            [~, grad_u, grad_z] = this.J(u, z);
             h = 10.^(-2:-1:-6);
             p = length(h);
             m = length(grad_u);
             n = length(grad_z);
 
+            % Check J_uu_Apply().
             v = randn(m, 1);
             v = v / norm(v);
             Hv = this.J_uu_Apply(v, u, z);
@@ -141,6 +226,7 @@ classdef Objective < handle
             end
             disp(' ');
 
+            % Check J_uz_Apply().
             v = randn(n, 1);
             v = v / norm(v);
             Hv = this.J_uz_Apply(v, u, z);
@@ -160,6 +246,7 @@ classdef Objective < handle
             end
             disp(' ');
 
+            % Check J_zu_Apply().
             v = randn(m, 1);
             v = v / norm(v);
             Hv = this.J_zu_Apply(v, u, z);
@@ -179,6 +266,7 @@ classdef Objective < handle
             end
             disp(' ');
 
+            % Check J_zz_Apply().
             v = randn(n, 1);
             v = v / norm(v);
             Hv = this.J_zz_Apply(v, u, z);
