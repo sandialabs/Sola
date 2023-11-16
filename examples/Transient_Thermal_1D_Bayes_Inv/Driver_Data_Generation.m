@@ -3,12 +3,12 @@ close all;
 clc;
 addpath(genpath('../../src'));
 
-m = 50;
-n = m;
+n_y = 50;
+n_z = n_y;
 T = 10;
-N = 100;
+n_t = 100;
 
-con = Thermal_Constraint(m, n, T, N);
+con = Thermal_Constraint(n_y, n_z, T, n_t);
 forcing = @(x, t) exp(-100 * (x - 0.5).^2);
 z_true = (1.e-2) * (2 + cos(3 * pi * con.x));
 

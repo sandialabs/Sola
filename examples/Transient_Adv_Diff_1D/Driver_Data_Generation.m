@@ -4,17 +4,17 @@ clc;
 addpath(genpath('../../src'));
 
 %% Set up the optimization problem.
-m = 200;
-N = 51;
+n_y = 200;
+n_t = 51;
 T = 1;
 num_space_control_nodes = 10;
-n = num_space_control_nodes * (N - 1);
-con = Adv_Diff_Gaussian_Source_Constraint(m, n, T, N, num_space_control_nodes);
+n_z = num_space_control_nodes * (n_t - 1);
+con = Adv_Diff_Gaussian_Source_Constraint(n_y, n_z, T, n_t, num_space_control_nodes);
 
 %% Solve the state equation for several random controls.
 num_solves = 3;
-Z = randn(n, num_solves);
-Y = zeros(m * N, num_solves);
+Z = randn(n_z, num_solves);
+Y = zeros(n_y * n_t, num_solves);
 for k = 1:num_solves
     Y(:, k) = con.State_Solve(Z(:, k));
 end
@@ -23,9 +23,9 @@ end
 x = con.x;
 t = con.t_mesh;
 for j = 1:num_solves
-    u_reshape = reshape(Y(:, j), m, N);
+    u_reshape = reshape(Y(:, j), n_y, n_t);
     figure;
-    for k = 1:N
+    for k = 1:n_t
         plot(x, u_reshape(:, k), 'LineWidth', 3);
         ylim([-.1 .1]);
         title(['Forward solve ', num2str(j), ' at time ', num2str(t(k))]);

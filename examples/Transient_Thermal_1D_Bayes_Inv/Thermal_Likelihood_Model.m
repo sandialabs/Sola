@@ -4,8 +4,8 @@ classdef Thermal_Likelihood_Model < Likelihood_Model
         sigma
         obs_vec
         space_time_obs_vec
-        m
-        N
+        n_y
+        n_t
     end
 
     methods (Access = public)
@@ -19,7 +19,7 @@ classdef Thermal_Likelihood_Model < Likelihood_Model
         end
 
         function [u_out] = Observation_Operator_Transpose_Apply(this, d_in)
-            u_out = zeros(this.m * this.N, size(d_in, 2));
+            u_out = zeros(this.n_y * this.n_t, size(d_in, 2));
             u_out(this.space_time_obs_vec, :) = d_in;
         end
 
@@ -32,16 +32,16 @@ classdef Thermal_Likelihood_Model < Likelihood_Model
 
     methods (Access = public)
 
-        function this = Thermal_Likelihood_Model(m, N)
+        function this = Thermal_Likelihood_Model(n_y, n_t)
             this.sigma = 5.0;
-            this.obs_vec = round(linspace(1, m, 15));
-            this.space_time_obs_vec = zeros(length(this.obs_vec), N);
-            for k = 1:N
-                this.space_time_obs_vec(:, k) = this.obs_vec + (k - 1) * m;
+            this.obs_vec = round(linspace(1, n_y, 15));
+            this.space_time_obs_vec = zeros(length(this.obs_vec), n_t);
+            for k = 1:n_t
+                this.space_time_obs_vec(:, k) = this.obs_vec + (k - 1) * n_y;
             end
             this.space_time_obs_vec = this.space_time_obs_vec(:);
-            this.m = m;
-            this.N = N;
+            this.n_y = n_y;
+            this.n_t = n_t;
         end
 
     end

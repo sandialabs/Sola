@@ -16,15 +16,15 @@ classdef Mass_Spring_HDSA < HDSA_Sabl_MD_Interface_Elliptic_Prior
         function this = Mass_Spring_HDSA(con_opt_obj, alpha_u, alpha_z)
             this@HDSA_Sabl_MD_Interface_Elliptic_Prior(con_opt_obj, alpha_u, alpha_z);
 
-            N = con_opt_obj.con.N;
+            n_t = con_opt_obj.con.n_t;
             h = con_opt_obj.con.t_mesh(2) - con_opt_obj.con.t_mesh(1);
-            M = diag(4 * ones(1, N)) + diag(ones(1, N - 1), 1) + diag(ones(1, N - 1), -1);
+            M = diag(4 * ones(1, n_t)) + diag(ones(1, n_t - 1), 1) + diag(ones(1, n_t - 1), -1);
             M(1, 1) = .5 * M(1, 1);
             M(end, end) = .5 * M(end, end);
             M = (1 / 6) * h * M;
             this.M = M;
 
-            S = diag(2 * ones(1, N)) + (-1) * diag(ones(1, N - 1), 1) + (-1) * diag(ones(1, N - 1), -1);
+            S = diag(2 * ones(1, n_t)) + (-1) * diag(ones(1, n_t - 1), 1) + (-1) * diag(ones(1, n_t - 1), -1);
             S(1, 1) = .5 * S(1, 1);
             S(end, end) = .5 * S(end, end);
             S = (1 / h) * S;
@@ -45,7 +45,7 @@ classdef Mass_Spring_HDSA < HDSA_Sabl_MD_Interface_Elliptic_Prior
             num_sing_vals = 100;
             oversampling = 0;
             num_subspace_iters = 1;
-            u_vec = zeros(con_opt_obj.this.m * N, 1);
+            u_vec = zeros(con_opt_obj.this.n_y * n_t, 1);
             this.Compute_Elliptic_GSVD(num_sing_vals, oversampling, num_subspace_iters, u_vec);
         end
 
@@ -58,11 +58,11 @@ classdef Mass_Spring_HDSA < HDSA_Sabl_MD_Interface_Elliptic_Prior
         end
 
         function [u_out] = Apply_M_u(this, u_in)
-            u_out = kron(eye(this.con_opt_obj.con.m), this.M) * u_in;
+            u_out = kron(eye(this.con_opt_obj.con.n_y), this.M) * u_in;
         end
 
         function [u_out] = Apply_M_u_Inverse(this, u_in)
-            u_out = linsolve(kron(eye(this.con_opt_obj.con.m), this.M), u_in);
+            u_out = linsolve(kron(eye(this.con_opt_obj.con.n_y), this.M), u_in);
         end
 
         function [z_out] = Apply_E_z_Inverse(this, z_in)

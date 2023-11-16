@@ -1,3 +1,5 @@
+% Method of Manufactured Solutions
+
 clear;
 close all;
 clc;
@@ -6,17 +8,17 @@ addpath(genpath('../../src'));
 plot_solution = true;
 
 %% Set up the optimization problem.
-m = 200;
-N = 51;
+n_y = 200;
+n_t = 51;
 T = 1;
-n = N * m;
-con = Adv_Diff_Constraint(m, n, T, N);
+n_z = n_t * n_y;
+con = Adv_Diff_Constraint(n_y, n_z, T, n_t);
 
 %% Define a custom control.
 x = con.x;
 t = con.t_mesh;
-z0 = zeros(m, N);
-for k = 1:N
+z0 = zeros(n_y, n_t);
+for k = 1:n_t
     tk = t(k);
     z0(:, k) = cos(2 * pi * x) + 4 * pi^2 * tk * cos(2 * pi * x) - 2 * pi * tk * sin(2 * pi * x);
 end
@@ -24,11 +26,11 @@ z0 = z0(:);
 
 %% Solve the state equation with the custom control.
 u = con.State_Solve(z0);
-u_reshape = reshape(u, m, N);
+u_reshape = reshape(u, n_y, n_t);
 
 %% Compute the true state solution with the custom control.
-u_true = zeros(m, N);
-for k = 1:N
+u_true = zeros(n_y, n_t);
+for k = 1:n_t
     tk = t(k);
     u_true(:, k) = tk * cos(2 * pi * x);
 end
@@ -36,7 +38,7 @@ end
 %% Plot the true and computed state solution.
 if plot_solution
     figure;
-    for k = 1:N
+    for k = 1:n_t
         plot(x, u_reshape(:, k), '-', x, u_true(:, k), '--', 'LineWidth', 3);
         ylim([-1 1]);
         pause(.05);

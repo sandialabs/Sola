@@ -8,6 +8,8 @@ __pycache__/
 docs/build
 main.pdf
 .markdownlint.json
+*.mat
+AdiGator_Files/
 
 ### Boilerplate latex ignore file:
 ## Latex Ignore:

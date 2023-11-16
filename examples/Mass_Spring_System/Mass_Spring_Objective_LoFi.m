@@ -7,14 +7,14 @@ classdef Mass_Spring_Objective_LoFi < Dynamic_Objective
 
     methods
 
-        function this = Mass_Spring_Objective_LoFi(T, N)
-            m = 2;
-            n = 1;
-            this = this@Dynamic_Objective(m, n, T, N);
+        function this = Mass_Spring_Objective_LoFi(T, n_t)
+            n_y = 2;
+            n_z = 1;
+            this = this@Dynamic_Objective(n_y, n_z, T, n_t);
 
             this.reg_coeff = 1.e-6;
 
-            P_z = eye(N);
+            P_z = eye(n_t);
             P_z = P_z(:, 2:end);
             P_z(1, 1) = 1;
             this.P_z = P_z;

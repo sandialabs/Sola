@@ -13,9 +13,9 @@ classdef Mass_Spring_Coupled < Dynamic_Constraint
     methods
 
         function this = Mass_Spring_Coupled(T, N)
-            m = 4;
-            n = 1;
-            this = this@Dynamic_Constraint(m, n, T, N);
+            n_y = 4;
+            n_z = 1;
+            this = this@Dynamic_Constraint(n_y, n_z, T, N);
 
             this.m1 = 1;
             this.m2 = 10;

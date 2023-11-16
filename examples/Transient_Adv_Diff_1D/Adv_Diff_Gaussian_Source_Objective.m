@@ -35,14 +35,14 @@ classdef Adv_Diff_Gaussian_Source_Objective < Dynamic_Objective
 
     methods (Access = public)
 
-        function this = Adv_Diff_Gaussian_Source_Objective(m, n, T, N, num_space_control_nodes)
-            this = this@Dynamic_Objective(m, n, T, N);
+        function this = Adv_Diff_Gaussian_Source_Objective(n_y, n_z, T, n_t, num_space_control_nodes)
+            this = this@Dynamic_Objective(n_y, n_z, T, n_t);
 
             % Spatial domain
-            this.x = linspace(0, 1, m)';
+            this.x = linspace(0, 1, n_y)';
             h = this.x(2) - this.x(1);
 
-            M = diag(4 * ones(1, m)) + diag(ones(1, m - 1), 1) + diag(ones(1, m - 1), -1);
+            M = diag(4 * ones(1, n_y)) + diag(ones(1, n_y - 1), 1) + diag(ones(1, n_y - 1), -1);
             M(1, 1) = .5 * M(1, 1);
             M(end, end) = .5 * M(end, end);
             M = (1 / 6) * h * M;
@@ -51,7 +51,7 @@ classdef Adv_Diff_Gaussian_Source_Objective < Dynamic_Objective
             this.beta_reg = 10^-3;
 
             % Trapazoid rule for time integration
-            time_weights = ones(N, 1);
+            time_weights = ones(n_t, 1);
             time_weights(1) = .5 * time_weights(1);
             time_weights(end) = .5 * time_weights(end);
             time_weights = T * time_weights / sum(time_weights);
@@ -59,12 +59,12 @@ classdef Adv_Diff_Gaussian_Source_Objective < Dynamic_Objective
 
             % Control matrix (Gaussian)
             source_loc = linspace(0, 1, num_space_control_nodes)';
-            Br = zeros(m, num_space_control_nodes);
+            Br = zeros(n_y, num_space_control_nodes);
             for k = 1:num_space_control_nodes
                 Br(:, k) = exp(-200 * (this.x - source_loc(k)).^2);
             end
             this.Br = Br;
-            this.z_time_mesh = linspace(0, T, N)';
+            this.z_time_mesh = linspace(0, T, n_t)';
             this.z_time_mesh = this.z_time_mesh(2:end);
         end
 
