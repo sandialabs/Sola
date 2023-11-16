@@ -44,6 +44,18 @@ classdef Dynamic_Constraint < Constraint
         verbose                     % Output verbosity.
     end
 
+    properties (Dependent)
+        T                           % Final time :math:`T = t_{n_t}`.
+    end
+
+    methods
+
+        function finaltime = get.T(this)
+            finaltime = this.t_mesh(end);
+        end
+
+    end
+
     methods (Abstract, Access = public)
 
         [f, f_y, f_z] = Time_Instance_RHS(this, y, z, t)

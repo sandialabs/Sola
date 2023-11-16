@@ -14,7 +14,7 @@ classdef Mass_Spring_LoFi < Dynamic_Constraint
     methods
 
         function this = Mass_Spring_LoFi(mass_spring_coupled)
-            this = this@Dynamic_Constraint(2, mass_spring_coupled.n, mass_spring_coupled.T, mass_spring_coupled.N);
+            this = this@Dynamic_Constraint(2, mass_spring_coupled.n_z, mass_spring_coupled.T, mass_spring_coupled.n_t);
             this.mass_spring_coupled = mass_spring_coupled;
 
             this.m1 = mass_spring_coupled.m1;

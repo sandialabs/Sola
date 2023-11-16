@@ -32,7 +32,7 @@ classdef Thermal_Prior_Model < Inf_Dim_Prior_Model
         end
 
         function [z_prior_mean] = Get_Prior_Mean(this)
-            z_prior_mean = (1.e-2) * 2 * ones(this.con.m, 1);
+            z_prior_mean = (1.e-2) * 2 * ones(this.con.n_y, 1);
         end
 
     end

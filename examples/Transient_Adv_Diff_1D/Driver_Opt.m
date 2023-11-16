@@ -4,26 +4,26 @@ clc;
 addpath(genpath('../../src'));
 
 %% Set up the optimization problem.
-m = 200;
-N = 51;
+n_y = 200;
+n_t = 51;
 T = 1;
 num_space_control_nodes = 10;
-n = num_space_control_nodes * (N - 1);
-obj = Adv_Diff_Gaussian_Source_Objective(m, n, T, N, num_space_control_nodes);
-con = Adv_Diff_Gaussian_Source_Constraint(m, n, T, N, num_space_control_nodes);
+n_z = num_space_control_nodes * (n_t - 1);
+obj = Adv_Diff_Gaussian_Source_Objective(n_y, n_z, T, n_t, num_space_control_nodes);
+con = Adv_Diff_Gaussian_Source_Constraint(n_y, n_z, T, n_t, num_space_control_nodes);
 opt = Reduced_Space_Optimization(obj, con);
 
 %% Solve the optimization problem.
-z0 = rand(n, 1);
+z0 = rand(n_z, 1);
 [u, z] = opt.Optimize(z0);
 
 %% Compare the optimal state to the target.
 x = con.x;
 t = con.t_mesh;
 
-u_reshape = reshape(u, m, N);
+u_reshape = reshape(u, n_y, n_t);
 figure;
-for k = 1:N
+for k = 1:n_t
     target = obj.Evaluate_Target(t(k), x);
     plot(x, u_reshape(:, k), '-', x, target, '--', 'LineWidth', 3);
     legend({'State', 'Target'});

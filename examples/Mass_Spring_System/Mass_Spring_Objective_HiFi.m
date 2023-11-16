@@ -8,9 +8,9 @@ classdef Mass_Spring_Objective_HiFi < Dynamic_Objective
     methods
 
         function this = Mass_Spring_Objective_HiFi(T, N)
-            m = 4;
-            n = 1;
-            this = this@Dynamic_Objective(m, n, T, N);
+            n_y = 4;
+            n_z = 1;
+            this = this@Dynamic_Objective(n_y, n_z, T, N);
 
             this.reg_coeff = 1.e-6;
 

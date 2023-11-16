@@ -3,12 +3,12 @@ close all;
 clc;
 run('../../src/Set_Paths');
 
-m = 50;
-n = m;
+n_y = 50;
+n_z = n_y;
 T = 1;
-N = 100;
+n_t = 100;
 
-con = Transient_Inv_Prob_Constraint_AD(m, n, T, N);
+con = Transient_Inv_Prob_Constraint_AD(n_y, n_z, T, n_t);
 x = con.x;
 
 jacobian_check = false;
@@ -17,7 +17,7 @@ grid_refinement_check = false;
 finite_diff_check = true;
 
 if jacobian_check
-    y = randn(m, 1);
+    y = randn(n_y, 1);
     z = randn(m, 1);
     t = rand;
 
@@ -32,11 +32,11 @@ if mms_check
     con.AD_Initialization();
     y = 1 + cos(2 * pi * con.x) * con.t_mesh';
     u = con.State_Solve(z);
-    u_reshape = reshape(u, m, N);
+    u_reshape = reshape(u, n_y, n_t);
     error = sqrt((y - u_reshape)' * con.M * (y - u_reshape));
     error = diag(error)' * con.w;
     figure(1);
-    for k = 1:N
+    for k = 1:n_t
         plot(x, u_reshape(:, k), x, y(:, k), '--', 'LineWidth', 3);
         pause(.05);
     end
@@ -65,10 +65,10 @@ end
 
 if finite_diff_check
     con.AD_Initialization();
-    likelihood = Transient_Inv_Prob_Likelihood_Model(m, N);
+    likelihood = Transient_Inv_Prob_Likelihood_Model(n_y, n_t);
     prior = Transient_Inv_Prob_Prior_Model(con);
     bayes_inv = Bayesian_Inversion(likelihood, prior, con);
-    z0 = 10 * rand(m, 1);
+    z0 = 10 * rand(n_z, 1);
     diffs = bayes_inv.opt.Finite_Difference_Gradient_Check(z0);
     diffs = bayes_inv.opt.Finite_Difference_Hessian_Check(z0);
 end
