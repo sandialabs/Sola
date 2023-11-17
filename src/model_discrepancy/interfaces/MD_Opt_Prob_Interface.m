@@ -1,0 +1,39 @@
+classdef MD_Opt_Prob_Interface < handle
+
+    properties
+
+    end
+
+    methods (Abstract, Access = public)
+
+        %% Pure virtual functions
+
+        [z_out] = Apply_Solution_Operator_z_Jacobian_Transpose(this, u_in, z)
+
+        [z_out] = Apply_RS_Hessian(this, z_in, z)
+
+        [grad_u] = Misfit_Gradient(this, u, z)
+
+        [u_out] = Apply_Misfit_Hessian(this, u_in, u, z)
+
+    end
+
+    methods
+
+        % This function must be implemented to enable continuation
+        function [u] = State_Solve(this, z)
+            u = [];
+        end
+
+        % This function must be implemented to enable continuation
+        function [u_out] = Apply_Solution_Operator_Jacobian(this, z_in, z)
+            u_out = [];
+        end
+
+        function this = MD_Opt_Prob_Interface()
+
+        end
+
+    end
+
+end

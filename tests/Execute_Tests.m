@@ -32,4 +32,11 @@ if test_automatic_differentiation
     cd ..;
 end
 
+test_linear_algebra_tools = true;
+if test_linear_algebra_tools
+    cd linear_algebra_tools/;
+    Execute_Tests;
+    cd ..;
+end
+
 clear;

@@ -9,9 +9,14 @@ suppress_figures = true;
 m = 51;
 x = linspace(0, 1, m)';
 
-md_interface = HDSA_MD_Interface_synthetic_test_with_hessian_gevp(m);
+data_interface = MD_Data_Interface_synthetic_test_with_hessian_gevp(m);
+data_interface.Load_Data();
+opt_prob_interface = MD_Opt_Prob_Interface_synthetic_test_with_hessian_gevp(m);
+u_prior_interface = MD_u_Prior_Interface_synthetic_test_with_hessian_gevp(m);
+z_prior_interface = MD_z_Prior_Interface_synthetic_test_with_hessian_gevp(m);
+
 num_prior_samples = 100;
-md_prior_sampling = HDSA_MD_Prior_Sampling(md_interface);
+md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 
 %%
 delta_samples = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
@@ -35,11 +40,12 @@ if ~suppress_figures
 end
 
 %%
-md_update = HDSA_MD_Update(md_interface);
-
+md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 num_evals = 20;
 oversampling = 10;
-md_update.Compute_Hessian_GEVP(num_evals, oversampling);
+md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
+
+md_update = MD_Update(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
 
 alpha = 1.e-5;
 num_post_samples = 100;
@@ -52,22 +58,22 @@ Z_test(:, 3) = 1.5 * ones(m, 1);
 if ~suppress_figures
     figure;
     hold on;
-    plot(x, md_update.post_data.Y(:, 1), 'color', 'black', 'LineWidth', 3);
+    plot(x, md_update.post_data.D(:, 1), 'color', 'black', 'LineWidth', 3);
     plot(x, delta_mean{1}, '--', 'color', 'red', 'LineWidth', 3);
     for k = 1:num_post_samples
         plot(x, delta_samples{1}(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
-    plot(x, md_update.post_data.Y(:, 1), 'color', 'black', 'LineWidth', 3);
+    plot(x, md_update.post_data.D(:, 1), 'color', 'black', 'LineWidth', 3);
     plot(x, delta_mean{1}, '--', 'color', 'red', 'LineWidth', 3);
 
     figure;
     hold on;
-    plot(x, md_update.post_data.Y(:, 2), 'color', 'black', 'LineWidth', 3);
+    plot(x, md_update.post_data.D(:, 2), 'color', 'black', 'LineWidth', 3);
     plot(x, delta_mean{2}, '--', 'color', 'red', 'LineWidth', 3);
     for k = 1:num_post_samples
         plot(x, delta_samples{2}(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
-    plot(x, md_update.post_data.Y(:, 2), 'color', 'black', 'LineWidth', 3);
+    plot(x, md_update.post_data.D(:, 2), 'color', 'black', 'LineWidth', 3);
     plot(x, delta_mean{2}, '--', 'color', 'red', 'LineWidth', 3);
 
     figure;

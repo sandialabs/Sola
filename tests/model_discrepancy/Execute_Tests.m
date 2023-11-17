@@ -1,7 +1,3 @@
-cd Hessian_Randomzied_GEVP/;
-Driver;
-cd ..;
-
 cd model_discrepancy_synthetic_test/;
 Driver;
 cd ..;
@@ -16,10 +12,6 @@ cd ..;
 
 cd PDE_Test_Problem/;
 Driver_HDSA;
-cd ..;
-
-cd Randomized_GEVP/;
-Driver;
 cd ..;
 
 cd Transient_Test_Problem/;
