@@ -122,13 +122,13 @@ cd(working_path);
 L = length(z_update_mean_range);
 mean_error = zeros(L, 1);
 post_var = zeros(L, 1);
-normalize = sqrt(z_hifi' * md_interface.Apply_M_z(z_hifi));
+normalize = sqrt(z_hifi' * z_prior_interface.Apply_M_z(z_hifi));
 for k = 1:L
     e = z_hifi - z_update_mean_range{k};
-    mean_error(k) = sqrt(e' * md_interface.Apply_M_z(e)) / normalize;
+    mean_error(k) = sqrt(e' * z_prior_interface.Apply_M_z(e)) / normalize;
 
     C = cov(z_update_samples_range{k}');
-    post_var(k) = ones(m, 1)' * md_interface.Apply_M_z(diag(C));
+    post_var(k) = ones(m, 1)' * z_prior_interface.Apply_M_z(diag(C));
 end
 
 figure;
@@ -146,7 +146,7 @@ saveas(gca, 'vary_rank', 'epsc');
 cd(working_path);
 
 figure;
-semilogy(md_update.gevp.evals / md_update.gevp.evals(1), 'LineWidth', 3, 'color', 'black');
+semilogy(md_update.md_hessian_analysis.evals / md_update.md_hessian_analysis.evals(1), 'LineWidth', 3, 'color', 'black');
 xlabel('Subspace Rank');
 ylabel('Normalized Generalized Eigenvalue');
 set(gca, 'fontsize', 18);

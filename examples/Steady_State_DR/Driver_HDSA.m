@@ -11,13 +11,17 @@ opt_lofi = Reduced_Space_Optimization(obj, con_lofi);
 x = con_lofi.x;
 
 %%
+data_interface = MD_Data_Interface_Diff_React();
+data_interface.Load_Data();
+opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
 alpha_u = 2^2;
 alpha_z = 1.e-10;
-md_interface = Diff_React_HDSA(opt_lofi, alpha_u, alpha_z);
+u_prior_interface = MD_Elliptic_u_Prior_Interface_Diff_React(alpha_u, opt_lofi);
+z_prior_interface = MD_Elliptic_z_Prior_Interface_Diff_React(alpha_z, opt_lofi);
 
 %%
 num_prior_samples = 500;
-md_prior_sampling = HDSA_MD_Prior_Sampling(md_interface);
+md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 
 prior_delta_samples = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
 figure;
@@ -33,7 +37,8 @@ plot(x, z_samples, 'LineWidth', 3);
 set(gca, 'fontsize', 18);
 
 %%
-md_update = HDSA_MD_Update(md_interface);
+md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
+md_update = MD_Update(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
 
 alpha_d = 1.e-4;
 num_post_samples = 500;
@@ -85,7 +90,8 @@ set(gca, 'fontsize', 18);
 %%
 num_evals = 4;
 oversampling = 20;
-md_update.Compute_Hessian_GEVP(num_evals, oversampling);
+md_update.md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
+
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
 
 figure;
@@ -154,7 +160,7 @@ z_update_samples_range = cell(length(rank_range), 1);
 count = 1;
 for k = 1:length(rank_range)
     num_evals = rank_range(k);
-    md_update.Compute_Hessian_GEVP(num_evals, oversampling);
+    md_update.md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
     [z_update_mean_range{count}, z_update_samples_range{count}] = md_update.Posterior_Update_Samples();
     count = count + 1;
 end

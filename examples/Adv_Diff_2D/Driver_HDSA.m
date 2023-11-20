@@ -14,13 +14,17 @@ obj = Adv_Diff_Objective(adv_diff, reg_coeff);
 con = Adv_Diff_Constraint(adv_diff);
 opt = Reduced_Space_Optimization(obj, con);
 
+data_interface = MD_Data_Interface_Adv_Diff();
+data_interface.Load_Data();
+opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
 alpha_u = 2^2;
 alpha_z = 1.e-8;
-md_interface = Adv_Diff_HDSA(opt, alpha_u, alpha_z);
+u_prior_interface = MD_Elliptic_u_Prior_Interface_Adv_Diff(alpha_u, opt);
+z_prior_interface = MD_Elliptic_z_Prior_Interface_Adv_Diff(alpha_z, opt);
 
 %%
 num_prior_samples = 10;
-md_prior_sampling = HDSA_MD_Prior_Sampling(md_interface);
+md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 
 delta_samples = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
 for k = 1:10
@@ -29,7 +33,12 @@ for k = 1:10
 end
 
 %%
-md_update = HDSA_MD_Update(md_interface);
+md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
+num_evals = 1;
+oversampling = 10;
+md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
+
+md_update = MD_Update(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
 
 alpha_d = 1.e-2;
 num_post_samples = 100;
@@ -53,12 +62,12 @@ for k = 1:5
 end
 
 diff = D(:, 1) - delta_mean{1};
-normalize = sqrt(D(:, 1)' * md_interface.Apply_M_u(D(:, 1)));
-mean_diff = sqrt(diff' * md_interface.Apply_M_u(diff)) / normalize;
+normalize = sqrt(D(:, 1)' * u_prior_interface.Apply_M_u(D(:, 1)));
+mean_diff = sqrt(diff' * u_prior_interface.Apply_M_u(diff)) / normalize;
 sample_diff = zeros(num_post_samples, 1);
 for k = 1:num_post_samples
     diff = delta_mean{1} - delta_samples{1}(:, k);
-    sample_diff(k) = sqrt(diff' * md_interface.Apply_M_u(diff)) / normalize;
+    sample_diff(k) = sqrt(diff' * u_prior_interface.Apply_M_u(diff)) / normalize;
 end
 figure;
 hold on;
@@ -71,20 +80,15 @@ for k = 1:5
     adv_diff.pde_meshing.Plot_Field(delta_samples{2}(:, k), name);
 end
 
-normalize = sqrt(delta_mean{2}' * md_interface.Apply_M_u(delta_mean{2}));
+normalize = sqrt(delta_mean{2}' * u_prior_interface.Apply_M_u(delta_mean{2}));
 sample_diff = zeros(num_post_samples, 1);
 for k = 1:num_post_samples
     diff = delta_mean{2} - delta_samples{2}(:, k);
-    sample_diff(k) = sqrt(diff' * md_interface.Apply_M_u(diff)) / normalize;
+    sample_diff(k) = sqrt(diff' * u_prior_interface.Apply_M_u(diff)) / normalize;
 end
 figure;
 hold on;
 histogram(sample_diff);
-
-%%
-num_evals = 1;
-oversampling = 10;
-md_update.Compute_Hessian_GEVP(num_evals, oversampling);
 
 %%
 [z_update_mean_1, z_update_samples_1] = md_update.Posterior_Update_Samples();
@@ -136,9 +140,8 @@ disp(['Objective at mean update solution = ', num2str(val_update_1)]);
 %%
 num_evals = 2;
 oversampling = 10;
-md_update.Compute_Hessian_GEVP(num_evals, oversampling);
+md_update.md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
 
-%%
 [z_update_mean_2, z_update_samples_2] = md_update.Posterior_Update_Samples();
 I = find(x > opt.obj.control_xlim(1));
 I = intersect(I, find(x < opt.obj.control_xlim(2)));
