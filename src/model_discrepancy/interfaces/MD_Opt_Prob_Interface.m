@@ -26,7 +26,7 @@ classdef MD_Opt_Prob_Interface < handle
         end
 
         % This function must be implemented to enable continuation
-        function [u_out] = Apply_Solution_Operator_Jacobian(this, z_in, z)
+        function [u_out] = Apply_Solution_Operator_z_Jacobian(this, z_in, z)
             u_out = [];
         end
 

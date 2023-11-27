@@ -17,3 +17,7 @@ cd ..;
 cd Transient_Test_Problem/;
 Driver_Unit_Test;
 cd ..;
+
+cd model_discrepancy_oed_unit_test/;
+Driver;
+cd ..;

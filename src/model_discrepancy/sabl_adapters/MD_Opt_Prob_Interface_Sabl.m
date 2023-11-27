@@ -56,7 +56,7 @@ classdef MD_Opt_Prob_Interface_Sabl < MD_Opt_Prob_Interface
             end
         end
 
-        function [u_out] = Apply_Solution_Operator_Jacobian(this, z_in, z)
+        function [u_out] = Apply_Solution_Operator_z_Jacobian(this, z_in, z)
             u = this.State_Solve(z);
             tmp = this.sabl_opt.con.c_z_Apply(z_in, u, z);
             u_out = -this.sabl_opt.con.c_u_Inverse_Apply(tmp, u, z);

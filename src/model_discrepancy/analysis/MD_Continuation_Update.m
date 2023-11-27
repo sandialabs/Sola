@@ -96,7 +96,7 @@ classdef MD_Continuation_Update < handle
 
             z_out = z_out + this.Apply_Discrepancy_z_Jacobian_transpose(u_tmp2, t_n);
 
-            u_tmp3 = this.opt_prob_interface.Apply_Solution_Operator_Jacobian(z_in, z_n);
+            u_tmp3 = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian(z_in, z_n);
             u_tmp4 = this.opt_prob_interface.Apply_Misfit_Hessian(u_tmp3, u_n + delta, z_n);
             z_out = z_out + this.Apply_Discrepancy_z_Jacobian_transpose(u_tmp4, t_n);
         end
