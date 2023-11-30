@@ -1,4 +1,4 @@
-# `optimization.Dynamic_Objective`
+# `Dynamic_Objective`
 
 :::{admonition} Abstract Methods
 :class: abstract

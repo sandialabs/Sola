@@ -83,7 +83,7 @@ classdef Adv_Diff_Gaussian_Source_Constraint < Dynamic_Constraint
             V(1, 1) = -1 / 2;
             V(end, end) = 1 / 2;
 
-            % Spatially discretized PDE: M f(y,z) = -Ay + Mz,  A = S + Pe V
+            % Spatially discretized PDE: M f(y,z) = -Ay + MBz,  A = S + Pe V
             A = S + Pe * V;
             this.A = A;
             this.M = M;

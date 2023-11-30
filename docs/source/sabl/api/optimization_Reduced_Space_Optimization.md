@@ -1,4 +1,4 @@
-# `optimization.Reduced_Space_Optimization`
+# `Reduced_Space_Optimization`
 
 ## Class Definition
 

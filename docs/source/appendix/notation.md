@@ -58,7 +58,7 @@ For a scalar-valued function $J(\u,\z) \to \R$ where $\u = (u_1,\ldots,u_{n_u})\
 | $\grad{z,u}J(\u,\z)$ | Hessian of $J$ w.r.t. $\u$ then $\z$  | $n_z \times n_u$ | $\frac{\partial^2}{\partial z_i \partial u_j}J(\u,\z)$ |
 | $\grad{z,z}J(\u,\z)$ | Hessian of $J$ w.r.t. $\z$ then $\z$  | $n_z \times n_z$ | $\frac{\partial^2}{\partial z_i \partial z_j}J(\u,\z)$ |
 
-For a vector-valued function $\c(\u, \z) \to \R^{n}$ with entries $\c(\u,\z) = (c_1(\u, \z),\ldots,c_n(\u,\z))\trp$, we denote the derivatives of $\c$ as follows.
+For a vector-valued function $\c(\u, \z) \to \R^{n_u}$ with entries $\c(\u,\z) = (c_1(\u, \z),\ldots,c_n(\u,\z))\trp$, we denote the derivatives of $\c$ as follows.
 
 | Symbol            | Description                              | Dimensions                  | $ij$-th entry      |
 | :---------------- | :--------------------------------------- | :-------------------------- | :----------------- |

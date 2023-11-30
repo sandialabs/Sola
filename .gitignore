@@ -10,6 +10,7 @@ main.pdf
 .markdownlint.json
 *.mat
 AdiGator_Files/
+.formatter_changes.txt
 
 ### Boilerplate latex ignore file:
 ## Latex Ignore:

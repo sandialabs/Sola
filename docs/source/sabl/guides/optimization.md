@@ -89,3 +89,20 @@ Unlike the previous classes, the user does not need to subclass {meth}`Reduced_S
 
 [Tutorial 1](../tutorials/example1) shows this workflow in action for a simple problem.
 :::
+
+## Automatic Differentiation
+
+:::{admonition} TODO
+Reference ADiGator, discuss pros and cons of AD, list AD alternatives.
+
+- {class}`Objective_AD`
+- {class}`Dynamic_Objective_AD`
+- {class}`Constraint_AD`
+- {class}`Dynamic_Constraint_AD`
+:::
+
+## Model Reduction
+
+:::{admonition} TODO
+Motivate surrogate modeling, reference {class}`POD_Basis`, {class}`Reduced_Dynamic_Objective`, and {class}`OpInf_ROM_Constraint`
+:::

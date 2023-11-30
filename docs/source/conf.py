@@ -92,33 +92,23 @@ myst_dmath_double_inline = True  # $$ OK if no newline before and after.
 suppress_warnings = ["myst.domains"]  # Suppress warning for using sphinx_proof
 
 # LaTeX macros.
-mathjax3_config = {
-    "tex": {
-        "macros": {
-            "trp": r"{^{\mathsf{T}}}",
-            "invtrp": r"{^{-\mathsf{T}}}",
-            "grad": [r"\nabla_{\!#1}\,", 1],
-            "c": r"\mathbf{c}",
-            "f": r"\mathbf{f}",
-            "g": r"\mathbf{g}",
-            "h": r"\mathbf{h}",
-            "u": r"\mathbf{u}",
-            "v": r"\mathbf{v}",
-            "w": r"\mathbf{w}",
-            "x": r"\mathbf{x}",
-            "y": r"\mathbf{y}",
-            "z": r"\mathbf{z}",
-            "S": r"\mathbf{S}",
-            "0": r"\mathbf{0}",
-            "J": r"\mathcal{J}",
-            "R": r"\mathbb{R}",
-            "RR": r"\mathbb{R}",
-            "bflambda": r"\boldsymbol{\lambda}",
-            "bfmu": r"\boldsymbol{\mu}",
-            "bfgamma": r"\boldsymbol{\gamma}",
-        }
-    }
+macros = {
+    "trp": r"{^{\mathsf{T}}}",
+    "invtrp": r"{^{-\mathsf{T}}}",
+    "grad": [r"\nabla_{\!#1}\,", 1],
+    "ddt": r"\frac{\textrm{d}}{\textup{d}t}",
+    "J": r"\mathcal{J}",
+    "N": r"\mathbb{N}",
+    "R": r"\mathbb{R}",
 }
+macros.update({x: rf"\mathbf{{{x}}}" for x in "bcfghquvwxyzABCDHIQSVWXYZ01"})
+macros.update(
+    {
+        f"bf{x}": rf"\boldsymbol{{\{x}}}"
+        for x in ["lambda", "mu", "gamma", "Gamma", "Phi", "Sigma", "Psi"]
+    }
+)
+mathjax3_config = {"tex": {"macros": macros}}
 
 # MATLAB API generation.
 autodoc_member_order = "bysource"
