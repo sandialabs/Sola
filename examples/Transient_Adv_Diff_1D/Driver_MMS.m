@@ -26,7 +26,7 @@ z0 = z0(:);
 
 %% Solve the state equation with the custom control.
 u = con.State_Solve(z0);
-u_reshape = reshape(u, n_y, n_t);
+u_reshaped = reshape(u, n_y, n_t);
 
 %% Compute the true state solution with the custom control.
 u_true = zeros(n_y, n_t);
@@ -39,7 +39,7 @@ end
 if plot_solution
     figure;
     for k = 1:n_t
-        plot(x, u_reshape(:, k), '-', x, u_true(:, k), '--', 'LineWidth', 3);
+        plot(x, u_reshaped(:, k), '-', x, u_true(:, k), '--', 'LineWidth', 3);
         ylim([-1 1]);
         pause(.05);
     end

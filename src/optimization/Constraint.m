@@ -18,7 +18,7 @@ classdef Constraint < handle
         %
         % Returns
         % -------
-        % u
+        % u : vector
         %   State :math:`\u = \S(\z) \in \R^{n_u}`.
 
         [Mv] = c_u_Transpose_Inverse_Apply(this, v, u, z)
@@ -102,8 +102,8 @@ classdef Constraint < handle
 
         function [c] = c(this, u, z)
             % *Semi-abstract method.*
-            % Constraint :math:`\c(\u,\z)`. This method is only used for
-            % finite difference checks and automatic differentiation.
+            % Explicitly form the constraint :math:`\c(\u,\z)`.
+            % This method is only used for finite difference checks.
             %
             % Parameters
             % ----------
@@ -114,7 +114,7 @@ classdef Constraint < handle
             %
             % Returns
             % -------
-            % Mv : vector
+            % c : vector
             %   Constraint :math:`\c(\u,\z)\in\R^{n_u}`.
             Mv = error('c() not implemented');
         end
@@ -262,7 +262,7 @@ classdef Constraint < handle
 
             % c_z_Apply check
             c = this.c(u, z);
-            h = -2:-1:-6;
+            h = 10.^(-2:-1:-6);
             p = length(h);
             v = randn(length(z), 1);
             cz_v = this.c_z_Apply(v, u, z);

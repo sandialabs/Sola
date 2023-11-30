@@ -1,26 +1,60 @@
 classdef Constraint_AD < Constraint
+    % Define a constraint function :math:`\c(\u, \z)\to\R^{n_u}` where
+    % :math:`\u \in \R^{n_u}` is the state and
+    % :math:`\z \in \R^{n_z}` is the control.
+    %
+    % The Jacobian and Hessian actions of $\c$ are computed via
+    % automatic differentiation from the :meth:`c_AD()` method.
 
     properties
-        n_u
-        n_z
+        n_u             % Dimension :math:`n_u` of the state :math:`\u`.
+        n_z             % Dimension :math:`n_z` of the control :math:`\z`.
         u_current
         z_current
         lambda_current
         Jac_current
         Hess_current
         Hess_zero
-        verbose
+        verbose         % If ``true``, print automatic differentiation info.
     end
 
     methods (Abstract, Access = public)
 
         [c] = c_AD(this, u, z)
+        % *Abstract method.*
+        % Constraint :math:`\c(\u,\z)`.
+        % This method is used for automatic differentiation.
+        %
+        % Parameters
+        % ----------
+        % u
+        %   State :math:`\u\in\R^{n_u}`.
+        % z
+        %   Control :math:`\z\in\R^{n_z}`.
+        %
+        % Returns
+        % -------
+        % Mv : vector
+        %   Constraint :math:`\c(\u,\z)\in\R^{n_u}`.
 
     end
 
     methods (Access = public)
 
         function [u] = State_Solve(this, z)
+            % Given :math:`\z`, solve the constraint equation
+            % :math:`\c(\u,\z)=\0` for :math:`\u`, i.e., compute
+            % :math:`\u = \S(\z)`.
+            %
+            % Parameters
+            % ----------
+            % z
+            %   Control :math:`\z\in\R^{n_z}`.
+            %
+            % Returns
+            % -------
+            % u : vector
+            %   State :math:`\u = \S(\z) \in \R^{n_u}`.
 
             u = this.u_current;
             res = this.c_AD(u, z);
@@ -128,6 +162,12 @@ classdef Constraint_AD < Constraint
     methods (Access = public)
 
         function this = Constraint_AD(n_u, n_z)
+            % Parameters
+            % ----------
+            % n_u
+            %   Dimension :math:`n_u` of the state.
+            % n_z
+            %   Dimension :math:`n_z` of the control.
             this.n_u = n_u;
             this.n_z = n_z;
             this.u_current = inf * ones(this.n_u, 1);

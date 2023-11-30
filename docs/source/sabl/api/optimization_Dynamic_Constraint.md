@@ -1,4 +1,4 @@
-# `optimization.Dynamic_Constraint`
+# `Dynamic_Constraint`
 
 :::{admonition} Abstract Methods
 :class: abstract
@@ -52,7 +52,7 @@ classdef My_Dynamic_Constraint < Dynamic_Constraint
         end
 
         function [h, h_z] = Initial_Condition(this, z)
-            error('Initial_ConditionApply() not implemented');
+            error('Initial_Condition() not implemented');
         end
 
         function [Mv] = Time_Instance_RHS_yy_Apply(this, v, y, z, t, lambda)

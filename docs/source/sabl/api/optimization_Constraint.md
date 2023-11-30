@@ -1,4 +1,4 @@
-# `optimization.Constraint`
+# `Constraint`
 
 :::{admonition} Abstract Methods
 :class: abstract

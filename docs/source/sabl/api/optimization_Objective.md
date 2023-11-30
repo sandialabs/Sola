@@ -1,4 +1,4 @@
-# `optimization.Objective`
+# `Objective`
 
 ::::{admonition} Abstract Methods
 :class: abstract

@@ -27,6 +27,18 @@ classdef Dynamic_Objective < Objective
         w           % Quadrature weights :math:`(w_1,\ldots,w_{n_t})\trp` for the time integral.
     end
 
+    properties (Dependent)
+        T           % Final time :math:`T = t_{n_t}`.
+    end
+
+    methods
+
+        function final_time = get.T(this)
+            final_time = this.t_mesh(end);
+        end
+
+    end
+
     methods (Abstract, Access = public)
 
         [val, grad_y] = Time_Instance_Objective(this, y, t)

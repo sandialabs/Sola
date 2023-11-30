@@ -5,12 +5,20 @@ OnGreen='\033[42m'        # Green background
 OnRed='\033[41m'          # Red background
 ColorOff='\033[0m'        # Text Reset
 
+LOGFILE=".formatter_changes.txt"
+
 
 function check_result() {
     # Exit with a failure code if the last command failed.
     if [[ $? -ne 0 ]]; then
         echo -e "${ColorOff}${BoldBlack}${OnRed}failed!${ColorOff}"
         echo -e "\nFormatter made changes, COMMIT ABORTED\n"
+        if [[ -e ${LOGFILE} ]]; then
+            echo -e "Formatter log\n-------------"
+            cat ${LOGFILE}
+            rm ${LOGFILE}
+            echo ""
+        fi
         exit 1
     fi
     echo -e "${ColorOff}${BoldBlack}${OnGreen}passed!${ColorOff}"
@@ -23,13 +31,14 @@ if ! command -v mh_style &> /dev/null; then
     exit 1
 fi
 
-echo -n "Checking source code................."
+echo -n "Checking source code......................."
 
 # Run the formatter for the source code.
-mh_style --fix --brief &> /dev/null
+mh_style --fix --brief &> ${LOGFILE}
 check_result
+rm ${LOGFILE}
 
-echo -en "Checking documentation code blocks..."
+echo -en "Checking documentation code blocks........."
 
 # Run the formatter for the documentation.
 cd docs

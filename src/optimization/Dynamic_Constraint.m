@@ -1,7 +1,7 @@
 classdef Dynamic_Constraint < Constraint
     % Define constraint equations through an ordinary differential equation
     %
-    % .. math:: \frac{\textrm{d}}{\textup{d}t}\y(t) &= \f(\y(t),\z,t),
+    % .. math:: \ddt\y(t) &= \f(\y(t),\z,t),
     %  \qquad t \in [0, T], \\
     %  \y(0) &= \h(\z),
     %
@@ -74,11 +74,11 @@ classdef Dynamic_Constraint < Constraint
         %
         % Returns
         % -------
-        % f : vector
+        % f : :math:`n_y`-vector
         %   Function value :math:`\f(\y,\z,t)\in\R^{n_y}`.
-        % f_y : matrix
+        % f_y : :math:`n_y \times n_y` matrix
         %   Function Jacobian :math:`\f_{y}(\y,\z,t)\in\R^{n_y \times n_y}`.
-        % f_z : matrix
+        % f_z : :math:`n_y \times n_z` matrix
         %   Function Jacobian :math:`\f_{z}(\y,\z,t)\in\R^{n_y \times n_z}`.
 
         [h, h_z] = Initial_Condition(this, z)
@@ -92,9 +92,9 @@ classdef Dynamic_Constraint < Constraint
         %
         % Returns
         % -------
-        % h : vector
+        % h : :math:`n_y`-vector
         %   Function value :math:`\h(\z)\in\R^{n_y}`.
-        % h_z : matrix
+        % h_z : :math:`n_y \times n_z` matrix
         %   Function Jacobian :math:`\h_{z}(\z)\in\R^{n_y \times n_z}`.
 
         [Mv] = Time_Instance_RHS_yy_Apply(this, v, y, z, t, lambda)
@@ -116,9 +116,9 @@ classdef Dynamic_Constraint < Constraint
         %
         % Returns
         % -------
-        % Mv : vector
+        % Mv : :math:`n_y`-vector
         %   Vector-Hessian-vector product
-        % :math:`\bflambda\trp \f_{y,y}(\y,\z,t)\v\in\R^{n_y}`.
+        %   :math:`\bflambda\trp \f_{y,y}(\y,\z,t)\v\in\R^{n_y}`.
 
         [Mv] = Time_Instance_RHS_yz_Apply(this, v, y, z, t, lambda)
         % *Abstract method.*
@@ -139,9 +139,9 @@ classdef Dynamic_Constraint < Constraint
         %
         % Returns
         % -------
-        % Mv : vector
+        % Mv : :math:`n_y`-vector
         %   Vector-Hessian-vector product
-        % :math:`\bflambda\trp \f_{y,z}(\y,\z,t)\v\in\R^{n_y}`.
+        %   :math:`\bflambda\trp \f_{y,z}(\y,\z,t)\v\in\R^{n_y}`.
 
         [Mv] = Time_Instance_RHS_zy_Apply(this, v, y, z, t, lambda)
         % *Abstract method.*
@@ -162,9 +162,9 @@ classdef Dynamic_Constraint < Constraint
         %
         % Returns
         % -------
-        % Mv : vector
+        % Mv : :math:`n_z`-vector
         %   Vector-Hessian-vector product
-        % :math:`\bflambda\trp \f_{z,y}(\y,\z,t)\v\in\R^{n_z}`.
+        %   :math:`\bflambda\trp \f_{z,y}(\y,\z,t)\v\in\R^{n_z}`.
 
         [Mv] = Time_Instance_RHS_zz_Apply(this, v, y, z, t, lambda)
         % *Abstract method.*
@@ -185,9 +185,9 @@ classdef Dynamic_Constraint < Constraint
         %
         % Returns
         % -------
-        % Mv : vector
+        % Mv : :math:`n_z`-vector
         %   Vector-Hessian-vector product
-        % :math:`\bflambda\trp \f_{z,z}(\y,\z,t)\v\in\R^{n_z}`.
+        %   :math:`\bflambda\trp \f_{z,z}(\y,\z,t)\v\in\R^{n_z}`.
 
         [Mv] = Initial_Condition_zz_Apply(this, v, z, lambda)
         % *Abstract method.*
@@ -204,9 +204,9 @@ classdef Dynamic_Constraint < Constraint
         %
         % Returns
         % -------
-        % Mv : vector
+        % Mv : :math:`n_z`-vector
         %   Vector-Jacobian-vector product
-        % :math:`\bflambda\trp \h_{z}(\z)\v\in\R^{n_z}`
+        %   :math:`\bflambda\trp \h_{z}(\z)\v\in\R^{n_z}`.
 
     end
 
@@ -401,8 +401,12 @@ classdef Dynamic_Constraint < Constraint
             end
             if this.verbose
                 disp('State Jacobian finite difference check');
-                for k = 1:p
-                    disp(['h = ', num2str(h(k)), ' and error = ', num2str(diffs_y(k))]);
+                if norm(fv) < 1e-15
+                    disp('||f_y|| = 0');
+                else
+                    for k = 1:p
+                        disp(['h = ', num2str(h(k)), ' and error = ', num2str(diffs_y(k))]);
+                    end
                 end
                 disp(' ');
             end
@@ -422,8 +426,12 @@ classdef Dynamic_Constraint < Constraint
             end
             if this.verbose
                 disp('Control Jacobian finite difference check');
-                for k = 1:p
-                    disp(['h = ', num2str(h(k)), ' and error = ', num2str(diffs_z(k))]);
+                if norm(fv) < 1e-15
+                    disp('||f_z|| = 0');
+                else
+                    for k = 1:p
+                        disp(['h = ', num2str(h(k)), ' and error = ', num2str(diffs_z(k))]);
+                    end
                 end
                 disp(' ');
             end
@@ -475,8 +483,12 @@ classdef Dynamic_Constraint < Constraint
             end
             if this.verbose
                 disp('Hessian yy finite difference check');
-                for k = 1:p
-                    disp(['h = ', num2str(h(k)), ' and error = ', num2str(diffs_yy(k))]);
+                if norm(Mv) < 1e-15
+                    disp('||f_yy|| = 0');
+                else
+                    for k = 1:p
+                        disp(['h = ', num2str(h(k)), ' and error = ', num2str(diffs_yy(k))]);
+                    end
                 end
                 disp(' ');
             end
@@ -494,8 +506,12 @@ classdef Dynamic_Constraint < Constraint
             end
             if this.verbose
                 disp('Hessian yz finite difference check');
-                for k = 1:p
-                    disp(['h = ', num2str(h(k)), ' and error = ', num2str(diffs_yz(k))]);
+                if norm(Mv) < 1e-15
+                    disp('||f_yz|| = 0');
+                else
+                    for k = 1:p
+                        disp(['h = ', num2str(h(k)), ' and error = ', num2str(diffs_yz(k))]);
+                    end
                 end
                 disp(' ');
             end
@@ -513,8 +529,12 @@ classdef Dynamic_Constraint < Constraint
             end
             if this.verbose
                 disp('Hessian zy finite difference check');
-                for k = 1:p
-                    disp(['h = ', num2str(h(k)), ' and error = ', num2str(diffs_zy(k))]);
+                if norm(Mv) < 1e-15
+                    disp('||f_zy|| = 0');
+                else
+                    for k = 1:p
+                        disp(['h = ', num2str(h(k)), ' and error = ', num2str(diffs_zy(k))]);
+                    end
                 end
                 disp(' ');
             end
@@ -532,8 +552,12 @@ classdef Dynamic_Constraint < Constraint
             end
             if this.verbose
                 disp('Hessian zz finite difference check');
-                for k = 1:p
-                    disp(['h = ', num2str(h(k)), ' and error = ', num2str(diffs_zz(k))]);
+                if norm(Mv) < 1e-15
+                    disp('||f_zz|| = 0');
+                else
+                    for k = 1:p
+                        disp(['h = ', num2str(h(k)), ' and error = ', num2str(diffs_zz(k))]);
+                    end
                 end
                 disp(' ');
             end
