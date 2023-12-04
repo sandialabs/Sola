@@ -10,7 +10,6 @@ classdef Objective < handle
     methods (Abstract, Access = public)
 
         [val, grad_u, grad_z] = J(this, u, z)
-        % *Abstract method.*
         % Evaluate the objective function :math:`J(\u,\z)` and its
         % gradients :math:`\grad{u}J(\u,\z)` and :math:`\grad{z}J(\u,\z)`.
         %
@@ -31,7 +30,6 @@ classdef Objective < handle
         %   Objective gradient :math:`\grad{z}J(\u,\z)`.
 
         [Mv] = J_uu_Apply(this, v, u, z)
-        % *Abstract method.*
         % Compute :math:`\grad{u,u}J(\u,\z)\v`.
         %
         % Parameters
@@ -49,7 +47,6 @@ classdef Objective < handle
         %   Gradient-vector product :math:`\grad{u,u}J(\u,\z)\v\in\R^{n_u}`.
 
         [Mv] = J_uz_Apply(this, v, u, z)
-        % *Abstract method.*
         % Compute :math:`\grad{u,z}J(\u,\z)\v`.
         %
         % Parameters
@@ -66,9 +63,7 @@ classdef Objective < handle
         % Mv : vector
         %   Gradient-vector product :math:`\grad{u,z}J(\u,\z)\v\in\R^{n_u}`.
 
-        % function [Mv] = J_zu_Apply(this, v, u, z)
         [Mv] = J_zu_Apply(this, v, u, z)
-        % *Abstract method.*
         % Compute :math:`\grad{z,u}J(\u,\z)\v`.
         %
         % Parameters
@@ -86,7 +81,6 @@ classdef Objective < handle
         %   Gradient-vector product :math:`\grad{z,u}J(\u,\z)\v\in\R^{n_z}`.
 
         [Mv] = J_zz_Apply(this, v, u, z)
-        % *Abstract method.*
         % Compute :math:`\grad{z,z}J(\u,\z)\v`.
         %
         % Parameters

@@ -21,7 +21,6 @@ classdef Constraint_AD < Constraint
     methods (Abstract, Access = public)
 
         [c] = c_AD(this, u, z)
-        % *Abstract method.*
         % Constraint :math:`\c(\u,\z)`.
         % This method is used for automatic differentiation.
         %

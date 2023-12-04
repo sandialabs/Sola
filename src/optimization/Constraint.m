@@ -6,7 +6,6 @@ classdef Constraint < handle
     methods (Abstract, Access = public)
 
         [u] = State_Solve(this, z)
-        % *Abstract method.*
         % Given :math:`\z`, solve the constraint equation
         % :math:`\c(\u,\z)=\0` for :math:`\u`, i.e., compute
         % :math:`\u = \S(\z)`.
@@ -22,7 +21,6 @@ classdef Constraint < handle
         %   State :math:`\u = \S(\z) \in \R^{n_u}`.
 
         [Mv] = c_u_Transpose_Inverse_Apply(this, v, u, z)
-        % *Abstract method.*
         % Compute the Jacobian-vector product :math:`c_u(\u,\z)\invtrp\v`,
         % i.e., solve :math:`c_u(\u,\z)\trp\bflambda = \v`
         % for :math:`\bflambda`.
@@ -42,7 +40,6 @@ classdef Constraint < handle
         %   Jacobian-vector product :math:`c_u(\u,\z)\invtrp\v\in\R^{n_u}`.
 
         [Mv] = c_z_Transpose_Apply(this, v, u, z)
-        % *Abstract method.*
         % Compute the Jacobian-vector product :math:`c_z(\u,\z)\trp\v`.
         %
         % Parameters
@@ -60,7 +57,6 @@ classdef Constraint < handle
         %   Jacobian-vector product :math:`c_z(\u,\z)\trp\v\in\R^{n_z}`.
 
         [Mv] = c_u_Inverse_Apply(this, v, u, z)
-        % *Abstract method.*
         % Compute the Jacobian-vector product :math:`c_u(\u,\z)^{-1}\v`,
         % i.e., solve :math:`c_u(\u,\z)\bfmu = \v` for :math:`\bfmu`.
         %
@@ -79,7 +75,6 @@ classdef Constraint < handle
         %   Jacobian-vector product :math:`c_u(\u,\z)^{-1}\v\in\R^{n_u}`.
 
         [Mv] = c_z_Apply(this, v, u, z)
-        % *Abstract method.*
         % Compute the Jacobian-vector product :math:`c_z(\u,\z)\v`.
         %
         % Parameters

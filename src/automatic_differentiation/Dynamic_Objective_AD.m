@@ -30,7 +30,6 @@ classdef Dynamic_Objective_AD < Dynamic_Objective
     methods (Abstract, Access = public)
 
         [val] = Time_Instance_Objective_AD(this, y, t)
-        % *Abstract method.*
         % Evaluate the integrand :math:`g(\y,t)`.
         %
         % Parameters
@@ -46,7 +45,6 @@ classdef Dynamic_Objective_AD < Dynamic_Objective
         %   Function value :math:`g(\y,t)\in\R`.
 
         [val] = Regularization_Objective_AD(this, z)
-        % *Abstract method.*
         % Evaluate the regularization term :math:`R(\z)`.
         %
         % Parameters

@@ -42,7 +42,6 @@ classdef Dynamic_Objective < Objective
     methods (Abstract, Access = public)
 
         [val, grad_y] = Time_Instance_Objective(this, y, t)
-        % *Abstract method.*
         % Evaluate the integrand :math:`g(\y,t)`
         % and its gradient :math:`\grad{y}g(\y,t)`.
         %
@@ -61,7 +60,6 @@ classdef Dynamic_Objective < Objective
         %   Function gradient :math:`\grad{y}g(\y,t)\in\R^{n_y}`.
 
         [val, grad_z] = Regularization_Objective(this, z)
-        % *Abstract method.*
         % Evaluate the regularization term :math:`R(\z)`
         % and its gradient :math:`\grad{z}R(\z)`.
         %
@@ -78,7 +76,6 @@ classdef Dynamic_Objective < Objective
         %   Function gradient :math:`\grad{z}R(\z)\in\R^{n_z}`.
 
         [Mv] = Time_Instance_Objective_yy_Apply(this, v, y, t)
-        % *Abstract method.*
         % Compute the Hessian-vector product :math:`\grad{y,y}g(\y, t)\v`.
         %
         % Parameters
@@ -96,7 +93,6 @@ classdef Dynamic_Objective < Objective
         %   Hessian-vector product :math:`\grad{y,y}g(\y, t)\v\in\R^{n_y}`
 
         [Mv] = Regularization_Objective_zz_Apply(this, v, z)
-        % *Abstract method.*
         % Compute the Hessian-vector product :math:`\grad{z,z}R(\z)\v`.
         %
         % Parameters
@@ -113,9 +109,9 @@ classdef Dynamic_Objective < Objective
 
     end
 
-    %% Instantiation of base class pure virtual functions
-
     methods (Access = public)
+
+        %% Implementation of parent class abstract methods.
 
         function [val, grad_u, grad_z] = J(this, u, z)
             % Evaluate the objective function and its derivatives.
@@ -168,9 +164,7 @@ classdef Dynamic_Objective < Objective
             Mv = this.Regularization_Objective_zz_Apply(v, z);
         end
 
-    end
-
-    methods (Access = public)
+        %% Constructor.
 
         function this = Dynamic_Objective(n_y, n_z, T, n_t)
             % Parameters
