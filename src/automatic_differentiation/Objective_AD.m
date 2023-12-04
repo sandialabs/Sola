@@ -19,7 +19,6 @@ classdef Objective_AD < Objective
     methods (Abstract, Access = public)
 
         [val] = J_AD(this, u, z)
-        % *Abstract method.*
         % Evaluate the objective function :math:`J(\u,\z)` and its
         % gradients :math:`\grad{u}J(\u,\z)` and :math:`\grad{z}J(\u,\z)`.
         %

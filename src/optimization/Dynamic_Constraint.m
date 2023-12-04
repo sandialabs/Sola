@@ -59,7 +59,6 @@ classdef Dynamic_Constraint < Constraint
     methods (Abstract, Access = public)
 
         [f, f_y, f_z] = Time_Instance_RHS(this, y, z, t)
-        % *Abstract method.*
         % Evaluate the ODE function :math:`\f(\y,\z,t)` and its Jacobians
         % :math:`\f_{y}(\y,\z,t)` and :math:`\f_{z}(\y,\z,t)`.
         %
@@ -82,7 +81,6 @@ classdef Dynamic_Constraint < Constraint
         %   Function Jacobian :math:`\f_{z}(\y,\z,t)\in\R^{n_y \times n_z}`.
 
         [h, h_z] = Initial_Condition(this, z)
-        % *Abstract method.*
         % Evaluate the ODE initial condition :math:`\h(\z)` and its Jacobian :math:`\h_{z}(\z)`.
         %
         % Parameters
@@ -98,7 +96,6 @@ classdef Dynamic_Constraint < Constraint
         %   Function Jacobian :math:`\h_{z}(\z)\in\R^{n_y \times n_z}`.
 
         [Mv] = Time_Instance_RHS_yy_Apply(this, v, y, z, t, lambda)
-        % *Abstract method.*
         % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{y,y}(\y,\z,t)\v`.
         %
         % Parameters
@@ -121,7 +118,6 @@ classdef Dynamic_Constraint < Constraint
         %   :math:`\bflambda\trp \f_{y,y}(\y,\z,t)\v\in\R^{n_y}`.
 
         [Mv] = Time_Instance_RHS_yz_Apply(this, v, y, z, t, lambda)
-        % *Abstract method.*
         % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{y,z}(\y,\z,t)\v`.
         %
         % Parameters
@@ -144,7 +140,6 @@ classdef Dynamic_Constraint < Constraint
         %   :math:`\bflambda\trp \f_{y,z}(\y,\z,t)\v\in\R^{n_y}`.
 
         [Mv] = Time_Instance_RHS_zy_Apply(this, v, y, z, t, lambda)
-        % *Abstract method.*
         % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{z,y}(\y,\z,t)\v`.
         %
         % Parameters
@@ -167,7 +162,6 @@ classdef Dynamic_Constraint < Constraint
         %   :math:`\bflambda\trp \f_{z,y}(\y,\z,t)\v\in\R^{n_z}`.
 
         [Mv] = Time_Instance_RHS_zz_Apply(this, v, y, z, t, lambda)
-        % *Abstract method.*
         % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{z,z}(\y,\z,t)\v`.
         %
         % Parameters
@@ -190,7 +184,6 @@ classdef Dynamic_Constraint < Constraint
         %   :math:`\bflambda\trp \f_{z,z}(\y,\z,t)\v\in\R^{n_z}`.
 
         [Mv] = Initial_Condition_zz_Apply(this, v, z, lambda)
-        % *Abstract method.*
         % Compute the vector-Jacobian-vector product :math:`\bflambda\trp \h_{z}(\z)\v`.
         %
         % Parameters

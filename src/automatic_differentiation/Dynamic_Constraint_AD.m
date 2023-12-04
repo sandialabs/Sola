@@ -53,7 +53,6 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
     methods (Abstract, Access = public)
 
         [f] = Time_Instance_RHS_AD(this, y, z, t)
-        % *Abstract method.*
         % Evaluate the ODE function :math:`\f(\y,\z,t)`.
         %
         % Parameters
@@ -71,7 +70,6 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
         %   Function value :math:`\f(\y,\z,t)\in\R^{n_y}`.
 
         [h] = Initial_Condition_AD(this, z)
-        % *Abstract method.*
         % Evaluate the ODE initial condition :math:`\h(\z)`.
         %
         % Parameters

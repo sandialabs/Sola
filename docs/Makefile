@@ -1,5 +1,5 @@
 # Minimal makefile for Sphinx documentation
-.PHONY: help requirements format Makefile
+.PHONY: help requirements format docs Makefile
 
 
 # You can set these variables from the command line, and also
@@ -21,6 +21,10 @@ requirements:
 
 format:
 	python3 format_code_blocks.py
+
+
+docs:
+	./builddocs.sh
 
 
 # Catch-all target: route all unknown targets to Sphinx using the new
