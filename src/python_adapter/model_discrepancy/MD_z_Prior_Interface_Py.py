@@ -4,7 +4,8 @@ from abc import ABC, abstractmethod
 class MD_z_Prior_Interface_Py():
 
     def __init__(self):
-        
+        pass
+
     # -------------------------------------------------------------------------------------------------------
     # Abstract methods which must be implemented
 
