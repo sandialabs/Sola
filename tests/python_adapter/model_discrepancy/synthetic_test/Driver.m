@@ -1,12 +1,12 @@
-clear
-close all
-clc
+clear;
+close all;
+clc;
 addpath(genpath('../../../../src'));
 
 update_python = false;
 
 if update_python
-    clear classes
+    clear classes;
     update_python = true;
 end
 
@@ -16,7 +16,7 @@ m = int64(51);
 x = linspace(0, 1, m)';
 
 mod = py.importlib.import_module('MD_Data_Interface_Python_Synthetic_Test');
-if update_python   
+if update_python
     py.importlib.reload(mod);
 end
 data_interface_python = mod.MD_Data_Interface_Python_Synthetic_Test(m);

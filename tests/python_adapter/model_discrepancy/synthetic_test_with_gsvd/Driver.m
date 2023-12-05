@@ -7,7 +7,7 @@ rng(121234);
 update_python = true;
 
 if update_python
-    clear classes
+    clear classes;
     update_python = true;
 end
 
@@ -20,7 +20,7 @@ alpha_u = 1 / (2^2);
 alpha_z = 1 / (100^2);
 
 mod = py.importlib.import_module('MD_Data_Interface_Python_Synthetic_Test');
-if update_python   
+if update_python
     py.importlib.reload(mod);
 end
 data_interface_python = mod.MD_Data_Interface_Python_Synthetic_Test(m);
@@ -39,15 +39,14 @@ if update_python
     py.importlib.reload(mod);
 end
 u_prior_interface_python = mod.MD_Elliptic_u_Prior_Interface_Python_Synthetic_Test(m);
-u_prior_interface = MD_Elliptic_u_Prior_Interface_Py(u_prior_interface_python,alpha_u);
+u_prior_interface = MD_Elliptic_u_Prior_Interface_Py(u_prior_interface_python, alpha_u);
 
 mod = py.importlib.import_module('MD_Elliptic_z_Prior_Interface_Python_Synthetic_Test');
 if update_python
     py.importlib.reload(mod);
 end
 z_prior_interface_python = mod.MD_Elliptic_z_Prior_Interface_Python_Synthetic_Test(m);
-z_prior_interface = MD_Elliptic_z_Prior_Interface_Py(z_prior_interface_python,alpha_z);
-
+z_prior_interface = MD_Elliptic_z_Prior_Interface_Py(z_prior_interface_python, alpha_z);
 
 num_sing_vals = 50;
 oversampling = 1;
@@ -137,4 +136,3 @@ if ~suppress_figures
     plot(x, 1 + x, 'color', 'cyan', 'LineWidth', 3);
     plot(x, z_update_mean, '--', 'color', 'red', 'LineWidth', 3);
 end
-

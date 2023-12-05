@@ -23,14 +23,14 @@ classdef MD_Data_Interface < handle
         % Overload function to load high-fidelity data
         function [Z] = Load_Z_Data(this)
             Z = [];
-            disp('Load_Z_Data must be implemented for any analyses except for optimal experimental design')
+            disp('Load_Z_Data must be implemented for any analyses except for optimal experimental design');
         end
 
         % Defaults to return empty array
         % Overload function to load high-fidelity data
         function [D] = Load_d_Data(this)
             D = [];
-            disp('Load_d_Data must be implemented for any analyses except for optimal experimental design')
+            disp('Load_d_Data must be implemented for any analyses except for optimal experimental design');
         end
 
         function this = MD_Data_Interface()

@@ -14,6 +14,14 @@ classdef MD_Data_Interface_PDE_Test_Problem < MD_Data_Interface
             z_opt = load('z_opt.mat').z_opt;
         end
 
+        function [Z] = Load_Z_Data(this)
+            Z = [];
+        end
+
+        function [D] = Load_d_Data(this)
+            D = [];
+        end
+
     end
 
     methods
