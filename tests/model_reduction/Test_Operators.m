@@ -105,7 +105,7 @@ assert(allclose(HY, HYtrue));
 I = eye(n_y);
 for j = 1:n_t
     y = Y(:, j);
-    HJac = op.Jacobian_y(y, y);
+    HJac = op.Jacobian_y(y);
     assert(size(HJac, 1) == n_y);
     assert(size(HJac, 2) == n_y);
     HJactrue = H * (kron(I, y) + kron(y, I));

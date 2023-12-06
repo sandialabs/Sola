@@ -58,7 +58,7 @@ classdef Quadratic_Operator < OpInf_Operator
 
             % Compute the pre-Jacobian tensor.
             Ht = reshape(H, n_y, n_y, n_y);
-            this.prejac = Ht + permute(Ht, [1, 3, 2]);
+            this.prejac = reshape(Ht + permute(Ht, [1, 3, 2]), n_y, n_y^2);
 
             Set_Entries@OpInf_Operator(this, Hc);
         end
@@ -102,7 +102,7 @@ classdef Quadratic_Operator < OpInf_Operator
             % jac : :math:`n_y \times n_y` matrixr
             %   State Jacobian
             %   :math:`\H[(\I\otimes\y) + (\y\otimes\I)]\in\R^{n_y \times n_y}`.
-            jac = tensorprod(this.prejac, y, 3, 1);
+            jac = this.prejac * kron(eye(this.n_y), y);
         end
 
         function [Mv] = Hessian_yy_Apply(this, v, y, q, lambda)
