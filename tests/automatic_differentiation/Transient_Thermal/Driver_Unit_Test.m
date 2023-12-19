@@ -157,5 +157,4 @@ if error > 1.e-9
     disp('Error in automatic differentiation Transient Thermal example');
 end
 
-rmpath('AdiGator_Files/');
-rmdir('AdiGator_Files/', 's');
+evalc('rmdir("AdiGator_Files/", "s")');

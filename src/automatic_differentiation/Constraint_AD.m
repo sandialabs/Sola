@@ -16,6 +16,7 @@ classdef Constraint_AD < Constraint
         Hess_current
         Hess_zero
         verbose         % If ``true``, print automatic differentiation info.
+        path_name
     end
 
     methods (Abstract, Access = public)
@@ -78,7 +79,9 @@ classdef Constraint_AD < Constraint
             if (norm(z - this.z_current) ~= 0) || (norm(u - this.u_current) ~= 0)
                 this.u_current = u;
                 this.z_current = z;
+                cd(this.path_name);
                 this.Jac_current = Jac_c_AD_Jac(this, [u; z]);
+                cd ..;
             end
         end
 
@@ -87,7 +90,9 @@ classdef Constraint_AD < Constraint
                 this.u_current = u;
                 this.z_current = z;
                 this.lambda_current = lambda;
+                cd(this.path_name);
                 this.Hess_current = Hess_c_AD_Hes(this, [u; z], lambda);
+                cd ..;
             end
         end
 
@@ -178,24 +183,32 @@ classdef Constraint_AD < Constraint
             this.verbose = true;
         end
 
-        function [] = AD_Initialization(this)
-            addpath .;
-            if ~exist('AdiGator_Files', 'dir')
-                mkdir AdiGator_Files;
+        function [] = AD_Initialization(this, folder_name)
+
+            if nargin > 1
+                this.path_name = [pwd(), '/', folder_name];
+            else
+                this.path_name = [pwd(), '/AdiGator_Files'];
             end
-            addpath AdiGator_Files;
-            cd AdiGator_Files;
+
+            if ~exist(this.path_name, 'dir')
+                mkdir(this.path_name);
+            end
 
             % Test if any functions have changed
             u = randn(this.n_u, 1);
             z = randn(this.n_z, 1);
             lambda = randn(this.n_u, 1);
+            ccurrent = this.c_AD(u, z);
+
+            addpath('.');
+            cd(this.path_name);
             try
                 [~, cold] = Jac_c_AD_Jac(this, [u; z]);
             catch
                 cold = zeros(this.n_u, 1);
             end
-            ccurrent = this.c_AD(u, z);
+
             if norm(cold - ccurrent) > 10^-15
                 if this.verbose
                     disp('Detected change in constraint');
