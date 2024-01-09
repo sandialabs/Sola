@@ -15,7 +15,8 @@ Driver_HDSA;
 cd ..;
 
 cd Transient_Test_Problem/;
-Driver_Unit_Test;
+Driver_Unit_Test_1;
+Driver_Unit_Test_2;
 cd ..;
 
 cd model_discrepancy_oed_unit_test/;

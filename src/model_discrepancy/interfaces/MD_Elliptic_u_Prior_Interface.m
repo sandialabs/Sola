@@ -123,9 +123,10 @@ classdef MD_Elliptic_u_Prior_Interface < MD_u_Prior_Interface
                 aleph = (this.sing_vals.^2) * this.transient_prior_cov.evals';
                 aleph = aleph ./ (1 + this.alpha_u * scalar * aleph);
                 u_out = 0.0 * u_in;
+                r = length(this.sing_vals);
                 for k = 1:size(u_out, 2)
                     u_tmp = reshape(u_in(:, k), this.transient_prior_cov.n_y, this.transient_prior_cov.n_t);
-                    u_tmp = u_tmp .* sqrt(aleph);
+                    u_tmp = u_tmp(1:r, :) .* sqrt(aleph);
                     u_tmp = this.sing_vecs_output * u_tmp * this.transient_prior_cov.E_td_inv_evecs';
                     u_out(:, k) = sqrt(this.alpha_u) * u_tmp(:);
                 end
