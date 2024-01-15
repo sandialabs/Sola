@@ -28,6 +28,7 @@ classdef POD_Basis < Basis
         maxdim
         singular_vectors
         singular_values
+        W
     end
 
     properties (Dependent)
@@ -39,7 +40,7 @@ classdef POD_Basis < Basis
 
         %% Constructor
 
-        function this = POD_Basis(Y, shift)
+        function this = POD_Basis(Y, shift, W)
             % Parameters
             % ----------
             % Y
@@ -49,15 +50,23 @@ classdef POD_Basis < Basis
             %   (Optional) if ``true``, set the reference snapshot to the mean
             %   :math:`\bar{\y} = \frac{1}{n_t}\sum_{j=1}^{n_t}\y_j`.
             %   If ``false`` (default), use :math:`\bar{\y} = \0`.
+            % W
+            %   (Optional) Weight matrix :math:`\W\in\R^{m\times m}`.
+            %   If provided, the basis :math:`\V` is weighted to satisfy
+            %   :math:`\V\trp\W\V = \I_{r}`.
+            %   If provided as a vector :math:`\w\in\R^{m\times 1}`, use
+            %   :math:`\W = \text{diag}(\w)`.
             arguments
                 Y (:, :) double
                 shift = false
+                W (:, :) {mustBeNumeric} = []
             end
 
             this.economize = false;
             this.maxdim = size(Y, 2);       % Maximum number of basis vectors.
             this.r = this.maxdim;
 
+            % Shift snapshots by the mean if desired.
             if shift
                 this.ybar = mean(Y, 2);
                 Y = Y - this.ybar;
@@ -65,9 +74,23 @@ classdef POD_Basis < Basis
                 this.ybar = zeros(size(Y, 1), 1);
             end
 
+            % Weighting.
+            if size(W, 1) == 0
+                W = ones(size(Y, 1), 1);
+            end
+            if size(W, 1) == 1 || size(W, 2) == 1
+                this.W = diag(W);
+                Wsqrt = diag(sqrt(W));
+                Winvsqrt = diag(1 ./ sqrt(W));
+            else
+                this.W = W;
+                Wsqrt = sqrtm(W);
+                Winvsqrt = linsolve(Wsqrt, eye(size(W, 1)));
+            end
+
             % Do the SVD and store the singular values / vectors.
-            [svdvecs, svdvals, rightsvdvals] = svd(Y, "econ");
-            this.singular_vectors = svdvecs;
+            [Phi, svdvals, ~] = svd(Wsqrt * Y, "econ");
+            this.singular_vectors = Winvsqrt * Phi;
             this.singular_values = diag(svdvals);
         end
 
@@ -164,7 +187,7 @@ classdef POD_Basis < Basis
             % -------
             % states_compressed : vector(s)
             %   Compressed state(s) :math:`\hat{\y}\in\R^{r}`.
-            states_compressed = this.V' * (states - this.ybar);
+            states_compressed = (this.V' * this.W) * (states - this.ybar);
         end
 
         function [states] = Decompress(this, states_compressed)
