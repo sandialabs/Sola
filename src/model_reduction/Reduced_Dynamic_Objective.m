@@ -3,8 +3,8 @@ classdef Reduced_Dynamic_Objective < Dynamic_Objective
     %
     % .. math:: J(\u,\z) = \sum_{j=1}^{N} w_{j} g(\y_{j}, t_{j}) + R(\z),
     %
-    % define a modified objective that replaces the ODE state with the
-    % reduced-order approximation :math:`\y(t) \approx \V\hat{\y}(t)`, i.e.,
+    % this class defines a modified objective that results from approximating
+    % the ODE state as :math:`\y(t) \approx \V\hat{\y}(t)`:
     %
     % .. math::
     %  \tilde{J}(\hat{\u},\z) = \sum_{j=1}^{N} w_{j} \hat{g}(\hat{\y}_{j}, t_{j}) + R(\z),
@@ -40,7 +40,7 @@ classdef Reduced_Dynamic_Objective < Dynamic_Objective
             %   Initialized dynamic objective, subclassed from
             %   :class:`Dynamic_Objective`.
             % V
-            %   Linear basis matrix :math:`\V\in\R^{n_y \times n_y'}`.
+            %   Basis matrix :math:`\V\in\R^{n_y \times n_y'}`.
             this.obj = objective;
             this.V = V;
             this = this@Dynamic_Objective(this.obj.n_y, this.obj.n_z, this.obj.T, this.obj.n_t);
@@ -67,7 +67,7 @@ classdef Reduced_Dynamic_Objective < Dynamic_Objective
             % grad_y : vector
             %   Function gradient :math:`\grad{y}g(\y,t)\in\R^{n_y}`.
             [val, grad_y] = this.obj.Time_Instance_Objective(this.V * yhat, t);
-            grad_yhat = V' * grad_y;
+            grad_yhat = this.V' * grad_y;
         end
 
         function [val, grad_z] = Regularization_Objective(this, z)
@@ -93,8 +93,8 @@ classdef Reduced_Dynamic_Objective < Dynamic_Objective
             % Mv : vector
             %   Hessian-vector product
             %   :math:`\grad{\hat{y},\hat{y}}\hat{g}(\hat{\y}, t)\hat{\v}\in\R^{n_y'}`.
-            v = this.V @ vhat;
-            y = this.V @ yhat;
+            v = this.V * vhat;
+            y = this.V * yhat;
             Mv = this.V' * this.obj.Time_Instance_Objective_yy_Apply(v, y, t);
         end
 
