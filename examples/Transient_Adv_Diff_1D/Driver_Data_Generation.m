@@ -3,6 +3,9 @@ close all;
 clc;
 addpath(genpath('../../src'));
 
+datafile = 'OpInf_Training_Data.mat';
+show_states = false;
+
 %% Set up the optimization problem.
 n_y = 200;
 n_t = 51;
@@ -20,15 +23,20 @@ for k = 1:num_solves
 end
 
 %% Visualize each set of drawn states.
-x = con.x;
-t = con.t_mesh;
-for j = 1:num_solves
-    u_reshape = reshape(Y(:, j), n_y, n_t);
-    figure;
-    for k = 1:n_t
-        plot(x, u_reshape(:, k), 'LineWidth', 3);
-        ylim([-.1 .1]);
-        title(['Forward solve ', num2str(j), ' at time ', num2str(t(k))]);
-        pause(.05);
+if show_states
+    x = con.x;
+    t = con.t_mesh;
+    for j = 1:num_solves
+        u_reshape = reshape(Y(:, j), n_y, n_t);
+        figure;
+        for k = 1:n_t
+            plot(x, u_reshape(:, k), 'LineWidth', 3);
+            ylim([-.1 .1]);
+            title(['Forward solve ', num2str(j), ' at time ', num2str(t(k))]);
+            pause(.05);
+        end
     end
 end
+
+%% Save the data.
+save(datafile, "n_y", "n_z", "T", "n_t", "num_space_control_nodes", "num_solves", "Y", "Z");
