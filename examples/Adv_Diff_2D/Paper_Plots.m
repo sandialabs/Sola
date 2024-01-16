@@ -6,7 +6,7 @@ addpath(genpath('../../src'));
 load('HDSA_Results.mat');
 
 working_path = pwd;
-write_path = '~/Desktop/junk'; % '~/Desktop/Model_Discrepancy_Sampling/figures/adv_diff';
+write_path = '~/Desktop/output_figures/adv_diff/';
 
 name = 'Low-fidelity state';
 u_lofi = adv_diff.State_Solve(opt.con.Map_z_vec_to_mesh(z_lofi));

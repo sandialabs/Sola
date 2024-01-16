@@ -3,7 +3,6 @@ classdef MD_Elliptic_u_Prior_Interface_Adv_Diff < MD_Elliptic_u_Prior_Interface
     properties
         E_u
         M_u
-        E_d
     end
 
     methods (Access = public)

@@ -2,7 +2,6 @@ classdef MD_Elliptic_u_Prior_Interface_Diff_React < MD_Elliptic_u_Prior_Interfac
 
     properties
         E_u
-        E_d
         M
     end
 
@@ -20,18 +19,6 @@ classdef MD_Elliptic_u_Prior_Interface_Diff_React < MD_Elliptic_u_Prior_Interfac
             u_out = this.M * u_in;
         end
 
-        function [u_out] = Apply_M_u_Inverse(this, u_in)
-            u_out = linsolve(this.M, u_in);
-        end
-
-        function [u_out] = Apply_E_d(this, u_in)
-            u_out = this.E_d * u_in;
-        end
-
-        function [u_out] = Apply_E_d_Transpose(this, u_in)
-            u_out = this.E_d' * u_in;
-        end
-
         function this = MD_Elliptic_u_Prior_Interface_Diff_React(alpha_u, sabl_opt)
             this@MD_Elliptic_u_Prior_Interface(alpha_u);
 
@@ -39,8 +26,6 @@ classdef MD_Elliptic_u_Prior_Interface_Diff_React < MD_Elliptic_u_Prior_Interfac
             this.M = sabl_opt.con.M;
 
             this.E_u = (2.e-2) * S + this.M;
-
-            this.E_d = (1.e-8) * S + this.M;
 
             num_sing_vals = 200;
             oversampling = 0;

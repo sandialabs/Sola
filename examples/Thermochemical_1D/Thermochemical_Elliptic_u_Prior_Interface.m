@@ -31,18 +31,6 @@ classdef Thermochemical_Elliptic_u_Prior_Interface < MD_Elliptic_u_Prior_Interfa
             u_out = kron(eye(4), this.M) * u_in;
         end
 
-        function [u_out] = Apply_M_u_Inverse(this, u_in)
-            u_out = linsolve(kron(eye(4), this.M), u_in);
-        end
-
-        function [u_out] = Apply_E_d(this, u_in)
-            u_out = kron(eye(4), this.M) * u_in;
-        end
-
-        function [u_out] = Apply_E_d_Transpose(this, u_in)
-            u_out = kron(eye(4), this.M) * u_in;
-        end
-
         function this = Thermochemical_Elliptic_u_Prior_Interface(alpha_u, transient_prior_cov, fe)
             this@MD_Elliptic_u_Prior_Interface(alpha_u, transient_prior_cov);
             this.M = fe.M;

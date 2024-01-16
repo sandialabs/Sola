@@ -6,7 +6,7 @@ addpath(genpath('../../src'));
 load('HDSA_Results.mat');
 
 working_path = pwd;
-write_path = '~/Desktop/junk'; % '~/Desktop/Model_Discrepancy_Sampling/figures/mass_spring/';
+write_path = '~/Desktop/output_figures/mass_spring/';
 
 figure;
 hold on;

@@ -6,10 +6,6 @@ classdef MD_Data_Interface_Adv_Diff < MD_Data_Interface
 
     methods (Access = public)
 
-        function [u_out] = Apply_E_d_Transpose(this, u_in)
-            u_out = this.E_d' * u_in;
-        end
-
         function [u_opt] = Load_Optimal_u(this)
             u_opt = load('u_opt.mat').u_opt;
         end

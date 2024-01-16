@@ -3,7 +3,6 @@ classdef MD_Elliptic_u_Prior_Interface_Mass_Spring < MD_Elliptic_u_Prior_Interfa
     properties
         sabl_opt
         E_u
-        E_d
         M
     end
 
@@ -19,18 +18,6 @@ classdef MD_Elliptic_u_Prior_Interface_Mass_Spring < MD_Elliptic_u_Prior_Interfa
 
         function [u_out] = Apply_M_u(this, u_in)
             u_out = kron(eye(this.sabl_opt.con.n_y), this.M) * u_in;
-        end
-
-        function [u_out] = Apply_M_u_Inverse(this, u_in)
-            u_out = linsolve(kron(eye(this.sabl_opt.con.n_y), this.M), u_in);
-        end
-
-        function [u_out] = Apply_E_d(this, u_in)
-            u_out = this.E_d * u_in;
-        end
-
-        function [u_out] = Apply_E_d_Transpose(this, u_in)
-            u_out = this.E_d' * u_in;
         end
 
         function this = MD_Elliptic_u_Prior_Interface_Mass_Spring(alpha_u, sabl_opt)
@@ -57,8 +44,6 @@ classdef MD_Elliptic_u_Prior_Interface_Mass_Spring < MD_Elliptic_u_Prior_Interfa
             this.E_u(1:2, :) = 0;
             this.E_u(1, 1) = 10;
             this.E_u(2, 2) = 40;
-
-            this.E_d = (1.e-8) * kron(S, I) + kron(this.M, I);
 
             num_sing_vals = 100;
             oversampling = 0;
