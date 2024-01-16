@@ -41,9 +41,9 @@ classdef Reduced_Dynamic_Objective < Dynamic_Objective
             %   :class:`Dynamic_Objective`.
             % V
             %   Basis matrix :math:`\V\in\R^{n_y \times n_y'}`.
+            this@Dynamic_Objective(objective.n_y, objective.n_z, objective.T, objective.n_t);
             this.obj = objective;
             this.V = V;
-            this = this@Dynamic_Objective(this.obj.n_y, this.obj.n_z, this.obj.T, this.obj.n_t);
         end
 
         %% Implement abstract methods from parent class.

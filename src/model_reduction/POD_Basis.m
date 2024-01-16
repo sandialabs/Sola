@@ -144,7 +144,7 @@ classdef POD_Basis < Basis
             % dimension : uint8
             %   Reduced dimension :math:`r`.
             svdvals2 = this.singular_values.^2;
-            cumulative_energies = cumsum(svdvals) / sum(svdvals);
+            cumulative_energies = cumsum(svdvals2) / sum(svdvals2);
             dimension = sum(cumulative_energies < energy) + 1;
             this.r = dimension;
         end

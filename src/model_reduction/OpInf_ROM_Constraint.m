@@ -211,6 +211,9 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
                 D = horzcat(D, this.operators{i}.Datablock(Y, Q)');
             end
 
+            % disp(['Data matrix size: (', num2str(size(D, 1)), ', ', num2str(size(D, 2)), ')']);
+            % disp(['RHS matrix size: (', num2str(size(dYdt, 2)), ', ', num2str(size(dYdt, 1)), ')']);
+
             % Solve the regression problem for the operator entries.
             if norm(this.regularizer) > 0
                 % Tikhonov regularization.
@@ -219,6 +222,8 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
                 % No regularization.
                 Ohat = lscov(D, dYdt')';
             end
+
+            % disp(['Operator matrix size: (', num2str(size(Ohat, 1)), ', ', num2str(size(Ohat, 2)), ')']);
 
             % Unpack the operator entries.
             index = 1;
@@ -251,7 +256,7 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             end
         end
 
-        function [h, h_z] = Initial_Condition(this, z)
+        function [h, h_z] = Initial_Condition(this, ~)
             h = this.y0;
             h_z = zeros(this.n_z, 1);
         end
@@ -294,7 +299,7 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             end
         end
 
-        function [Mv] = Initial_Condition_zz_Apply(this, v, z, lambda)
+        function [Mv] = Initial_Condition_zz_Apply(this, v, ~, ~)
             Mv = zeros(this.n_z, size(v, 2));
         end
 
