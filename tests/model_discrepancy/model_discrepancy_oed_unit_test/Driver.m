@@ -51,7 +51,7 @@ G = ones(N, N) + Ztilde' * z_prior_interface.Apply_W_z_Inverse(Ztilde);
 [g, mu] = eig(G, 'vector');
 
 Wu_inv = u_prior_interface.Apply_W_u_Inverse(eye(m));
-Wd = u_prior_interface.Apply_W_d(eye(m));
+Wd = u_prior_interface.Apply_M_u(eye(m));
 [X, lambda] = eig(Wu_inv * Wd, 'vector');
 for j = 1:m
     X(:, j) = X(:, j) / sqrt(X(:, j)' * Wd * X(:, j));

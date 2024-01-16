@@ -1,7 +1,7 @@
 import numpy as np
 from abc import ABC, abstractmethod
 
-class MD_Elliptic_u_Prior_Interface_Py():
+class MD_Transient_Elliptic_u_Prior_Interface_Py():
     
     def __init__(self):
         pass
@@ -18,7 +18,7 @@ class MD_Elliptic_u_Prior_Interface_Py():
         pass
 
     @abstractmethod
-    def Apply_M_u_Py(self, u_in):
+    def Apply_Spatial_M_u_Py(self, u_in):
         pass
 
     # -------------------------------------------------------------------------------------------------------
@@ -32,6 +32,6 @@ class MD_Elliptic_u_Prior_Interface_Py():
         u_in = np.array(u_in)
         return self.Apply_E_u_Inverse_Transpose_Py(u_in)
 
-    def Apply_M_u(self, u_in):
+    def Apply_Spatial_M_u(self, u_in):
         u_in = np.array(u_in)
-        return self.Apply_M_u_Py(u_in)
+        return self.Apply_Spatial_M_u_Py(u_in)

@@ -19,7 +19,7 @@ classdef Elliptic_GSVD < Randomized_GSVD
         end
 
         function [vec_out] = Apply_Output_Weighting_Operator(this, vec_in)
-            vec_out = this.u_prior_interface.Apply_W_d(vec_in);
+            vec_out = this.u_prior_interface.Apply_M_u(vec_in);
         end
 
     end

@@ -26,26 +26,24 @@ class MD_u_Prior_Interface_Python_Synthetic_Test(MD_u_Prior_Interface_Py):
             self.S[i+1,i] = -1.0
         self.S = (1.0/h)*self.S
 
-        self.E_d = (1.e-6) * self.S + self.M
         self.E_u = (2.0) * ((5.e-2) * self.S + self.M)
 
-        self.W_d = np.transpose(self.E_d)@np.linalg.solve(self.M,self.E_d)
         self.W_u = np.transpose(self.E_u)@np.linalg.solve(self.M,self.E_u)
 
     def Apply_W_u_Inverse_Py(self, u_in):
         u_out = np.linalg.solve(self.W_u,u_in)
         return u_out
 
-    def Apply_W_d_Py(self, u_in):
-        u_out = self.W_d @ u_in
+    def Apply_M_u_Py(self, u_in):
+        u_out = self.M @ u_in
         return u_out
 
-    def Apply_W_u_Plus_scalar_W_d_Inverse_Py(self, u_in, scalar):
-        u_out = np.linalg.solve(self.W_u + scalar * self.W_d, u_in)
+    def Apply_W_u_Plus_scalar_M_u_Inverse_Py(self, u_in, scalar):
+        u_out = np.linalg.solve(self.W_u + scalar * self.M, u_in)
         return u_out
 
-    def Apply_W_u_Plus_scalar_W_d_Inverse_Factor_Py(self, u_in, scalar):
-        L = np.linalg.cholesky(self.W_u + scalar * self.W_d)
+    def Apply_W_u_Plus_scalar_M_u_Inverse_Factor_Py(self, u_in, scalar):
+        L = np.linalg.cholesky(self.W_u + scalar * self.M)
         u_out = np.linalg.solve(np.transpose(L), u_in)
         return u_out
 

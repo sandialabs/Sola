@@ -5,22 +5,21 @@ classdef MD_u_Prior_Interface_synthetic_test < MD_u_Prior_Interface
         x  % Mesh nodes on [0,1]
         S  % Stiffness matrix
         M  % Mass matrix
-        W_d  % Discrepancy precision matrix
         W_u  % State weighting matrix
     end
 
     methods (Access = public)
 
-        function [u_out] = Apply_W_d(this, u_in)
-            u_out = this.W_d * u_in;
+        function [u_out] = Apply_M_u(this, u_in)
+            u_out = this.M * u_in;
         end
 
-        function [u_out] = Apply_W_u_Plus_scalar_W_d_Inverse(this, u_in, scalar)
-            u_out = linsolve(this.W_u + scalar * this.W_d, u_in);
+        function [u_out] = Apply_W_u_Plus_scalar_M_u_Inverse(this, u_in, scalar)
+            u_out = linsolve(this.W_u + scalar * this.M, u_in);
         end
 
-        function [u_out] = Apply_W_u_Plus_scalar_W_d_Inverse_Factor(this, u_in, scalar)
-            R = chol(this.W_u + scalar * this.W_d);
+        function [u_out] = Apply_W_u_Plus_scalar_M_u_Inverse_Factor(this, u_in, scalar)
+            R = chol(this.W_u + scalar * this.M);
             u_out = linsolve(R, u_in);
         end
 
@@ -54,10 +53,8 @@ classdef MD_u_Prior_Interface_synthetic_test < MD_u_Prior_Interface
             S = (1 / h) * S;
             this.S = S;
 
-            E_d = (1.e-6) * S + M;
             E_u = (2.0) * ((5.e-2) * S + M);
 
-            this.W_d = E_d' * linsolve(M, E_d);
             this.W_u = E_u' * linsolve(M, E_u);
         end
 

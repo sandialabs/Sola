@@ -26,7 +26,6 @@ class MD_Elliptic_u_Prior_Interface_Python_Synthetic_Test(MD_Elliptic_u_Prior_In
             self.S[i+1,i] = -1.0
         self.S = (1.0/h)*self.S
 
-        self.E_d = (1.e-6) * self.S + self.M
         self.E_u = (5.e-2) * self.S + self.M
 
     def Apply_E_u_Inverse_Py(self, u_in):
@@ -41,14 +40,3 @@ class MD_Elliptic_u_Prior_Interface_Python_Synthetic_Test(MD_Elliptic_u_Prior_In
         u_out = self.M@u_in
         return u_out
 
-    def Apply_M_u_Inverse_Py(self, u_in):
-        u_out = np.linalg.solve(self.M,u_in)
-        return u_out
-
-    def Apply_E_d_Py(self, u_in):
-        u_out = self.E_d@u_in
-        return u_out
-
-    def Apply_E_d_Transpose_Py(self, u_in):
-        u_out = np.transpose(self.E_d)@u_in
-        return u_out

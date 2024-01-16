@@ -42,12 +42,12 @@ classdef MD_Bayes_Posterior_Data < handle
             this.G = (1 + this.W_z_inv_z_opt' * z_opt) - this.Z' * this.W_z_inv_z_opt - this.W_z_inv_z_opt' * this.Z + this.Z' * this.W_z_inv_Z;
             [this.g_vecs, this.Mu] = eig(this.G);
 
-            W_d_Y = u_prior_interface.Apply_W_d(this.D);
-            this.u_ell = u_prior_interface.Apply_W_u_Inverse(W_d_Y);
+            M_u_Y = u_prior_interface.Apply_M_u(this.D);
+            this.u_ell = u_prior_interface.Apply_W_u_Inverse(M_u_Y);
             this.u_i_ell = cell(this.N, 1);
-            W_d_u_ell = u_prior_interface.Apply_W_d(this.u_ell);
+            M_u_u_ell = u_prior_interface.Apply_M_u(this.u_ell);
             for i = 1:this.N
-                this.u_i_ell{i} = (1 / this.alpha_d) * u_prior_interface.Apply_W_u_Plus_scalar_W_d_Inverse(W_d_u_ell, this.Mu(i, i) / this.alpha_d);
+                this.u_i_ell{i} = (1 / this.alpha_d) * u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(M_u_u_ell, this.Mu(i, i) / this.alpha_d);
             end
 
             this.a_ell = zeros(this.N, 1);
@@ -65,7 +65,7 @@ classdef MD_Bayes_Posterior_Data < handle
                 m = size(this.u_ell, 1);
                 for i = 1:this.N
                     Omega = randn(m, this.num_samples);
-                    this.ui_hat{i} = (1 / sqrt(this.alpha_d)) * u_prior_interface.Apply_W_u_Plus_scalar_W_d_Inverse_Factor(Omega, this.Mu(i, i) / this.alpha_d);
+                    this.ui_hat{i} = (1 / sqrt(this.alpha_d)) * u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse_Factor(Omega, this.Mu(i, i) / this.alpha_d);
                 end
 
                 Omega = randn(m, this.num_samples);

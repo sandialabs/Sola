@@ -5,7 +5,6 @@ classdef MD_Elliptic_u_Prior_Interface_synthetic_test_with_gsvd < MD_Elliptic_u_
         x  % Mesh nodes on [0,1]
         S  % Stiffness matrix
         M  % Mass matrix
-        E_d  % Discrepancy precision matrix elliptic operator
         E_u  % State precision matrix elliptic operator
     end
 
@@ -21,18 +20,6 @@ classdef MD_Elliptic_u_Prior_Interface_synthetic_test_with_gsvd < MD_Elliptic_u_
 
         function [u_out] = Apply_M_u(this, u_in)
             u_out = this.M * u_in;
-        end
-
-        function [u_out] = Apply_M_u_Inverse(this, u_in)
-            u_out = linsolve(this.M, u_in);
-        end
-
-        function [u_out] = Apply_E_d(this, u_in)
-            u_out = this.E_d * u_in;
-        end
-
-        function [u_out] = Apply_E_d_Transpose(this, u_in)
-            u_out = this.E_d' * u_in;
         end
 
     end
@@ -58,7 +45,6 @@ classdef MD_Elliptic_u_Prior_Interface_synthetic_test_with_gsvd < MD_Elliptic_u_
             S = (1 / h) * S;
             this.S = S;
 
-            this.E_d = (1.e-6) * S + M;
             this.E_u = (5.e-2) * S + M;
 
             num_sing_vals = 50;

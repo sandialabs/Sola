@@ -1,8 +1,7 @@
-classdef MD_Elliptic_u_Prior_Interface_Transient_Test_Problem < MD_Elliptic_u_Prior_Interface
+classdef MD_Transient_Elliptic_u_Prior_Interface_Transient_Test_Problem < MD_Transient_Elliptic_u_Prior_Interface
 
     properties
         E_u
-        E_d
         M
     end
 
@@ -16,35 +15,21 @@ classdef MD_Elliptic_u_Prior_Interface_Transient_Test_Problem < MD_Elliptic_u_Pr
             u_out = linsolve(this.E_u, u_in);
         end
 
-        function [u_out] = Apply_M_u(this, u_in)
+        function [u_out] = Apply_Spatial_M_u(this, u_in)
             u_out = this.M * u_in;
-        end
-
-        function [u_out] = Apply_M_u_Inverse(this, u_in)
-            u_out = linsolve(this.M, u_in);
-        end
-
-        function [u_out] = Apply_E_d(this, u_in)
-            u_out = this.E_d * u_in;
-        end
-
-        function [u_out] = Apply_E_d_Transpose(this, u_in)
-            u_out = this.E_d' * u_in;
         end
 
     end
 
     methods
 
-        function this = MD_Elliptic_u_Prior_Interface_Transient_Test_Problem(alpha_u, transient_prior_cov, sabl_opt, num_sing_vals)
-            this@MD_Elliptic_u_Prior_Interface(alpha_u, transient_prior_cov);
+        function this = MD_Transient_Elliptic_u_Prior_Interface_Transient_Test_Problem(alpha_u, transient_prior_cov, sabl_opt, num_sing_vals)
+            this@MD_Transient_Elliptic_u_Prior_Interface(alpha_u, transient_prior_cov);
 
             S = sabl_opt.con.S;
             this.M = sabl_opt.con.M;
 
             this.E_u = (2.e-2) * S + this.M;
-
-            this.E_d = (1.e-8) * S + this.M;
 
             oversampling = sabl_opt.con.n_y - num_sing_vals;
             num_subspace_iters = 1;
