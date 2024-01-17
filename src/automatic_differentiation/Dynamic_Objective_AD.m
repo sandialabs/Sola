@@ -63,30 +63,22 @@ classdef Dynamic_Objective_AD < Dynamic_Objective
     methods (Access = public)
 
         function [val, grad_y] = Time_Instance_Objective(this, y, t)
-            cd(this.path_name);
             [grad_y, val] = grad_Time_Instance_Objective_AD_Jac(this, y, t);
-            cd('../');
             grad_y = grad_y';
         end
 
         function [val, grad_z] = Regularization_Objective(this, z)
-            cd(this.path_name);
             [grad_z, val] = grad_Regularization_Objective_AD_Jac(this, z);
-            cd('../');
             grad_z = grad_z';
         end
 
         function [Mv] = Time_Instance_Objective_yy_Apply(this, v, y, t)
-            cd(this.path_name);
             M = Hess_Time_Instance_Objective_AD_Hes(this, y, t);
-            cd('../');
             Mv = M * v;
         end
 
         function [Mv] = Regularization_Objective_zz_Apply(this, v, z)
-            cd(this.path_name);
             M = Hess_Regularization_Objective_AD_Hes(this, z);
-            cd('../');
             Mv = M * v;
         end
 
@@ -121,20 +113,20 @@ classdef Dynamic_Objective_AD < Dynamic_Objective
                 mkdir(this.path_name);
             end
 
+            addpath('.');
+            addpath(this.path_name);
+            cd(this.path_name);
+
             % Test if any functions have changed
             y = randn(this.n_y, 1);
             z = randn(this.n_z, 1);
             t = rand;
-            valcurrent = this.Time_Instance_Objective_AD(y, t);
-
-            addpath('.');
-            cd(this.path_name);
             try
                 [~, valold] = grad_Time_Instance_Objective_AD_Jac(this, y, t);
             catch
                 valold = 0;
             end
-
+            valcurrent = this.Time_Instance_Objective_AD(y, t);
             if norm(valold - valcurrent) > 10^-15
                 if this.verbose
                     disp('Detected change in time instance objective');

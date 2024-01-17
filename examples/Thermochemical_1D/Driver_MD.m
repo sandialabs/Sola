@@ -22,13 +22,12 @@ data_interface.Load_Data();
 
 opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
 
-beta_tu = 10;
-beta_iu = 1.e5;
-beta_td = 0.0;
-transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(beta_tu, beta_iu, beta_td, T, n_t, 4 * n_y);
+beta_t = 10;
+beta_i = 1.e5;
+transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(beta_t, beta_i, T, n_t, 4 * n_y);
 
 alpha_u = 200.0^2;
-u_prior_interface = Thermochemical_Elliptic_u_Prior_Interface(alpha_u, transient_prior_cov, con.fe);
+u_prior_interface = Thermochemical_Transient_Elliptic_u_Prior_Interface(alpha_u, transient_prior_cov, con.fe);
 
 alpha_z = 1.e-10;
 z_prior_interface = Thermochemical_Elliptic_z_Prior_Interface(alpha_z, con.fe, T, control_time_nodes);

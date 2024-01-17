@@ -14,6 +14,7 @@ classdef Objective_AD < Objective
         n_u             % Dimension :math:`n_u` of the state :math:`\u`.
         n_z             % Dimension :math:`n_z` of the control :math:`\z`.
         verbose         % If ``true``, print automatic differentiation info.
+        path_name
     end
 
     methods (Abstract, Access = public)
@@ -78,13 +79,21 @@ classdef Objective_AD < Objective
             this.verbose = true;
         end
 
-        function [] = AD_Initialization(this)
-            addpath .;
-            if ~exist('AdiGator_Files', 'dir')
-                mkdir AdiGator_Files;
+        function [] = AD_Initialization(this, folder_name)
+
+            if nargin > 1
+                this.path_name = [pwd(), '/', folder_name];
+            else
+                this.path_name = [pwd(), '/AdiGator_Files'];
             end
-            addpath AdiGator_Files;
-            cd AdiGator_Files;
+
+            if ~exist(this.path_name, 'dir')
+                mkdir(this.path_name);
+            end
+
+            addpath('.');
+            addpath(this.path_name);
+            cd(this.path_name);
 
             % Test if any functions have changed
             u = randn(this.n_u, 1);

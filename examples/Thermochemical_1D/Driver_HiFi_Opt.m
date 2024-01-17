@@ -83,5 +83,6 @@ title('f');
 colorbar();
 set(gca, 'fontsize', 18);
 
-rmdir('Hifi_AD_Files/', 's');
+con.Clear_AD();
+% rmdir('Hifi_AD_Files/', 's');
 save('HiFi_Opt_Results.mat', 'obj', 'con', 'u', 'z');

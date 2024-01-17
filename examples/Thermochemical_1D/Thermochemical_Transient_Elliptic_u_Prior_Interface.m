@@ -1,4 +1,4 @@
-classdef Thermochemical_Elliptic_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
+classdef Thermochemical_Transient_Elliptic_u_Prior_Interface < MD_Transient_Elliptic_u_Prior_Interface
 
     properties
         M
@@ -27,12 +27,12 @@ classdef Thermochemical_Elliptic_u_Prior_Interface < MD_Elliptic_u_Prior_Interfa
             u_out((3 * this.m + 1):(4 * this.m), :) = linsolve(this.E_v2, u_in((3 * this.m + 1):(4 * this.m), :));
         end
 
-        function [u_out] = Apply_M_u(this, u_in)
+        function [u_out] = Apply_Spatial_M_u(this, u_in)
             u_out = kron(eye(4), this.M) * u_in;
         end
 
-        function this = Thermochemical_Elliptic_u_Prior_Interface(alpha_u, transient_prior_cov, fe)
-            this@MD_Elliptic_u_Prior_Interface(alpha_u, transient_prior_cov);
+        function this = Thermochemical_Transient_Elliptic_u_Prior_Interface(alpha_u, transient_prior_cov, fe)
+            this@MD_Transient_Elliptic_u_Prior_Interface(alpha_u, transient_prior_cov);
             this.M = fe.M;
             this.E_T = (5.e-2) * fe.S + fe.M;
             this.E_u1 = (5.e-2) * fe.S + fe.M;

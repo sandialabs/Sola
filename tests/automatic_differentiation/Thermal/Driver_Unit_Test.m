@@ -152,4 +152,4 @@ if error > 1.e-11
     disp('Error in automatic differentiation Thermal example');
 end
 
-evalc('rmdir("AdiGator_Files/", "s")');
+con_AD.Clear_AD();

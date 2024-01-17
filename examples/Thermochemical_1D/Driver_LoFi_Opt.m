@@ -64,5 +64,5 @@ title('f');
 colorbar();
 set(gca, 'fontsize', 18);
 
-rmdir('Lofi_AD_Files/', 's');
+con.Clear_AD();
 save('LoFi_Opt_Results.mat', 'obj', 'con', 'u', 'z');

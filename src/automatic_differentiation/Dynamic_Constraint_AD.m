@@ -93,9 +93,7 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
                 if (norm(z - this.z_current(:, time_index)) ~= 0) || (norm(y - this.yt_current(:, time_index)) ~= 0)
                     this.yt_current(:, time_index) = y;
                     this.z_current(:, time_index) = z;
-                    cd(this.path_name);
                     [this.Jac_current(:, :, time_index), this.f_current(:, time_index)] = Jac_Time_Instance_RHS_AD_Jac(this, [y; z], t);
-                    cd('../');
                 end
             end
         end
@@ -107,9 +105,7 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
                     this.yt_current(:, time_index) = y;
                     this.z_current(:, time_index) = z;
                     this.lambdat_current(:, time_index) = lambda;
-                    cd(this.path_name);
                     this.Hess_current(:, :, time_index) = Hess_Time_Instance_RHS_AD_Hes(this, [y; z], t, lambda);
-                    cd('../');
                 end
             end
         end
@@ -117,9 +113,7 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
         function [f, f_y, f_z] = Time_Instance_RHS(this, y, z, t)
             time_index = this.Update_Jacobian(y, z, t);
             if isempty(time_index)
-                cd(this.path_name);
                 [Jac, Fun] = Jac_Time_Instance_RHS_AD_Jac(this, [y; z], t);
-                cd('../');
                 f = Fun;
                 f_y = Jac(:, 1:this.n_y);
                 f_z = Jac(:, (this.n_y + 1):end);
@@ -135,18 +129,14 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
                 h = this.Initial_Condition_AD(z);
                 h_z = zeros(length(h), length(z));
             else
-                cd(this.path_name);
                 [h_z, h] = Jac_Initial_Condition_AD_Jac(this, z);
-                cd('../');
             end
         end
 
         function [Mv] = Time_Instance_RHS_yy_Apply(this, v, y, z, t, lambda)
             time_index = this.Update_Hessian(y, z, t, lambda);
             if isempty(time_index)
-                cd(this.path_name);
                 M = Hess_Time_Instance_RHS_AD_Hes(this, [y; z], t, lambda);
-                cd('../');
                 Mv = M(1:this.n_y, 1:this.n_y) * v;
             else
                 Mv = this.Hess_current(1:this.n_y, 1:this.n_y, time_index) * v;
@@ -156,9 +146,7 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
         function [Mv] = Time_Instance_RHS_yz_Apply(this, v, y, z, t, lambda)
             time_index = this.Update_Hessian(y, z, t, lambda);
             if isempty(time_index)
-                cd(this.path_name);
                 M = Hess_Time_Instance_RHS_AD_Hes(this, [y; z], t, lambda);
-                cd('../');
                 Mv = M(1:this.n_y, (this.n_y + 1):end) * v;
             else
                 Mv = this.Hess_current(1:this.n_y, (this.n_y + 1):end, time_index) * v;
@@ -168,9 +156,7 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
         function [Mv] = Time_Instance_RHS_zy_Apply(this, v, y, z, t, lambda)
             time_index = this.Update_Hessian(y, z, t, lambda);
             if isempty(time_index)
-                cd(this.path_name);
                 M = Hess_Time_Instance_RHS_AD_Hes(this, [y; z], t, lambda);
-                cd('../');
                 Mv = M((this.n_y + 1):end, 1:this.n_y) * v;
             else
                 Mv = this.Hess_current((this.n_y + 1):end, 1:this.n_y, time_index) * v;
@@ -180,9 +166,7 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
         function [Mv] = Time_Instance_RHS_zz_Apply(this, v, y, z, t, lambda)
             time_index = this.Update_Hessian(y, z, t, lambda);
             if isempty(time_index)
-                cd(this.path_name);
                 M = Hess_Time_Instance_RHS_AD_Hes(this, [y; z], t, lambda);
-                cd('../');
                 Mv = M((this.n_y + 1):end, (this.n_y + 1):end) * v;
             else
                 Mv = this.Hess_current((this.n_y + 1):end, (this.n_y + 1):end, time_index) * v;
@@ -193,9 +177,7 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
             if this.ic_Hess_zero
                 Mv = 0 * v;
             else
-                cd(this.path_name);
                 M = Hess_Initial_Condition_AD_Hess(this, z);
-                cd('../');
                 Mv = M * v;
             end
         end
@@ -225,6 +207,10 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
             this.Hess_current = inf * ones(n_y + n_z, n_y + n_z, n_t);
         end
 
+        function [] = Clear_AD(this)
+            evalc("rmdir(this.path_name,'s')");
+        end
+
         function [] = AD_Initialization(this, folder_name)
 
             if nargin > 1
@@ -237,21 +223,25 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
                 mkdir(this.path_name);
             end
 
-            % Test if any functions have changed
-            y = randn(this.n_y, 1);
-            z = randn(this.n_z, 1);
-            t = rand;
-            lambda = randn(this.n_y, 1);
-            fcurrent = this.Time_Instance_RHS_AD(y, z, t);
-
             addpath('.');
+            addpath(this.path_name);
             cd(this.path_name);
+
+            % Test if any functions have changed
+            repeat = 1;
+            while repeat
+                y = randn(this.n_y, 1);
+                z = randn(this.n_z, 1);
+                t = rand;
+                lambda = randn(this.n_y, 1);
+                fcurrent = this.Time_Instance_RHS_AD(y, z, t);
+                repeat = isnan(norm(fcurrent));
+            end
             try
                 [~, fold] = Jac_Time_Instance_RHS_AD_Jac(this, [y; z], t);
             catch
                 fold = zeros(this.n_y, 1);
             end
-
             if norm(fold - fcurrent) > 10^-15
                 if this.verbose
                     disp('Detected change in constraint');
