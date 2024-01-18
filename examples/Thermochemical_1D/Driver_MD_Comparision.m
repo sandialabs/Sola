@@ -51,3 +51,5 @@ ylabel('Time');
 title('Updated f');
 colorbar();
 set(gca, 'fontsize', 18);
+
+con_hifi.Clear_AD();

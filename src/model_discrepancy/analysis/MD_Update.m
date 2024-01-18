@@ -28,6 +28,54 @@ classdef MD_Update < handle
             this.post_data.Compute_Posterior_Data(this.opt_prob_interface, this.data_interface, this.u_prior_interface, this.z_prior_interface, alpha_d, this.u_opt, this.z_opt, num_samples);
         end
 
+        function [mean_error, sample_error, delta_mean, delta_samples] = Compute_Discrepancy_Fit_Error(this)
+
+            [delta_mean, delta_samples] = this.Posterior_Discrepancy_Samples(this.post_data.Z);
+            mean_error = zeros(this.post_data.N, 1);
+            sample_error = zeros(this.post_data.N, this.post_data.num_samples);
+            for i = 1:this.post_data.N
+                diff = delta_mean{i} - this.post_data.D(:, i);
+                normalization = sqrt(this.post_data.D(:, i)' * this.u_prior_interface.Apply_M_u(this.post_data.D(:, i)));
+                mean_error(i) = sqrt(this.u_prior_interface.Apply_M_u(diff)' * diff) / normalization;
+                for k = 1:this.post_data.num_samples
+                    diff = delta_samples{i}(:, k) - this.post_data.D(:, i);
+                    sample_error(i, k) = sqrt(this.u_prior_interface.Apply_M_u(diff)' * diff) / normalization;
+                end
+            end
+
+            for i = 1:this.post_data.N
+                figure;
+                hold on;
+                histogram(sample_error(i, :));
+                plot([mean_error(i), mean_error(i)], [0, max(get(gca, 'YLim'))], 'LineWidth', 5);
+                title(['Posterior discrepancy relative error at $z_\ell$, $\ell=$', num2str(i)], 'Interpreter', 'latex');
+                legend({'Posterior Samples', 'Posterior Mean'}, 'Location', 'best');
+                set(gca, 'fontsize', 18);
+            end
+        end
+
+        function [] = Compute_Discrepancy_Extrapolation_Variabilty(this, Z_test)
+
+            [delta_mean, delta_samples] = this.Posterior_Discrepancy_Samples(Z_test);
+            N = size(Z_test, 2);
+            sample_variability = zeros(N, this.post_data.num_samples);
+            for i = 1:N
+                normalization = sqrt(delta_mean{i}' * this.u_prior_interface.Apply_M_u(delta_mean{i}));
+                for k = 1:this.post_data.num_samples
+                    diff = delta_samples{i}(:, k) - delta_mean{i};
+                    sample_variability(i, k) = sqrt(this.u_prior_interface.Apply_M_u(diff)' * diff) / normalization;
+                end
+            end
+
+            for i = 1:N
+                figure;
+                hold on;
+                histogram(sample_variability(i, :));
+                title(['Posterior discrepancy sample variability at $z_{test,i}$, $i=$', num2str(i)], 'Interpreter', 'latex');
+                set(gca, 'fontsize', 18);
+            end
+        end
+
         function [delta_mean, delta_samples] = Posterior_Discrepancy_Samples(this, z)
             m = size(this.post_data.u_ell, 1);
             p = size(z, 2);

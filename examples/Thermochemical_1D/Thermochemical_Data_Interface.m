@@ -1,8 +1,7 @@
 classdef Thermochemical_Data_Interface < MD_Data_Interface
 
     properties
-        n_y
-        n_t
+
     end
 
     methods (Access = public)
@@ -16,20 +15,15 @@ classdef Thermochemical_Data_Interface < MD_Data_Interface
         end
 
         function [Z] = Load_Z_Data(this)
-            Z = load('HiFi_Opt_Results.mat', 'z').z - load('LoFi_Opt_Results.mat', 'z').z;
+            Z = load('Discrepancy_Evaluations.mat', 'Z').Z;
         end
 
         function [D] = Load_d_Data(this)
-            u_hifi = load('HiFi_Opt_Results.mat', 'u').u;
-            u_lofi = load('LoFi_Opt_Results.mat', 'u').u;
-            u_hifi_rs = reshape(u_hifi, 6 * this.n_y, this.n_t);
-            u_hifi_rs = u_hifi_rs(kron([1; 2; 4; 5], (1:this.n_y)'), :);
-            D = u_hifi_rs(:) - u_lofi;
+            D = load('Discrepancy_Evaluations.mat', 'D').D;
         end
 
-        function this = Thermochemical_Data_Interface(n_y, n_t)
-            this.n_y = n_y;
-            this.n_t = n_t;
+        function this = Thermochemical_Data_Interface()
+
         end
 
     end

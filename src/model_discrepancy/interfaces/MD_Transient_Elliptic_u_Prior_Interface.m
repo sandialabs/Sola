@@ -36,28 +36,37 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_u_Prior_Interface
             if size(u_in, 1) == this.transient_prior_cov.n_y
                 u_out = this.Apply_Spatial_M_u(u_in);
             else
-                u_tmp = reshape(u_in, this.transient_prior_cov.n_y, this.transient_prior_cov.n_t);
-                u_tmp = u_tmp * this.transient_prior_cov.M_t;
-                u_out = this.Apply_Spatial_M_u(u_tmp);
-                u_out = u_out(:);
+                u_out = 0.0 * u_in;
+                for k = 1:size(u_out, 2)
+                    u_tmp = reshape(u_in(:, k), this.transient_prior_cov.n_y, this.transient_prior_cov.n_t);
+                    u_tmp = u_tmp * this.transient_prior_cov.M_t;
+                    u_tmp = this.Apply_Spatial_M_u(u_tmp);
+                    u_out(:, k) = u_tmp(:);
+                end
             end
         end
 
         function [u_out] = Apply_W_u_Plus_scalar_M_u_Inverse(this, u_in, scalar)
-            u_tmp = reshape(u_in, this.transient_prior_cov.n_y, this.transient_prior_cov.n_t);
-            u_tmp = this.sing_vecs_output' * u_tmp * this.transient_prior_cov.M_t_inv_evecs;
-            aleph = (this.sing_vals.^2) * this.transient_prior_cov.evals';
-            aleph = aleph ./ (1 + this.alpha_u * scalar * aleph);
-            u_tmp = u_tmp .* aleph;
-            u_tmp = this.sing_vecs_output * u_tmp * this.transient_prior_cov.M_t_inv_evecs';
-            u_out = this.alpha_u * u_tmp(:);
+            u_out = 0.0 * u_in;
+            for k = 1:size(u_out, 2)
+                u_tmp = reshape(u_in(:, k), this.transient_prior_cov.n_y, this.transient_prior_cov.n_t);
+                u_tmp = this.sing_vecs_output' * u_tmp * this.transient_prior_cov.M_t_inv_evecs;
+                aleph = (this.sing_vals.^2) * this.transient_prior_cov.evals';
+                aleph = aleph ./ (1 + this.alpha_u * scalar * aleph);
+                u_tmp = u_tmp .* aleph;
+                u_tmp = this.sing_vecs_output * u_tmp * this.transient_prior_cov.M_t_inv_evecs';
+                u_out(:, k) = this.alpha_u * u_tmp(:);
+            end
         end
 
         function [u_out] = Apply_W_u_Inverse(this, u_in)
-            u_tmp = reshape(u_in, this.transient_prior_cov.n_y, this.transient_prior_cov.n_t);
-            u_tmp = u_tmp * this.transient_prior_cov.M_t_inv_evecs * diag(this.transient_prior_cov.evals) * this.transient_prior_cov.M_t_inv_evecs';
-            u_out = this.alpha_u * this.sing_vecs_output * diag(this.sing_vals.^2) * this.sing_vecs_output' * u_tmp;
-            u_out = u_out(:);
+            u_out = 0.0 * u_in;
+            for k = 1:size(u_out, 2)
+                u_tmp = reshape(u_in(:, k), this.transient_prior_cov.n_y, this.transient_prior_cov.n_t);
+                u_tmp = u_tmp * this.transient_prior_cov.M_t_inv_evecs * diag(this.transient_prior_cov.evals) * this.transient_prior_cov.M_t_inv_evecs';
+                u_tmp = this.alpha_u * this.sing_vecs_output * diag(this.sing_vals.^2) * this.sing_vecs_output' * u_tmp;
+                u_out(:, k) = u_tmp(:);
+            end
         end
 
         % Factorize W_u^{-1}=F*F^T, function gives u_out=F*u_in
