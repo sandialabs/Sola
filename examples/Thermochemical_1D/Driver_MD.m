@@ -24,7 +24,7 @@ data_interface.Load_Data();
 
 opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
 
-beta_t = 10;
+beta_t = 50;
 beta_i = 1.e5;
 transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(beta_t, beta_i, T, n_t, 4 * n_y);
 
@@ -52,7 +52,7 @@ end
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 md_update = MD_Update(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
 
-alpha_d = 1.e-4;
+alpha_d = 1.e-6;
 num_post_samples = 20;
 md_update.Compute_Posterior_Data(alpha_d, num_post_samples);
 

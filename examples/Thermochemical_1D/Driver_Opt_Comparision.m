@@ -39,7 +39,4 @@ title('LoFi f');
 colorbar();
 set(gca, 'fontsize', 18);
 
-% con_lofi = load('LoFi_Opt_Results.mat','con').con;
-% con_lofi.AD_Initialization('Lofi_AD_Files');
-% obj_lofi = Thermochemical_Dynamic_Objective(con_lofi,reg_coeff);
-% opt_lofi = Reduced_Space_Optimization(obj_lofi,con_lofi);
+con_hifi.Clear_AD();

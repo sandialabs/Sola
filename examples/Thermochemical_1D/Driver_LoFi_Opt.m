@@ -14,7 +14,7 @@ con.AD_Initialization('Lofi_AD_Files');
 obj = Thermochemical_Dynamic_Objective(con, reg_coeff);
 opt = Reduced_Space_Optimization(obj, con);
 
-z0 = ones(n_z, 1);
+z0 = load('HiFi_Opt_Results.mat', 'z').z;
 [u, z] = opt.Optimize(z0);
 
 f = con.con_hifi.Map_Controller_to_Mesh(z);

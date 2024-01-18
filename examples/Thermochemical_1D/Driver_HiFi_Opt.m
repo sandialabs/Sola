@@ -4,7 +4,7 @@ clc;
 run('../../src/Set_Paths');
 
 n_y = 50;
-T = 1;
+T = 0.5;
 n_t = 51;
 control_time_nodes = 10;
 n_z = n_y * control_time_nodes;

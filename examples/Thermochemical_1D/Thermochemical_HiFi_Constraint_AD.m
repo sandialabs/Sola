@@ -150,7 +150,7 @@ classdef Thermochemical_HiFi_Constraint_AD < Dynamic_Constraint_AD
             this.cooling_2 = 1.0;
 
             this.react_rate_1 = 5.e-2;
-            this.react_rate_2 = 1.0;
+            this.react_rate_2 = 1.e-1;
 
             legendre_polys = zeros(this.n_t, this.control_time_nodes);
             for k = 1:this.control_time_nodes
