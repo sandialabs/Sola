@@ -29,7 +29,9 @@ num_evals = 20;
 oversampling = 10;
 md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
 
-md_oed = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
+oed_interface = MD_OED_Interface_Diff(data_interface, con_lofi);
+
+md_oed = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
 md_oed.verbosity = print_output;
 md_oed.Offline_Computation();
 
@@ -142,10 +144,34 @@ alpha_d = rand;
 beta_d = randn((N - 1) * r, 1);
 h = 10.^(-2:-1:-6);
 p = length(h);
-obj_fd_error = zeros(p, 1);
+post_cov_fd_error = zeros(p, 1);
 for s = 1:p
     beta_s = beta + h(s) * beta_d;
     val_s = md_oed.Evaluate_Posterior_Cov_Trace(beta_s, alpha_d);
+    fd_approx = (val_s - val) / h(s);
+    post_cov_fd_error(s) = abs(fd_approx - grad' * beta_d);
+end
+
+if print_output
+    disp('Posterior covariance finite difference error:');
+    for s = 1:p
+        disp(['Stepsize = ', num2str(h(s)), ' and error = ', num2str(post_cov_fd_error(s))]);
+    end
+end
+
+%%
+beta = randn((N - 1) * r, 1);
+alpha_d = rand;
+reg_coeff = rand;
+[val, grad] = md_oed.Evaluate_OED_Objective(beta, alpha_d, reg_coeff);
+
+beta_d = randn((N - 1) * r, 1);
+h = 10.^(-2:-1:-6);
+p = length(h);
+obj_fd_error = zeros(p, 1);
+for s = 1:p
+    beta_s = beta + h(s) * beta_d;
+    val_s = md_oed.Evaluate_OED_Objective(beta_s, alpha_d, reg_coeff);
     fd_approx = (val_s - val) / h(s);
     obj_fd_error(s) = abs(fd_approx - grad' * beta_d);
 end
@@ -160,15 +186,17 @@ end
 %%
 beta_0 = randn((N - 1) * r, 1);
 alpha_d = rand;
-[beta, Z] = md_oed.Generate_Optimal_Design(beta_0, alpha_d);
+reg_coeff = (1.e-6) * rand;
+[beta, Z] = md_oed.Generate_Optimal_Design(beta_0, alpha_d, reg_coeff);
 
 %%
-% save('Reference_Solution.mat','g_fd_error','mu_fd_error','Mg_fd_error','obj_fd_error','beta','Z')
+% save('Reference_Solution.mat','g_fd_error','mu_fd_error','Mg_fd_error','post_cov_fd_error','obj_fd_error','beta','Z')
 ref = load('Reference_Solution.mat');
 
 error = norm(ref.Mg_fd_error - Mg_fd_error);
 error = max(error, norm(ref.mu_fd_error - mu_fd_error));
 error = max(error, norm(ref.g_fd_error - g_fd_error));
+error = max(error, norm(ref.post_cov_fd_error - post_cov_fd_error));
 error = max(error, norm(ref.obj_fd_error - obj_fd_error));
 error = max(error, norm(ref.beta - beta));
 error = max(error, norm(ref.Z - Z));

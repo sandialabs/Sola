@@ -6,6 +6,7 @@ classdef MD_OED < handle
         u_prior_interface
         z_prior_interface
         md_hessian_analysis
+        oed_interface
 
         offline_data
         verbosity
@@ -13,12 +14,13 @@ classdef MD_OED < handle
 
     methods
 
-        function this = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis)
+        function this = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface)
             this.opt_prob_interface = opt_prob_interface;
             this.data_interface = data_interface;
             this.u_prior_interface = u_prior_interface;
             this.z_prior_interface = z_prior_interface;
             this.md_hessian_analysis = md_hessian_analysis;
+            this.oed_interface = oed_interface;
             this.verbosity = true;
         end
 
@@ -52,17 +54,52 @@ classdef MD_OED < handle
             this.offline_data.Ju = Ju;
             this.offline_data.Mu_Wu_inv_Ju = this.u_prior_interface.Apply_M_u(tmp);
 
+            this.offline_data.Vt_Design_Cov_Inv_V = this.offline_data.V' * this.oed_interface.Apply_Design_Cov_Inverse(this.offline_data.V);
+
         end
 
-        function [beta, Z] = Generate_Optimal_Design(this, beta_0, alpha_d)
+        function [Z] = Generate_Random_Design(this, N)
+            Omega = randn(length(this.data_interface.z_opt), N - 1);
+            Z = this.data_interface.z_opt + this.oed_interface.Apply_Design_Cov_Factor(Omega);
+            Z = [this.data_interface.z_opt, Z];
+        end
+
+        function [Z] = Generate_Random_Design_from_Subspace(this, N)
+            v = randn(size(this.offline_data.V, 2), N - 1);
+            coeff = length(this.data_interface.z_opt) / trace(this.offline_data.Vt_Design_Cov_Inv_V);
+            Z_tmp = sqrt(coeff) * this.offline_data.V * v;
+            Z = [this.data_interface.z_opt, this.data_interface.z_opt + Z_tmp];
+        end
+
+        function [beta, Z, post_var, reg_val] = L_Curve_Analysis(this, beta_0, alpha_d, reg_coeffs)
+            m = length(reg_coeffs);
+            post_var = zeros(m, 1);
+            reg_val = zeros(m, 1);
+            beta = zeros(length(beta_0), m);
+            Z = cell(m, 1);
+            for k = 1:m
+                [beta(:, k), Z{k}] = this.Generate_Optimal_Design(beta_0, alpha_d, reg_coeffs(k));
+                post_var(k) = -this.Evaluate_Posterior_Cov_Trace(beta(:, k), alpha_d);
+                reg_val(k) = this.Evaluate_Regularization(beta(:, k));
+            end
+        end
+
+        function [beta, Z] = Generate_Optimal_Design(this, beta_0, alpha_d, reg_coeff)
             if this.verbosity
                 options = optimoptions('fminunc', 'Algorithm', 'quasi-newton', 'Display', 'iter', 'MaxIterations', 5000, 'SpecifyObjectiveGradient', true);
             else
                 options = optimoptions('fminunc', 'Algorithm', 'quasi-newton', 'Display', 'None', 'MaxIterations', 5000, 'SpecifyObjectiveGradient', true);
             end
-            beta = fminunc(@(beta)this.Evaluate_Posterior_Cov_Trace(beta, alpha_d), beta_0, options);
+            beta = fminunc(@(beta)this.Evaluate_OED_Objective(beta, alpha_d, reg_coeff), beta_0, options);
             Z = this.data_interface.z_opt + this.offline_data.V * reshape(beta, size(this.offline_data.V, 2), []);
             Z = [this.data_interface.z_opt, Z];
+        end
+
+        function [val, grad] = Evaluate_OED_Objective(this, beta, alpha_d, reg_coeff)
+            [val1, grad1] = this.Evaluate_Posterior_Cov_Trace(beta, alpha_d);
+            [val2, grad2] = this.Evaluate_Regularization(beta);
+            val = -val1 + reg_coeff * val2;
+            grad = -grad1 + reg_coeff * grad2;
         end
 
         function [val, grad] = Evaluate_Posterior_Cov_Trace(this, beta, alpha_d)
@@ -129,6 +166,21 @@ classdef MD_OED < handle
                 grad = grad + 2 * tmp * (tmp1' * diag(1 ./ this.offline_data.Rho.^2) * tmp2);
             end
 
+        end
+
+        function [val, grad] = Evaluate_Regularization(this, beta)
+            N = length(beta) / this.offline_data.r + 1;
+            M = reshape([zeros(this.offline_data.r, 1); beta], this.offline_data.r, N);
+            val = 0;
+            grad = 0 * beta;
+            for i = 2:N
+                tmp = this.offline_data.Vt_Design_Cov_Inv_V * M(:, i);
+                val = val + M(:, i)' * tmp;
+                ei = zeros(N, 1);
+                ei(i) = 1;
+                grad_reg = 2 * kron(ei(2:end), tmp);
+                grad = grad + grad_reg;
+            end
         end
 
         function [g, mu, Mg, g_jac, mu_jac, Mg_jac] = G_eigs(this, beta)
