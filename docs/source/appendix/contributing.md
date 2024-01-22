@@ -3,40 +3,75 @@
 This project is currently privately maintained in Sandia's GitLab server at [cee-gitlab.sandia.gov/joshart/sabl](https://cee-gitlab.sandia.gov/joshart/sabl).
 Please [contact Joey Hart](mailto:joshart@sandia.gov) if you are interested in contributing.
 
-## Getting Started
+## Style Guide
+
+### Code Formatting
+
+MATLAB code in this repository is formatted using the `mh_style` command line tool provided in the [MISS_HIT](https://misshit.org/) package by Florian Schanda.
+
+```bash
+python3 -m pip install miss_hit
+```
+
+Use the following commands to format the MATLAB source code.
+
+```bash
+mh_style            # List style problems in detail without changing any files.
+mh_style --brief    # List style problems briefly without changing any files.
+mh_style --fix      # Fix style problems, overwriting offending files.
+```
+
+The following will format MATLAB code blocks in the documentation.
+
+```bash
+cd docs
+python3 format_code_blocks.py
+```
+
+To ensure proper formatting before committing changes, install a git `pre-commit` hook with the following command.
+
+```bash
+cp .pre-commit-formatting-hook .git/hooks/pre-commit
+```
+
+Now `git commit` automatically runs the formatter and cleans the code.
+A commit is **aborted** if the formatter makes any changes; in this case, review / add the changes and commit again.
+
+To run the formatter without a commit:
+
+```bash
+./.pre-commit-formatting-hook
+```
+
+### Coding Conventions
+
+- Class and function names: `Capitalize_And_Underscore`.
+The use of "math names" is approved so long as the notation is sufficiently documented.
+For example, the `Dynamic_Constraint` class has a `Time_Instance_RHS()` that is being renamed to simply `f()`.
+- Hessian-vector product methods often have many arguments, representing the state $\u$, the control $\z$, sometimes the adjoint state $\bflambda$, and the search direction $\v$.
+Our convention is to list the search direction first, then the (state, control, adjoint) triple (or (state, control) pair if the adjoint is not involved).
+The state should always be `u`, the control `z` (or `y` and `q` in the dynamic setting, when appropriate), and the adjoint `lambda`.
+The search direction $\v$ should be `u_in` or `z_in`, depending on the size of $\v$; likewise, the return variable should be `u_out` or `z_out`.
+- Classes, functions, and methods are documented using python's `sphinx` framework with the [`sphinxcontrib.matlab`](https://github.com/sphinx-contrib/matlabdomain/tree/master) extension.
+See [below](#automatic-api-generation) for more details.
 
 :::{admonition} TODO
 
-- Link to installation page
-- Pre-commit hooks
-- Developer requirements (MISS_HIT, pre-commit hooks)
+- Naming conventions for tests: folders, drivers, etc.
+- Error messages in tests
+- Directory structure for examples?
 :::
 
 ## Source Code
 
-### Organization
+SABL codes are split into three main directories:
+
+- `src/`, the problem-agnostic source code to be distributed as a package,
+- `tests/`, basic unit and regression tests for the `src/` code, and
+- `examples/`, a collection of fully fleshed-out applications.
 
 :::{admonition} TODO
 Mermaid diagram of the different modules.
-:::
-
-### Tests and Tutorials
-
-:::{admonition} TODO
-Describe `src/`, `examples/`, and `tests/`.
-:::
-
-### Style Guide
-
-:::{admonition} TODO
-
-- Mention MISS_HIT again
-- Conventions
-  - Class names: `Capitalize_And_Underscore`.
-  - Method names
-  - Names of input/output arguments for Hessian-vector products, i.e., we have things like $\bflambda\trp\grad{y,z}J(\u,\z)\v$ in several places. What should $\bflambda$ and $\v$ be called in the code? What about the outputs? In some places we have `lambda` and `v`, in other places `u_in` or `z_out`, etc. Leaning toward using `z_in`, `z_out` (etc.) everywhere like the HDSA.
-  - Variable names
-  - Docstring conventions
 :::
 
 ## Documentation
