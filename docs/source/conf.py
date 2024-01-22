@@ -32,7 +32,7 @@ extensions = [
     "myst_parser",  # Write content in Markdown.
     "sphinx_copybutton",  # Copy code blocks.
     "sphinx_proof",  # Theorems, algorithms, etc.
-    "sphinx_tippy",  # Previews when hovering over links.
+    # "sphinx_tippy",  # Previews when hovering over links.
     "sphinx_togglebutton",  # Dropdowns.
     "sphinxcontrib.matlab",  # MATLAB API generation.
     "sphinx.ext.autodoc",  # API generation.
@@ -70,7 +70,7 @@ html_css_files = [
     "admonish.css",  # Custom admonition :class: abstract
     "colors.css",  # Explicit text coloring.
     "rightalign.css",  # Right align equation labels.
-    "tippy.css",  # Correct theme for link previews.
+    # "tippy.css",  # Correct theme for link previews.
 ]
 
 # Explicit text coloring (ignoring theme).
