@@ -16,7 +16,7 @@ classdef Example_5_Constraint < Dynamic_Constraint
 
     methods (Access = public)
 
-        function [f, f_y, f_z] = Time_Instance_RHS(this, y, z, t)
+        function [f, f_y, f_z] = f(this, y, z, t)
             w = this.Temporal_Weights(t);
             zt = w' * z;
             f = [2 * t * y(1); 3 * t^2 * y(2) + t^2 - zt];
@@ -25,32 +25,32 @@ classdef Example_5_Constraint < Dynamic_Constraint
             f_z(2, :) = -w';
         end
 
-        function [h, h_z] = Initial_Condition(this, z)
+        function [h, h_z] = h(this, z)
             h = [1; 1];
             h_z = zeros(2, length(z));
         end
 
-        function [Mv] = Time_Instance_RHS_yy_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_yy_Apply(this, v, y, z, t, lambda)
             num_vecs = size(v, 2);
             Mv = zeros(this.n_y, num_vecs);
         end
 
-        function [Mv] = Time_Instance_RHS_yz_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_yz_Apply(this, v, y, z, t, lambda)
             num_vecs = size(v, 2);
             Mv = zeros(this.n_y, num_vecs);
         end
 
-        function [Mv] = Time_Instance_RHS_zy_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_zy_Apply(this, v, y, z, t, lambda)
             num_vecs = size(v, 2);
             Mv = zeros(this.n_z, num_vecs);
         end
 
-        function [Mv] = Time_Instance_RHS_zz_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_zz_Apply(this, v, y, z, t, lambda)
             num_vecs = size(v, 2);
             Mv = zeros(this.n_z, num_vecs);
         end
 
-        function [Mv] = Initial_Condition_zz_Apply(this, v, z, lambda)
+        function [Mv] = h_zz_Apply(this, v, z, lambda)
             num_vecs = size(v, 2);
             Mv = zeros(this.n_z, num_vecs);
         end

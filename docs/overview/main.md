@@ -692,37 +692,37 @@ The subclass inputs the state dimension $m$, the final time $T$, and the number 
     \hline
     Function Signature & Mathematical Description
     \\ \hline
-    `[val,grad_y] = Time_Instance_Objective(y,t)`
+    `[val,grad_y] = g(y,t)`
     & Evaluate $g(y,t)$ and $\nabla_y g(y,t)$
     \\
-    `[val,grad_z] = Regularization_Objective(z)`
+    `[val,grad_z] = R(z)`
     & Evaluate $R(z)$ and $\nabla_z R(z)$
     \\
-    `[f,f_y,f_z] = Time_Instance_RHS(y,z,t)`
+    `[f,f_y,f_z] = f(y,z,t)`
     & Evaluate $f(y,z,t)$, $f_y(y,z,t)$, and $f_z(y,z,t)$
     \\
-    `[h, h_z] = Initial_Condition(z)`
+    `[h, h_z] = h(z)`
     & Evaluate $h(z)$ and $h_z(z)$
     \\
-    `[Mv] = Time_Instance_Objective_yy_Apply(v,y,t)`
+    `[Mv] = g_yy_Apply(v,y,t)`
     & Compute the product $\nabla_{y,y} g(y,t) v$
     \\
-    `[Mv] = Regularization_Objective_zz_Apply(v,z)`
+    `[Mv] = R_zz_Apply(v,z)`
     & Compute the product $\nabla_{z,z} R(z) v$
     \\
-    `[Mv] = Time_Instance_RHS_yy_Apply(v,y,z,t,lambda)`
+    `[Mv] = f_yy_Apply(v,y,z,t,lambda)`
     & Compute the product $\lambda^{\mathsf{T}} f_{y,y}(y,z,t) v$
     \\
-    `[Mv]  = Time_Instance_RHS_yz_Apply(v,y,z,t,lambda)`
+    `[Mv]  = f_yz_Apply(v,y,z,t,lambda)`
     & Compute the product $\lambda^{\mathsf{T}} f_{y,z}(y,z,t) v$
     \\
-    `[Mv]  = Time_Instance_RHS_zy_Apply(v,y,z,t,lambda)`
+    `[Mv]  = f_zy_Apply(v,y,z,t,lambda)`
     & Compute the product $\lambda^{\mathsf{T}} f_{z,y}(y,z,t) v$
     \\
-    `[Mv]  = Time_Instance_RHS_zz_Apply(v,y,z,t,lambda)`
+    `[Mv]  = f_zz_Apply(v,y,z,t,lambda)`
     & Compute the product $\lambda^{\mathsf{T}} f_{z,z}(y,z,t) v$
     \\
-    `[Mv]  = Initial_Condition_zz_Apply(v,z,lambda)`
+    `[Mv]  = h_zz_Apply(v,z,lambda)`
     & Compute the product $\lambda^{\mathsf{T}} h_{z,z}(z) v$
     \\ \hline
 \end{tabular}

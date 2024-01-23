@@ -8,29 +8,29 @@ classdef Thermochemical_Dynamic_Objective < Dynamic_Objective
 
     methods (Access = public)
 
-        function [val, grad_y] = Time_Instance_Objective(this, y, t)
+        function [val, grad_y] = g(this, y, t)
             grad_y = -this.con.I_u1' * this.con.fe.M * (this.con.I_u1 * y);
             val = (1 / 2) * y' * grad_y;
         end
 
-        function [val, grad_z] = Regularization_Objective(this, z)
+        function [val, grad_z] = R(this, z)
             zt = reshape(z, this.con.fe.m, this.con.control_time_nodes);
             val = this.reg_coeff * (1 / 2) * diag(zt' * this.con.fe.M * zt)' * this.gl_weights;
             tmp = (this.con.fe.M * zt) .* (ones(this.con.fe.m, 1) * this.gl_weights');
             grad_z = this.reg_coeff * tmp(:);
         end
 
-        function [Mv] = Time_Instance_Objective_yy_Apply(this, v, y, t)
+        function [Mv] = g_yy_Apply(this, v, y, t)
             Mv = zeros(length(y), size(v, 2));
             for k = 1:size(v, 2)
-                [~, Mv(:, k)] = this.Time_Instance_Objective(v(:, k), t);
+                [~, Mv(:, k)] = this.g(v(:, k), t);
             end
         end
 
-        function [Mv] = Regularization_Objective_zz_Apply(this, v, z)
+        function [Mv] = R_zz_Apply(this, v, z)
             Mv = zeros(length(z), size(v, 2));
             for k = 1:size(v, 2)
-                [~, Mv(:, k)] = this.Regularization_Objective(v(:, k));
+                [~, Mv(:, k)] = this.R(v(:, k));
             end
         end
 

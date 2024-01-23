@@ -41,7 +41,7 @@ classdef Dynamic_Objective < Objective
 
     methods (Abstract, Access = public)
 
-        [val, grad_y] = Time_Instance_Objective(this, y, t)
+        [val, grad_y] = g(this, y, t)
         % Evaluate the integrand :math:`g(\y,t)`
         % and its gradient :math:`\grad{y}g(\y,t)`.
         %
@@ -59,7 +59,7 @@ classdef Dynamic_Objective < Objective
         % grad_y : vector
         %   Function gradient :math:`\grad{y}g(\y,t)\in\R^{n_y}`.
 
-        [val, grad_z] = Regularization_Objective(this, z)
+        [val, grad_z] = R(this, z)
         % Evaluate the regularization term :math:`R(\z)`
         % and its gradient :math:`\grad{z}R(\z)`.
         %
@@ -75,12 +75,12 @@ classdef Dynamic_Objective < Objective
         % grad_y : vector
         %   Function gradient :math:`\grad{z}R(\z)\in\R^{n_z}`.
 
-        [Mv] = Time_Instance_Objective_yy_Apply(this, v, y, t)
+        [y_out] = g_yy_Apply(this, y_in, y, t)
         % Compute the Hessian-vector product :math:`\grad{y,y}g(\y, t)\v`.
         %
         % Parameters
         % ----------
-        % v
+        % y_in
         %   Search direction :math:`\v\in\R^{n_y}`.
         % y
         %   Differential equation state :math:`\y\in\R^{n_y}`.
@@ -89,22 +89,22 @@ classdef Dynamic_Objective < Objective
         %
         % Returns
         % -------
-        % Mv : vector
+        % y_out : vector
         %   Hessian-vector product :math:`\grad{y,y}g(\y, t)\v\in\R^{n_y}`
 
-        [Mv] = Regularization_Objective_zz_Apply(this, v, z)
+        [z_out] = R_zz_Apply(this, z_in, z)
         % Compute the Hessian-vector product :math:`\grad{z,z}R(\z)\v`.
         %
         % Parameters
         % ----------
-        % v
+        % z_in
         %   Search direction :math:`\v\in\R^{n_z}`.
         % z
         %   Control :math:`\z\in\R^{n_z}`.
         %
         % Returns
         % -------
-        % Mv : vector
+        % z_out : vector
         %   Hessian-vector product :math:`\grad{z,z}R(\z)\v\in\R^{n_z}`
 
     end
@@ -136,11 +136,11 @@ classdef Dynamic_Objective < Objective
             grad_u = 0 * u;
             for k = 1:this.n_t
                 I = ((k - 1) * this.n_y + 1):(k * this.n_y);        % y_{k} = u(I)
-                [valk, gradk] = this.Time_Instance_Objective(u(I), this.t_mesh(k));
+                [valk, gradk] = this.g(u(I), this.t_mesh(k));
                 val = val + this.w(k) * valk;
                 grad_u(I) = this.w(k) * gradk;
             end
-            [valk, grad_z] = this.Regularization_Objective(z);
+            [valk, grad_z] = this.R(z);
             val = val + valk;
         end
 
@@ -148,7 +148,7 @@ classdef Dynamic_Objective < Objective
             Mv = zeros(this.n_y * this.n_t, size(v, 2));
             for k = 1:this.n_t
                 I = ((k - 1) * this.n_y + 1):(k * this.n_y);        % y_{k} = u(I)
-                Mv(I, :) = this.w(k) * this.Time_Instance_Objective_yy_Apply(v(I, :), u(I), this.t_mesh(k));
+                Mv(I, :) = this.w(k) * this.g_yy_Apply(v(I, :), u(I), this.t_mesh(k));
             end
         end
 
@@ -161,7 +161,7 @@ classdef Dynamic_Objective < Objective
         end
 
         function [Mv] = J_zz_Apply(this, v, u, z)
-            Mv = this.Regularization_Objective_zz_Apply(v, z);
+            Mv = this.R_zz_Apply(v, z);
         end
 
         %% Constructor.

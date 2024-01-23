@@ -31,7 +31,7 @@ classdef Thermochemical_HiFi_Constraint_AD < Dynamic_Constraint_AD
 
     methods (Access = public)
 
-        function [f] = Time_Instance_RHS_AD(this, y, z, t)
+        function [f] = f_AD(this, y, z, t)
             T = this.I_T * y;
             u1 = this.I_u1 * y;
             u2 = this.I_u2 * y;
@@ -70,7 +70,7 @@ classdef Thermochemical_HiFi_Constraint_AD < Dynamic_Constraint_AD
             f = this.I_T' * f_T + this.I_u1' * f_u1 + this.I_u2' * f_u2 + this.I_v1' * f_v1 + this.I_v2' * f_v2 + this.I_v3' * f_v3;
         end
 
-        function [h] = Initial_Condition_AD(this, z)
+        function [h] = h_AD(this, z)
             T_0 = this.Initial_T();
             u1_0 = this.Initial_u1();
             u2_0 = this.Initial_u2();

@@ -9,23 +9,23 @@ classdef Thermal_Constraint < Dynamic_Constraint
 
     methods (Access = public)
 
-        function [f, f_y, f_z] = Time_Instance_RHS(this, y, z, t)
+        function [f, f_y, f_z] = f(this, y, z, t)
             D = this.Assembly(z);
             f_y = -linsolve(this.M, D);
             f = f_y * y + (10^3) * this.forcing(this.x, t);
             f_z = -linsolve(this.M, this.Assembly_z_Jacobian(y));
         end
 
-        function [h, h_z] = Initial_Condition(this, z)
+        function [h, h_z] = h(this, z)
             h = ones(this.n_y, 1);
             h_z = zeros(this.n_y, this.n_y);
         end
 
-        function [Mv] = Time_Instance_RHS_yy_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_yy_Apply(this, v, y, z, t, lambda)
             Mv = 0 * v;
         end
 
-        function [Mv] = Time_Instance_RHS_yz_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_yz_Apply(this, v, y, z, t, lambda)
             Mv = zeros(this.n_y, size(v, 2));
             for k = 1:size(v, 2)
                 D = this.Assembly(z);
@@ -34,7 +34,7 @@ classdef Thermal_Constraint < Dynamic_Constraint
             end
         end
 
-        function [Mv] = Time_Instance_RHS_zy_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_zy_Apply(this, v, y, z, t, lambda)
             Mv = zeros(this.n_y, size(v, 2));
             for k = 1:size(v, 2)
                 D_diff = this.Assembly_z_Jacobian(y);
@@ -43,11 +43,11 @@ classdef Thermal_Constraint < Dynamic_Constraint
             end
         end
 
-        function [Mv] = Time_Instance_RHS_zz_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_zz_Apply(this, v, y, z, t, lambda)
             Mv = 0 * v;
         end
 
-        function [Mv] = Initial_Condition_zz_Apply(this, v, z, lambda)
+        function [Mv] = h_zz_Apply(this, v, z, lambda)
             Mv = 0 * v;
         end
 

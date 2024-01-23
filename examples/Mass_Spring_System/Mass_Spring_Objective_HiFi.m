@@ -33,23 +33,23 @@ classdef Mass_Spring_Objective_HiFi < Dynamic_Objective
             val = 5 * t.^2;
         end
 
-        function [val, grad_y] = Time_Instance_Objective(this, y, t)
+        function [val, grad_y] = g(this, y, t)
             val = 0.5 * (y(1) - this.target(t)).^2;
             grad_y = zeros(4, 1);
             grad_y(1) = y(1) - this.target(t);
         end
 
-        function [val, grad_z] = Regularization_Objective(this, z)
+        function [val, grad_z] = R(this, z)
             val = 0.5 * this.reg_coeff * (this.w' * (this.P_z * z).^2);
             grad_z = this.reg_coeff * this.P_z' * (this.w .* (this.P_z * z));
         end
 
-        function [Mv] = Time_Instance_Objective_yy_Apply(this, v, y, t)
+        function [Mv] = g_yy_Apply(this, v, y, t)
             Mv = zeros(size(v));
             Mv(1, :) = v(1, :);
         end
 
-        function [Mv] = Regularization_Objective_zz_Apply(this, v, z)
+        function [Mv] = R_zz_Apply(this, v, z)
             Mv = this.reg_coeff * this.P_z' * diag(this.w) * this.P_z * v;
         end
 

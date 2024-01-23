@@ -20,14 +20,14 @@ classdef Constraint < handle
         % u : vector
         %   State :math:`\u = \S(\z) \in \R^{n_u}`.
 
-        [Mv] = c_u_Transpose_Inverse_Apply(this, v, u, z)
+        [u_out] = c_u_Transpose_Inverse_Apply(this, u_in, u, z)
         % Compute the Jacobian-vector product :math:`c_u(\u,\z)\invtrp\v`,
         % i.e., solve :math:`c_u(\u,\z)\trp\bflambda = \v`
         % for :math:`\bflambda`.
         %
         % Parameters
         % ----------
-        % v
+        % u_in
         %   Search direction :math:`\v\in\R^{n_u}`.
         % u
         %   State :math:`\u\in\R^{n_u}`.
@@ -36,15 +36,15 @@ classdef Constraint < handle
         %
         % Returns
         % -------
-        % Mv : vector
+        % u_out : vector
         %   Jacobian-vector product :math:`c_u(\u,\z)\invtrp\v\in\R^{n_u}`.
 
-        [Mv] = c_z_Transpose_Apply(this, v, u, z)
+        [z_out] = c_z_Transpose_Apply(this, u_in, u, z)
         % Compute the Jacobian-vector product :math:`c_z(\u,\z)\trp\v`.
         %
         % Parameters
         % ----------
-        % v
+        % u_in
         %   Search direction :math:`\v\in\R^{n_u}`.
         % u
         %   State :math:`\u\in\R^{n_u}`.
@@ -53,16 +53,16 @@ classdef Constraint < handle
         %
         % Returns
         % -------
-        % Mv : vector
+        % z_out : vector
         %   Jacobian-vector product :math:`c_z(\u,\z)\trp\v\in\R^{n_z}`.
 
-        [Mv] = c_u_Inverse_Apply(this, v, u, z)
+        [u_out] = c_u_Inverse_Apply(this, u_in, u, z)
         % Compute the Jacobian-vector product :math:`c_u(\u,\z)^{-1}\v`,
         % i.e., solve :math:`c_u(\u,\z)\bfmu = \v` for :math:`\bfmu`.
         %
         % Parameters
         % ----------
-        % v
+        % u_in
         %   Search direction :math:`\v\in\R^{n_u}`.
         % u
         %   State :math:`\u\in\R^{n_u}`.
@@ -71,15 +71,15 @@ classdef Constraint < handle
         %
         % Returns
         % -------
-        % Mv : vector
+        % u_out : vector
         %   Jacobian-vector product :math:`c_u(\u,\z)^{-1}\v\in\R^{n_u}`.
 
-        [Mv] = c_z_Apply(this, v, u, z)
+        [u_out] = c_z_Apply(this, z_in, u, z)
         % Compute the Jacobian-vector product :math:`c_z(\u,\z)\v`.
         %
         % Parameters
         % ----------
-        % v
+        % z_in
         %   Search direction :math:`\v\in\R^{n_z}`.
         % u
         %   State :math:`\u\in\R^{n_u}`.
@@ -88,7 +88,7 @@ classdef Constraint < handle
         %
         % Returns
         % -------
-        % Mv : vector
+        % u_out : vector
         %   Jacobian-vector product :math:`c_z(\u,\z)\v\in\R^{n_u}`.
 
     end
@@ -111,17 +111,17 @@ classdef Constraint < handle
             % -------
             % c : vector
             %   Constraint :math:`\c(\u,\z)\in\R^{n_u}`.
-            Mv = error('c() not implemented');
+            c = error('c() not implemented');
         end
 
-        function [Mv] = c_uu_Apply(this, v, u, z, lambda)
+        function [u_out] = c_uu_Apply(this, u_in, u, z, lambda)
             % *Semi-abstract method.*
             % Compute the vector-Hessian-vector product
             % :math:`\bflambda\trp c_{u,u}(\u,\z)\v`.
             %
             % Parameters
             % ----------
-            % v
+            % u_in
             %   Search direction :math:`\v\in\R^{n_u}`.
             % u
             %   State :math:`\u\in\R^{n_u}`.
@@ -132,20 +132,20 @@ classdef Constraint < handle
             %
             % Returns
             % -------
-            % Mv : vector
+            % u_out : vector
             %   Vector-Hessian-vector product
             %   :math:`\bflambda\trp c_{u,u}(\u,\z)\v\in\R^{n_u}`.
-            Mv = error('c_uu_Apply() not implemented');
+            u_out = error('c_uu_Apply() not implemented');
         end
 
-        function [Mv] = c_uz_Apply(this, v, u, z, lambda)
+        function [u_out] = c_uz_Apply(this, z_in, u, z, lambda)
             % *Semi-abstract method.*
             % Compute the vector-Hessian-vector product
             % :math:`\bflambda\trp c_{u,z}(\u,\z)\v`.
             %
             % Parameters
             % ----------
-            % v
+            % z_in
             %   Search direction :math:`\v\in\R^{n_z}`.
             % u
             %   State :math:`\u\in\R^{n_u}`.
@@ -156,20 +156,20 @@ classdef Constraint < handle
             %
             % Returns
             % -------
-            % Mv : vector
+            % u_out : vector
             %   Vector-Hessian-vector product
             %   :math:`\bflambda\trp c_{u,z}(\u,\z)\v\in\R^{n_u}`.
-            Mv = error('c_uz_Apply() not implemented');
+            u_out = error('c_uz_Apply() not implemented');
         end
 
-        function [Mv] = c_zu_Apply(this, v, u, z, lambda)
+        function [z_out] = c_zu_Apply(this, u_in, u, z, lambda)
             % *Semi-abstract method.*
             % Compute the vector-Hessian-vector product
             % :math:`\bflambda\trp c_{z,u}(\u,\z)\v`.
             %
             % Parameters
             % ----------
-            % v
+            % u_in
             %   Search direction :math:`\v\in\R^{n_u}`.
             % u
             %   State :math:`\u\in\R^{n_u}`.
@@ -180,20 +180,20 @@ classdef Constraint < handle
             %
             % Returns
             % -------
-            % Mv : vector
+            % z_out : vector
             %   Vector-Hessian-vector product
             %   :math:`\bflambda\trp c_{z,u}(\u,\z)\v\in\R^{n_z}`.
-            Mv = error('c_zu_Apply() not implemented');
+            z_out = error('c_zu_Apply() not implemented');
         end
 
-        function [Mv] = c_zz_Apply(this, v, u, z, lambda)
+        function [z_out] = c_zz_Apply(this, z_in, u, z, lambda)
             % *Semi-abstract method.*
             % Compute the vector-Hessian-vector product
             % :math:`\bflambda\trp c_{z,z}(\u,\z)\v`.
             %
             % Parameters
             % ----------
-            % v
+            % z_in
             %   Search direction :math:`\v\in\R^{n_z}`.
             % u
             %   State :math:`\u\in\R^{n_u}`.
@@ -204,10 +204,10 @@ classdef Constraint < handle
             %
             % Returns
             % -------
-            % Mv : vector
+            % z_out : vector
             %   Vector-Hessian-vector product
             %   :math:`\bflambda\trp c_{z,z}(\u,\z)\v\in\R^{n_z}`.
-            Mv = error('c_zz_Apply() not implemented');
+            z_out = error('c_zz_Apply() not implemented');
         end
 
     end

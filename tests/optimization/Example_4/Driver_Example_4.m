@@ -17,8 +17,8 @@ opt.verbose = false;
 z0 = rand(n_z, 1) + 1;
 y0 = rand(n_y, 1) + 1;
 t = rand;
-con.Time_Instance_RHS_Jacobian_Check(y0, z0, t);
-con.Time_Instance_RHS_Hessian_Check(y0, z0, t);
+con.f_Jacobian_Check(y0, z0, t);
+con.f_Hessian_Check(y0, z0, t);
 opt.Finite_Difference_Gradient_Check(z0);
 opt.Finite_Difference_Hessian_Check(z0);
 

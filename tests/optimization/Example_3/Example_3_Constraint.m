@@ -10,35 +10,35 @@ classdef Example_3_Constraint < Dynamic_Constraint
 
     methods (Access = public)
 
-        function [f, f_y, f_z] = Time_Instance_RHS(this, y, z, t)
+        function [f, f_y, f_z] = f(this, y, z, t)
             f = [y(3) / y(2); 2 * y(1); 3 * y(1) * y(2)];
             f_y = [0, -y(3) / y(2)^2, 1 / y(2); 2, 0, 0; 3 * y(2), 3 * y(1), 0];
             f_z = zeros(3, 3);
         end
 
-        function [h, h_z] = Initial_Condition(this, z)
+        function [h, h_z] = h(this, z)
             h = [z(1)^2; z(2)^3; z(3)^4];
             h_z = [2 * z(1), 0, 0; 0, 3 * z(2).^2, 0; 0, 0, 4 * z(3)^3];
         end
 
-        function [Mv] = Time_Instance_RHS_yy_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_yy_Apply(this, v, y, z, t, lambda)
             A = [0, 3 * lambda(3), 0; 3 * lambda(3), 2 * lambda(1) * y(3) / y(2)^3, -lambda(1) / y(2)^2; 0, -lambda(1) / y(2)^2, 0];
             Mv = A * v;
         end
 
-        function [Mv] = Time_Instance_RHS_yz_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_yz_Apply(this, v, y, z, t, lambda)
             Mv = zeros(this.n_y, size(v, 2));
         end
 
-        function [Mv] = Time_Instance_RHS_zy_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_zy_Apply(this, v, y, z, t, lambda)
             Mv = zeros(length(z), size(v, 2));
         end
 
-        function [Mv] = Time_Instance_RHS_zz_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_zz_Apply(this, v, y, z, t, lambda)
             Mv = zeros(length(z), size(v, 2));
         end
 
-        function [Mv] = Initial_Condition_zz_Apply(this, v, z, lambda)
+        function [Mv] = h_zz_Apply(this, v, z, lambda)
             A = diag([2 * lambda(1); 6 * lambda(2) * z(2); 12 * lambda(3) * z(3)^2]);
             Mv = A * v;
         end

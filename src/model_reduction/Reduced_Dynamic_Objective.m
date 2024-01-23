@@ -48,7 +48,7 @@ classdef Reduced_Dynamic_Objective < Dynamic_Objective
 
         %% Implement abstract methods from parent class.
 
-        function [val, grad_yhat] = Time_Instance_Objective(this, yhat, t)
+        function [val, grad_yhat] = g(this, yhat, t)
             % Evaluate the integrand :math:`\hat{g}(\hat{\y},t) = g(\V\hat{\y}, t)`
             % and its gradient
             % :math:`\grad{\hat{y}}\hat{g}(\hat{\y},t) = \V\trp\grad{y}g(\V\hat{\y},t)`.
@@ -66,15 +66,15 @@ classdef Reduced_Dynamic_Objective < Dynamic_Objective
             %   Function value :math:`g(\y,t)\in\R`.
             % grad_y : vector
             %   Function gradient :math:`\grad{y}g(\y,t)\in\R^{n_y}`.
-            [val, grad_y] = this.obj.Time_Instance_Objective(this.V * yhat, t);
+            [val, grad_y] = this.obj.g(this.V * yhat, t);
             grad_yhat = this.V' * grad_y;
         end
 
-        function [val, grad_z] = Regularization_Objective(this, z)
-            [val, grad_z] = this.obj.Regularization_Objective(z);
+        function [val, grad_z] = R(this, z)
+            [val, grad_z] = this.obj.R(z);
         end
 
-        function [Mv] = Time_Instance_Objective_yy_Apply(this, vhat, yhat, t)
+        function [Mv] = g_yy_Apply(this, vhat, yhat, t)
             % Compute the Hessian-vector product
             % :math:`\grad{\hat{y},\hat{y}}\hat{g}(\hat{\y}, t)\hat{\v}
             % = \V\trp \grad{y,y}g(\V\hat{\y}, t)\V\hat{\v}`.
@@ -95,11 +95,11 @@ classdef Reduced_Dynamic_Objective < Dynamic_Objective
             %   :math:`\grad{\hat{y},\hat{y}}\hat{g}(\hat{\y}, t)\hat{\v}\in\R^{n_y'}`.
             v = this.V * vhat;
             y = this.V * yhat;
-            Mv = this.V' * this.obj.Time_Instance_Objective_yy_Apply(v, y, t);
+            Mv = this.V' * this.obj.g_yy_Apply(v, y, t);
         end
 
-        function [Mv] = Regularization_Objective_zz_Apply(this, v, z)
-            Mv = this.obj.Regularization_Objective_zz_Apply(v, z);
+        function [Mv] = R_zz_Apply(this, v, z)
+            Mv = this.obj.R_zz_Apply(v, z);
         end
 
     end

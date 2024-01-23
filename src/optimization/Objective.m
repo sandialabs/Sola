@@ -29,12 +29,12 @@ classdef Objective < handle
         % grad_z : vector
         %   Objective gradient :math:`\grad{z}J(\u,\z)`.
 
-        [Mv] = J_uu_Apply(this, v, u, z)
+        [u_out] = J_uu_Apply(this, u_in, u, z)
         % Compute :math:`\grad{u,u}J(\u,\z)\v`.
         %
         % Parameters
         % ----------
-        % v
+        % u_in
         %   Search direction :math:`\v\in\R^{n_u}`.
         % u
         %   State :math:`\u\in\R^{n_u}`.
@@ -43,15 +43,15 @@ classdef Objective < handle
         %
         % Returns
         % -------
-        % Mv : vector
+        % u_out : vector
         %   Gradient-vector product :math:`\grad{u,u}J(\u,\z)\v\in\R^{n_u}`.
 
-        [Mv] = J_uz_Apply(this, v, u, z)
+        [u_out] = J_uz_Apply(this, z_in, u, z)
         % Compute :math:`\grad{u,z}J(\u,\z)\v`.
         %
         % Parameters
         % ----------
-        % v
+        % z_in
         %   Search direction :math:`\v\in\R^{n_z}`.
         % u
         %   State :math:`\u\in\R^{n_u}`.
@@ -60,15 +60,15 @@ classdef Objective < handle
         %
         % Returns
         % -------
-        % Mv : vector
+        % u_out : vector
         %   Gradient-vector product :math:`\grad{u,z}J(\u,\z)\v\in\R^{n_u}`.
 
-        [Mv] = J_zu_Apply(this, v, u, z)
+        [z_out] = J_zu_Apply(this, u_in, u, z)
         % Compute :math:`\grad{z,u}J(\u,\z)\v`.
         %
         % Parameters
         % ----------
-        % v
+        % u_in
         %   Search direction :math:`\v\in\R^{n_u}`.
         % u
         %   State :math:`\u\in\R^{n_u}`.
@@ -77,15 +77,15 @@ classdef Objective < handle
         %
         % Returns
         % -------
-        % Mv : vector
+        % z_out : vector
         %   Gradient-vector product :math:`\grad{z,u}J(\u,\z)\v\in\R^{n_z}`.
 
-        [Mv] = J_zz_Apply(this, v, u, z)
+        [z_out] = J_zz_Apply(this, z_in, u, z)
         % Compute :math:`\grad{z,z}J(\u,\z)\v`.
         %
         % Parameters
         % ----------
-        % v
+        % z_in
         %   Search direction :math:`\v\in\R^{n_z}`.
         % u
         %   State :math:`\u\in\R^{n_u}`.
@@ -94,7 +94,7 @@ classdef Objective < handle
         %
         % Returns
         % -------
-        % Mv : vector
+        % z_out : vector
         %   Gradient-vector product :math:`\grad{z,z}J(\u,\z)\v\in\R^{n_z}`.
 
     end

@@ -11,12 +11,12 @@ classdef Thermal_Constraint_AD < Dynamic_Constraint_AD
 
     methods (Access = public)
 
-        function [f] = Time_Instance_RHS_AD(this, y, z, t)
+        function [f] = f_AD(this, y, z, t)
             D = this.Assembly(z);
             f = -this.Minv * D * y + (10^3) * this.forcing(this.x, t);
         end
 
-        function [h] = Initial_Condition_AD(this, z)
+        function [h] = h_AD(this, z)
             h = ones(this.n_y, 1);
         end
 

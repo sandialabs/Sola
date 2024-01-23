@@ -6,8 +6,8 @@
 {class}`Dynamic_Constraint_AD` is an abstract class.
 Classes that inherit from it must implement the following methods.
 
-- {meth}`Dynamic_Constraint_AD.Time_Instance_RHS_AD()`
-- {meth}`Dynamic_Constraint_AD.Initial_Condition_AD()`
+- {meth}`Dynamic_Constraint_AD.f_AD()`
+- {meth}`Dynamic_Constraint_AD.h_AD()`
 
 Abstract methods of the {class}`Dynamic_Constraint` class are implemented by automatic differentiation of the methods listed above.
 
@@ -32,12 +32,12 @@ classdef My_Constraint < Dynamic_Constraint_AD
 
     methods (Access = public)
 
-        function [f] = Time_Instance_RHS_AD(this, y, z, t)
-            error('Time_Instance_RHS_AD() not implemented');
+        function [f] = f_AD(this, y, z, t)
+            error('f_AD() not implemented');
         end
 
-        function [h] = Initial_Condition_AD(this, z)
-            error('Initial_Condition_AD() not implemented');
+        function [h] = h_AD(this, z)
+            error('h_AD() not implemented');
         end
 
     end

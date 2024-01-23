@@ -11,7 +11,7 @@ classdef Adv_Diff_Gaussian_Source_Constraint < Dynamic_Constraint
 
     methods (Access = public)
 
-        function [f, f_y, f_z] = Time_Instance_RHS(this, y, z, t)
+        function [f, f_y, f_z] = f(this, y, z, t)
             % Extract the control for the given time.
             w = this.Temporal_Weights(t);
             zt = reshape(z, this.num_space_control_nodes, length(this.z_time_mesh)) * w;
@@ -22,32 +22,32 @@ classdef Adv_Diff_Gaussian_Source_Constraint < Dynamic_Constraint
             f_z = kron(w', this.B);
         end
 
-        function [h, h_z] = Initial_Condition(this, z)
+        function [h, h_z] = h(this, z)
             h = zeros(this.n_y, 1);
             h_z = zeros(this.n_y, this.n_z);
         end
 
-        function [Mv] = Time_Instance_RHS_yy_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_yy_Apply(this, v, y, z, t, lambda)
             num_vecs = size(v, 2);
             Mv = zeros(this.n_y, num_vecs);
         end
 
-        function [Mv] = Time_Instance_RHS_yz_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_yz_Apply(this, v, y, z, t, lambda)
             num_vecs = size(v, 2);
             Mv = zeros(this.n_y, num_vecs);
         end
 
-        function [Mv] = Time_Instance_RHS_zy_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_zy_Apply(this, v, y, z, t, lambda)
             num_vecs = size(v, 2);
             Mv = zeros(this.n_z, num_vecs);
         end
 
-        function [Mv] = Time_Instance_RHS_zz_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_zz_Apply(this, v, y, z, t, lambda)
             num_vecs = size(v, 2);
             Mv = zeros(this.n_z, num_vecs);
         end
 
-        function [Mv] = Initial_Condition_zz_Apply(this, v, z, lambda)
+        function [Mv] = h_zz_Apply(this, v, z, lambda)
             num_vecs = size(v, 2);
             Mv = zeros(this.n_z, num_vecs);
         end

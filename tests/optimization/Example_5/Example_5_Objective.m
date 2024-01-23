@@ -16,24 +16,24 @@ classdef Example_5_Objective < Dynamic_Objective
 
     methods (Access = public)
 
-        function [val, grad_y] = Time_Instance_Objective(this, y, t)
+        function [val, grad_y] = g(this, y, t)
             val = (y(1) - exp(t^2))^2 + (y(2) - exp(t^3))^2;
             grad_y = zeros(2, 1);
             grad_y(1) = 2 * (y(1) - exp(t^2));
             grad_y(2) = 2 * (y(2) - exp(t^3));
         end
 
-        function [val, grad_z] = Regularization_Objective(this, z)
+        function [val, grad_z] = R(this, z)
             val = this.beta_reg * (z - this.z_time_mesh.^2)' * diag(this.weights) * (z - this.z_time_mesh.^2);
             grad_z = this.beta_reg * 2 * diag(this.weights) * (z - this.z_time_mesh.^2);
         end
 
-        function [Mv] = Time_Instance_Objective_yy_Apply(this, v, y, t)
+        function [Mv] = g_yy_Apply(this, v, y, t)
             A = 2 * eye(2);
             Mv = A * v;
         end
 
-        function [Mv] = Regularization_Objective_zz_Apply(this, v, z)
+        function [Mv] = R_zz_Apply(this, v, z)
             Mv = this.beta_reg * 2 * diag(this.weights) * v;
         end
 
