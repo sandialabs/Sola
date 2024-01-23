@@ -149,7 +149,8 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             %   ODE system operators. These may be uninitialized,
             %   i.e., with null entries.
 
-            this@Dynamic_Constraint(n_y, n_q * n_t, T, n_t);
+            this@Dynamic_Constraint(n_y, n_q * (n_t - 1), T, n_t);
+            % Note: no control at the initial time step b/c bkwd Euler.
             this.n_q = n_q;
             this.y0 = y0;
             this.operators = operators;
@@ -258,7 +259,7 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
 
         function [h, h_z] = h(this, ~)
             h = this.y0;
-            h_z = zeros(this.n_z, 1);
+            h_z = zeros(this.n_y, this.n_z);
         end
 
         function [Mv] = f_yy_Apply(this, v, y, z, t, lambda)
@@ -309,7 +310,11 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
 
         function [mask] = Input_Indices(this, t)
             [~, t_index] = min(abs(t - this.t_mesh));
-            mask = (this.n_q * (t_index - 1) + 1):(this.n_q * t_index);
+            if t_index == 1
+                error('no control at initial time!');
+            end
+            idx = t_index - 1;
+            mask = (this.n_q * (idx - 1) + 1):(this.n_q * idx);
         end
 
     end
