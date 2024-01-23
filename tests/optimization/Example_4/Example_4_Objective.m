@@ -10,7 +10,7 @@ classdef Example_4_Objective < Dynamic_Objective
 
     methods (Access = public)
 
-        function [val, grad_y] = Time_Instance_Objective(this, y, t)
+        function [val, grad_y] = g(this, y, t)
             val = (y(1) - exp(t))^2 + (y(2) - exp(2 * t))^2 + (y(3) - exp(3 * t))^2;
             grad_y = zeros(3, 1);
             grad_y(1) = 2 * (y(1) - exp(t));
@@ -18,17 +18,17 @@ classdef Example_4_Objective < Dynamic_Objective
             grad_y(3) = 2 * (y(3) - exp(3 * t));
         end
 
-        function [val, grad_z] = Regularization_Objective(this, z)
+        function [val, grad_z] = R(this, z)
             val = (z(1) - 1)^2 + (z(2) - 1)^2 + (z(3) - 1)^2;
             grad_z = 2 * (z - 1);
         end
 
-        function [Mv] = Time_Instance_Objective_yy_Apply(this, v, y, t)
+        function [Mv] = g_yy_Apply(this, v, y, t)
             A = 2 * eye(3);
             Mv = A * v;
         end
 
-        function [Mv] = Regularization_Objective_zz_Apply(this, v, z)
+        function [Mv] = R_zz_Apply(this, v, z)
             A = 2 * eye(3);
             Mv = A * v;
         end

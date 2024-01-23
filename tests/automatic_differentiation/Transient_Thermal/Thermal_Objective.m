@@ -2,21 +2,21 @@ classdef Thermal_Objective < Dynamic_Objective
 
     methods (Access = public)
 
-        function [val, grad_y] = Time_Instance_Objective(this, y, t)
+        function [val, grad_y] = g(this, y, t)
             val = (1 / 2) * (y' * y);
             grad_y = y;
         end
 
-        function [val, grad_z] = Regularization_Objective(this, z)
+        function [val, grad_z] = R(this, z)
             val = (1 / 2) * (z' * z);
             grad_z = z;
         end
 
-        function [Mv] = Time_Instance_Objective_yy_Apply(this, v, y, t)
+        function [Mv] = g_yy_Apply(this, v, y, t)
             Mv = v;
         end
 
-        function [Mv] = Regularization_Objective_zz_Apply(this, v, z)
+        function [Mv] = R_zz_Apply(this, v, z)
             Mv = v;
         end
 

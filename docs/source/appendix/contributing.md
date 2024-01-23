@@ -47,7 +47,7 @@ To run the formatter without a commit:
 
 - Class and function names: `Capitalize_And_Underscore`.
 The use of "math names" is approved so long as the notation is sufficiently documented.
-For example, the `Dynamic_Constraint` class has a `Time_Instance_RHS()` that is being renamed to simply `f()`.
+For example, the `Dynamic_Constraint` class has a `f()` that is being renamed to simply `f()`.
 - Hessian-vector product methods often have many arguments, representing the state $\u$, the control $\z$, sometimes the adjoint state $\bflambda$, and the search direction $\v$.
 Our convention is to list the search direction first, then the (state, control, adjoint) triple (or (state, control) pair if the adjoint is not involved).
 The state should always be `u`, the control `z` (or `y` and `q` in the dynamic setting, when appropriate), and the adjoint `lambda`.

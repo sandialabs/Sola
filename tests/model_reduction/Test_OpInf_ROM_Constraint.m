@@ -78,11 +78,11 @@ con.verbose = false;
 for j = 1:n_t
     t = con.t_mesh(j);
     % disp(['Checks for t = ', num2str(t)]);
-    [diffs_y, diffs_z] = con.Time_Instance_RHS_Jacobian_Check(y, z, t);
+    [diffs_y, diffs_z] = con.f_Jacobian_Check(y, z, t);
     checkdiffs(diffs_y);
     checkdiffs(diffs_z);
 
-    [diffs_yy, diffs_yz, diffs_zy, diffs_zz] = con.Time_Instance_RHS_Hessian_Check(y, z, t);
+    [diffs_yy, diffs_yz, diffs_zy, diffs_zz] = con.f_Hessian_Check(y, z, t);
     checkdiffs(diffs_yy);
     checkdiffs(diffs_yz);
     checkdiffs(diffs_zy);

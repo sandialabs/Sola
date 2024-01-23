@@ -6,8 +6,8 @@
 {class}`Dynamic_Objective_AD` is an abstract class.
 Classes that inherit from it must implement the following methods.
 
-- {meth}`Dynamic_Objective_AD.Time_Instance_Objective_AD()`
-- {meth}`Dynamic_Objective_AD.Regularization_Objective_AD()`
+- {meth}`Dynamic_Objective_AD.g_AD()`
+- {meth}`Dynamic_Objective_AD.R_AD()`
 
 Abstract methods of the {class}`Dynamic_Objective` class are implemented by automatic differentiation of the methods listed above.
 
@@ -32,12 +32,12 @@ classdef My_Objective < Dynamic_Objective_AD
 
     methods (Access = public)
 
-        function [val] = Time_Instance_Objective_AD(this, y, t)
-            error('Time_Instance_Objective_AD() not implemented');
+        function [val] = g_AD(this, y, t)
+            error('g_AD() not implemented');
         end
 
-        function [val] = Regularization_Objective_AD(this, z)
-            error('Regularization_Objective_AD() not implemented');
+        function [val] = R_AD(this, z)
+            error('R_AD() not implemented');
         end
 
     end

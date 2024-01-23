@@ -35,8 +35,8 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
     % Instead of forming :math:`\c(\u,\z)` explicitly, MATLAB's ``fsolve()``
     % is used at each time step to solve for successive :math:`\y_{j}`.
     % The Jacobians and Hessian actions of :math:`\f` and :math:`\h` are
-    % computed via automatic differentiation from :meth:`Time_Instance_RHS_AD()`
-    % and :meth:`Initial_Condition_AD()`, respectively.
+    % computed via automatic differentiation from :meth:`f_AD()`
+    % and :meth:`h_AD()`, respectively.
 
     properties
         yt_current
@@ -53,7 +53,7 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
 
     methods (Abstract, Access = public)
 
-        [f] = Time_Instance_RHS_AD(this, y, z, t)
+        [f] = f_AD(this, y, z, t)
         % Evaluate the ODE function :math:`\f(\y,\z,t)`.
         %
         % Parameters
@@ -70,7 +70,7 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
         % f : vector
         %   Function value :math:`\f(\y,\z,t)\in\R^{n_y}`.
 
-        [h] = Initial_Condition_AD(this, z)
+        [h] = h_AD(this, z)
         % Evaluate the ODE initial condition :math:`\h(\z)`.
         %
         % Parameters
@@ -93,7 +93,7 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
                 if (norm(z - this.z_current(:, time_index)) ~= 0) || (norm(y - this.yt_current(:, time_index)) ~= 0)
                     this.yt_current(:, time_index) = y;
                     this.z_current(:, time_index) = z;
-                    [this.Jac_current(:, :, time_index), this.f_current(:, time_index)] = Jac_Time_Instance_RHS_AD_Jac(this, [y; z], t);
+                    [this.Jac_current(:, :, time_index), this.f_current(:, time_index)] = Jac_f_AD_Jac(this, [y; z], t);
                 end
             end
         end
@@ -105,15 +105,15 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
                     this.yt_current(:, time_index) = y;
                     this.z_current(:, time_index) = z;
                     this.lambdat_current(:, time_index) = lambda;
-                    this.Hess_current(:, :, time_index) = Hess_Time_Instance_RHS_AD_Hes(this, [y; z], t, lambda);
+                    this.Hess_current(:, :, time_index) = Hess_f_AD_Hes(this, [y; z], t, lambda);
                 end
             end
         end
 
-        function [f, f_y, f_z] = Time_Instance_RHS(this, y, z, t)
+        function [f, f_y, f_z] = f(this, y, z, t)
             time_index = this.Update_Jacobian(y, z, t);
             if isempty(time_index)
-                [Jac, Fun] = Jac_Time_Instance_RHS_AD_Jac(this, [y; z], t);
+                [Jac, Fun] = Jac_f_AD_Jac(this, [y; z], t);
                 f = Fun;
                 f_y = Jac(:, 1:this.n_y);
                 f_z = Jac(:, (this.n_y + 1):end);
@@ -124,60 +124,60 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
             end
         end
 
-        function [h, h_z] = Initial_Condition(this, z)
+        function [h, h_z] = h(this, z)
             if this.ic_Jac_zero
-                h = this.Initial_Condition_AD(z);
+                h = this.h_AD(z);
                 h_z = zeros(length(h), length(z));
             else
-                [h_z, h] = Jac_Initial_Condition_AD_Jac(this, z);
+                [h_z, h] = Jac_h_AD_Jac(this, z);
             end
         end
 
-        function [Mv] = Time_Instance_RHS_yy_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_yy_Apply(this, v, y, z, t, lambda)
             time_index = this.Update_Hessian(y, z, t, lambda);
             if isempty(time_index)
-                M = Hess_Time_Instance_RHS_AD_Hes(this, [y; z], t, lambda);
+                M = Hess_f_AD_Hes(this, [y; z], t, lambda);
                 Mv = M(1:this.n_y, 1:this.n_y) * v;
             else
                 Mv = this.Hess_current(1:this.n_y, 1:this.n_y, time_index) * v;
             end
         end
 
-        function [Mv] = Time_Instance_RHS_yz_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_yz_Apply(this, v, y, z, t, lambda)
             time_index = this.Update_Hessian(y, z, t, lambda);
             if isempty(time_index)
-                M = Hess_Time_Instance_RHS_AD_Hes(this, [y; z], t, lambda);
+                M = Hess_f_AD_Hes(this, [y; z], t, lambda);
                 Mv = M(1:this.n_y, (this.n_y + 1):end) * v;
             else
                 Mv = this.Hess_current(1:this.n_y, (this.n_y + 1):end, time_index) * v;
             end
         end
 
-        function [Mv] = Time_Instance_RHS_zy_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_zy_Apply(this, v, y, z, t, lambda)
             time_index = this.Update_Hessian(y, z, t, lambda);
             if isempty(time_index)
-                M = Hess_Time_Instance_RHS_AD_Hes(this, [y; z], t, lambda);
+                M = Hess_f_AD_Hes(this, [y; z], t, lambda);
                 Mv = M((this.n_y + 1):end, 1:this.n_y) * v;
             else
                 Mv = this.Hess_current((this.n_y + 1):end, 1:this.n_y, time_index) * v;
             end
         end
 
-        function [Mv] = Time_Instance_RHS_zz_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_zz_Apply(this, v, y, z, t, lambda)
             time_index = this.Update_Hessian(y, z, t, lambda);
             if isempty(time_index)
-                M = Hess_Time_Instance_RHS_AD_Hes(this, [y; z], t, lambda);
+                M = Hess_f_AD_Hes(this, [y; z], t, lambda);
                 Mv = M((this.n_y + 1):end, (this.n_y + 1):end) * v;
             else
                 Mv = this.Hess_current((this.n_y + 1):end, (this.n_y + 1):end, time_index) * v;
             end
         end
 
-        function [Mv] = Initial_Condition_zz_Apply(this, v, z, lambda)
+        function [Mv] = h_zz_Apply(this, v, z, lambda)
             if this.ic_Hess_zero
                 Mv = 0 * v;
             else
-                M = Hess_Initial_Condition_AD_Hess(this, z);
+                M = Hess_h_AD_Hess(this, z);
                 Mv = M * v;
             end
         end
@@ -234,11 +234,11 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
                 z = randn(this.n_z, 1);
                 t = rand;
                 lambda = randn(this.n_y, 1);
-                fcurrent = this.Time_Instance_RHS_AD(y, z, t);
+                fcurrent = this.f_AD(y, z, t);
                 repeat = isnan(norm(fcurrent));
             end
             try
-                [~, fold] = Jac_Time_Instance_RHS_AD_Jac(this, [y; z], t);
+                [~, fold] = Jac_f_AD_Jac(this, [y; z], t);
             catch
                 fold = zeros(this.n_y, 1);
             end
@@ -253,7 +253,7 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
 
                 gyz = adigatorCreateDerivInput([length(y) + length(z), 1], 'yz'); % Create Deriv Input
                 try
-                    genout = adigatorGenJacFile('Jac_Time_Instance_RHS_AD', {this, gyz, t}, options);
+                    genout = adigatorGenJacFile('Jac_f_AD', {this, gyz, t}, options);
                 catch
                     if this.verbose
                         disp('RHS jacobian is zero');
@@ -261,7 +261,7 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
                 end
 
                 try
-                    genout = adigatorGenHesFile('Hess_Time_Instance_RHS_AD', {this, gyz, t, lambda}, options);
+                    genout = adigatorGenHesFile('Hess_f_AD', {this, gyz, t, lambda}, options);
                 catch
                     if this.verbose
                         disp('RHS Hessian is zero');
@@ -272,11 +272,11 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
             end
 
             try
-                [~, icold] = Jac_Initial_Condition_AD_Jac(this, z);
+                [~, icold] = Jac_h_AD_Jac(this, z);
             catch
                 icold = zeros(this.n_y, 1);
             end
-            iccurrent = this.Initial_Condition_AD(z);
+            iccurrent = this.h_AD(z);
             if norm(icold - iccurrent) > 10^-15
                 if this.verbose
                     disp('Detected change in initial condition');
@@ -287,7 +287,7 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
                 options.echo = 0;
                 gz = adigatorCreateDerivInput([length(z), 1], 'z'); % Create Deriv Input
                 try
-                    genout = adigatorGenJacFile('Jac_Initial_Condition_AD', {this, gz}, options);
+                    genout = adigatorGenJacFile('Jac_h_AD', {this, gz}, options);
                 catch
                     if this.verbose
                         disp('Initial condition jacobian is zero');
@@ -296,7 +296,7 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
                 end
 
                 try
-                    genout = adigatorGenHesFile('Hess_Initial_Condition_AD', {this, gz}, options);
+                    genout = adigatorGenHesFile('Hess_h_AD', {this, gz}, options);
                 catch
                     if this.verbose
                         disp('Initial condition hessian is zero');

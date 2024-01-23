@@ -9,7 +9,7 @@ TEMPBRANCH="_temporarydocbuild"
 
 # Stash any changes and switch to a temporary branch.
 CURRENTBRANCH=`git rev-parse --abbrev-ref HEAD`
-git stash push -m "temporary stash for documentation build"
+STASHED=`git stash push -m "temporary stash for documentation build"`
 git switch --create ${TEMPBRANCH}
 
 # Modify the MATLAB source code as needed.
@@ -22,4 +22,6 @@ make html
 git reset --hard
 git switch ${CURRENTBRANCH}
 git branch -D ${TEMPBRANCH}
-git stash pop
+if [[ ${STASHED} != "No local changes to save" ]]; then
+    git stash pop
+fi

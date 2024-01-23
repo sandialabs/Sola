@@ -69,8 +69,8 @@ These sanity checks do not guarantee that an implementation is correct, but they
 - {meth}`Objective.Finite_Difference_Gradient_Check()`
 - {meth}`Objective.Finite_Difference_Hessian_Check()`
 - {meth}`Constraint.Finite_Difference_Constraint_Check()`
-- {meth}`Dynamic_Constraint.Time_Instance_RHS_Jacobian_Check()`
-- {meth}`Dynamic_Constraint.Time_Instance_RHS_Hessian_Check()`
+- {meth}`Dynamic_Constraint.f_Jacobian_Check()`
+- {meth}`Dynamic_Constraint.f_Hessian_Check()`
 - {meth}`Reduced_Space_Optimization.Finite_Difference_Gradient_Check()`
 - {meth}`Reduced_Space_Optimization.Finite_Difference_Hessian_Check()`
 

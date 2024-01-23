@@ -8,39 +8,39 @@ classdef Diff_Constraint < Dynamic_Constraint
 
     methods (Access = public)
 
-        function [f, f_y, f_z] = Time_Instance_RHS(this, y, z, t)
+        function [f, f_y, f_z] = f(this, y, z, t)
             % Evaluate the RHS and its derivatives.
             f = linsolve(this.M, -this.S * y + this.M * z);
             f_y = linsolve(this.M, -this.S);
             f_z = eye(this.n_y);
         end
 
-        function [h, h_z] = Initial_Condition(this, z)
+        function [h, h_z] = h(this, z)
             h = zeros(this.n_y, 1);
             h_z = zeros(this.n_y, this.n_z);
         end
 
-        function [Mv] = Time_Instance_RHS_yy_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_yy_Apply(this, v, y, z, t, lambda)
             num_vecs = size(v, 2);
             Mv = zeros(this.n_y, num_vecs);
         end
 
-        function [Mv] = Time_Instance_RHS_yz_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_yz_Apply(this, v, y, z, t, lambda)
             num_vecs = size(v, 2);
             Mv = zeros(this.n_y, num_vecs);
         end
 
-        function [Mv] = Time_Instance_RHS_zy_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_zy_Apply(this, v, y, z, t, lambda)
             num_vecs = size(v, 2);
             Mv = zeros(this.n_z, num_vecs);
         end
 
-        function [Mv] = Time_Instance_RHS_zz_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_zz_Apply(this, v, y, z, t, lambda)
             num_vecs = size(v, 2);
             Mv = zeros(this.n_z, num_vecs);
         end
 
-        function [Mv] = Initial_Condition_zz_Apply(this, v, z, lambda)
+        function [Mv] = h_zz_Apply(this, v, z, lambda)
             num_vecs = size(v, 2);
             Mv = zeros(this.n_z, num_vecs);
         end

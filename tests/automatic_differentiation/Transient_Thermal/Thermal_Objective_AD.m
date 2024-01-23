@@ -6,11 +6,11 @@ classdef Thermal_Objective_AD < Dynamic_Objective_AD
 
     methods (Access = public)
 
-        function [val] = Time_Instance_Objective_AD(this, y, t)
+        function [val] = g_AD(this, y, t)
             val = (1 / 2) * (y' * y);
         end
 
-        function [val] = Regularization_Objective_AD(this, z)
+        function [val] = R_AD(this, z)
             val = (1 / 2) * (z' * z);
         end
 

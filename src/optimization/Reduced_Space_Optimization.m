@@ -170,7 +170,7 @@ classdef Reduced_Space_Optimization < handle
             hessian_data = [u; z; lambda];
         end
 
-        function [Hv] = Jhat_hessVec(this, hessian_data, v)
+        function [z_out] = Jhat_hessVec(this, hessian_data, z_in)
             % Compute the vector-Hessian-vector product
             % :math:`\bflambda\trp\grad{z,z}\hat{J}(\z)\v`
             % via an adjoint-based approach.
@@ -181,36 +181,36 @@ classdef Reduced_Space_Optimization < handle
             %   Concatenation of the state :math:`\u\in\R^{n_u}`,
             %   control :math:`\z\in\R^{n_z}`,
             %   and adjoint :math:`\bflambda\in\R^{n_u}`.
-            % v : vector
+            % z_in : vector
             %   Control direction :math:`\v\in\R^{n_z}`.
             %
             % Returns
             % -------
-            % Hv : vector
+            % z_out : vector
             %   Vector-Hessian-vector product
             %   :math:`\bflambda\trp\grad{z,z}\hat{J}(\z)\v\in\R^{n_z}`.
 
             % Extract state, control, and adjoint from hessian_data.
-            p = length(v);
+            p = length(z_in);
             m = (length(hessian_data) - p) / 2;
             u = hessian_data(1:m);
             z = hessian_data((m + 1):(m + p));
             lambda = hessian_data((m + p + 1):end);
 
             % Execute Algorithm 2 or 3 for computing the Hessian-vector product.
-            w = this.con.c_z_Apply(v, u, z);
+            w = this.con.c_z_Apply(z_in, u, z);
             mu = this.con.c_u_Inverse_Apply(-w, u, z);
-            yJ = this.obj.J_uu_Apply(mu, u, z) + this.obj.J_uz_Apply(v, u, z);
-            xJ = this.obj.J_zu_Apply(mu, u, z) + this.obj.J_zz_Apply(v, u, z);
+            yJ = this.obj.J_uu_Apply(mu, u, z) + this.obj.J_uz_Apply(z_in, u, z);
+            xJ = this.obj.J_zu_Apply(mu, u, z) + this.obj.J_zz_Apply(z_in, u, z);
             if this.Gauss_Newton_Hess
                 gamma = this.con.c_u_Transpose_Inverse_Apply(-yJ, u, z);
                 xc = this.con.c_z_Transpose_Apply(gamma, u, z);
             else
-                yc = this.con.c_uu_Apply(mu, u, z, lambda) + this.con.c_uz_Apply(v, u, z, lambda);
+                yc = this.con.c_uu_Apply(mu, u, z, lambda) + this.con.c_uz_Apply(z_in, u, z, lambda);
                 gamma = this.con.c_u_Transpose_Inverse_Apply(-(yJ + yc), u, z);
-                xc = this.con.c_z_Transpose_Apply(gamma, u, z) + this.con.c_zu_Apply(mu, u, z, lambda) + this.con.c_zz_Apply(v, u, z, lambda);
+                xc = this.con.c_z_Transpose_Apply(gamma, u, z) + this.con.c_zu_Apply(mu, u, z, lambda) + this.con.c_zz_Apply(z_in, u, z, lambda);
             end
-            Hv = xJ + xc;
+            z_out = xJ + xc;
         end
 
         %% Finite difference tests

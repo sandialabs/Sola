@@ -58,7 +58,7 @@ classdef Dynamic_Constraint < Constraint
 
     methods (Abstract, Access = public)
 
-        [f, f_y, f_z] = Time_Instance_RHS(this, y, z, t)
+        [val, grad_y, grad_z] = f(this, y, z, t)
         % Evaluate the ODE function :math:`\f(\y,\z,t)` and its Jacobians
         % :math:`\f_{y}(\y,\z,t)` and :math:`\f_{z}(\y,\z,t)`.
         %
@@ -73,14 +73,14 @@ classdef Dynamic_Constraint < Constraint
         %
         % Returns
         % -------
-        % f : :math:`n_y`-vector
+        % val : :math:`n_y`-vector
         %   Function value :math:`\f(\y,\z,t)\in\R^{n_y}`.
-        % f_y : :math:`n_y \times n_y` matrix
+        % grad_y : :math:`n_y \times n_y` matrix
         %   Function Jacobian :math:`\f_{y}(\y,\z,t)\in\R^{n_y \times n_y}`.
-        % f_z : :math:`n_y \times n_z` matrix
+        % grad_z : :math:`n_y \times n_z` matrix
         %   Function Jacobian :math:`\f_{z}(\y,\z,t)\in\R^{n_y \times n_z}`.
 
-        [h, h_z] = Initial_Condition(this, z)
+        [val, grad_z] = h(this, z)
         % Evaluate the ODE initial condition :math:`\h(\z)` and its Jacobian :math:`\h_{z}(\z)`.
         %
         % Parameters
@@ -90,17 +90,17 @@ classdef Dynamic_Constraint < Constraint
         %
         % Returns
         % -------
-        % h : :math:`n_y`-vector
+        % val : :math:`n_y`-vector
         %   Function value :math:`\h(\z)\in\R^{n_y}`.
-        % h_z : :math:`n_y \times n_z` matrix
+        % grad_z : :math:`n_y \times n_z` matrix
         %   Function Jacobian :math:`\h_{z}(\z)\in\R^{n_y \times n_z}`.
 
-        [Mv] = Time_Instance_RHS_yy_Apply(this, v, y, z, t, lambda)
+        [y_out] = f_yy_Apply(this, y_in, y, z, t, lambda)
         % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{y,y}(\y,\z,t)\v`.
         %
         % Parameters
         % ----------
-        % v
+        % y_in
         %   Search direction :math:`\v\in\R^{n_y}`.
         % y
         %   Differential equation state :math:`\y\in\R^{n_y}`.
@@ -113,16 +113,16 @@ classdef Dynamic_Constraint < Constraint
         %
         % Returns
         % -------
-        % Mv : :math:`n_y`-vector
+        % y_out : :math:`n_y`-vector
         %   Vector-Hessian-vector product
         %   :math:`\bflambda\trp \f_{y,y}(\y,\z,t)\v\in\R^{n_y}`.
 
-        [Mv] = Time_Instance_RHS_yz_Apply(this, v, y, z, t, lambda)
+        [y_out] = f_yz_Apply(this, z_in, y, z, t, lambda)
         % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{y,z}(\y,\z,t)\v`.
         %
         % Parameters
         % ----------
-        % v
+        % z_in
         %   Search direction :math:`\v\in\R^{n_z}`.
         % y
         %   Differential equation state :math:`\y\in\R^{n_y}`.
@@ -135,16 +135,16 @@ classdef Dynamic_Constraint < Constraint
         %
         % Returns
         % -------
-        % Mv : :math:`n_y`-vector
+        % y_out : :math:`n_y`-vector
         %   Vector-Hessian-vector product
         %   :math:`\bflambda\trp \f_{y,z}(\y,\z,t)\v\in\R^{n_y}`.
 
-        [Mv] = Time_Instance_RHS_zy_Apply(this, v, y, z, t, lambda)
+        [z_out] = f_zy_Apply(this, y_in, y, z, t, lambda)
         % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{z,y}(\y,\z,t)\v`.
         %
         % Parameters
         % ----------
-        % v
+        % y_in
         %   Search direction :math:`\v\in\R^{n_y}`.
         % y
         %   Differential equation state :math:`\y\in\R^{n_y}`.
@@ -157,16 +157,16 @@ classdef Dynamic_Constraint < Constraint
         %
         % Returns
         % -------
-        % Mv : :math:`n_z`-vector
+        % z_out : :math:`n_z`-vector
         %   Vector-Hessian-vector product
         %   :math:`\bflambda\trp \f_{z,y}(\y,\z,t)\v\in\R^{n_z}`.
 
-        [Mv] = Time_Instance_RHS_zz_Apply(this, v, y, z, t, lambda)
+        [z_out] = f_zz_Apply(this, z_in, y, z, t, lambda)
         % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{z,z}(\y,\z,t)\v`.
         %
         % Parameters
         % ----------
-        % v
+        % z_in
         %   Search direction :math:`\v\in\R^{n_z}`.
         % y
         %   Differential equation state :math:`\y\in\R^{n_y}`.
@@ -179,16 +179,16 @@ classdef Dynamic_Constraint < Constraint
         %
         % Returns
         % -------
-        % Mv : :math:`n_z`-vector
+        % z_out : :math:`n_z`-vector
         %   Vector-Hessian-vector product
         %   :math:`\bflambda\trp \f_{z,z}(\y,\z,t)\v\in\R^{n_z}`.
 
-        [Mv] = Initial_Condition_zz_Apply(this, v, z, lambda)
+        [z_out] = h_zz_Apply(this, z_in, z, lambda)
         % Compute the vector-Jacobian-vector product :math:`\bflambda\trp \h_{z}(\z)\v`.
         %
         % Parameters
         % ----------
-        % v
+        % z_in
         %   Search direction :math:`\v\in\R^{n_z}`.
         % z
         %   Control :math:`\z\in\R^{n_z}`.
@@ -197,7 +197,7 @@ classdef Dynamic_Constraint < Constraint
         %
         % Returns
         % -------
-        % Mv : :math:`n_z`-vector
+        % z_out : :math:`n_z`-vector
         %   Vector-Jacobian-vector product
         %   :math:`\bflambda\trp \h_{z}(\z)\v\in\R^{n_z}`.
 
@@ -210,7 +210,7 @@ classdef Dynamic_Constraint < Constraint
         function [u] = State_Solve(this, z)
             % Solve the constraint equation :math:`\c(\u,\z) = \0` by
             % integrating the ordinary differential equation
-            % :math:`\frac{\textup{d}}{\textup{d}t}\y(t) = \f(\y(t),\z,t)`
+            % :math:`\ddt\y(t) = \f(\y(t),\z,t)`
             % in time using the first-order implicit Euler method.
             %
             % Parameters
@@ -225,7 +225,7 @@ classdef Dynamic_Constraint < Constraint
             %   where :math:`\y_j` is the ODE state at time :math:`t_j`.
 
             u = zeros(this.n_y * this.n_t, 1);
-            u(1:this.n_y) = this.Initial_Condition(z);
+            u(1:this.n_y) = this.h(z);
             for k = 2:this.n_t
                 Im = ((k - 2) * this.n_y + 1):((k - 1) * this.n_y);      % y_{k-1} = u(Im)
                 I = ((k - 1) * this.n_y + 1):(k * this.n_y);           % y_{k} = u(I)
@@ -252,12 +252,12 @@ classdef Dynamic_Constraint < Constraint
         end
 
         function [Mv] = c_z_Transpose_Apply(this, v, u, z)
-            [~, h_z] = this.Initial_Condition(z);
+            [~, h_z] = this.h(z);
             Mv = -h_z' * v(1:this.n_y, :);
             for k = 2:this.n_t
                 I = ((k - 1) * this.n_y + 1):(k * this.n_y);            % y_{k} = u(I)
                 dt = this.t_mesh(k) - this.t_mesh(k - 1);
-                [~, ~, f_z] = this.Time_Instance_RHS(u(I), z, this.t_mesh(k));
+                [~, ~, f_z] = this.f(u(I), z, this.t_mesh(k));
                 Mv = Mv - dt * f_z' * v(I, :);
             end
         end
@@ -279,12 +279,12 @@ classdef Dynamic_Constraint < Constraint
             num_vecs = size(v, 2);
             Mv = zeros(this.n_y * this.n_t, num_vecs);
             I = 1:this.n_y;
-            [~, h_z] = this.Initial_Condition(z);
+            [~, h_z] = this.h(z);
             Mv(I, :) = -h_z * v;
             for k = 2:this.n_t
                 I = ((k - 1) * this.n_y + 1):(k * this.n_y);            % y_{k} = u(I)
                 dt = this.t_mesh(k) - this.t_mesh(k - 1);
-                [~, ~, f_z] = this.Time_Instance_RHS(u(I), z, this.t_mesh(k));
+                [~, ~, f_z] = this.f(u(I), z, this.t_mesh(k));
                 Mv(I, :) = Mv(I, :) - dt * f_z * v;
             end
         end
@@ -295,7 +295,7 @@ classdef Dynamic_Constraint < Constraint
             for k = 2:this.n_t
                 I = ((k - 1) * this.n_y + 1):(k * this.n_y);            % y_{k} = u(I)
                 dt = this.t_mesh(k) - this.t_mesh(k - 1);
-                f_yy = this.Time_Instance_RHS_yy_Apply(v(I, :), u(I), z, this.t_mesh(k), lambda(I));
+                f_yy = this.f_yy_Apply(v(I, :), u(I), z, this.t_mesh(k), lambda(I));
                 Mv(I, :) = -dt * f_yy;
             end
         end
@@ -306,7 +306,7 @@ classdef Dynamic_Constraint < Constraint
             for k = 2:this.n_t
                 I = ((k - 1) * this.n_y + 1):(k * this.n_y);          % y_{k} = u(I)
                 dt = this.t_mesh(k) - this.t_mesh(k - 1);
-                f_yz = this.Time_Instance_RHS_yz_Apply(v, u(I), z, this.t_mesh(k), lambda(I));
+                f_yz = this.f_yz_Apply(v, u(I), z, this.t_mesh(k), lambda(I));
                 Mv(I, :) = -dt * f_yz;
             end
         end
@@ -317,17 +317,17 @@ classdef Dynamic_Constraint < Constraint
             for k = 2:this.n_t
                 I = ((k - 1) * this.n_y + 1):(k * this.n_y);          % y_{k} = u(I)
                 dt = this.t_mesh(k) - this.t_mesh(k - 1);
-                f_zy = this.Time_Instance_RHS_zy_Apply(v(I, :), u(I), z, this.t_mesh(k), lambda(I));
+                f_zy = this.f_zy_Apply(v(I, :), u(I), z, this.t_mesh(k), lambda(I));
                 Mv = Mv - dt * f_zy;
             end
         end
 
         function [Mv] = c_zz_Apply(this, v, u, z, lambda)
-            Mv = -this.Initial_Condition_zz_Apply(v, z, lambda(1:this.n_y));
+            Mv = -this.h_zz_Apply(v, z, lambda(1:this.n_y));
             for k = 2:this.n_t
                 I = ((k - 1) * this.n_y + 1):(k * this.n_y);          % y_{k} = u(I)
                 dt = this.t_mesh(k) - this.t_mesh(k - 1);
-                f_zz = this.Time_Instance_RHS_zz_Apply(v, u(I), z, this.t_mesh(k), lambda(I));
+                f_zz = this.f_zz_Apply(v, u(I), z, this.t_mesh(k), lambda(I));
                 Mv = Mv - dt * f_zz;
             end
         end
@@ -357,8 +357,8 @@ classdef Dynamic_Constraint < Constraint
 
         %% Finite difference tests
 
-        function [diffs_y, diffs_z] = Time_Instance_RHS_Jacobian_Check(this, y, z, t)
-            % Check the implementation of :meth:`Time_Instance_RHS()`
+        function [diffs_y, diffs_z] = f_Jacobian_Check(this, y, z, t)
+            % Check the implementation of :meth:`f()`
             % via finite differences.
             %
             % Parameters
@@ -377,7 +377,7 @@ classdef Dynamic_Constraint < Constraint
             % diffs_z : vector
             %   Finite difference errors for the Jacobian :math:`\f_{z}(\y(t),\z,t)`.
 
-            [f, f_y, f_z] = this.Time_Instance_RHS(y, z, t);
+            [f, f_y, f_z] = this.f(y, z, t);
 
             % Check f_y against finite differences of f.
             v = randn(this.n_y, 1);
@@ -388,7 +388,7 @@ classdef Dynamic_Constraint < Constraint
             fd_fv = zeros(this.n_y, p);
             diffs_y = zeros(p, 1);
             for k = 1:p
-                [fk] = this.Time_Instance_RHS(y + h(k) * v, z, t);
+                [fk] = this.f(y + h(k) * v, z, t);
                 fd_fv(:, k) = (fk - f) / h(k);
                 diffs_y(k) = norm(fd_fv(:, k) - fv) / norm(fv);
             end
@@ -413,7 +413,7 @@ classdef Dynamic_Constraint < Constraint
             fd_fv = zeros(this.n_y, p);
             diffs_z = zeros(p, 1);
             for k = 1:p
-                [fk] = this.Time_Instance_RHS(y, z + h(k) * v, t);
+                [fk] = this.f(y, z + h(k) * v, t);
                 fd_fv(:, k) = (fk - f) / h(k);
                 diffs_z(k) = norm(fd_fv(:, k) - fv) / norm(fv);
             end
@@ -430,13 +430,13 @@ classdef Dynamic_Constraint < Constraint
             end
         end
 
-        function [diffs_yy, diffs_yz, diffs_zy, diffs_zz] = Time_Instance_RHS_Hessian_Check(this, y, z, t)
+        function [diffs_yy, diffs_yz, diffs_zy, diffs_zz] = f_Hessian_Check(this, y, z, t)
             % Check the implementation of the following via finite differences.
             %
-            % * :meth:`Time_Instance_RHS_yy_Apply()` for :math:`\bflambda\trp\f_{y,y}(\y,\z,t)\v`.
-            % * :meth:`Time_Instance_RHS_yz_Apply()` for :math:`\bflambda\trp\f_{y,z}(\y,\z,t)\v`.
-            % * :meth:`Time_Instance_RHS_zy_Apply()` for :math:`\bflambda\trp\f_{z,y}(\y,\z,t)\v`.
-            % * :meth:`Time_Instance_RHS_zz_Apply()` for :math:`\bflambda\trp\f_{z,z}(\y,\z,t)\v`.
+            % * :meth:`f_yy_Apply()` for :math:`\bflambda\trp\f_{y,y}(\y,\z,t)\v`.
+            % * :meth:`f_yz_Apply()` for :math:`\bflambda\trp\f_{y,z}(\y,\z,t)\v`.
+            % * :meth:`f_zy_Apply()` for :math:`\bflambda\trp\f_{z,y}(\y,\z,t)\v`.
+            % * :meth:`f_zz_Apply()` for :math:`\bflambda\trp\f_{z,z}(\y,\z,t)\v`.
             %
             % Parameters
             % ----------
@@ -458,19 +458,19 @@ classdef Dynamic_Constraint < Constraint
             % diffs_zz : vector
             %   Finite difference errors for :math:`\bflambda\trp\f_{z,z}(\y,\z,t)\v`.
 
-            [~, f_y, f_z] = this.Time_Instance_RHS(y, z, t);
+            [~, f_y, f_z] = this.f(y, z, t);
             lambda = randn(this.n_y, 1);
             h = 10.^(-2:-1:-6);
             p = length(h);
 
-            % Check Time_Instance_RHS_yy_Apply().
+            % Check f_yy_Apply().
             v = randn(this.n_y, 1);
             v = v / norm(v);
-            Mv = this.Time_Instance_RHS_yy_Apply(v, y, z, t, lambda);
+            Mv = this.f_yy_Apply(v, y, z, t, lambda);
             fd_Mv = zeros(this.n_y, p);
             diffs_yy = zeros(p, 1);
             for k = 1:p
-                [~, f_yk] = this.Time_Instance_RHS(y + h(k) * v, z, t);
+                [~, f_yk] = this.f(y + h(k) * v, z, t);
                 fd_Mv(:, k) = (f_yk' * lambda - f_y' * lambda) / h(k);
                 diffs_yy(k) = norm(fd_Mv(:, k) - Mv) / norm(Mv);
             end
@@ -486,14 +486,14 @@ classdef Dynamic_Constraint < Constraint
                 disp(' ');
             end
 
-            % Check Time_Instance_RHS_yz_Apply().
+            % Check f_yz_Apply().
             v = randn(this.n_z, 1);
             v = v / norm(v);
-            Mv = this.Time_Instance_RHS_yz_Apply(v, y, z, t, lambda);
+            Mv = this.f_yz_Apply(v, y, z, t, lambda);
             fd_Mv = zeros(this.n_y, p);
             diffs_yz = zeros(p, 1);
             for k = 1:p
-                [~, f_yk] = this.Time_Instance_RHS(y, z + h(k) * v, t);
+                [~, f_yk] = this.f(y, z + h(k) * v, t);
                 fd_Mv(:, k) = (f_yk' * lambda - f_y' * lambda) / h(k);
                 diffs_yz(k) = norm(fd_Mv(:, k) - Mv) / norm(Mv);
             end
@@ -509,14 +509,14 @@ classdef Dynamic_Constraint < Constraint
                 disp(' ');
             end
 
-            % Check Time_Instance_RHS_zy_Apply().
+            % Check f_zy_Apply().
             v = randn(this.n_y, 1);
             v = v / norm(v);
-            Mv = this.Time_Instance_RHS_zy_Apply(v, y, z, t, lambda);
+            Mv = this.f_zy_Apply(v, y, z, t, lambda);
             fd_Mv = zeros(this.n_z, p);
             diffs_zy = zeros(p, 1);
             for k = 1:p
-                [~, ~, f_zk] = this.Time_Instance_RHS(y + h(k) * v, z, t);
+                [~, ~, f_zk] = this.f(y + h(k) * v, z, t);
                 fd_Mv(:, k) = (f_zk' * lambda - f_z' * lambda) / h(k);
                 diffs_zy(k) = norm(fd_Mv(:, k) - Mv) / norm(Mv);
             end
@@ -532,14 +532,14 @@ classdef Dynamic_Constraint < Constraint
                 disp(' ');
             end
 
-            % Check Time_Instance_RHS_zz_Apply().
+            % Check f_zz_Apply().
             v = randn(this.n_z, 1);
             v = v / norm(v);
-            Mv = this.Time_Instance_RHS_zz_Apply(v, y, z, t, lambda);
+            Mv = this.f_zz_Apply(v, y, z, t, lambda);
             fd_Mv = zeros(this.n_z, p);
             diffs_zz = zeros(p, 1);
             for k = 1:p
-                [~, ~, f_zk] = this.Time_Instance_RHS(y, z + h(k) * v, t);
+                [~, ~, f_zk] = this.f(y, z + h(k) * v, t);
                 fd_Mv(:, k) = (f_zk' * lambda - f_z' * lambda) / h(k);
                 diffs_zz(k) = norm(fd_Mv(:, k) - Mv) / norm(Mv);
             end
@@ -583,7 +583,7 @@ classdef Dynamic_Constraint < Constraint
         % Output:
         % Mv: (I_{n_y} - dt*f_y(y, z, t_k))^{-1}v
         function [Mv] = Linearized_Time_Step_Solve(this, v, y, z, tk, dt)
-            [~, f_y] = this.Time_Instance_RHS(y, z, tk);
+            [~, f_y] = this.f(y, z, tk);
             A = eye(this.n_y) - dt * f_y;
             Mv = linsolve(A, v);
         end
@@ -597,7 +597,7 @@ classdef Dynamic_Constraint < Constraint
         % Output:
         % Mv: (I - dt*f_y(y, z, t_k)^T)^{-1}v
         function [Mv] = Linearized_Adjoint_Time_Step_Solve(this, v, y, z, tk, dt)
-            [~, f_y] = this.Time_Instance_RHS(y, z, tk);
+            [~, f_y] = this.f(y, z, tk);
             A = eye(this.n_y) - dt * f_y';
             Mv = linsolve(A, v);
         end
@@ -612,7 +612,7 @@ classdef Dynamic_Constraint < Constraint
         % f: value of the residual y_k-y_{k-1} - dt f(y_k, z, t_k) in R^{n_y}
         % Jac: state Jacobian of the residual in R^{m x m}
         function [f, Jac] = Nonlinear_Step(this, yk, ykm, z, tk, dt)
-            [val, val_y] = this.Time_Instance_RHS(yk, z, tk);
+            [val, val_y] = this.f(yk, z, tk);
             f = yk - ykm - dt * val;
             Jac = eye(this.n_y, this.n_y) - dt * val_y;
         end

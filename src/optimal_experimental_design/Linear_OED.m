@@ -84,7 +84,7 @@ classdef Linear_OED < handle
 
         function [val, grad] = OED_Objective(this, w)
             [val1, grad1] = this.Posterior_Trace_Objective(w);
-            [val2, grad2] = this.Regularization_Objective(w);
+            [val2, grad2] = this.R(w);
             val = val1 + this.reguarlization_coeff * val2;
             grad = grad1 + this.reguarlization_coeff * grad2;
         end
@@ -105,7 +105,7 @@ classdef Linear_OED < handle
             grad = -(1 / this.num_trace_samples) * sum(Ftilde_E_Hinv_samples.^2, 2);
         end
 
-        function [val, grad] = Regularization_Objective(this, w)
+        function [val, grad] = R(this, w)
             val = sum(w);
             grad = 1 + 0 * w;
         end

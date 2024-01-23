@@ -236,7 +236,7 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
 
         %% Implement abstract methods from the parent class.
 
-        function [f, f_y, f_z] = Time_Instance_RHS(this, y, z, t)
+        function [f, f_y, f_z] = f(this, y, z, t)
 
             % Extract the input q(t) from the control z based on the time t.
             I = this.Input_Indices(t);
@@ -256,12 +256,12 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             end
         end
 
-        function [h, h_z] = Initial_Condition(this, ~)
+        function [h, h_z] = h(this, ~)
             h = this.y0;
             h_z = zeros(this.n_z, 1);
         end
 
-        function [Mv] = Time_Instance_RHS_yy_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_yy_Apply(this, v, y, z, t, lambda)
             I = this.Input_Indices(t);
             q = z(I);
             Mv = zeros(this.n_y, size(v, 2));
@@ -270,7 +270,7 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             end
         end
 
-        function [Mv] = Time_Instance_RHS_yz_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_yz_Apply(this, v, y, z, t, lambda)
             I = this.Input_Indices(t);
             q = z(I);
             vt = v(I, :);
@@ -280,7 +280,7 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             end
         end
 
-        function [Mv] = Time_Instance_RHS_zy_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_zy_Apply(this, v, y, z, t, lambda)
             I = this.Input_Indices(t);
             q = z(I);
             Mv = zeros(this.n_z, size(v, 2));
@@ -289,7 +289,7 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             end
         end
 
-        function [Mv] = Time_Instance_RHS_zz_Apply(this, v, y, z, t, lambda)
+        function [Mv] = f_zz_Apply(this, v, y, z, t, lambda)
             I = this.Input_Indices(t);
             q = z(I);
             vt = v(I, :);
@@ -299,7 +299,7 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             end
         end
 
-        function [Mv] = Initial_Condition_zz_Apply(this, v, ~, ~)
+        function [Mv] = h_zz_Apply(this, v, ~, ~)
             Mv = zeros(this.n_z, size(v, 2));
         end
 

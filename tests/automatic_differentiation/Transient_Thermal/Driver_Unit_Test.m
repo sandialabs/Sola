@@ -29,8 +29,8 @@ v = randn(m, 1);
 error = 0;
 
 %%
-[val, grad_y] = obj.Time_Instance_Objective(y, t);
-[val_AD, grad_y_AD] = obj_AD.Time_Instance_Objective(y, t);
+[val, grad_y] = obj.g(y, t);
+[val_AD, grad_y_AD] = obj_AD.g(y, t);
 local_error = norm(val - val_AD);
 error = max(error, local_error);
 if print_output
@@ -43,8 +43,8 @@ if print_output
 end
 
 %%
-[val, grad_z] = obj.Regularization_Objective(z);
-[val_AD, grad_z_AD] = obj_AD.Regularization_Objective(z);
+[val, grad_z] = obj.R(z);
+[val_AD, grad_z_AD] = obj_AD.R(z);
 local_error = norm(val - val_AD);
 error = max(error, local_error);
 if print_output
@@ -57,8 +57,8 @@ if print_output
 end
 
 %%
-Mv = obj.Time_Instance_Objective_yy_Apply(v, y, t);
-Mv_AD = obj_AD.Time_Instance_Objective_yy_Apply(v, y, t);
+Mv = obj.g_yy_Apply(v, y, t);
+Mv_AD = obj_AD.g_yy_Apply(v, y, t);
 local_error = norm(Mv - Mv_AD);
 error = max(error, local_error);
 if print_output
@@ -66,8 +66,8 @@ if print_output
 end
 
 %%
-Mv = obj.Regularization_Objective_zz_Apply(v, z);
-Mv_AD = obj_AD.Regularization_Objective_zz_Apply(v, z);
+Mv = obj.R_zz_Apply(v, z);
+Mv_AD = obj_AD.R_zz_Apply(v, z);
 local_error = norm(Mv - Mv_AD);
 error = max(error, local_error);
 if print_output
@@ -75,8 +75,8 @@ if print_output
 end
 
 %%
-[f, f_y, f_z] = con.Time_Instance_RHS(y, z, t);
-[f_AD, f_y_AD, f_z_AD] = con_AD.Time_Instance_RHS(y, z, t);
+[f, f_y, f_z] = con.f(y, z, t);
+[f_AD, f_y_AD, f_z_AD] = con_AD.f(y, z, t);
 local_error = norm(f - f_AD);
 error = max(error, local_error);
 if print_output
@@ -94,8 +94,8 @@ if print_output
 end
 
 %%
-[h, hz] = con.Initial_Condition(z);
-[h_AD, hz_AD] = con_AD.Initial_Condition(z);
+[h, hz] = con.h(z);
+[h_AD, hz_AD] = con_AD.h(z);
 local_error = norm(h - h_AD);
 error = max(error, local_error);
 if print_output
@@ -108,8 +108,8 @@ if print_output
 end
 
 %%
-Mv = con.Time_Instance_RHS_yy_Apply(v, y, z, t, lambda);
-Mv_AD = con_AD.Time_Instance_RHS_yy_Apply(v, y, z, t, lambda);
+Mv = con.f_yy_Apply(v, y, z, t, lambda);
+Mv_AD = con_AD.f_yy_Apply(v, y, z, t, lambda);
 local_error = norm(Mv - Mv_AD);
 error = max(error, local_error);
 if print_output
@@ -117,8 +117,8 @@ if print_output
 end
 
 %%
-Mv = con.Time_Instance_RHS_yz_Apply(v, y, z, t, lambda);
-Mv_AD = con_AD.Time_Instance_RHS_yz_Apply(v, y, z, t, lambda);
+Mv = con.f_yz_Apply(v, y, z, t, lambda);
+Mv_AD = con_AD.f_yz_Apply(v, y, z, t, lambda);
 local_error = norm(Mv - Mv_AD);
 error = max(error, local_error);
 if print_output
@@ -126,8 +126,8 @@ if print_output
 end
 
 %%
-Mv = con.Time_Instance_RHS_zy_Apply(v, y, z, t, lambda);
-Mv_AD = con_AD.Time_Instance_RHS_zy_Apply(v, y, z, t, lambda);
+Mv = con.f_zy_Apply(v, y, z, t, lambda);
+Mv_AD = con_AD.f_zy_Apply(v, y, z, t, lambda);
 local_error = norm(Mv - Mv_AD);
 error = max(error, local_error);
 if print_output
@@ -135,8 +135,8 @@ if print_output
 end
 
 %%
-Mv = con.Time_Instance_RHS_zz_Apply(v, y, z, t, lambda);
-Mv_AD = con_AD.Time_Instance_RHS_zz_Apply(v, y, z, t, lambda);
+Mv = con.f_zz_Apply(v, y, z, t, lambda);
+Mv_AD = con_AD.f_zz_Apply(v, y, z, t, lambda);
 local_error = norm(Mv - Mv_AD);
 error = max(error, local_error);
 if print_output
@@ -144,8 +144,8 @@ if print_output
 end
 
 %%
-Mv = con.Initial_Condition_zz_Apply(v, z, lambda);
-Mv_AD = con_AD.Initial_Condition_zz_Apply(v, z, lambda);
+Mv = con.h_zz_Apply(v, z, lambda);
+Mv_AD = con_AD.h_zz_Apply(v, z, lambda);
 local_error = norm(Mv - Mv_AD);
 error = max(error, local_error);
 if print_output

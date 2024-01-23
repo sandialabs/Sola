@@ -20,8 +20,8 @@ classdef Dynamic_Objective_AD < Dynamic_Objective
     %   and :math:`w_{1} = w_{n_t} = \frac{1}{2}\delta t`.
     %
     % The gradients and Hessian actions of :math:`g` are computed via
-    % automatic differentiation from the :meth:`Time_Instance_Objective_AD()`
-    % and :meth:`Regularization_Objective_AD()` methods.
+    % automatic differentiation from the :meth:`g_AD()`
+    % and :meth:`R_AD()` methods.
 
     properties
         verbose
@@ -30,7 +30,7 @@ classdef Dynamic_Objective_AD < Dynamic_Objective
 
     methods (Abstract, Access = public)
 
-        [val] = Time_Instance_Objective_AD(this, y, t)
+        [val] = g_AD(this, y, t)
         % Evaluate the integrand :math:`g(\y,t)`.
         %
         % Parameters
@@ -45,7 +45,7 @@ classdef Dynamic_Objective_AD < Dynamic_Objective
         % val : double
         %   Function value :math:`g(\y,t)\in\R`.
 
-        [val] = Regularization_Objective_AD(this, z)
+        [val] = R_AD(this, z)
         % Evaluate the regularization term :math:`R(\z)`.
         %
         % Parameters
@@ -62,23 +62,23 @@ classdef Dynamic_Objective_AD < Dynamic_Objective
 
     methods (Access = public)
 
-        function [val, grad_y] = Time_Instance_Objective(this, y, t)
-            [grad_y, val] = grad_Time_Instance_Objective_AD_Jac(this, y, t);
+        function [val, grad_y] = g(this, y, t)
+            [grad_y, val] = grad_g_AD_Jac(this, y, t);
             grad_y = grad_y';
         end
 
-        function [val, grad_z] = Regularization_Objective(this, z)
-            [grad_z, val] = grad_Regularization_Objective_AD_Jac(this, z);
+        function [val, grad_z] = R(this, z)
+            [grad_z, val] = grad_R_AD_Jac(this, z);
             grad_z = grad_z';
         end
 
-        function [Mv] = Time_Instance_Objective_yy_Apply(this, v, y, t)
-            M = Hess_Time_Instance_Objective_AD_Hes(this, y, t);
+        function [Mv] = g_yy_Apply(this, v, y, t)
+            M = Hess_g_AD_Hes(this, y, t);
             Mv = M * v;
         end
 
-        function [Mv] = Regularization_Objective_zz_Apply(this, v, z)
-            M = Hess_Regularization_Objective_AD_Hes(this, z);
+        function [Mv] = R_zz_Apply(this, v, z)
+            M = Hess_R_AD_Hes(this, z);
             Mv = M * v;
         end
 
@@ -122,11 +122,11 @@ classdef Dynamic_Objective_AD < Dynamic_Objective
             z = randn(this.n_z, 1);
             t = rand;
             try
-                [~, valold] = grad_Time_Instance_Objective_AD_Jac(this, y, t);
+                [~, valold] = grad_g_AD_Jac(this, y, t);
             catch
                 valold = 0;
             end
-            valcurrent = this.Time_Instance_Objective_AD(y, t);
+            valcurrent = this.g_AD(y, t);
             if norm(valold - valcurrent) > 10^-15
                 if this.verbose
                     disp('Detected change in time instance objective');
@@ -137,7 +137,7 @@ classdef Dynamic_Objective_AD < Dynamic_Objective
                 options.echo = 0;
                 gy = adigatorCreateDerivInput([length(y), 1], 'y'); % Create Deriv Input
                 try
-                    genout = adigatorGenJacFile('grad_Time_Instance_Objective_AD', {this, gy, t}, options);
+                    genout = adigatorGenJacFile('grad_g_AD', {this, gy, t}, options);
                 catch
                     if this.verbose
                         disp('objective gradient is zero');
@@ -145,7 +145,7 @@ classdef Dynamic_Objective_AD < Dynamic_Objective
                 end
 
                 try
-                    genout = adigatorGenHesFile('Hess_Time_Instance_Objective_AD', {this, gy, t}, options);
+                    genout = adigatorGenHesFile('Hess_g_AD', {this, gy, t}, options);
                 catch
                     if this.verbose
                         disp('objective Hessian is zero');
@@ -155,11 +155,11 @@ classdef Dynamic_Objective_AD < Dynamic_Objective
             end
 
             try
-                [~, valold] = grad_Regularization_Objective_AD_Jac(this, z);
+                [~, valold] = grad_R_AD_Jac(this, z);
             catch
                 valold = 0;
             end
-            valcurrent = this.Regularization_Objective_AD(z);
+            valcurrent = this.R_AD(z);
             if norm(valold - valcurrent) > 10^-15
                 if this.verbose
                     disp('Detected change in regularization objective');
@@ -170,7 +170,7 @@ classdef Dynamic_Objective_AD < Dynamic_Objective
                 options.echo = 0;
                 gz = adigatorCreateDerivInput([length(z), 1], 'z'); % Create Deriv Input
                 try
-                    genout = adigatorGenJacFile('grad_Regularization_Objective_AD', {this, gz}, options);
+                    genout = adigatorGenJacFile('grad_R_AD', {this, gz}, options);
                 catch
                     if this.verbose
                         disp('regularization gradient is zero');
@@ -178,7 +178,7 @@ classdef Dynamic_Objective_AD < Dynamic_Objective
                 end
 
                 try
-                    genout = adigatorGenHesFile('Hess_Regularization_Objective_AD', {this, gz}, options);
+                    genout = adigatorGenHesFile('Hess_R_AD', {this, gz}, options);
                 catch
                     if this.verbose
                         disp('regularization Hessian is zero');

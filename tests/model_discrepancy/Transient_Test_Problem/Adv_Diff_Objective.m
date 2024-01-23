@@ -8,22 +8,22 @@ classdef Adv_Diff_Objective < Dynamic_Objective
 
     methods (Access = public)
 
-        function [val, grad_y] = Time_Instance_Objective(this, y, t)
+        function [val, grad_y] = g(this, y, t)
             target = this.Evaluate_Target(t, this.x);
             val = .5 * (y - target)' * this.M * (y - target);
             grad_y = this.M * (y - target);
         end
 
-        function [val, grad_z] = Regularization_Objective(this, z)
+        function [val, grad_z] = R(this, z)
             grad_z = this.beta_reg * this.M * z;
             val = .5 * z' * grad_z;
         end
 
-        function [Mv] = Time_Instance_Objective_yy_Apply(this, v, y, t)
+        function [Mv] = g_yy_Apply(this, v, y, t)
             Mv = this.M * v;
         end
 
-        function [Mv] = Regularization_Objective_zz_Apply(this, v, z)
+        function [Mv] = R_zz_Apply(this, v, z)
             Mv = this.beta_reg * this.M * v;
         end
 

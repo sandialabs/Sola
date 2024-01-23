@@ -21,8 +21,8 @@ if jacobian_check
     z = randn(n_y, 1);
     t = rand;
 
-    con.Time_Instance_RHS_Jacobian_Check(y, z, t);
-    con.Time_Instance_RHS_Hessian_Check(y, z, t);
+    con.f_Jacobian_Check(y, z, t);
+    con.f_Hessian_Check(y, z, t);
 end
 
 if mms_check
