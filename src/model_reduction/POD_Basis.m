@@ -167,10 +167,44 @@ classdef POD_Basis < Basis
             % dimension : uint8
             %   Reduced dimension :math:`r`.
             dimension = this.Set_Reduced_Dimension_From_Cumulative_Energy(1 - energy);
-            % svdvals2 = this.singular_values .^ 2;
-            % residual_energies = 1 - (cumsum(svdvals) / sum(svdvals));
-            % dimension = sum(residual_energies > energy) + 1;
-            % this.r = dimension;
+        end
+
+        function [dimension] = Set_Reduced_Dimension_From_Projection_Error(this, states, threshold)
+            % Set the ``r`` property based on the projection error criteria:
+            % choose :math:`r` to be the smallest integer such that
+            %
+            % .. math:: \frac{||\Q - \tilde{\Q}_{r}||}{||\Q||} < \epsilon
+            %
+            % where :math:`\tilde{\Q}_{r}` is the rank-:math:`r` projection
+            % of the states :math:`\Q`.
+            %
+            % Parameters
+            % ----------
+            % states
+            %   States :math:`\Q` to test.
+            % threshold
+            %   Projection error threshold :math:`\epsilon`.
+            %
+            % Returns
+            % -------
+            % dimension : uint8
+            %   Reduced dimension :math:`r`
+            old_r = this.r;
+            denom = norm(states);
+            success = false;
+            for dim = 1:this.maxdim
+                this.r = dim;
+                projection_error = norm(this.Project(states) - states) / denom;
+                if projection_error < threshold
+                    success = true;
+                    break
+                end
+            end
+            if ~success
+                this.r = old_r;
+                error('projection error threshold failed');
+            end
+            dimension = this.r;
         end
 
         %% Dimensionality reduction: compression and decompression

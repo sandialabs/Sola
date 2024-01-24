@@ -37,4 +37,27 @@ classdef Basis < handle
 
     end
 
+    methods (Access = public)
+
+        function [states_projected] = Project(this, states)
+            % Project full-order states to the span of the basis.
+            %
+            % This is compression followed by decompression:
+            % ``states_projected = Decompress(Compress(states))``.
+            %
+            % Parameters
+            % ----------
+            % states
+            %   State(s) :math:`\y\in\R^{n_y}` to project.
+            %
+            % Returns
+            % -------
+            % states_projected : vector(s)
+            %   Projected state(s) :math:`\tilde{\y}\in\R^{n_y}`.
+            states_compressed = this.Compress(states);
+            states_projected = this.Decompress(states_compressed);
+        end
+
+    end
+
 end
