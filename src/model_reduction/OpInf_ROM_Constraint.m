@@ -159,6 +159,30 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
 
         %% Training.
 
+        function [Y, dYdt] = Estimate_State_ddts(this, Y)
+            % Use first-order backward differences to estimate the time
+            % derivatives of the training states.
+            %
+            % Parameters
+            % ----------
+            % Y
+            %   State snapshots :math:`\Y \in \R^{n_y \times n_t}`.
+            %   This includes the initial condition.
+            %
+            % Returns
+            % -------
+            % Y
+            %   State snapshots :math:`\Y \in \R^{n_y \times (n_t - 1)}`,
+            %   not including the initial condition.
+            % dYdt
+            %   Time derivative of snapshots,
+            %   :math:`\dot{\Y} \in \R^{n_y \times (n_t - 1)}`.
+
+            dt = this.t_mesh(2) - this.t_mesh(1);
+            dYdt = (Y(:, 2:end) - Y(:, 1:(end - 1))) / dt;
+            Y = Y(:, 2:end);
+        end
+
         function Learn_Operators(this, Y, Q, dYdt)
             % Infer the entries of the system operators by solving the
             % regression problem
@@ -188,22 +212,20 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             % Q
             %   Inputs :math:`\Q \in \R^{n_q \times n_t}`.
             % dYdt
-            %   (Optional) Time derivative of snapshots
+            %   Time derivative of the state snapshots,
             %   :math:`\dot{\Y} \in \R^{n_y \times n_t}`.
-            %   If not provided, these are estimated from ``Y`` with finite differences.
             arguments
                 this
                 Y (:, :) {mustBeNumeric}
                 Q (:, :) {mustBeNumeric}
-                dYdt (:, :) {mustBeNumeric} = []
+                dYdt (:, :) {mustBeNumeric}
             end
 
-            % If time derivatives not given, estimate with backward Euler (to match time stepping scheme).
-            if size(dYdt, 1) == 0
-                dt = this.t_mesh(2) - this.t_mesh(1);
-                dYdt = (Y(:, 2:end) - Y(:, 1:(end - 1))) / dt;
-                Y = Y(:, 2:end);
-                Q = Q(:, 2:end);
+            % Check that Y, Q, and dYdt are all the same size.
+            if ~isequal(size(Y), size(Q))
+                error('Y and Q not aligned');
+            elseif ~isequal(size(Y), size(dYdt))
+                error('Y and dYdt not aligned');
             end
 
             % Construct the data matrix.
@@ -233,6 +255,43 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
                 this.operators{i}.Set_Entries(Ohat(:, index:(newindex - 1)));
                 index = newindex;
             end
+        end
+
+        function [reg] = Select_Regularization(this, states, controls)
+            % Use a grid search to select a scalar regularization hyperparameter.
+            %
+            % Parameters
+            % ----------
+            % states
+            %   Compressed training states :math:`\uhat\in\R^{n_y'n_t\times k}`
+            %   where :math:`k` is the number of trajectories.
+            % controls
+            %   Control profiles :math:`\z\in\R^{n_z\times k}`
+            %   corresponding to the training states.
+            %
+            % Returns
+            % -------
+            % reg : float
+            %   Best regularization hyperparameter.
+            reg_candidates = logspace(-12, 4, 100);
+            num_trajectories = size(states, 2);
+            dYdts = zeros(this.n_y, this.n_t - 1, num_trajectories);
+            Y = zeros(this.n_y, this.n_t - 1, num_trajectories);
+            for k = 1:num_trajectories
+                [Yk, dYk] = this.Estimate_State_ddts(reshape(states(:, k), this.n_y, this.n_t));
+                dYdts(:, :, k) = dYk;
+                Y(:, :, k) = Yk;
+            end
+            Z = reshape(controls, this.n_q, (this.n_t - 1) * num_trajectories);
+
+            error('not implemented');
+
+            for i = 1:size(reg_candidates, 2)
+                reg = reg_candidates(i);
+                this.regularization = reg;
+                this.Learn_Operators(Y, Z, dYdt);
+            end
+
         end
 
         %% Implement abstract methods from the parent class.
