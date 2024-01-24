@@ -257,7 +257,7 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             end
         end
 
-        function [reg] = Select_Regularization(this, states, controls)
+        function [best_reg] = Select_Regularization(this, states, controls)
             % Use a grid search to select a scalar regularization hyperparameter.
             %
             % Parameters
@@ -271,27 +271,50 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             %
             % Returns
             % -------
-            % reg : float
+            % best_reg : float
             %   Best regularization hyperparameter.
-            reg_candidates = logspace(-12, 4, 100);
             num_trajectories = size(states, 2);
-            dYdts = zeros(this.n_y, this.n_t - 1, num_trajectories);
+
+            % Estimate time derivatives.
+            dYdt = zeros(this.n_y, this.n_t - 1, num_trajectories);
             Y = zeros(this.n_y, this.n_t - 1, num_trajectories);
             for k = 1:num_trajectories
                 [Yk, dYk] = this.Estimate_State_ddts(reshape(states(:, k), this.n_y, this.n_t));
-                dYdts(:, :, k) = dYk;
+                dYdt(:, :, k) = dYk;
                 Y(:, :, k) = Yk;
             end
+            Y = reshape(Y, this.n_y, (this.n_t - 1) * num_trajectories);
+            dYdt = reshape(dYdt, this.n_y, (this.n_t - 1) * num_trajectories);
             Z = reshape(controls, this.n_q, (this.n_t - 1) * num_trajectories);
 
-            error('not implemented');
-
-            for i = 1:size(reg_candidates, 2)
+            reg_candidates = logspace(-12, 4, 100);
+            num_candidates = size(reg_candidates, 2);
+            reconstruction_errors = zeros(1, num_candidates);
+            disp(['Regularization selection (' num2str(num_candidates), ' candidates)']);
+            for i = 1:num_candidates
                 reg = reg_candidates(i);
-                this.regularization = reg;
+                this.regularizer = reg;
                 this.Learn_Operators(Y, Z, dYdt);
+
+                % Solve the model for each training control profile.
+                total_error = 0;
+                for k = 1:num_trajectories
+                    Uk = this.State_Solve(controls(:, k));
+                    local_error = norm(Uk - states(:, k)) / norm(states(:, k));
+                    total_error = total_error + local_error;
+                end
+                reconstruction_errors(i) = total_error;
+
+                disp(['reg = ', num2str(reg), '; error = ', num2str(total_error)]);
             end
 
+            % Choose the best regularization.
+            [err, idx] = min(reconstruction_errors);
+            best_reg = reg_candidates(idx);
+            disp(['winner = ', num2str(best_reg), '; error = ', num2str(err)]);
+
+            this.regularizer = best_reg;
+            this.Learn_Operators(Y, Z, dYdt);
         end
 
         %% Implement abstract methods from the parent class.
