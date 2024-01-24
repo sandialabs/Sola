@@ -221,8 +221,8 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
                 dYdt (:, :) {mustBeNumeric}
             end
 
-            % Check that Y, Q, and dYdt are all the same size.
-            if ~isequal(size(Y), size(Q))
+            % Check that Y, Q, and dYdt have appropriate sizes.
+            if ~isequal(size(Y, 2), size(Q, 2))
                 error('Y and Q not aligned');
             elseif ~isequal(size(Y), size(dYdt))
                 error('Y and dYdt not aligned');
@@ -257,7 +257,7 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             end
         end
 
-        function [best_reg] = Select_Regularization(this, states, controls)
+        function [best_reg] = Select_Regularization(this, states, controls, reg_candidates)
             % Use a grid search to select a scalar regularization hyperparameter.
             %
             % Parameters
@@ -268,6 +268,8 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             % controls
             %   Control profiles :math:`\z\in\R^{n_z\times k}`
             %   corresponding to the training states.
+            % reg_candidates
+            %   Candidate regularization values to check.
             %
             % Returns
             % -------
@@ -287,7 +289,6 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             dYdt = reshape(dYdt, this.n_y, (this.n_t - 1) * num_trajectories);
             Z = reshape(controls, this.n_q, (this.n_t - 1) * num_trajectories);
 
-            reg_candidates = logspace(-12, 4, 100);
             num_candidates = size(reg_candidates, 2);
             reconstruction_errors = zeros(1, num_candidates);
             disp(['Regularization selection (' num2str(num_candidates), ' candidates)']);
