@@ -61,7 +61,7 @@ plot(x, Z_test(:, 2), 'LineWidth', 3);
 plot(x, Z_test(:, 3), 'LineWidth', 3);
 xlabel('$x$', 'Interpreter', 'latex');
 ylabel('Source');
-legend({'$z_1$', '$z_2$', '$z_{rep}$'}, 'Interpreter', 'latex');
+legend({'$z_1$', '$z_2$', '$z_{ref}$'}, 'Interpreter', 'latex');
 set(gca, 'fontsize', 18);
 cd(write_path);
 saveas(gca, 'z_data', 'epsc');
