@@ -27,6 +27,6 @@ for k = 1:n_t
     target = obj.Evaluate_Target(t(k), x);
     plot(x, u_reshape(:, k), '-', x, target, '--', 'LineWidth', 3);
     legend({'State', 'Target'});
-    ylim([0 .2]);
+    ylim([-1, 2]);
     pause(.05);
 end

@@ -7,6 +7,8 @@ classdef Adv_Diff_Gaussian_Source_Objective < Dynamic_Objective
         time_weights
         z_time_mesh
         beta_reg
+        stashed_target
+        target_time_mesh
     end
 
     methods (Access = public)
@@ -23,11 +25,11 @@ classdef Adv_Diff_Gaussian_Source_Objective < Dynamic_Objective
             val = .5 * z' * grad_z;
         end
 
-        function [Mv] = g_yy_Apply(this, v, y, t)
+        function [Mv] = g_yy_Apply(this, v, ~, ~)
             Mv = this.M * v;
         end
 
-        function [Mv] = R_zz_Apply(this, v, z)
+        function [Mv] = R_zz_Apply(this, v, ~)
             Mv = this.beta_reg * (kron(diag(this.time_weights(2:end)), this.Br' * this.M * this.Br)) * v;
         end
 
@@ -66,10 +68,20 @@ classdef Adv_Diff_Gaussian_Source_Objective < Dynamic_Objective
             this.Br = Br;
             this.z_time_mesh = linspace(0, T, n_t)';
             this.z_time_mesh = this.z_time_mesh(2:end);
+
+            load("OpInf_Target_State.mat", "target", "target_time_mesh");
+            this.stashed_target = target;
+            this.target_time_mesh = target_time_mesh;
         end
 
         function [target] = Evaluate_Target(this, t, x)
-            target = 0.2 * t^2 * exp(-10 * (x - .5).^2);
+            % target = 0.2 * t^2 * exp(-10 * (x - .5).^2);
+            if t == 0
+                target = zeros(size(x, 1), 1);
+            else
+                [~, idx] = min(abs(this.target_time_mesh - t));
+                target = this.stashed_target(:, idx);
+            end
         end
 
         function [w] = Temporal_Weights(this, t)

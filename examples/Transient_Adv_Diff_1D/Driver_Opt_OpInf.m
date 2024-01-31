@@ -13,6 +13,7 @@ plot_optimization_solution = true;
 %% Generate or load training data.
 
 if ~exist(datafile, 'file')
+    disp('Generating training data');
     tic();
     % Set up the optimization problem.
     n_y = 200;
@@ -21,10 +22,21 @@ if ~exist(datafile, 'file')
     num_space_control_nodes = 10;
     n_z = num_space_control_nodes * (n_t - 1);
     con = Adv_Diff_Gaussian_Source_Constraint(n_y, n_z, T, n_t, num_space_control_nodes);
+    t = con.t_mesh;
+
+    % Choose a target within the range of the PDE.
+    q = zeros(num_space_control_nodes, n_t - 1);
+    for i = 1:num_space_control_nodes
+        q(i, :) = 10 * atan(10 * t(2:end)') .* cos(2 * pi * (t(2:end)' - (i - 1) / num_space_control_nodes));
+    end
+    z_truth = reshape(q, n_z, 1);
+    target = reshape(con.State_Solve(z_truth), n_y, n_t);
+    target_time_mesh = t;
+    save("OpInf_Target_State.mat", "target", "target_time_mesh");
 
     % Solve the state equation for several random controls.
     num_solves = 3;
-    Z_train = randn(n_z, num_solves);
+    Z_train = 10 * randn(n_z, num_solves);
     U_train = zeros(n_y * n_t, num_solves);
     for k = 1:num_solves
         U_train(:, k) = con.State_Solve(Z_train(:, k));
@@ -75,9 +87,9 @@ disp(['Average projection error of target state: ', num2str(mean(target_projecti
 
 operators = {Linear_Operator(), Input_Operator()};
 rom = OpInf_ROM_Constraint(basis.r, num_space_control_nodes, T, n_t, zeros(basis.r, 1), operators);
-Qhats = reshape(states_lofi, basis.r * n_t, num_solves);
+Yhats = reshape(states_lofi, basis.r * n_t, num_solves);
 tic();
-rom.Select_Regularization(Qhats, Z_train, logspace(-8, -3, 20));
+rom.Select_Regularization(Yhats, Z_train, logspace(-8, -3, 20));
 time_opinfcalibration = toc();
 
 % Validate the Operator Inference constraint by solving
@@ -130,15 +142,32 @@ for k = 1:n_t
     err2(k) = norm(target - u_true(:, k)) / denom;
     if plot_optimization_solution
         plot(x, u_rom(:, k), '-', x, u_true(:, k), ':', x, target, '--', 'LineWidth', 3);
+        title('Optimal states and target function');
         legend({'State (ROM)', 'State (FOM)', 'Target'});
-        ylim([0 .2]);
-        pause(.05);
+        xlim([0 1]);
+        ylim([-.75 2]);
+        pause(.1);
     end
 end
 if plot_optimization_solution
     figure;
     semilogy(t, err1, '-', t, err2, ':', 'LineWidth', 3);
     legend({'Target error (ROM)', 'Target error (FOM)'});
+    title('Error compared to target function');
+
+    figure;
+    hold on;
+    z_hifi_reshape = reshape(z_hifi, num_space_control_nodes, n_t - 1);
+    z_lofi_reshape = reshape(z_lofi, num_space_control_nodes, n_t - 1);
+    for i = 1:num_space_control_nodes
+        plot(t(2:end), z_lofi_reshape(i, :), ...
+             '-', 'LineWidth', 1, 'Color', "#0072BD");
+        plot(t(2:end), z_hifi_reshape(i, :), ...
+             ':', 'LineWidth', 1, 'Color', "#D95319");
+        plot(t(2:end), 10 * atan(10 * t(2:end)) .* cos(2 * pi * (t(2:end) - (i - 1) / num_space_control_nodes)), ...
+             '--', 'LineWidth', 1, 'Color', "#EDB120");
+    end
+    title('Optimal controls');
 end
 
 %% Final report.
