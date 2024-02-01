@@ -62,6 +62,7 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
         ds
         d                   % Number of operator entries for each system mode.
         y0                  % Initial condition :math:`\y(0)\in\R^{n_y}` for the ODE.
+        inferred_operators  % Track which operators need to be learned.
     end
 
     methods
@@ -73,8 +74,13 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             % meaning Set_Operators() has not been called.
             num_operators = length(operators);
             this.ds = zeros(num_operators, 1);
+            this.inferred_operators = zeros(num_operators, 1);
             for i = 1:num_operators
-                this.ds(i) = operators{i}.Column_Dimension(this.n_y, this.n_q);
+                op = operators{i};
+                this.ds(i) = op.Column_Dimension(this.n_y, this.n_q);
+                if size(op.entries, 1) == 0
+                    this.inferred_operators(i) = 1;
+                end
             end
             this.d = sum(this.ds);
             this.operators = operators;
@@ -221,6 +227,11 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
                 dYdt (:, :) {mustBeNumeric}
             end
 
+            % Check that there is something to do.
+            if sum(this.inferred_operators) == 0
+                error('All operator entries already populated');
+            end
+
             % Check that Y, Q, and dYdt have appropriate sizes.
             if ~isequal(size(Y, 2), size(Q, 2))
                 error('Y and Q not aligned');
@@ -229,9 +240,16 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             end
 
             % Construct the data matrix.
+            rhs = dYdt;
+            num_operators = length(this.operators);
             D = [];
-            for i = 1:length(this.operators)
-                D = horzcat(D, this.operators{i}.Datablock(Y, Q)');
+            for i = 1:num_operators
+                op = this.operators{i};
+                if this.inferred_operators(i) == 1
+                    D = horzcat(D, op.Datablock(Y, Q)');
+                else
+                    rhs = rhs - op.Apply(Y, Q);
+                end
             end
 
             % disp(['Data matrix size: (', num2str(size(D, 1)), ', ', num2str(size(D, 2)), ')']);
@@ -240,20 +258,22 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             % Solve the regression problem for the operator entries.
             if norm(this.regularizer) > 0
                 % Tikhonov regularization.
-                Ohat = lscov([D; this.regularizer], [dYdt'; zeros(this.d, this.n_y)])';
+                Ohat = lscov([D; this.regularizer], [rhs'; zeros(this.d, this.n_y)])';
             else
                 % No regularization.
-                Ohat = lscov(D, dYdt')';
+                Ohat = lscov(D, rhs')';
             end
 
             % disp(['Operator matrix size: (', num2str(size(Ohat, 1)), ', ', num2str(size(Ohat, 2)), ')']);
 
             % Unpack the operator entries.
             index = 1;
-            for i = 1:length(this.operators)
-                newindex = index + this.ds(i);
-                this.operators{i}.Set_Entries(Ohat(:, index:(newindex - 1)));
-                index = newindex;
+            for i = 1:num_operators
+                if this.inferred_operators(i) == 1
+                    newindex = index + this.ds(i);
+                    this.operators{i}.Set_Entries(Ohat(:, index:(newindex - 1)));
+                    index = newindex;
+                end
             end
         end
 

@@ -2,7 +2,8 @@
 clear;
 close all;
 clc;
-addpath('../../src/model_reduction/operators/');
+addpath('../../src/optimization');
+addpath('../../src/model_reduction/operators');
 rng(1129);
 
 %% Set test parameters and generate data.
@@ -10,17 +11,19 @@ rng(1129);
 r = 10;                         % Reduced state dimension.
 n_y = 2 * r;                    % Full state dimension.
 n_q = floor(r / 2);             % Input dimension.
-n_t = 4 * n_y;                  % Number of snapshots.
+n_t = 2 * n_y^2;                % Number of snapshots.
+n_z = n_q * (n_t - 1);          % Full control dimension.
 T = 1;                          % Final simulation time.
 
 Y = randn(n_y, n_t);            % State snapshots.
-Q = randn(n_q, n_t);            % Inputs.
+dYdt = randn(n_y, n_t);         % State time derivatives.
+Q = randn(n_q, n_t - 1);        % Inputs.
 Vr = randn(n_y, r);             % Basis matrix.
 
 y0 = randn(n_y, 1);             % Initial condition.
 y = Y(:, 1);                    % Single snapshot.
 q = Q(:, 1);                    % Single input vector.
-z = reshape(Q, n_q * n_t, 1);   % Full control vector.
+z = reshape(Q, n_z, 1);         % Full control vector.
 
 %% Test Constructor.
 
@@ -29,7 +32,7 @@ operators = {Constant_Operator(), Linear_Operator(), ...
 
 con = OpInf_ROM_Constraint(n_y, n_q, T, n_t, y0, operators);
 
-assert(con.n_z == n_q * n_t);
+assert(con.n_z == n_z);
 assert(con.n_y == n_y);
 assert(con.n_q == n_q);
 
@@ -63,19 +66,35 @@ assert(all(regdiag((n_y * (n_y + 1) / 2 + n_y + 2):end) == 4, 'all'));
 
 %% Test Learn_Operators() (actual Operator Inference part).
 
-con.Learn_Operators(Y, Q);
+con.Learn_Operators(Y(:, 2:end), Q, Y(:, 2:end));
 for i = 1:length(operators)
     entries = con.operators{i}.entries;
     assert(size(entries, 1) > 0);
     assert(min(abs(entries), [], 'all') > 0);
 end
 
+% Try with some operators given.
+c = randn(n_y, 1);
+A = randn(n_y, n_y);
+operators = {Constant_Operator(c), Linear_Operator(A), ...
+             Quadratic_Operator(), Input_Operator()};
+con = OpInf_ROM_Constraint(n_y, n_q, T, n_t, y0, operators);
+con.Learn_Operators(Y(:, 2:end), Q, dYdt(:, 2:end));
+
+for i = 1:length(operators)
+    entries = con.operators{i}.entries;
+    assert(size(entries, 1) > 0);
+    assert(min(abs(entries), [], 'all') > 0);
+end
+assert(all(c == con.operators{1}.entries, 'all'));
+assert(all(A == con.operators{2}.entries, 'all'));
+
 %% Finite difference tests.
 
 con.operators = Dummy_Operators(n_y, n_q);
 con.verbose = false;
 
-for j = 1:n_t
+for j = 2:n_t
     t = con.t_mesh(j);
     % disp(['Checks for t = ', num2str(t)]);
     [diffs_y, diffs_z] = con.f_Jacobian_Check(y, z, t);
@@ -92,11 +111,6 @@ end
 clc;
 
 %% Helper functions
-
-function [result] = allclose(A1, A2)
-    % Return true if ||A1 - A2|| < the tolerance ``TOL``.
-    result = (norm(A1 - A2) < 1e-12);
-end
 
 function checkdiffs(diffs)
     if ~all(isnan(diffs)) && min(diffs > 1e-6)
