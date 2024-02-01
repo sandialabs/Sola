@@ -69,7 +69,7 @@ classdef Adv_Diff_Gaussian_Source_Objective < Dynamic_Objective
             this.z_time_mesh = linspace(0, T, n_t)';
             this.z_time_mesh = this.z_time_mesh(2:end);
 
-            load("OpInf_Target_State.mat", "target", "target_time_mesh");
+            load("OpInf_Training_Data.mat", "target", "target_time_mesh");
             this.stashed_target = target;
             this.target_time_mesh = target_time_mesh;
         end

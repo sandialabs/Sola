@@ -32,7 +32,6 @@ if ~exist(datafile, 'file')
     z_truth = reshape(q, n_z, 1);
     target = reshape(con.State_Solve(z_truth), n_y, n_t);
     target_time_mesh = t;
-    save("OpInf_Target_State.mat", "target", "target_time_mesh");
 
     % Solve the state equation for several random controls.
     num_solves = 3;
@@ -44,7 +43,8 @@ if ~exist(datafile, 'file')
     time_trainingdata = toc();
 
     % Save the experimental parameters and the training data.
-    save(datafile, "n_y", "n_z", "T", "n_t", "num_space_control_nodes", "num_solves", "Z_train", "U_train", "time_trainingdata");
+    save(datafile, "n_y", "n_z", "T", "n_t", "num_space_control_nodes", "num_solves", ...
+         "Z_train", "U_train", "time_trainingdata", "target", "target_time_mesh");
 else
     load(datafile);
 end
@@ -175,6 +175,7 @@ end
 disp('Error Report');
 disp(['  Relative error of low-fi and high-fi opt state:', 9, num2str(diff_state)]);
 disp(['  Relative error of low-fi and high-fi opt control:' 9, num2str(diff_control)]);
+disp(['  Relative error of low-fi state and target state:' 9, num2str(mean(err1(2:end)))]);
 disp('Timing Report');
 disp(['  Generate ', num2str(num_solves), ' training trajectories:', 9, num2str(time_trainingdata), 's']);
 disp(['  OpInf ROM calibration:', 9, 9, num2str(time_opinfcalibration), 's']);
