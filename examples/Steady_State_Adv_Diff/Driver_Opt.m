@@ -5,7 +5,7 @@ addpath(genpath('../../src'));
 
 m = 200;
 diff_coeff = 1;
-vel_coeff = 1 / 2;
+vel_coeff = 10;
 robin_coeff = 2;
 reg_coeff = 10;
 obj = Adv_Diff_Objective(m, reg_coeff);
