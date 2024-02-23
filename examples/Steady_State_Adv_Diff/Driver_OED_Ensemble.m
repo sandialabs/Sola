@@ -34,13 +34,14 @@ md_oed = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_i
 
 md_oed.Offline_Computation();
 
-samps_per_N = 20;
-N_range = (2:6)';
+samps_per_N = 5;
+N_range = (2:4)';
 p = length(N_range);
 
 oed_beta_samps = cell(p, samps_per_N);
 oed_Z_samps = cell(p, samps_per_N);
 oed_D_samps = cell(p, samps_per_N);
+oed_obj = zeros(p, samps_per_N);
 
 rand_Z_samps = cell(p, samps_per_N);
 rand_D_samps = cell(p, samps_per_N);
@@ -55,6 +56,7 @@ for k = 1:p
         reg_coeff = 1.e-6;
         [oed_beta_samps{k, i}, oed_Z_samps{k, i}] = md_oed.Generate_Optimal_Design(beta_0, alpha_d, reg_coeff);
         oed_D_samps{k, i} = con_hifi.State_Solve(oed_Z_samps{k, i}) - con_lofi.State_Solve(oed_Z_samps{k, i});
+        oed_obj(k, i) = md_oed.Evaluate_OED_Objective(oed_beta_samps{k, i}, alpha_d, reg_coeff);
 
         rand_Z_samps{k, i} = md_oed.Generate_Random_Design(N);
         rand_D_samps{k, i} = con_hifi.State_Solve(rand_Z_samps{k, i}) - con_lofi.State_Solve(rand_Z_samps{k, i});

@@ -24,7 +24,7 @@ opt = Reduced_Space_Optimization(obj, con);
 data_interface = MD_Data_Interface_Diff_React();
 data_interface.Load_Data();
 opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
-alpha_u = (2 / 3)^2;
+alpha_u = 2^2;
 alpha_z = (1 / 50000)^2;
 u_prior_interface = MD_Elliptic_u_Prior_Interface_Diff_React(alpha_u, opt);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Diff_React(alpha_z, opt);

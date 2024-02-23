@@ -13,7 +13,7 @@ classdef Diff_React_Hifi < handle
             this.y = pde_meshing.y;
             this.model = createpde;
             this.model.Geometry = pde_meshing.model.Geometry;
-            aCoef = @(region, state) 5 + 0.05 * (1 + .1 * sin(pi * region.x)) .* state.u.^2;
+            aCoef = @(region, state) 5 + 0.1 * (1 + .1 * sin(pi * region.x)) .* state.u.^2;
             c = 1;
             specifyCoefficients(this.model, "m", 0, "d", 0, "c", c, "a", aCoef, "f", 0);
             this.model.BoundaryConditions = pde_meshing.model.BoundaryConditions;

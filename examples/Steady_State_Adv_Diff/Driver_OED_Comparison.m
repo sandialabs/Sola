@@ -10,13 +10,18 @@ num_post_samps = 1;
 Jhat_lofi = opt_hifi.Jhat(z_lofi);
 Jhat_hifi = opt_hifi.Jhat(z_hifi);
 
+z_error_0 = sqrt((z_lofi - z_hifi)' * z_prior_interface.Apply_M_z(z_lofi - z_hifi)) / sqrt(z_hifi' * z_prior_interface.Apply_M_z(z_hifi));
+
 md_update = MD_Update(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
 md_update.Compute_Posterior_Data(alpha_d, num_post_samps);
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
 Jhat_oed_1 = opt_hifi.Jhat(z_update_mean);
+z_error_1 = sqrt((z_update_mean - z_hifi)' * z_prior_interface.Apply_M_z(z_update_mean - z_hifi)) / sqrt(z_hifi' * z_prior_interface.Apply_M_z(z_hifi));
 
 Jhat_oed = zeros(p, samps_per_N);
+oed_z_error = zeros(p, samps_per_N);
 Jhat_rand = zeros(p, samps_per_N);
+rand_z_error = zeros(p, samps_per_N);
 for k = 1:p
     for i = 1:samps_per_N
         data_interface = MD_Data_Interface_Diff(k, i, 'OED');
@@ -25,6 +30,7 @@ for k = 1:p
         md_update.Compute_Posterior_Data(alpha_d, num_post_samps);
         [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
         Jhat_oed(k, i) = opt_hifi.Jhat(z_update_mean);
+        oed_z_error(k, i) = sqrt((z_update_mean - z_hifi)' * z_prior_interface.Apply_M_z(z_update_mean - z_hifi)) / sqrt(z_hifi' * z_prior_interface.Apply_M_z(z_hifi));
 
         data_interface = MD_Data_Interface_Diff(k, i, 'Random');
         data_interface.Load_Data();
@@ -32,6 +38,7 @@ for k = 1:p
         md_update.Compute_Posterior_Data(alpha_d, num_post_samps);
         [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
         Jhat_rand(k, i) = opt_hifi.Jhat(z_update_mean);
+        rand_z_error(k, i) = sqrt((z_update_mean - z_hifi)' * z_prior_interface.Apply_M_z(z_update_mean - z_hifi)) / sqrt(z_hifi' * z_prior_interface.Apply_M_z(z_hifi));
     end
 end
 
@@ -56,4 +63,16 @@ for k = 1:p
     plot(N_range(k) - 0.1, mean(Jhat_oed(k, :)), 'd', 'MarkerSize', mark_size, 'color', colors(5, :), 'HandleVisibility', 'off');
     plot(N_range(k) + 0.1, Jhat_rand(k, :), 'x', 'MarkerSize', mark_size, 'color', colors(6, :), 'HandleVisibility', 'off');
     plot(N_range(k) + 0.1, mean(Jhat_rand(k, :)), 'd', 'MarkerSize', mark_size, 'color', colors(7, :), 'HandleVisibility', 'off');
+end
+
+mark_size = 10;
+figure;
+hold on;
+plot(0, z_error_0, '.', 'MarkerSize', 3 * mark_size, 'color', colors(1, :));
+plot(1, z_error_1, '.', 'MarkerSize', 3 * mark_size, 'color', colors(3, :));
+for k = 1:p
+    plot(N_range(k) - 0.1, oed_z_error(k, :), 'o', 'MarkerSize', mark_size, 'color', colors(4, :), 'HandleVisibility', 'off');
+    plot(N_range(k) - 0.1, mean(oed_z_error(k, :)), 'd', 'MarkerSize', mark_size, 'color', colors(5, :), 'HandleVisibility', 'off');
+    plot(N_range(k) + 0.1, rand_z_error(k, :), 'x', 'MarkerSize', mark_size, 'color', colors(6, :), 'HandleVisibility', 'off');
+    plot(N_range(k) + 0.1, mean(rand_z_error(k, :)), 'd', 'MarkerSize', mark_size, 'color', colors(7, :), 'HandleVisibility', 'off');
 end

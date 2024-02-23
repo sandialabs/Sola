@@ -3,6 +3,7 @@ classdef Diff_React_Lofi < handle
     properties
         A
         M
+        S
         pde_meshing
     end
 
@@ -20,6 +21,7 @@ classdef Diff_React_Lofi < handle
             FEM = assembleFEMatrices(model, 'domain');
             this.A = FEM.K + FEM.A;
             this.M = pde_meshing.M;
+            this.S = FEM.K;
             this.pde_meshing = pde_meshing;
         end
 
