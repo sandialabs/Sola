@@ -161,16 +161,28 @@ classdef Constraint_AD < Constraint
 
     methods (Access = public)
 
-        function this = Constraint_AD(n_u, n_z)
+        function this = Constraint_AD(n_u, n_z, u0)
             % Parameters
             % ----------
             % n_u
             %   Dimension :math:`n_u` of the state.
             % n_z
             %   Dimension :math:`n_z` of the control.
+            % u0
+            %   **OPTIONAL** Initial guess for the state :math:`\u`.
+            %   If not provided, the initial guess is a vector of ones.
+            arguments
+                n_u {mustBePositive}
+                n_z {mustBePositive}
+                u0 (:, :) {mustBeNumeric} = []
+            end
+
             this.n_u = n_u;
             this.n_z = n_z;
-            this.u_current = inf * ones(this.n_u, 1);
+            if size(u0, 1) == 0
+                u0 = ones(this.n_u, 1);
+            end
+            this.u_current = u0;
             this.z_current = inf * ones(this.n_z, 1);
             this.lambda_current = inf * ones(this.n_u, 1);
             this.Jac_current = inf * ones(this.n_u, this.n_u + this.n_z);

@@ -72,7 +72,7 @@ classdef Dynamic_Objective < Objective
         % -------
         % val : double
         %   Function value :math:`R(\z)\in\R`.
-        % grad_y : vector
+        % grad_z : vector
         %   Function gradient :math:`\grad{z}R(\z)\in\R^{n_z}`.
 
         [y_out] = g_yy_Apply(this, y_in, y, t)

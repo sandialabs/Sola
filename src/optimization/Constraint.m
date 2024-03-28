@@ -95,7 +95,7 @@ classdef Constraint < handle
 
     methods (Access = public)
 
-        function [c] = c(this, u, z)
+        function [con] = c(this, u, z)
             % *Semi-abstract method.*
             % Explicitly form the constraint :math:`\c(\u,\z)`.
             % This method is only used for finite difference checks.
@@ -111,7 +111,7 @@ classdef Constraint < handle
             % -------
             % c : vector
             %   Constraint :math:`\c(\u,\z)\in\R^{n_u}`.
-            c = error('c() not implemented');
+            con = error('c() not implemented');
         end
 
         function [u_out] = c_uu_Apply(this, u_in, u, z, lambda)

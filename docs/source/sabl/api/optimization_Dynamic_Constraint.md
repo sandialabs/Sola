@@ -55,23 +55,23 @@ classdef My_Dynamic_Constraint < Dynamic_Constraint
             error('h() not implemented');
         end
 
-        function [Mv] = f_yy_Apply(this, v, y, z, t, lambda)
+        function [y_out] = f_yy_Apply(this, y_in, y, z, t, lambda)
             error('f_yy_Apply() not implemented');
         end
 
-        function [Mv] = f_yz_Apply(this, v, y, z, t, lambda)
+        function [y_out] = f_yz_Apply(this, z_in, y, z, t, lambda)
             error('f_yz_Apply() not implemented');
         end
 
-        function [Mv] = f_zy_Apply(this, v, y, z, t, lambda)
+        function [z_out] = f_zy_Apply(this, y_in, y, z, t, lambda)
             error('f_zy_Apply() not implemented');
         end
 
-        function [Mv] = f_zz_Apply(this, v, y, z, t, lambda)
+        function [z_out] = f_zz_Apply(this, z_in, y, z, t, lambda)
             error('f_zz_Apply() not implemented');
         end
 
-        function [Mv] = h_zz_Apply(this, v, z, lambda)
+        function [z_out] = h_zz_Apply(this, z_in, z, lambda)
             error('h_zz_Apply() not implemented');
         end
 

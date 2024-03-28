@@ -188,6 +188,7 @@ source/
     └── notation.md                 # Index of notation.
 ```
 
+(automatic-api-generation)=
 ### Automatic API Generation
 
 The documentation uses [`sphinxcontrib_matlabdomain`](https://github.com/sphinx-contrib/matlabdomain) to automatically generate the public API.

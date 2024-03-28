@@ -52,37 +52,37 @@ classdef My_Constraint < Constraint
             error('StateSolve() not implemented');
         end
 
-        function [Mv] = c_u_Transpose_Inverse_Apply(this, v, u, z)
+        function [u_out] = c_u_Transpose_Inverse_Apply(this, u_in, u, z)
             error('c_u_Transpose_Inverse_Apply() not implemented');
         end
 
-        function [Mv] = c_z_Transpose_Apply(this, v, u, z)
+        function [z_out] = c_z_Transpose_Apply(this, u_in, u, z)
             error('c_z_Transpose_Apply() not implemented');
         end
 
-        function [Mv] = c_u_Inverse_Apply(this, v, u, z)
+        function [u_out] = c_u_Inverse_Apply(this, u_in, u, z)
             error('c_u_Inverse_Apply() not implemented');
         end
 
-        function [Mv] = c_z_Apply(this, v, u, z)
+        function [u_out] = c_z_Apply(this, z_in, u, z)
             error('c_z_Apply() not implemented');
         end
 
-        % The following methods are not required if
+        % The following methods are not required when
         % Reduced_Space_Optimization.Gauss_Newton_Hess=true.
-        function [Mv] = c_uu_Apply(this, v, u, z, lambda)
+        function [u_out] = c_uu_Apply(this, u_in, u, z, lambda)
             error('c_uu_Apply() not implemented');
         end
 
-        function [Mv] = c_uz_Apply(this, v, u, z, lambda)
+        function [u_out] = c_uz_Apply(this, z_in, u, z, lambda)
             error('c_uz_Apply() not implemented');
         end
 
-        function [Mv] = c_zu_Apply(this, v, u, z, lambda)
+        function [z_out] = c_zu_Apply(this, u_in, u, z, lambda)
             error('c_zu_Apply() not implemented');
         end
 
-        function [Mv] = c_zz_Apply(this, v, u, z, lambda)
+        function [z_out] = c_zz_Apply(this, z_in, u, z, lambda)
             error('c_zz_Apply() not implemented');
         end
 

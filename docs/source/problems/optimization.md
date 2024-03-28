@@ -146,7 +146,7 @@ Tutorials 1--**TODO** deal with constrained optimization.
 ## Differential Equation Constraints
 
 Of particular interest are problems where the state $u$ is the solution of an ordinary or partial differential equation.
-In this case, the constraints $c(u, z) = 0$ describe the differential equation and the solution mapping $S:z\mapsto u$ means solving the differential equation with the specified control.
+In this case, the constraints $\c(\u, \z) = \0$ describe the differential equation and the solution mapping $\S:\z\mapsto \u$ means solving the differential equation with the specified control.
 For steady-state problems, the discrete state $\u$ represents a spatial discretization of the state $u$;
 for time-dependent problems, $\u$ includes the spatial discretization of the $u$ _at each time_ in the temporal discretization.
 In the latter setting, we use $\y(t)$ to denote the state at fixed time $t$.

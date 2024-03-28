@@ -20,8 +20,8 @@ classdef Objective_AD < Objective
     methods (Abstract, Access = public)
 
         [val] = J_AD(this, u, z)
-        % Evaluate the objective function :math:`J(\u,\z)` and its
-        % gradients :math:`\grad{u}J(\u,\z)` and :math:`\grad{z}J(\u,\z)`.
+        % Evaluate the objective function :math:`J(\u,\z)`.
+        % This method is used for automatic differentiation.
         %
         % Parameters
         % ----------
@@ -34,10 +34,6 @@ classdef Objective_AD < Objective
         % -------
         % val : double
         %   Objective value :math:`J(\u,\z)`.
-        % grad_u : vector
-        %   Objective gradient :math:`\grad{u}J(\u,\z)`.
-        % grad_z : vector
-        %   Objective gradient :math:`\grad{z}J(\u,\z)`.
 
     end
 
