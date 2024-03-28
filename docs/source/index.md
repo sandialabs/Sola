@@ -54,7 +54,7 @@ See the [Fundamentals](./appendix/fundamentals) page for the necessary mathemati
    mrhyde/tutorials
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Appendix
 
    appendix/fundamentals

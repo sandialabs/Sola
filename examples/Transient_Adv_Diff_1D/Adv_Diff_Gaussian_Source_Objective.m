@@ -50,7 +50,8 @@ classdef Adv_Diff_Gaussian_Source_Objective < Dynamic_Objective
             M = (1 / 6) * h * M;
 
             this.M = M;
-            this.beta_reg = 10^-3;
+            % this.beta_reg = 10^-3;
+            this.beta_reg = 10^-12;
 
             % Trapazoid rule for time integration
             time_weights = ones(n_t, 1);

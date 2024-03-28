@@ -1,4 +1,4 @@
-# 3: Optimization with Time-dependent ODE Constraints
+# 2: Optimization with Differential Constraints
 
 This example considers a [constrained optimization problem](../../problems/optimization) of the form
 
@@ -36,3 +36,7 @@ $$
 $$
 
 This is the problem of choosing the Dirichlet boundary conditions that result in the state with the smallest gradient.
+
+:::{warning}
+The rest of this page is under construction, please check back later.
+:::

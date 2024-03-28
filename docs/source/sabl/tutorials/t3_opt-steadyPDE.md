@@ -1,4 +1,4 @@
-# 2: Optimization with Steady-State PDE Constraints
+# 3: Optimization with Steady-State PDE Constraints
 
 This example considers a [constrained optimization problem](../../problems/optimization) of the form
 
@@ -31,3 +31,7 @@ $$
 $$
 
 where $z(x)$ is the spatially-dependent control, $f(\mathbf{x}) = x_{1}^{2} + x_{2}^{3}$ is given, and $\partial\Omega$ is the boundary of $\Omega$.
+
+:::{warning}
+The rest of this page is under construction, please check back later.
+:::

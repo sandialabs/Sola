@@ -82,18 +82,18 @@ These sanity checks do not guarantee that an implementation is correct, but they
 
 The {class}`Reduced_Space_Optimization` class combines an {class}`Objective` and a {class}`Constraint` to represent and solve an optimization problem of the form {eq}`sabl:opt_prob`.
 Specifically, {meth}`Reduced_Space_Optimization.Jhat()` and {meth}`Reduced_Space_Optimization.Jhat_hessVec()` utilize the abstract methods of the objective and the constraints to implement {prf:ref}`alg:adjoint_gradient` and {prf:ref}`alg:adjoint_hessvec`/{prf:ref}`alg:adjoint_gaussnewton`.
-Unlike the previous classes, the user does not need to subclass {meth}`Reduced_Space_Optimization`---it is ready to be used as is.
+The user does not need to subclass {meth}`Reduced_Space_Optimization`.
 
 :::{admonition} Try It Out!
 :class: seealso
 
-[Tutorial 1](../tutorials/example1) shows this workflow in action for a simple problem.
+[Tutorial 1](../tutorials/t1_opt-algebraic.md) shows this workflow in action for a simple problem.
 :::
 
 ## Automatic Differentiation
 
 :::{admonition} TODO
-Reference ADiGator, discuss pros and cons of AD, list AD alternatives.
+Reference [ADiGator](https://github.com/matt-weinstein/adigator), discuss pros and cons of AD, list AD alternatives.
 
 - {class}`Objective_AD`
 - {class}`Dynamic_Objective_AD`

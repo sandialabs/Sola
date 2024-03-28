@@ -41,19 +41,19 @@ classdef My_Objective < Objective
             error('J() not implemented');
         end
 
-        function [Mv] = J_uu_Apply(this, v, u, z)
+        function [u_out] = J_uu_Apply(this, u_in, u, z)
             error('J_uu_Apply() not implemented');
         end
 
-        function [Mv] = J_uz_Apply(this, v, u, z)
+        function [u_out] = J_uz_Apply(this, z_in, u, z)
             error('J_uz_Apply() not implemented');
         end
 
-        function [Mv] = J_zu_Apply(this, v, u, z)
+        function [z_out] = J_zu_Apply(this, u_in, u, z)
             error('J_zu_Apply() not implemented');
         end
 
-        function [Mv] = J_zz_Apply(this, v, u, z)
+        function [z_out] = J_zz_Apply(this, z_in, u, z)
             error('J_zz_Apply() not implemented');
         end
 

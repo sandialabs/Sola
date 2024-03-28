@@ -35,6 +35,7 @@ extensions = [
     # "sphinx_tippy",  # Previews when hovering over links.
     "sphinx_togglebutton",  # Dropdowns.
     "sphinxcontrib.matlab",  # MATLAB API generation.
+    # "sphinxcontrib.bibtex",  # LaTeX citations.
     "sphinx.ext.autodoc",  # API generation.
     "sphinx.ext.napoleon",  # Better docstring formatting.
 ]
@@ -109,6 +110,9 @@ macros.update(
     }
 )
 mathjax3_config = {"tex": {"macros": macros}}
+
+# LaTeX citations.
+# bibtex_bibfiles = ["references.bib"]
 
 # MATLAB API generation.
 autodoc_member_order = "bysource"

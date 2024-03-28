@@ -48,11 +48,11 @@ classdef My_Dynamic_Objective < Dynamic_Objective
             error('R() not implemented');
         end
 
-        function [Mv] = g_yy_Apply(this, v, y, t)
+        function [y_out] = g_yy_Apply(this, y_in, y, t)
             error('g_yy_Apply() not implemented');
         end
 
-        function [Mv] = R_zz_Apply(this, v, z)
+        function [z_out] = R_zz_Apply(this, z_in, z)
             error('R_zz_Apply() not implemented');
         end
 

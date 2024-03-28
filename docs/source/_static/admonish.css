@@ -15,3 +15,39 @@ div.admonition.abstract>.admonition-title:after {
 div.admonition.abstract>.admonition-title {
     color: rgb(26, 30, 37);
 }
+
+div.admonition.exercise {
+    border-color: rgb(253, 201, 12);
+}
+
+div.admonition.exercise>.admonition-title:before {
+    background-color: rgb(255, 248, 230)
+}
+
+div.admonition.exercise>.admonition-title:after {
+    color: rgb(253, 201, 12);
+    content: "\f51c";
+    /* fa-solid fa-chalkboard-user */
+}
+
+div.admonition.exercise>.admonition-title {
+    color: rgb(26, 30, 37);
+}
+
+div.admonition.solution {
+    border-color: rgb(118, 118, 118);
+}
+
+div.admonition.solution>.admonition-title:before {
+    background-color: rgb(232, 232, 232)
+}
+
+div.admonition.solution>.admonition-title:after {
+    color: rgb(118, 118, 118);
+    content: "\f4fc";
+    /* fa-regular fa-check */
+}
+
+div.admonition.solution>.admonition-title {
+    color: rgb(26, 30, 37);
+}
