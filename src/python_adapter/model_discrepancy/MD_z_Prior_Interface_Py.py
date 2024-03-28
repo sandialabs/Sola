@@ -41,6 +41,6 @@ class MD_z_Prior_Interface_Py():
         z_in = np.array(z_in)
         return self.Apply_W_z_Inverse_Factor_Py(z_in)
 
-    def Apply_W_z_Py(self, z_in):
+    def Apply_W_z(self, z_in):
         z_in = np.array(z_in)
         return self.Apply_W_z_Py(z_in)
