@@ -32,8 +32,8 @@ classdef MD_OED < handle
             this.offline_data.Rho = this.md_hessian_analysis.evals;
             this.offline_data.r = length(this.offline_data.Rho);
 
-            V_acute = 0 * this.offline_data.V;
-            Mu_Wu_inv_V_acute = 0 * this.offline_data.V;
+            V_acute = zeros(length(this.opt_prob_interface.u_current), this.offline_data.r);
+            Mu_Wu_inv_V_acute = zeros(length(this.opt_prob_interface.u_current), this.offline_data.r);
             Vt_Wz_inv_V = zeros(this.offline_data.r, this.offline_data.r);
             for k = 1:this.offline_data.r
                 tmp = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian(this.offline_data.V(:, k), this.data_interface.z_opt);
