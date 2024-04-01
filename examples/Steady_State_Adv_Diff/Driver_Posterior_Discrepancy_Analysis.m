@@ -5,11 +5,11 @@ clc;
 addpath(genpath('../../src'));
 load OED_Ensemble_Results.mat;
 
-num_post_samps = 1;
+num_post_samps = 100;
 
 M = 100;
 Omega = randn(length(z_lofi), M);
-z = z_lofi + 2 * z_prior_interface.Apply_W_z_Inverse_Factor(Omega);
+z = z_lofi + 40 * z_prior_interface.Apply_W_z_Inverse_Factor(Omega);
 d = con_hifi.State_Solve(z) - con_lofi.State_Solve(z);
 
 delta_mean = cell(p, samps_per_N);
@@ -44,3 +44,43 @@ hold on;
 for k = 1:p
     plot(N_range(k), mean(mean_error(k, :, :), 3), 'o', 'MarkerSize', 10);
 end
+
+d_hifi = con_hifi.State_Solve(z_hifi) - con_lofi.State_Solve(z_hifi);
+[delta_mean_hifi, delta_samples_hifi] = md_update.Posterior_Discrepancy_Samples(z_hifi);
+figure;
+hold on;
+plot(x, d_hifi, 'LineWidth', 3, 'Color', 'cyan');
+plot(x, delta_mean_hifi{1}, 'LineWidth', 3, 'Color', 'red');
+for k = 1:num_post_samps
+    plot(x, delta_samples_hifi{1}(:, k), 'LineWidth', 3, 'Color', [.9, .9, .9]);
+end
+plot(x, d_hifi, 'LineWidth', 3, 'Color', 'cyan');
+plot(x, delta_mean_hifi{1}, 'LineWidth', 3, 'Color', 'red');
+ylim([-20, 10]);
+legend({'Discrepancy', 'Discrepancy Approximation'});
+title('Discrepancy error at high-fidelity solution');
+
+[delta_mean_data, delta_samples_data] = md_update.Posterior_Discrepancy_Samples(md_update.data_interface.Z);
+for j = 1:size(md_update.data_interface.Z, 2)
+    figure;
+    hold on;
+    plot(x, md_update.data_interface.D(:, j), 'LineWidth', 3, 'Color', 'cyan');
+    plot(x, delta_mean_data{j}, 'LineWidth', 3, 'Color', 'red');
+    for k = 1:num_post_samps
+        plot(x, delta_samples_data{j}(:, k), 'LineWidth', 3, 'Color', [.9, .9, .9]);
+    end
+    plot(x, md_update.data_interface.D(:, j), 'LineWidth', 3, 'Color', 'cyan');
+    plot(x, delta_mean_data{j}, 'LineWidth', 3, 'Color', 'red');
+    ylim([-20, 10]);
+    legend({'Discrepancy', 'Discrepancy Approximation'});
+    title(['Discrepancy error at training data ', num2str(j)]);
+end
+
+figure;
+hold on;
+plot(x, z_hifi, 'LineWidth', 3, 'Color', 'cyan');
+plot(x, md_update.data_interface.Z(:, 1), 'LineWidth', 3, 'Color', 'red');
+plot(x, md_update.data_interface.Z(:, 2), 'LineWidth', 3, 'Color', 'black');
+plot(x, md_update.data_interface.Z(:, 3), 'LineWidth', 3, 'Color', 'black');
+plot(x, md_update.data_interface.Z(:, 4), 'LineWidth', 3, 'Color', 'black');
+legend({'High-fidelity control', 'Low-fidelity control', 'Training Data'});

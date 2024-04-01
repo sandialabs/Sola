@@ -14,7 +14,7 @@ opt_hifi = Reduced_Space_Optimization(obj, con_hifi);
 opt_lofi = Reduced_Space_Optimization(obj, con_lofi);
 x = con_lofi.x;
 
-data_interface = MD_Data_Interface_Diff();
+data_interface = MD_Data_Interface_Diff(3, 5, 'OED');
 data_interface.Load_Data();
 opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
 alpha_u = (1 / 2)^2;
