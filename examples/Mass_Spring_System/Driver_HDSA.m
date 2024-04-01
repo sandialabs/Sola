@@ -18,7 +18,7 @@ t = con_hifi.t_mesh;
 %%
 data_interface = MD_Data_Interface_Mass_Spring();
 data_interface.Load_Data();
-opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
+
 alpha_u = 1.e4;
 alpha_z = 1.e-10;
 u_prior_interface = MD_Elliptic_u_Prior_Interface_Mass_Spring(alpha_u, opt_lofi);
@@ -52,20 +52,14 @@ plot(t(2:end), z_samples, 'LineWidth', 3);
 set(gca, 'fontsize', 18);
 
 %%
-md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
-num_evals = 17;
-oversampling = 20;
-md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
-
-md_update = MD_Update(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
-
+md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 alpha_d = 1.e-1;
 num_post_samples = 500;
-md_update.Compute_Posterior_Data(alpha_d, num_post_samples);
+md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 Z_test = zeros(N - 1, 3);
 Z_test(:, 1:2) = Z;
 Z_test(:, 3) = 500 * ones(N - 1, 1);
-[delta_mean, delta_samples] = md_update.Posterior_Discrepancy_Samples(Z_test);
+[delta_mean, delta_samples] = md_post_sampling.Posterior_Discrepancy_Samples(Z_test);
 
 figure;
 hold on;
@@ -77,12 +71,12 @@ set(gca, 'fontsize', 18);
 
 figure;
 hold on;
-plot(t, md_update.post_data.D(1:2:end, 1), 'color', 'black', 'LineWidth', 3);
+plot(t, md_post_sampling.post_data.D(1:2:end, 1), 'color', 'black', 'LineWidth', 3);
 plot(t, delta_mean{1}(1:2:end), '--', 'color', 'red', 'LineWidth', 3);
 for k = 1:num_post_samples
     plot(t, delta_samples{1}(1:2:end, k), 'color', [.9, .9, .9], 'LineWidth', 3);
 end
-plot(t, md_update.post_data.D(1:2:end, 1), 'color', 'black', 'LineWidth', 3);
+plot(t, md_post_sampling.post_data.D(1:2:end, 1), 'color', 'black', 'LineWidth', 3);
 plot(t, delta_mean{1}(1:2:end), '--', 'color', 'red', 'LineWidth', 3);
 xlabel('Time');
 ylabel('$x_1$', 'Interpreter', 'latex');
@@ -90,12 +84,12 @@ set(gca, 'fontsize', 18);
 
 figure;
 hold on;
-plot(t, md_update.post_data.D(2:2:end, 1), 'color', 'black', 'LineWidth', 3);
+plot(t, md_post_sampling.post_data.D(2:2:end, 1), 'color', 'black', 'LineWidth', 3);
 plot(t, delta_mean{1}(2:2:end), '--', 'color', 'red', 'LineWidth', 3);
 for k = 1:num_post_samples
     plot(t, delta_samples{1}(2:2:end, k), 'color', [.9, .9, .9], 'LineWidth', 3);
 end
-plot(t, md_update.post_data.D(2:2:end, 1), 'color', 'black', 'LineWidth', 3);
+plot(t, md_post_sampling.post_data.D(2:2:end, 1), 'color', 'black', 'LineWidth', 3);
 plot(t, delta_mean{1}(2:2:end), '--', 'color', 'red', 'LineWidth', 3);
 xlabel('Time');
 ylabel('$v_1$', 'Interpreter', 'latex');
@@ -103,12 +97,12 @@ set(gca, 'fontsize', 18);
 
 figure;
 hold on;
-plot(t, md_update.post_data.D(1:2:end, 2), 'color', 'black', 'LineWidth', 3);
+plot(t, md_post_sampling.post_data.D(1:2:end, 2), 'color', 'black', 'LineWidth', 3);
 plot(t, delta_mean{2}(1:2:end), '--', 'color', 'red', 'LineWidth', 3);
 for k = 1:num_post_samples
     plot(t, delta_samples{2}(1:2:end, k), 'color', [.9, .9, .9], 'LineWidth', 3);
 end
-plot(t, md_update.post_data.D(1:2:end, 2), 'color', 'black', 'LineWidth', 3);
+plot(t, md_post_sampling.post_data.D(1:2:end, 2), 'color', 'black', 'LineWidth', 3);
 plot(t, delta_mean{2}(1:2:end), '--', 'color', 'red', 'LineWidth', 3);
 xlabel('Time');
 ylabel('$x_1$', 'Interpreter', 'latex');
@@ -116,12 +110,12 @@ set(gca, 'fontsize', 18);
 
 figure;
 hold on;
-plot(t, md_update.post_data.D(2:2:end, 2), 'color', 'black', 'LineWidth', 3);
+plot(t, md_post_sampling.post_data.D(2:2:end, 2), 'color', 'black', 'LineWidth', 3);
 plot(t, delta_mean{2}(2:2:end), '--', 'color', 'red', 'LineWidth', 3);
 for k = 1:num_post_samples
     plot(t, delta_samples{2}(2:2:end, k), 'color', [.9, .9, .9], 'LineWidth', 3);
 end
-plot(t, md_update.post_data.D(2:2:end, 2), 'color', 'black', 'LineWidth', 3);
+plot(t, md_post_sampling.post_data.D(2:2:end, 2), 'color', 'black', 'LineWidth', 3);
 plot(t, delta_mean{2}(2:2:end), '--', 'color', 'red', 'LineWidth', 3);
 xlabel('Time');
 ylabel('$v_1$', 'Interpreter', 'latex');
@@ -150,6 +144,14 @@ ylabel('$v_1$', 'Interpreter', 'latex');
 set(gca, 'fontsize', 18);
 
 %%
+opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
+md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
+
+num_evals = 17;
+oversampling = 20;
+md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
+
+md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
 
 figure;

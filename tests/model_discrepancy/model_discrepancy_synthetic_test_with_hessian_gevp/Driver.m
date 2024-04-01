@@ -11,7 +11,7 @@ x = linspace(0, 1, m)';
 
 data_interface = MD_Data_Interface_synthetic_test_with_hessian_gevp(m);
 data_interface.Load_Data();
-opt_prob_interface = MD_Opt_Prob_Interface_synthetic_test_with_hessian_gevp(m);
+
 u_prior_interface = MD_u_Prior_Interface_synthetic_test_with_hessian_gevp(m);
 z_prior_interface = MD_z_Prior_Interface_synthetic_test_with_hessian_gevp(m);
 
@@ -40,40 +40,34 @@ if ~suppress_figures
 end
 
 %%
-md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
-num_evals = 20;
-oversampling = 10;
-md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
-
-md_update = MD_Update(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
-
+md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 alpha = 1.e-5;
 num_post_samples = 100;
-md_update.Compute_Posterior_Data(alpha, num_post_samples);
+md_post_sampling.Compute_Posterior_Data(alpha, num_post_samples);
 Z_test = randn(m, 3);
-Z_test(:, 1:2) = md_update.post_data.Z;
+Z_test(:, 1:2) = md_post_sampling.post_data.Z;
 Z_test(:, 3) = 1.5 * ones(m, 1);
-[delta_mean, delta_samples] = md_update.Posterior_Discrepancy_Samples(Z_test);
+[delta_mean, delta_samples] = md_post_sampling.Posterior_Discrepancy_Samples(Z_test);
 
 if ~suppress_figures
     figure;
     hold on;
-    plot(x, md_update.post_data.D(:, 1), 'color', 'black', 'LineWidth', 3);
+    plot(x, md_post_sampling.post_data.D(:, 1), 'color', 'black', 'LineWidth', 3);
     plot(x, delta_mean{1}, '--', 'color', 'red', 'LineWidth', 3);
     for k = 1:num_post_samples
         plot(x, delta_samples{1}(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
-    plot(x, md_update.post_data.D(:, 1), 'color', 'black', 'LineWidth', 3);
+    plot(x, md_post_sampling.post_data.D(:, 1), 'color', 'black', 'LineWidth', 3);
     plot(x, delta_mean{1}, '--', 'color', 'red', 'LineWidth', 3);
 
     figure;
     hold on;
-    plot(x, md_update.post_data.D(:, 2), 'color', 'black', 'LineWidth', 3);
+    plot(x, md_post_sampling.post_data.D(:, 2), 'color', 'black', 'LineWidth', 3);
     plot(x, delta_mean{2}, '--', 'color', 'red', 'LineWidth', 3);
     for k = 1:num_post_samples
         plot(x, delta_samples{2}(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
-    plot(x, md_update.post_data.D(:, 2), 'color', 'black', 'LineWidth', 3);
+    plot(x, md_post_sampling.post_data.D(:, 2), 'color', 'black', 'LineWidth', 3);
     plot(x, delta_mean{2}, '--', 'color', 'red', 'LineWidth', 3);
 
     figure;
@@ -86,6 +80,15 @@ if ~suppress_figures
 
 end
 %%
+opt_prob_interface = MD_Opt_Prob_Interface_synthetic_test_with_hessian_gevp(m);
+md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
+
+num_evals = 20;
+oversampling = 10;
+md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
+
+md_update = MD_Update(md_post_sampling, md_hessian_analysis);
+
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
 
 if ~suppress_figures

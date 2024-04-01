@@ -16,7 +16,7 @@ x = con_lofi.x;
 
 data_interface = MD_Data_Interface_Diff(3, 5, 'OED');
 data_interface.Load_Data();
-opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
+
 alpha_u = (1 / 2)^2;
 alpha_z = (1 / 100)^2;
 u_prior_interface = MD_Elliptic_u_Prior_Interface_Diff(alpha_u, opt_lofi);
@@ -55,36 +55,34 @@ if ~suppress_figures
 end
 
 %%
-md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
-md_update = MD_Update(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
-
+md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 alpha_d = 1.e-2;
 num_post_samples = 100;
-md_update.Compute_Posterior_Data(alpha_d, num_post_samples);
+md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 Z_test = zeros(m, 3);
 Z_test(:, 1:2) = Z;
 Z_test(:, 3) = z(:, 3);
-[delta_mean, delta_samples] = md_update.Posterior_Discrepancy_Samples(Z_test);
+[delta_mean, delta_samples] = md_post_sampling.Posterior_Discrepancy_Samples(Z_test);
 
 if ~suppress_figures
     figure;
     hold on;
-    plot(x, md_update.post_data.D(:, 1), 'color', 'black', 'LineWidth', 3);
+    plot(x, md_post_sampling.post_data.D(:, 1), 'color', 'black', 'LineWidth', 3);
     plot(x, delta_mean{1}, '--', 'color', 'red', 'LineWidth', 3);
     for k = 1:num_post_samples
         plot(x, delta_samples{1}(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
-    plot(x, md_update.post_data.D(:, 1), 'color', 'black', 'LineWidth', 3);
+    plot(x, md_post_sampling.post_data.D(:, 1), 'color', 'black', 'LineWidth', 3);
     plot(x, delta_mean{1}, '--', 'color', 'red', 'LineWidth', 3);
 
     figure;
     hold on;
-    plot(x, md_update.post_data.D(:, 2), 'color', 'black', 'LineWidth', 3);
+    plot(x, md_post_sampling.post_data.D(:, 2), 'color', 'black', 'LineWidth', 3);
     plot(x, delta_mean{2}, '--', 'color', 'red', 'LineWidth', 3);
     for k = 1:num_post_samples
         plot(x, delta_samples{2}(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
-    plot(x, md_update.post_data.D(:, 2), 'color', 'black', 'LineWidth', 3);
+    plot(x, md_post_sampling.post_data.D(:, 2), 'color', 'black', 'LineWidth', 3);
     plot(x, delta_mean{2}, '--', 'color', 'red', 'LineWidth', 3);
 
     figure;
@@ -98,6 +96,10 @@ if ~suppress_figures
 end
 
 %%
+opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
+md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
+md_update = MD_Update(md_post_sampling, md_hessian_analysis);
+
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
 
 if ~suppress_figures
@@ -109,7 +111,7 @@ if ~suppress_figures
     for k = 1:num_post_samples
         plot(x, z_update_samples(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
-    plot(x, md_update.z_opt, 'color', 'black', 'LineWidth', 3);
+    plot(x, md_post_sampling.z_opt, 'color', 'black', 'LineWidth', 3);
     plot(x, z_hifi, 'color', 'cyan', 'LineWidth', 3);
     plot(x, z_update_mean, '--', 'color', 'red', 'LineWidth', 3);
     legend({'Low-fidelity control', 'High-fidelity control', 'Update'});

@@ -16,7 +16,7 @@ opt = Reduced_Space_Optimization(obj, con);
 
 data_interface = MD_Data_Interface_Adv_Diff();
 data_interface.Load_Data();
-opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
+
 alpha_u = 2^2;
 alpha_z = 1.e-8;
 u_prior_interface = MD_Elliptic_u_Prior_Interface_Adv_Diff(alpha_u, opt);
@@ -33,21 +33,15 @@ for k = 1:10
 end
 
 %%
-md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
-num_evals = 1;
-oversampling = 10;
-md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
-
-md_update = MD_Update(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
-
+md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 alpha_d = 1.e-2;
 num_post_samples = 100;
-md_update.Compute_Posterior_Data(alpha_d, num_post_samples);
+md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 n = length(z_lofi);
 Z_test = zeros(n, 2);
 Z_test(:, 1) = z_lofi;
 Z_test(:, 2) = mean(z_lofi) * ones(n, 1);
-[delta_mean, delta_samples] = md_update.Posterior_Discrepancy_Samples(Z_test);
+[delta_mean, delta_samples] = md_post_sampling.Posterior_Discrepancy_Samples(Z_test);
 
 %%
 name = 'D_1';
@@ -91,6 +85,15 @@ hold on;
 histogram(sample_diff);
 
 %%
+opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
+md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
+
+num_evals = 1;
+oversampling = 10;
+md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
+
+md_update = MD_Update(md_post_sampling, md_hessian_analysis);
+
 [z_update_mean_1, z_update_samples_1] = md_update.Posterior_Update_Samples();
 I = find(x > opt.obj.control_xlim(1));
 I = intersect(I, find(x < opt.obj.control_xlim(2)));
@@ -140,7 +143,9 @@ disp(['Objective at mean update solution = ', num2str(val_update_1)]);
 %%
 num_evals = 2;
 oversampling = 10;
-md_update.md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
+md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
+
+md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 
 [z_update_mean_2, z_update_samples_2] = md_update.Posterior_Update_Samples();
 I = find(x > opt.obj.control_xlim(1));

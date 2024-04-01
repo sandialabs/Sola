@@ -12,22 +12,22 @@ opt = Reduced_Space_Optimization(obj, con);
 
 data_interface = MD_Data_Interface_continuation_synthetic_test();
 data_interface.Load_Data();
-opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
+
 alpha_u = 1.e1;
 alpha_z = 1.e-2;
 u_prior_interface = MD_Elliptic_u_Prior_Interface_continuation_synthetic_test(alpha_u, con.m);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_continuation_synthetic_test(alpha_z, con.n);
 
-md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
-md_update = MD_Update(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
-
-num_continuation_steps = 100;
-md_continuation_update = MD_Continuation_Update(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, num_continuation_steps);
-
+md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 alpha_d = 1.e-4;
 num_post_samples = 100;
-md_continuation_update.Compute_Posterior_Data(alpha_d, num_post_samples);
-md_update.Compute_Posterior_Data(alpha_d, num_post_samples);
+md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
+
+opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
+md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
+
+num_continuation_steps = 100;
+md_continuation_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
 
 %%
 [u_update, z_update] = md_continuation_update.Posterior_Update_Mean();
@@ -35,24 +35,24 @@ md_update.Compute_Posterior_Data(alpha_d, num_post_samples);
 %%
 m = con.m;
 n = con.n;
-N = md_update.post_data.N;
+N = md_post_sampling.post_data.N;
 p = m * (n + 1);
 theta_est = zeros(p, 1);
 for ell = 1:N
-    coeff = md_continuation_update.post_data.a_ell(ell);
-    u = md_continuation_update.post_data.u_ell(:, ell);
-    z_tmp = md_continuation_update.post_data.Z(:, ell) - data_interface.z_opt;
+    coeff = md_post_sampling.post_data.a_ell(ell);
+    u = md_post_sampling.post_data.u_ell(:, ell);
+    z_tmp = md_post_sampling.post_data.Z(:, ell) - data_interface.z_opt;
     z = linsolve(z_prior_interface.M_z, z_prior_interface.Apply_W_z_Inverse(z_tmp));
     tmp = [coeff * u; kron(u, z)];
     theta_est = theta_est + tmp;
 
     for i = 1:N
         coeff = md_continuation_update.si(i);
-        u = md_continuation_update.post_data.u_i_ell{i}(:, ell);
+        u = md_post_sampling.post_data.u_i_ell{i}(:, ell);
         z_tmp = md_continuation_update.W_z_inv_yi(:, i);
         z = linsolve(z_prior_interface.M_z, z_tmp);
         tmp = [coeff * u; kron(u, z)];
-        theta_est = theta_est - md_continuation_update.post_data.b_i_ell(i, ell) * tmp;
+        theta_est = theta_est - md_post_sampling.post_data.b_i_ell(i, ell) * tmp;
     end
 end
 theta_est = (1 / alpha_d) * theta_est;

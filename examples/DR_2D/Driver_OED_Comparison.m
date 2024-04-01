@@ -11,8 +11,9 @@ opt_hifi = Hifi_Obj_Function(diff_react_hifi, obj);
 
 Jhat_lofi = opt_hifi.Jhat(z_lofi);
 
-md_update = MD_Update(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
-md_update.Compute_Posterior_Data(alpha_d, num_post_samps);
+md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
+md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samps);
+md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
 Jhat_oed_1 = opt_hifi.Jhat(z_update_mean);
 
@@ -22,15 +23,17 @@ for k = 1:p
     for i = 1:samps_per_N
         data_interface = MD_Data_Interface_Diff_React(k, i, 'OED');
         data_interface.Load_Data();
-        md_update = MD_Update(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
-        md_update.Compute_Posterior_Data(alpha_d, num_post_samps);
+        md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
+        md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samps);
+        md_update = MD_Update(md_post_sampling, md_hessian_analysis);
         [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
         Jhat_oed(k, i) = opt_hifi.Jhat(z_update_mean);
 
         data_interface = MD_Data_Interface_Diff_React(k, i, 'Random');
         data_interface.Load_Data();
-        md_update = MD_Update(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
-        md_update.Compute_Posterior_Data(alpha_d, num_post_samps);
+        md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
+        md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samps);
+        md_update = MD_Update(md_post_sampling, md_hessian_analysis);
         [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
         Jhat_rand(k, i) = opt_hifi.Jhat(z_update_mean);
     end

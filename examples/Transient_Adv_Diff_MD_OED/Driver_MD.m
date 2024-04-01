@@ -18,8 +18,6 @@ x = con_lofi.x;
 data_interface = MD_Data_Interface_Adv_Diff();
 data_interface.Load_Data();
 
-opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
-
 beta_t = 50;
 beta_i = 1.e5;
 transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(beta_t, beta_i, T, n_t, n_y);
@@ -62,26 +60,21 @@ if ~suppress_figures
 end
 
 %%
-md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
-num_evals = 26;
-oversampling = 20;
-md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
-
-md_update = MD_Update(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
+md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 
 alpha_d = 1.e-7;
 num_post_samples = 100;
-md_update.Compute_Posterior_Data(alpha_d, num_post_samples);
+md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 Z_test = zeros(length(z_lofi), 2);
 Z_test(:, 1) = z_lofi;
 Z_test(:, 2) = z_lofi + 1.0;
-[delta_mean, delta_samples] = md_update.Posterior_Discrepancy_Samples(Z_test);
+[delta_mean, delta_samples] = md_post_sampling.Posterior_Discrepancy_Samples(Z_test);
 
 if ~suppress_figures
 
-    Plot_State(x, md_update.post_data.D(:, 1));
+    Plot_State(x, md_post_sampling.post_data.D(:, 1));
     Plot_State(x, delta_mean{1});
-    error = State_Norm(md_update.post_data.D(:, 1) - delta_mean{1}, con_lofi) / State_Norm(md_update.post_data.D(:, 1), con_lofi);
+    error = State_Norm(md_post_sampling.post_data.D(:, 1) - delta_mean{1}, con_lofi) / State_Norm(md_post_sampling.post_data.D(:, 1), con_lofi);
 
     Plot_State(x, delta_mean{2});
     for k = 1:num_post_samples
@@ -91,6 +84,13 @@ if ~suppress_figures
 end
 
 %%
+opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
+md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
+num_evals = 26;
+oversampling = 20;
+md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
+md_update = MD_Update(md_post_sampling, md_hessian_analysis);
+
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
 
 if ~suppress_figures

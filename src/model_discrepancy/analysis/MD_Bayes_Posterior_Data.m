@@ -10,7 +10,6 @@ classdef MD_Bayes_Posterior_Data < handle
         G
         g_vecs
         Mu
-        state_grad
         u_ell
         u_i_ell
         a_ell
@@ -19,7 +18,6 @@ classdef MD_Bayes_Posterior_Data < handle
         num_samples
         ui_hat
         u_breve
-        state_grad_W_u_inv_state_grad
         zbreve
     end
 
@@ -29,13 +27,12 @@ classdef MD_Bayes_Posterior_Data < handle
 
         end
 
-        function [] = Compute_Posterior_Data(this, opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, alpha_d_in, u_opt, z_opt, num_samples)
+        function [] = Compute_Posterior_Data(this, data_interface, u_prior_interface, z_prior_interface, alpha_d_in, z_opt, num_samples)
             this.alpha_d = alpha_d_in;
             this.num_samples = num_samples;
             this.Z = data_interface.Z;
             this.D = data_interface.D;
             this.N = size(this.D, 2);
-            this.state_grad = opt_prob_interface.Misfit_Gradient(u_opt, z_opt);
 
             this.W_z_inv_Z = z_prior_interface.Apply_W_z_Inverse(this.Z);
             this.W_z_inv_z_opt = z_prior_interface.Apply_W_z_Inverse(z_opt);
@@ -71,7 +68,6 @@ classdef MD_Bayes_Posterior_Data < handle
                 Omega = randn(m, this.num_samples);
                 this.u_breve = u_prior_interface.Apply_W_u_Inverse_Factor(Omega);
 
-                this.state_grad_W_u_inv_state_grad = u_prior_interface.Apply_W_u_Inverse(this.state_grad)' * this.state_grad;
                 n = length(z_opt);
                 Omega = randn(n, this.num_samples);
                 this.zbreve = z_prior_interface.Apply_W_z_Inverse_Factor(Omega);

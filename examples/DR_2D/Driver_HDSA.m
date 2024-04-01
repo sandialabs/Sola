@@ -23,7 +23,7 @@ opt = Reduced_Space_Optimization(obj, con);
 
 data_interface = MD_Data_Interface_Diff_React();
 data_interface.Load_Data();
-opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
+
 alpha_u = 2^2;
 alpha_z = (1 / 50000)^2;
 u_prior_interface = MD_Elliptic_u_Prior_Interface_Diff_React(alpha_u, opt);
@@ -64,20 +64,14 @@ if ~surpress_figures
 end
 
 %%
-md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
-num_evals = 15;
-oversampling = 20;
-md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
-
-md_update = MD_Update(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
-
+md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 alpha_d = 1.e-2;
 num_post_samples = 100;
-md_update.Compute_Posterior_Data(alpha_d, num_post_samples);
+md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 Z_test = zeros(m, 3);
 Z_test(:, 1:2) = Z;
 Z_test(:, 3) = z(:, 3);
-[delta_mean, delta_samples] = md_update.Posterior_Discrepancy_Samples(Z_test);
+[delta_mean, delta_samples] = md_post_sampling.Posterior_Discrepancy_Samples(Z_test);
 
 if ~surpress_figures
     name = 'Y_1';
@@ -122,10 +116,17 @@ if ~surpress_figures
 end
 
 %%
+opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
+md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
+num_evals = 15;
+oversampling = 20;
+md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
+
 num_evals = 20;
 oversampling = 10;
-md_update.md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
+md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
 
+md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
 
 if ~surpress_figures

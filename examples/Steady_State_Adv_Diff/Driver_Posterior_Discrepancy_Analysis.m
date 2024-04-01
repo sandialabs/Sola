@@ -18,10 +18,10 @@ for k = 1:p
     for i = 1:samps_per_N
         data_interface = MD_Data_Interface_Diff(k, i, 'OED');
         data_interface.Load_Data();
-        md_update = MD_Update(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
-        md_update.Compute_Posterior_Data(alpha_d, num_post_samps);
+        md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
+        md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samps);
 
-        [delta_mean{k, i}, delta_samples{k, i}] = md_update.Posterior_Discrepancy_Samples(z);
+        [delta_mean{k, i}, delta_samples{k, i}] = md_post_sampling.Posterior_Discrepancy_Samples(z);
     end
 end
 
@@ -46,7 +46,7 @@ for k = 1:p
 end
 
 d_hifi = con_hifi.State_Solve(z_hifi) - con_lofi.State_Solve(z_hifi);
-[delta_mean_hifi, delta_samples_hifi] = md_update.Posterior_Discrepancy_Samples(z_hifi);
+[delta_mean_hifi, delta_samples_hifi] = md_post_sampling.Posterior_Discrepancy_Samples(z_hifi);
 figure;
 hold on;
 plot(x, d_hifi, 'LineWidth', 3, 'Color', 'cyan');
@@ -60,16 +60,16 @@ ylim([-20, 10]);
 legend({'Discrepancy', 'Discrepancy Approximation'});
 title('Discrepancy error at high-fidelity solution');
 
-[delta_mean_data, delta_samples_data] = md_update.Posterior_Discrepancy_Samples(md_update.data_interface.Z);
-for j = 1:size(md_update.data_interface.Z, 2)
+[delta_mean_data, delta_samples_data] = md_post_sampling.Posterior_Discrepancy_Samples(md_post_sampling.data_interface.Z);
+for j = 1:size(md_post_sampling.data_interface.Z, 2)
     figure;
     hold on;
-    plot(x, md_update.data_interface.D(:, j), 'LineWidth', 3, 'Color', 'cyan');
+    plot(x, md_post_sampling.data_interface.D(:, j), 'LineWidth', 3, 'Color', 'cyan');
     plot(x, delta_mean_data{j}, 'LineWidth', 3, 'Color', 'red');
     for k = 1:num_post_samps
         plot(x, delta_samples_data{j}(:, k), 'LineWidth', 3, 'Color', [.9, .9, .9]);
     end
-    plot(x, md_update.data_interface.D(:, j), 'LineWidth', 3, 'Color', 'cyan');
+    plot(x, md_post_sampling.data_interface.D(:, j), 'LineWidth', 3, 'Color', 'cyan');
     plot(x, delta_mean_data{j}, 'LineWidth', 3, 'Color', 'red');
     ylim([-20, 10]);
     legend({'Discrepancy', 'Discrepancy Approximation'});
@@ -79,8 +79,8 @@ end
 figure;
 hold on;
 plot(x, z_hifi, 'LineWidth', 3, 'Color', 'cyan');
-plot(x, md_update.data_interface.Z(:, 1), 'LineWidth', 3, 'Color', 'red');
-plot(x, md_update.data_interface.Z(:, 2), 'LineWidth', 3, 'Color', 'black');
-plot(x, md_update.data_interface.Z(:, 3), 'LineWidth', 3, 'Color', 'black');
-plot(x, md_update.data_interface.Z(:, 4), 'LineWidth', 3, 'Color', 'black');
+plot(x, md_post_sampling.data_interface.Z(:, 1), 'LineWidth', 3, 'Color', 'red');
+plot(x, md_post_sampling.data_interface.Z(:, 2), 'LineWidth', 3, 'Color', 'black');
+plot(x, md_post_sampling.data_interface.Z(:, 3), 'LineWidth', 3, 'Color', 'black');
+plot(x, md_post_sampling.data_interface.Z(:, 4), 'LineWidth', 3, 'Color', 'black');
 legend({'High-fidelity control', 'Low-fidelity control', 'Training Data'});

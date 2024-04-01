@@ -15,13 +15,14 @@ x = con_lofi.x;
 %% HDSA interfaces
 data_interface = MD_Data_Interface_Diff();
 data_interface.Load_Data();
-opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
+
 alpha_u = (1 / 2)^2;
 alpha_z = (1 / 100)^2;
 u_prior_interface = MD_Elliptic_u_Prior_Interface_Diff(alpha_u, opt_lofi);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Diff(alpha_z, opt_lofi);
 
 %% Hessian analysis
+opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 num_evals = 20;
 oversampling = 10;

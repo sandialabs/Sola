@@ -22,8 +22,6 @@ control_time_nodes = con.control_time_nodes;
 data_interface = Thermochemical_Data_Interface();
 data_interface.Load_Data();
 
-opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
-
 beta_t = 50;
 beta_i = 1.e5;
 transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(beta_t, beta_i, T, n_t, 4 * n_y);
@@ -49,35 +47,37 @@ if ~suppress_figures
 end
 
 %%
-md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
-md_update = MD_Update(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
-
+md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 alpha_d = 1.e-6;
 num_post_samples = 20;
-md_update.Compute_Posterior_Data(alpha_d, num_post_samples);
+md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 
 if ~suppress_figures
-    [mean_error, sample_error] = md_update.Compute_Discrepancy_Fit_Error();
+    [mean_error, sample_error] = md_post_sampling.Compute_Discrepancy_Fit_Error();
 end
 
 %%
 if ~suppress_figures
     Z_test = data_interface.Z(:, 1) + 40;
-    md_update.Compute_Discrepancy_Extrapolation_Variabilty(Z_test);
+    md_post_sampling.Compute_Discrepancy_Extrapolation_Variabilty(Z_test);
 end
 
 %%
+opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
+md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
+
 num_evals = 100;
 oversampling = 20;
-md_update.md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
+md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
 
 if ~suppress_figures
     figure;
-    plot(md_update.md_hessian_analysis.evals, 'o');
+    plot(md_hessian_analysis.evals, 'o');
     title('Hessian Eigenvalues');
     set(gca, 'fontsize', 18);
 end
 
+md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
 
 save('MD_Analysis.mat');

@@ -1,12 +1,9 @@
 classdef MD_Continuation_Update < handle
 
     properties
-        opt_prob_interface
-        data_interface
-        u_prior_interface
-        z_prior_interface
+        md_post_sampling
         md_hessian_analysis
-        post_data
+        opt_prob_interface
         u_opt
         z_opt
         num_continuation_steps
@@ -19,27 +16,22 @@ classdef MD_Continuation_Update < handle
 
     methods
 
-        function this = MD_Continuation_Update(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, num_continuation_steps)
-            this.opt_prob_interface = opt_prob_interface;
-            this.data_interface = data_interface;
-            this.u_prior_interface = u_prior_interface;
-            this.z_prior_interface = z_prior_interface;
+        function this = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps)
+            this.md_post_sampling = md_post_sampling;
             this.md_hessian_analysis = md_hessian_analysis;
-            this.post_data = MD_Bayes_Posterior_Data();
-            this.u_opt = data_interface.u_opt;
-            this.z_opt = data_interface.z_opt;
+            this.opt_prob_interface = md_hessian_analysis.opt_prob_interface;
+            this.u_opt = md_post_sampling.data_interface.u_opt;
+            this.z_opt = md_post_sampling.data_interface.z_opt;
+
+            this.W_z_inv_Z_minus_z_opt = this.md_post_sampling.post_data.W_z_inv_Z - this.md_post_sampling.post_data.W_z_inv_z_opt;
+            this.W_z_inv_yi = 0 * this.W_z_inv_Z_minus_z_opt;
+            for i = 1:this.md_post_sampling.post_data.N
+                this.W_z_inv_yi(:, i) = this.md_post_sampling.post_data.W_z_inv_Z * this.md_post_sampling.post_data.g_vecs(:, i) - sum(this.md_post_sampling.post_data.g_vecs(:, i)) * this.md_post_sampling.post_data.W_z_inv_z_opt;
+                this.si(i) = sum(this.md_post_sampling.post_data.g_vecs(:, i)) - this.z_opt' * this.W_z_inv_yi(:, i);
+            end
+
             this.num_continuation_steps = num_continuation_steps;
             this.step_size = 1 / num_continuation_steps;
-        end
-
-        function [] = Compute_Posterior_Data(this, alpha_d, num_samples)
-            this.post_data.Compute_Posterior_Data(this.opt_prob_interface, this.data_interface, this.u_prior_interface, this.z_prior_interface, alpha_d, this.u_opt, this.z_opt, num_samples);
-            this.W_z_inv_Z_minus_z_opt = this.post_data.W_z_inv_Z - this.post_data.W_z_inv_z_opt;
-            this.W_z_inv_yi = 0 * this.W_z_inv_Z_minus_z_opt;
-            for i = 1:this.post_data.N
-                this.W_z_inv_yi(:, i) = this.post_data.W_z_inv_Z * this.post_data.g_vecs(:, i) - sum(this.post_data.g_vecs(:, i)) * this.post_data.W_z_inv_z_opt;
-                this.si(i) = sum(this.post_data.g_vecs(:, i)) - this.z_opt' * this.W_z_inv_yi(:, i);
-            end
         end
 
         function [u, z] = Posterior_Update_Mean(this)
@@ -102,69 +94,75 @@ classdef MD_Continuation_Update < handle
         end
 
         function [u_out] = Discrepancy_Evaluation(this, z_n, t_n)
-            N = this.post_data.N;
+            N = this.md_post_sampling.post_data.N;
             u_out = 0 * this.u_opt;
             for ell = 1:N
-                coeff = this.post_data.a_ell(ell) + z_n' * this.W_z_inv_Z_minus_z_opt(:, ell);
-                u_out = u_out + coeff * this.post_data.u_ell(:, ell);
+                coeff = this.md_post_sampling.post_data.a_ell(ell) + z_n' * this.W_z_inv_Z_minus_z_opt(:, ell);
+                u_out = u_out + coeff * this.md_post_sampling.post_data.u_ell(:, ell);
                 for i = 1:N
-                    coeff = this.post_data.b_i_ell(i, ell) * (this.si(i) + z_n' * this.W_z_inv_yi(:, i));
-                    u_out = u_out - coeff * this.post_data.u_i_ell{i}(:, ell);
+                    coeff = this.md_post_sampling.post_data.b_i_ell(i, ell) * (this.si(i) + z_n' * this.W_z_inv_yi(:, i));
+                    u_out = u_out - coeff * this.md_post_sampling.post_data.u_i_ell{i}(:, ell);
                 end
             end
-            u_out = (t_n / this.post_data.alpha_d) * u_out;
+            u_out = (t_n / this.md_post_sampling.post_data.alpha_d) * u_out;
         end
 
         function [u_out] = Apply_Discrepancy_z_Jacobian(this, z_in, t_n)
-            N = this.post_data.N;
+            N = this.md_post_sampling.post_data.N;
             u = 0 * this.u_opt;
             for ell = 1:N
-                u = u + this.post_data.u_ell(:, ell) * ((this.post_data.W_z_inv_Z(:, ell) - this.post_data.W_z_inv_z_opt)' * z_in);
+                coeff = (this.md_post_sampling.post_data.W_z_inv_Z(:, ell) - this.md_post_sampling.post_data.W_z_inv_z_opt)' * z_in;
+                u = u + coeff * this.md_post_sampling.post_data.u_ell(:, ell);
                 for i = 1:N
-                    u = u - this.post_data.u_i_ell{i}(:, ell) * this.post_data.b_i_ell(i, ell) * ((this.post_data.W_z_inv_Z * this.post_data.g_vecs(:, i) - sum(this.post_data.g_vecs(:, i)) * this.post_data.W_z_inv_z_opt)' * z_in);
+                    coeff = this.md_post_sampling.post_data.b_i_ell(i, ell) * ((this.md_post_sampling.post_data.W_z_inv_Z * this.md_post_sampling.post_data.g_vecs(:, i) - sum(this.md_post_sampling.post_data.g_vecs(:, i)) * this.md_post_sampling.post_data.W_z_inv_z_opt)' * z_in);
+                    u = u - coeff * this.md_post_sampling.post_data.u_i_ell{i}(:, ell);
                 end
             end
 
-            u_out = t_n * (1 / this.post_data.alpha_d) * u;
+            u_out = t_n * (1 / this.md_post_sampling.post_data.alpha_d) * u;
         end
 
         function [z_out] = Apply_Discrepancy_z_Jacobian_transpose(this, u_in, t_n)
-            N = this.post_data.N;
+            N = this.md_post_sampling.post_data.N;
             z = 0 * this.z_opt;
             for ell = 1:N
-                z = z + (this.post_data.u_ell(:, ell)' * u_in) * (this.post_data.W_z_inv_Z(:, ell) - this.post_data.W_z_inv_z_opt);
+                z = z + (this.md_post_sampling.post_data.u_ell(:, ell)' * u_in) * (this.md_post_sampling.post_data.W_z_inv_Z(:, ell) - this.md_post_sampling.post_data.W_z_inv_z_opt);
                 for i = 1:N
-                    z = z - this.post_data.b_i_ell(i, ell) * (this.post_data.u_i_ell{i}(:, ell)' * u_in) * (this.post_data.W_z_inv_Z * this.post_data.g_vecs(:, i) - sum(this.post_data.g_vecs(:, i)) * this.post_data.W_z_inv_z_opt);
+                    coeff = this.md_post_sampling.post_data.b_i_ell(i, ell) * (this.md_post_sampling.post_data.u_i_ell{i}(:, ell)' * u_in);
+                    vec = (this.md_post_sampling.post_data.W_z_inv_Z * this.md_post_sampling.post_data.g_vecs(:, i) - sum(this.md_post_sampling.post_data.g_vecs(:, i)) * this.md_post_sampling.post_data.W_z_inv_z_opt);
+                    z = z - coeff * vec;
                 end
             end
 
-            z_out = t_n * (1 / this.post_data.alpha_d) * z;
+            z_out = t_n * (1 / this.md_post_sampling.post_data.alpha_d) * z;
         end
 
         function [u_out] = Apply_Discrepancy_theta_Jacobian(this, z_n)
-            N = this.post_data.N;
+            N = this.md_post_sampling.post_data.N;
             u_out = 0 * this.u_opt;
             for ell = 1:N
-                coeff = this.post_data.a_ell(ell) + z_n' * this.W_z_inv_Z_minus_z_opt(:, ell);
-                u_out = u_out + coeff * this.post_data.u_ell(:, ell);
+                coeff = this.md_post_sampling.post_data.a_ell(ell) + z_n' * this.W_z_inv_Z_minus_z_opt(:, ell);
+                u_out = u_out + coeff * this.md_post_sampling.post_data.u_ell(:, ell);
                 for i = 1:N
-                    coeff = this.post_data.b_i_ell(i, ell) * (this.si(i) + z_n' * this.W_z_inv_yi(:, i));
-                    u_out = u_out - coeff * this.post_data.u_i_ell{i}(:, ell);
+                    coeff = this.md_post_sampling.post_data.b_i_ell(i, ell) * (this.si(i) + z_n' * this.W_z_inv_yi(:, i));
+                    u_out = u_out - coeff * this.md_post_sampling.post_data.u_i_ell{i}(:, ell);
                 end
             end
-            u_out = (1 / this.post_data.alpha_d) * u_out;
+            u_out = (1 / this.md_post_sampling.post_data.alpha_d) * u_out;
         end
 
         function [z_out] = Apply_Discrepancy_z_theta_Hessian(this, u)
-            N = this.post_data.N;
+            N = this.md_post_sampling.post_data.N;
             z_out = 0 * this.z_opt;
             for ell = 1:N
-                z_out = z_out + (u' * this.post_data.u_ell(:, ell)) * (this.post_data.W_z_inv_Z(:, ell) - this.post_data.W_z_inv_z_opt);
+                z_out = z_out + (u' * this.md_post_sampling.post_data.u_ell(:, ell)) * (this.md_post_sampling.post_data.W_z_inv_Z(:, ell) - this.md_post_sampling.post_data.W_z_inv_z_opt);
                 for i = 1:N
-                    z_out = z_out - this.post_data.b_i_ell(i, ell) * (u' * this.post_data.u_i_ell{i}(:, ell)) * (this.post_data.W_z_inv_Z * this.post_data.g_vecs(:, i) - sum(this.post_data.g_vecs(:, i)) * this.post_data.W_z_inv_z_opt);
+                    coeff = this.md_post_sampling.post_data.b_i_ell(i, ell) * (u' * this.md_post_sampling.post_data.u_i_ell{i}(:, ell));
+                    vec = this.md_post_sampling.post_data.W_z_inv_Z * this.md_post_sampling.post_data.g_vecs(:, i) - sum(this.md_post_sampling.post_data.g_vecs(:, i)) * this.md_post_sampling.post_data.W_z_inv_z_opt;
+                    z_out = z_out - coeff * vec;
                 end
             end
-            z_out = (1 / this.post_data.alpha_d) * z_out;
+            z_out = (1 / this.md_post_sampling.post_data.alpha_d) * z_out;
         end
 
     end

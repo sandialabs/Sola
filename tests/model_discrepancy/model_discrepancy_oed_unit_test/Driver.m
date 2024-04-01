@@ -17,13 +17,14 @@ con_lofi = Diff_Constraint(obj, con_hifi);
 opt_lofi = Reduced_Space_Optimization(obj, con_lofi);
 data_interface = MD_Data_Interface_PDE_Test_Problem();
 data_interface.Load_Data();
-opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
+
 alpha_u = 1 / (2^2);
 alpha_z = 1 / (600^2);
 u_prior_interface = MD_Elliptic_u_Prior_Interface_PDE_Test_Problem(alpha_u, opt_lofi);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_PDE_Test_Problem(alpha_z, opt_lofi);
 
 %%
+opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 num_evals = 20;
 oversampling = 10;
