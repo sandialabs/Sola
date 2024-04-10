@@ -1,7 +1,7 @@
 classdef Example_2_Objective < Dynamic_Objective
-    % Solve the optimiation problem
+    % Solve the optimization problem
     % min_{z} J(S(z),z) = int_0^T g(S(z)(t))dt + R(z)
-    % where S(z) solves the odinary differential equation
+    % where S(z) solves the ordinary differential equation
     % dy/dt = [y_1 , y_2]
     % y(0) = [z_1 , z_2]
     % g(y) = (y_1-exp(t))^2 + (y_2-exp(t))^2
