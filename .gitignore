@@ -165,6 +165,9 @@ acs-*.bib
 *.ilg
 *.ind
 
+# MATLAB
+*.asv
+
 # minitoc
 *.maf
 *.mlf
