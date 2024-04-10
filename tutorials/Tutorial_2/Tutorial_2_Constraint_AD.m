@@ -1,8 +1,8 @@
 classdef Tutorial_2_Constraint_AD < Dynamic_Constraint_AD
     % Constraint for an orbital dynamics problem.
     %
-    % dy/dt = (y2, y1 y4^2 - k/y1^2, y4, -2 y2 y4 / y1)
-    % y(0) = z
+    % dy/dt = (y2, y1 y4^2 - k/y1^2, y4, -2 y2 y4 / y1)\trp
+    % y(0) = (z_1, 0, 0, z_2)\trp
     %
     % Here y = (r, r', theta, theta') represents radius, change in radius,
     % angular momentum, and change in angular momentum of an object.
@@ -15,8 +15,8 @@ classdef Tutorial_2_Constraint_AD < Dynamic_Constraint_AD
 
     methods (Access = public)
 
-        function this = Tutorial_2_Constraint_AD(n_y, n_z, T, n_t, k)
-            this = this@Dynamic_Constraint_AD(n_y, n_z, T, n_t);
+        function this = Tutorial_2_Constraint_AD(T, n_t, k)
+            this = this@Dynamic_Constraint_AD(4, 2, T, n_t);
             this.k = k;
         end
 
