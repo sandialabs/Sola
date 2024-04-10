@@ -16,12 +16,12 @@ class MD_z_Prior_Interface_Py():
     # -------------------------------------------------------------------------------------------------------
     # Optional methods which must be implemented to enable some analyes
 
-    # Factorize W_z^{-1} = F*F^T, function gives z_out = F*z_in
-    # This function must be implemented to enable posterior update sampling
-    def Apply_W_z_Inverse_Factor_Py(self, z_in):
-        z_out = []
-        print('Apply_W_z_Inverse_Factor_Py must be implemented to use sampling algorithms')
+    # Compute samples from a mean zero Gaussian with covariance W_z^{-1}
+    def Sample_with_Covariance_W_z_Inverse_Py(this,num_samples)
+        z_out = [];
+        print('Sample_with_Covariance_W_z_Inverse must be implemented to use sampling algorithms');
         return z_out
+    end
 
     # Apply W_z matrix
     # This function must be implemented to enable Hessian GEVP
@@ -37,9 +37,9 @@ class MD_z_Prior_Interface_Py():
         z_in = np.array(z_in)
         return self.Apply_W_z_Inverse_Py(z_in)
 
-    def Apply_W_z_Inverse_Factor(self, z_in):
-        z_in = np.array(z_in)
-        return self.Apply_W_z_Inverse_Factor_Py(z_in)
+    % Compute samples from a mean zero Gaussian with covariance W_z^{-1}
+    def Sample_with_Covariance_W_z_Inverse(this,num_samples):
+        return self.Sample_with_Covariance_W_z_Inverse_Py(num_samples)
 
     def Apply_W_z(self, z_in):
         z_in = np.array(z_in)

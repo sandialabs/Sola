@@ -8,8 +8,7 @@ load OED_Ensemble_Results.mat;
 num_post_samps = 100;
 
 M = 100;
-Omega = randn(length(z_lofi), M);
-z = z_lofi + 40 * z_prior_interface.Apply_W_z_Inverse_Factor(Omega);
+z = z_lofi + 40 * z_prior_interface.Sample_with_Covariance_W_z_Inverse(M);
 d = con_hifi.State_Solve(z) - con_lofi.State_Solve(z);
 
 delta_mean = cell(p, samps_per_N);

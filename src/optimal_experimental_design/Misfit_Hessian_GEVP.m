@@ -33,8 +33,8 @@ classdef Misfit_Hessian_GEVP < Randomized_GEVP
             vec_out = this.inf_dim_prior.Mass_Matrix_Apply(vec_in);
         end
 
-        function [vec_out] = Apply_Weighting_Operator_Inverse_Factor(this, vec_in)
-            vec_out = vec_in;
+        function [samples] = Generate_Random_Samples(this, num_samples)
+            samples = randn(size(this.forward_operator_sing_vecs_input, 1), num_samples);
         end
 
     end

@@ -30,6 +30,15 @@ classdef MD_Elliptic_z_Prior_Interface_Py < MD_Elliptic_z_Prior_Interface
             end
         end
 
+        % Compute samples from a mean zero Gaussian with covariance W_z^{-1}
+        function [z_out] = Sample_with_Covariance_W_z_Inverse(this, num_samples)
+            z_out = this.elliptic_z_prior_interface_py.Sample_with_Covariance_W_z_Inverse(num_samples);
+            z_out = double(z_out);
+            if size(z_out, 1) == 1
+                z_out = z_out';
+            end
+        end
+
         function [z_out] = Apply_E_z(this, z_in)
             z_out = this.elliptic_z_prior_interface_py.Apply_E_z(z_in);
             z_out = double(z_out);

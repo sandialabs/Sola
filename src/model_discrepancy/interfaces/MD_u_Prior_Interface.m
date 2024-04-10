@@ -18,18 +18,16 @@ classdef MD_u_Prior_Interface < handle
 
     methods
 
-        % Factorize W_u^{-1}=F*F^T, function gives u_out=F*u_in
-        % This function must be implemented to enable posterior update sampling
-        function [u_out] = Apply_W_u_Inverse_Factor(this, u_in)
+        % Compute samples from a mean zero Gaussian with covariance W_u^{-1}
+        function [u_out] = Sample_with_Covariance_W_u_Inverse(this, num_samples)
             u_out = [];
-            disp('Apply_W_u_Inverse_Factor must be implemented to use sampling algorithms');
+            disp('Sample_with_Covariance_W_u_Inverse must be implemented to use sampling algorithms');
         end
 
-        % Factorize (W_u+scalar*M_u)^{-1}=F*F^T, function gives u_out=F*u_in
-        % This function must be implemented to enable posterior update sampling
-        function [u_out] = Apply_W_u_Plus_scalar_M_u_Inverse_Factor(this, u_in, scalar)
+        % Compute samples from a mean zero Gaussian with covariance (W_u+scalar*M_u)^{-1}
+        function [u_out] = Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(this, num_samples, scalar)
             u_out = [];
-            disp('Apply_W_u_Plus_scalar_M_u_Inverse_Factor must be implemented to use sampling algorithms');
+            disp('Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse must be implemented to use sampling algorithms');
         end
 
         function this = MD_u_Prior_Interface()

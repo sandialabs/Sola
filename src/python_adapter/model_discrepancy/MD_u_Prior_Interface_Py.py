@@ -24,18 +24,16 @@ class MD_u_Prior_Interface_Py():
     # -------------------------------------------------------------------------------------------------------
     # Optional methods which must be implemented to enable some analyes
 
-    # Factorize W_u^{-1}=F*F^T, function gives u_out=F*u_in
-    # This function must be implemented to enable posterior update sampling
-    def Apply_W_u_Inverse_Factor_Py(self, u_in):
+    # Compute samples from a mean zero Gaussian with covariance W_u^{-1}
+    def Sample_with_Covariance_W_u_Inverse_Py(this,num_samples):
         u_out = [];
-        print('Apply_W_u_Inverse_Factor_Py must be implemented to use sampling algorithms');
-        return u_out    
+        print('Sample_with_Covariance_W_u_Inverse_Py must be implemented to use sampling algorithms');
+        return u_out
 
-    # Factorize (W_u+scalar*M_u)^{-1}=F*F^T, function gives u_out=F*u_in
-    # This function must be implemented to enable posterior update sampling
-    def Apply_W_u_Plus_scalar_M_u_Inverse_Factor_Py(self, u_in, scalar):
-        u_out = []
-        print('Apply_W_u_Plus_scalar_M_u_Inverse_Factor_Py must be implemented to use sampling algorithms')
+    # Compute samples from a mean zero Gaussian with covariance (W_u+scalar*M_u)^{-1}
+    def Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse_Py(this,num_samples,scalar):
+        u_out = [];
+        disp('Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse_Py must be implemented to use sampling algorithms');
         return u_out
 
     # -------------------------------------------------------------------------------------------------------
@@ -53,10 +51,10 @@ class MD_u_Prior_Interface_Py():
         u_in = np.array(u_in)
         return self.Apply_W_u_Plus_scalar_M_u_Inverse_Py(u_in,scalar)
 
-    def Apply_W_u_Inverse_Factor(self, u_in):
-        u_in = np.array(u_in)
-        return self.Apply_W_u_Inverse_Factor_Py(u_in)
+    # Compute samples from a mean zero Gaussian with covariance W_u^{-1}
+    def Sample_with_Covariance_W_u_Inverse(this,num_samples):
+        return self.Sample_with_Covariance_W_u_Inverse_Py(num_samples)
 
-    def Apply_W_u_Plus_scalar_M_u_Inverse_Factor(self, u_in, scalar):
-        u_in = np.array(u_in)
-        return self.Apply_W_u_Plus_scalar_M_u_Inverse_Factor_Py(u_in,scalar)
+    # Compute samples from a mean zero Gaussian with covariance (W_u+scalar*M_u)^{-1}
+    def Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(this,num_samples,scalar):
+        return self.Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse_Py(num_samples,scalar)

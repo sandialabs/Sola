@@ -39,6 +39,12 @@ class MD_Elliptic_z_Prior_Interface_Py():
         print('Apply_M_z_Inverse_Py must be implemented to use Hessian GEVP')
         return z_out
 
+    # Compute samples from a mean zero Gaussian with covariance W_z^{-1}
+    def Sample_with_Covariance_W_z_Inverse_Py(this,num_samples)
+        z_out = [];
+        print('Sample_with_Covariance_W_z_Inverse must be implemented to use sampling algorithms');
+        return z_out
+
     # -------------------------------------------------------------------------------------------------------
     # Matlab-Python interoperabilty methods
 
@@ -65,3 +71,7 @@ class MD_Elliptic_z_Prior_Interface_Py():
     def Apply_M_z_Inverse(self, z_in):
         z_in = np.array(z_in)
         return self.Apply_M_z_Inverse_Py(z_in)
+
+    # Compute samples from a mean zero Gaussian with covariance W_z^{-1}
+    def Sample_with_Covariance_W_z_Inverse(this,num_samples):
+        return self.Sample_with_Covariance_W_z_Inverse_Py(num_samples)

@@ -30,7 +30,8 @@ plot(x, prior_delta_samples, 'LineWidth', 3, 'color', [.9, .9, .9]);
 plot(x, prior_delta_samples(:, 1:10), 'LineWidth', 3);
 set(gca, 'fontsize', 18);
 
-z_samples = md_prior_sampling.Prior_z_Samples(10);
+% z_samples = md_prior_sampling.Prior_z_Samples(10);
+z_samples = z_prior_interface.Sample_with_Covariance_W_z_Inverse(10);
 figure;
 hold on;
 plot(x, z_samples, 'LineWidth', 3);

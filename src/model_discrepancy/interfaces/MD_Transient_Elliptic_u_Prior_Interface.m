@@ -69,31 +69,34 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_u_Prior_Interface
             end
         end
 
-        % Factorize W_u^{-1}=F*F^T, function gives u_out=F*u_in
-        % This function must be implemented to enable posterior update sampling
-        function [u_out] = Apply_W_u_Inverse_Factor(this, u_in)
-            r = length(this.sing_vals);
-            u_out = 0.0 * u_in;
+        % Compute samples from a mean zero Gaussian with covariance W_u^{-1}
+        function [u_out] = Sample_with_Covariance_W_u_Inverse(this, num_samples)
+            r_s = length(this.sing_vals);
+            r_t = length(this.transient_prior_cov.evals);
+            m = size(this.sing_vecs_input, 1) * size(this.transient_prior_cov.evecs, 1);
+            u_out = 0.0 * zeros(m, num_samples);
             for k = 1:size(u_out, 2)
-                u_tmp = reshape(u_in(:, k), this.transient_prior_cov.n_y, this.transient_prior_cov.n_t);
-                u_tmp = u_tmp * diag(sqrt(this.transient_prior_cov.evals)) * this.transient_prior_cov.M_t_inv_evecs';
-                u_tmp = sqrt(this.alpha_u) * this.sing_vecs_output * diag(this.sing_vals) * u_tmp(1:r, :);
+                omega = diag(this.sing_vals) * randn(r_s, r_t) * diag(sqrt(this.transient_prior_cov.evals));
+                u_space = sqrt(this.alpha_u) * this.sing_vecs_output * omega;
+                u_tmp = u_space * this.transient_prior_cov.M_t_inv_evecs';
                 u_out(:, k) = u_tmp(:);
             end
         end
 
-        % Factorize (W_u+scalar*M_u)^{-1}=F*F^T, function gives u_out=F*u_in
-        % This function must be implemented to enable posterior update sampling
-        function [u_out] = Apply_W_u_Plus_scalar_M_u_Inverse_Factor(this, u_in, scalar)
+        % Compute samples from a mean zero Gaussian with covariance (W_u+scalar*M_u)^{-1}
+        function [u_out] = Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(this, num_samples, scalar)
             aleph = (this.sing_vals.^2) * this.transient_prior_cov.evals';
             aleph = aleph ./ (1 + this.alpha_u * scalar * aleph);
-            u_out = 0.0 * u_in;
-            r = length(this.sing_vals);
+
+            r_s = length(this.sing_vals);
+            r_t = length(this.transient_prior_cov.evals);
+            m = size(this.sing_vecs_input, 1) * size(this.transient_prior_cov.evecs, 1);
+            u_out = 0.0 * zeros(m, num_samples);
             for k = 1:size(u_out, 2)
-                u_tmp = reshape(u_in(:, k), this.transient_prior_cov.n_y, this.transient_prior_cov.n_t);
-                u_tmp = u_tmp(1:r, :) .* sqrt(aleph);
-                u_tmp = this.sing_vecs_output * u_tmp * this.transient_prior_cov.M_t_inv_evecs';
-                u_out(:, k) = sqrt(this.alpha_u) * u_tmp(:);
+                omega = sqrt(aleph) .* randn(r_s, r_t);
+                u_space = sqrt(this.alpha_u) * this.sing_vecs_output * omega;
+                u_tmp = u_space * this.transient_prior_cov.M_t_inv_evecs';
+                u_out(:, k) = u_tmp(:);
             end
         end
 

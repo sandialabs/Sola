@@ -19,8 +19,8 @@ classdef Randomized_GEVP_Test < Randomized_GEVP
             vec_out = linsolve(this.M, vec_in);
         end
 
-        function [vec_out] = Apply_Weighting_Operator_Inverse_Factor(this, vec_in)
-            vec_out = linsolve(sqrtm(this.M), vec_in);
+        function [samples] = Generate_Random_Samples(this, num_samples)
+            samples = linsolve(sqrtm(this.M), randn(size(this.M, 1), num_samples));
         end
 
     end

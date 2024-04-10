@@ -39,19 +39,17 @@ classdef MD_Elliptic_u_Prior_Interface < MD_u_Prior_Interface
             u_out = this.alpha_u * this.sing_vecs_output * diag(this.sing_vals.^2) * this.sing_vecs_output' * u_in;
         end
 
-        % Factorize W_u^{-1}=F*F^T, function gives u_out=F*u_in
-        % This function must be implemented to enable posterior update sampling
-        function [u_out] = Apply_W_u_Inverse_Factor(this, u_in)
+        % Compute samples from a mean zero Gaussian with covariance W_u^{-1}
+        function [u_out] = Sample_with_Covariance_W_u_Inverse(this, num_samples)
             r = length(this.sing_vals);
-            u_out = sqrt(this.alpha_u) * this.sing_vecs_output * diag(this.sing_vals) * u_in(1:r, :);
+            u_out = sqrt(this.alpha_u) * this.sing_vecs_output * diag(this.sing_vals) * randn(r, num_samples);
         end
 
-        % Factorize (W_u+scalar*M_u)^{-1}=F*F^T, function gives u_out=F*u_in
-        % This function must be implemented to enable posterior update sampling
-        function [u_out] = Apply_W_u_Plus_scalar_M_u_Inverse_Factor(this, u_in, scalar)
+        % Compute samples from a mean zero Gaussian with covariance (W_u+scalar*M_u)^{-1}
+        function [u_out] = Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(this, num_samples, scalar)
             K = (this.sing_vals.^2) ./ (1 + this.alpha_u * scalar * this.sing_vals.^2);
             r = length(this.sing_vals);
-            u_out = sqrt(this.alpha_u) * this.sing_vecs_output * diag(sqrt(K)) * u_in(1:r, :);
+            u_out = sqrt(this.alpha_u) * this.sing_vecs_output * diag(sqrt(K)) * randn(r, num_samples);
         end
 
     end

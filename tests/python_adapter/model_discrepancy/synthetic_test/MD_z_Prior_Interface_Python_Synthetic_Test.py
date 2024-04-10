@@ -34,8 +34,9 @@ class MD_z_Prior_Interface_Python_Synthetic_Test(MD_z_Prior_Interface_Py):
         z_out = np.linalg.solve(self.W_z,z_in)
         return z_out
 
-    def Apply_W_z_Inverse_Factor_Py(self, z_in):
+    # Compute samples from a mean zero Gaussian with covariance W_z^{-1}
+    def Sample_with_Covariance_W_z_Inverse(this,num_samples):
+        Omega = np.random.standard_normal((self.m,num_samples)) 
         L = np.linalg.cholesky(self.W_z)
-        z_out = np.transpose(L)@z_in
+        z_out = np.transpose(L)@Omega
         return z_out
-

@@ -12,10 +12,9 @@ classdef MD_z_Prior_Interface_Adv_Diff < MD_z_Prior_Interface
             z_out = this.alpha_z * this.F * (this.F' * z_in);
         end
 
-        % Factorize W_z^{-1} = F*F^T, function gives z_out = F*z_in
-        % This function must be implemented to enable posterior update sampling
-        function [z_out] = Apply_W_z_Inverse_Factor(this, z_in)
-            z_out = sqrt(this.alpha_z) * this.F * z_in;
+        % Compute samples from a mean zero Gaussian with covariance W_z^{-1}
+        function [z_out] = Sample_with_Covariance_W_z_Inverse(this, num_samples)
+            z_out = sqrt(this.alpha_z) * this.F * randn(size(this.F, 1), num_samples);
         end
 
         % Apply W_z matrix

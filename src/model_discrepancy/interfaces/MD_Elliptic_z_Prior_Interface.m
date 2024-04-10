@@ -36,6 +36,12 @@ classdef MD_Elliptic_z_Prior_Interface < MD_z_Prior_Interface
             disp('Apply_M_z_Inverse must be implemented to use Hessian GEVP');
         end
 
+        % Compute samples from a mean zero Gaussian with covariance W_z^{-1}
+        function [z_out] = Sample_with_Covariance_W_z_Inverse(this, num_samples)
+            z_out = [];
+            disp('Sample_with_Covariance_W_z_Inverse must be implemented to use sampling algorithms');
+        end
+
         function this = MD_Elliptic_z_Prior_Interface(alpha_z)
             this.alpha_z = alpha_z;
         end
@@ -52,13 +58,6 @@ classdef MD_Elliptic_z_Prior_Interface < MD_z_Prior_Interface
             tmp1 = this.Apply_E_z(z_in);
             tmp2 = this.Apply_M_z_Inverse(tmp1);
             z_out = (1 / this.alpha_z) * this.Apply_E_z_Transpose(tmp2);
-        end
-
-        % Factorize W_z^{-1} = F*F^T, function gives z_out = F*z_in
-        function [z_out] = Apply_W_z_Inverse_Factor(this, z_in)
-            mass_mat_sqrt = M_z_Sqrt(this);
-            tmp = mass_mat_sqrt.Matrix_Sqrt_Apply(z_in);
-            z_out = sqrt(this.alpha_z) * this.Apply_E_z_Inverse(tmp);
         end
 
     end

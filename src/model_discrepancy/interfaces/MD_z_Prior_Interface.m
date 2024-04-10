@@ -14,11 +14,10 @@ classdef MD_z_Prior_Interface < handle
 
     methods
 
-        % Factorize W_z^{-1} = F*F^T, function gives z_out = F*z_in
-        % This function must be implemented to enable posterior update sampling
-        function [z_out] = Apply_W_z_Inverse_Factor(this, z_in)
+        % Compute samples from a mean zero Gaussian with covariance W_z^{-1}
+        function [z_out] = Sample_with_Covariance_W_z_Inverse(this, num_samples)
             z_out = [];
-            disp('Apply_W_z_Inverse_Factor must be implemented to use sampling algorithms');
+            disp('Sample_with_Covariance_W_z_Inverse must be implemented to use sampling algorithms');
         end
 
         % Apply W_z matrix

@@ -18,18 +18,20 @@ classdef MD_u_Prior_Interface_synthetic_test < MD_u_Prior_Interface
             u_out = linsolve(this.W_u + scalar * this.M, u_in);
         end
 
-        function [u_out] = Apply_W_u_Plus_scalar_M_u_Inverse_Factor(this, u_in, scalar)
-            R = chol(this.W_u + scalar * this.M);
-            u_out = linsolve(R, u_in);
-        end
-
         function [u_out] = Apply_W_u_Inverse(this, u_in)
             u_out = linsolve(this.W_u, u_in);
         end
 
-        function [u_out] = Apply_W_u_Inverse_Factor(this, u_in)
+        % Compute samples from a mean zero Gaussian with covariance W_u^{-1}
+        function [u_out] = Sample_with_Covariance_W_u_Inverse(this, num_samples)
             R = chol(this.W_u);
-            u_out = linsolve(R, u_in);
+            u_out = linsolve(R, randn(size(R, 1), num_samples));
+        end
+
+        % Compute samples from a mean zero Gaussian with covariance (W_u+scalar*M_u)^{-1}
+        function [u_out] = Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(this, num_samples, scalar)
+            R = chol(this.W_u + scalar * this.M);
+            u_out = linsolve(R, randn(size(R, 1), num_samples));
         end
 
     end

@@ -59,18 +59,13 @@ classdef MD_Bayes_Posterior_Data < handle
             if this.num_samples > 0
 
                 this.ui_hat = cell(this.N, 1);
-                m = size(this.u_ell, 1);
                 for i = 1:this.N
-                    Omega = randn(m, this.num_samples);
-                    this.ui_hat{i} = (1 / sqrt(this.alpha_d)) * u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse_Factor(Omega, this.Mu(i, i) / this.alpha_d);
+                    this.ui_hat{i} = (1 / sqrt(this.alpha_d)) * u_prior_interface.Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(this.num_samples, this.Mu(i, i) / this.alpha_d);
                 end
 
-                Omega = randn(m, this.num_samples);
-                this.u_breve = u_prior_interface.Apply_W_u_Inverse_Factor(Omega);
+                this.u_breve = u_prior_interface.Sample_with_Covariance_W_u_Inverse(this.num_samples);
 
-                n = length(z_opt);
-                Omega = randn(n, this.num_samples);
-                this.zbreve = z_prior_interface.Apply_W_z_Inverse_Factor(Omega);
+                this.zbreve = z_prior_interface.Sample_with_Covariance_W_z_Inverse(this.num_samples);
 
             end
 

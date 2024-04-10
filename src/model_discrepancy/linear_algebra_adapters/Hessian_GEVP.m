@@ -21,8 +21,13 @@ classdef Hessian_GEVP < Randomized_GEVP
             vec_out = this.normalization_coeff * this.z_prior_interface.Apply_W_z_Inverse(vec_in);
         end
 
-        function [vec_out] = Apply_Weighting_Operator_Preconditioner_Factor(this, vec_in)
-            vec_out = sqrt(this.normalization_coeff) * this.z_prior_interface.Apply_W_z_Inverse_Factor(vec_in);
+        function [samples] = Generate_Random_Samples(this, num_samples)
+            samples = this.z_prior_interface.Sample_with_Covariance_W_z_Inverse(num_samples);
+            if size(samples, 1) > 0
+                samples = sqrt(this.normalization_coeff) * samples;
+            else
+                samples = randn(length(this.z), num_samples);
+            end
         end
 
     end

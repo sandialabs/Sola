@@ -21,6 +21,12 @@ classdef MD_Elliptic_z_Prior_Interface_synthetic_test_with_gsvd < MD_Elliptic_z_
             z_out = this.M * z_in;
         end
 
+        % Compute samples from a mean zero Gaussian with covariance W_z^{-1}
+        function [z_out] = Sample_with_Covariance_W_z_Inverse(this, num_samples)
+            R = chol(this.M);
+            z_out = sqrt(this.alpha_z) * linsolve(this.E_z, R' * randn(size(R, 1), num_samples));
+        end
+
     end
 
     methods

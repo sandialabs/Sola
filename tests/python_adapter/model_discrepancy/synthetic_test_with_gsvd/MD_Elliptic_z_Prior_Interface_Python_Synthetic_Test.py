@@ -39,3 +39,10 @@ class MD_Elliptic_z_Prior_Interface_Python_Synthetic_Test(MD_Elliptic_z_Prior_In
     def Apply_M_z_Py(self, z_in):
         z_out = self.M@z_in
         return z_out
+
+    # Compute samples from a mean zero Gaussian with covariance W_z^{-1}
+    def Sample_with_Covariance_W_z_Inverse(this,num_samples):
+        Omega = np.random.standard_normal((self.m,num_samples)) 
+        L = np.linalg.cholesky(self.W_z)
+        z_out = np.transpose(L)@Omega
+        return z_out

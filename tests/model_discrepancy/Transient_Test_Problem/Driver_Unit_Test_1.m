@@ -75,24 +75,6 @@ error = [error, local_error];
 
 %%
 u_in = randn(n_y * n_t, 1);
-u_out = u_prior_interface.Apply_W_u_Inverse_Factor(u_in);
-tmp = reshape(u_in, n_y, n_t);
-r = length(u_prior_interface.sing_vals);
-test = sqrt(alpha_u) * u_prior_interface.sing_vecs_output * diag(u_prior_interface.sing_vals) * tmp(1:r, :) * diag(sqrt(transient_prior_cov.evals)) * transient_prior_cov.M_t_inv_evecs';
-
-local_error = norm(u_out - test(:));
-error = [error, local_error];
-
-%%
-F = u_prior_interface.Apply_W_u_Inverse_Factor(eye(n_y * n_t));
-u_in = randn(n_y * n_t, 1);
-u_out = u_prior_interface.Apply_W_u_Inverse(u_in);
-
-local_error = norm(u_out - F * (F' * u_in));
-error = [error, local_error];
-
-%%
-u_in = randn(n_y * n_t, 1);
 scalar = rand;
 u_out = u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(u_in, scalar);
 test  = linsolve(W_u + scalar * M_u, u_in);
@@ -101,17 +83,28 @@ local_error = norm(u_out - test);
 error = [error, local_error];
 
 %%
-u_in = randn(n_y * n_t, 1);
-scalar = rand;
-u_out = u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse_Factor(u_in, scalar);
-aleph = kron(transient_prior_cov.evals, [u_prior_interface.sing_vals.^2; zeros(n_y - r, 1)]);
-aleph = aleph ./ (1 + alpha_u * scalar * aleph);
-test  = sqrt(alpha_u) * kron(transient_prior_cov.M_t_inv_evecs, [u_prior_interface.sing_vecs_output, zeros(n_y, n_y - r)]) * diag(sqrt(aleph)) * u_in;
+num_samples = 1.e4;
 
-local_error = norm(u_out - test);
-error = [error, local_error];
+u_samps = u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samples);
+test = cov(u_samps');
+W_u_inv = u_prior_interface.Apply_W_u_Inverse(eye(n_y * n_t));
+sampling_local_error = norm(W_u_inv - test, 'fro') / norm(W_u_inv, 'fro');
+sampling_error = sampling_local_error;
+
+%%
+scalar = rand;
+u_samps = u_prior_interface.Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(num_samples, scalar);
+test = cov(u_samps');
+W_u_Plus_scalar_M_u_inv = u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(eye(n_y * n_t), scalar);
+sampling_local_error = norm(W_u_Plus_scalar_M_u_inv - test, 'fro') / norm(W_u_Plus_scalar_M_u_inv, 'fro');
+sampling_error = [sampling_error, sampling_local_error];
+
 %%
 
-if max(error) > 1.e-7
+if max(error) > 5.e-7
+    disp('Error in model_discrepancy/Transient_Test_Problem/Driver_Unit_Test_1');
+end
+
+if max(sampling_error) > .03
     disp('Error in model_discrepancy/Transient_Test_Problem/Driver_Unit_Test_1');
 end

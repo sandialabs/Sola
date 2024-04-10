@@ -30,16 +30,18 @@ classdef MD_u_Prior_Interface_Py < MD_u_Prior_Interface
             end
         end
 
-        function [u_out] = Apply_W_u_Inverse_Factor(this, u_in)
-            u_out = this.u_prior_interface_py.Apply_W_u_Inverse_Factor(u_in);
+        % Compute samples from a mean zero Gaussian with covariance W_u^{-1}
+        function [u_out] = Sample_with_Covariance_W_u_Inverse(this, num_samples)
+            u_out = this.u_prior_interface_py.Sample_with_Covariance_W_u_Inverse(num_samples);
             u_out = double(u_out);
             if size(u_out, 1) == 1
                 u_out = u_out';
             end
         end
 
-        function [u_out] = Apply_W_u_Plus_scalar_M_u_Inverse_Factor(this, u_in, scalar)
-            u_out = this.u_prior_interface_py.Apply_W_u_Plus_scalar_M_u_Inverse_Factor(u_in, scalar);
+        % Compute samples from a mean zero Gaussian with covariance (W_u+scalar*M_u)^{-1}
+        function [u_out] = Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(this, num_samples, scalar)
+            u_out = this.u_prior_interface_py.Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(num_samples, scalar);
             u_out = double(u_out);
             if size(u_out, 1) == 1
                 u_out = u_out';

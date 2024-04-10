@@ -14,16 +14,11 @@ classdef Randomized_GEVP < handle
 
         [vec_out] = Apply_Weighting_Operator_Inverse(this, vec_in)
 
+        [samples] = Generate_Random_Samples(this, num_samples)
+
     end
 
     methods
-
-        % Defaults to identity
-        % Ideally, we for a weighting operator W, this function should
-        % apply vec_out = F*vec_in, where W^{-1} = F*F^T
-        function [vec_out] = Apply_Weighting_Operator_Preconditioner_Factor(this, vec_in)
-            vec_out = vec_in;
-        end
 
         function this = Randomized_GEVP(vec)
             this.vec = 0 * vec;
@@ -32,10 +27,7 @@ classdef Randomized_GEVP < handle
         function [evecs, evals] = Compute_GEVP(this, num_evals, oversampling)
 
             kpp = num_evals + oversampling;
-            m = length(this.vec);
-
-            Omega = this.Apply_Weighting_Operator_Preconditioner_Factor(randn(m, kpp));
-            tmp = this.Apply_Operator(Omega);
+            tmp = this.Generate_Random_Samples(kpp);
             Y = this.Apply_Weighting_Operator_Inverse(tmp);
 
             Q = this.CholQR(Y, 'weighting');

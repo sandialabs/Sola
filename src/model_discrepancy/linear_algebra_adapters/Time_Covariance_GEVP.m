@@ -20,6 +20,10 @@ classdef Time_Covariance_GEVP < Randomized_GEVP
             vec_out = this.M_t * vec_in;
         end
 
+        function [samples] = Generate_Random_Samples(this, num_samples)
+            samples = randn(size(this.M_t, 1), num_samples);
+        end
+
     end
 
     methods
