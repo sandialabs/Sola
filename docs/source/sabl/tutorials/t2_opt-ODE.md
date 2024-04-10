@@ -83,6 +83,8 @@ Note that $\g$ can also be written as $\g(\y(t), t) = \|\y(t) - \boldsymbol{\alp
 The dimension of the ODE state is $n_y = 4$ and the dimension of the control is $n_z = 2$.
 The full state $\u$ of the optimization problem consists of the ODE state at a collection of time instances, but we never need form $\u$ explicitly in our implementation.
 
+## Trajectory Control Problem
+
 :::{warning}
 The rest of this page is under construction, please check back later.
 :::
