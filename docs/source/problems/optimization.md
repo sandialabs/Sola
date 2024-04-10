@@ -154,7 +154,7 @@ For example, suppose the state $u(x,t)$ is to be computed at spatial points $x_{
 Then the discrete state $\u$ is given by
 
 $$
-\begin{align*}
+\begin{aligned}
     \u =
     \left(\begin{array}{c}
         \y_1 \\ \y_2 \\ \vdots \\ \y_{n_t}
@@ -173,7 +173,7 @@ $$
         u(x_{1},t_{n_t}) \\ u(x_{2},t_{n_t}) \\ \vdots \\ u(x_{n_y},t_{n_t})
     \end{array}\right)
     \in \R^{n_u},
-\end{align*}
+\end{aligned}
 $$
 
 where $\y_j = (y_{j,1},y_{j,2},\ldots,y_{j,n_t})\trp\in\R^{n_t}$ with $y_{j,k} \approx u(x_k, t_j)$.
@@ -182,17 +182,17 @@ The discrete state dimension is $n_u = n_y n_t$.
 The following ODE-constrained optimization problem is a common occurrence of {eq}`optimization:problem_discrete` for scientific problems.
 
 $$
-\begin{align*}
+\begin{aligned}
     \min_{\y(t),\z} ~& \int_{0}^{T} g(\y(t),t) dt + R(\z)
     \\
     s.t. ~~& \frac{\textup{d}}{\textup{d}t}\y(t) = \f(\y(t), \z, t), ~~ \y(0) = \h(\z),
-\end{align*}
+\end{aligned}
 $$
 
 where $T>0$ and
 
 $$
-\begin{align*}
+\begin{aligned}
     \y &: [0,T] \to \R^{n_y},
     &
     g &: \R^{n_y} \times [0, T] \to \R,
@@ -202,7 +202,7 @@ $$
     \f &: \R^{n_y} \times \R^{n_z} \times [0,T]  \to \R^m,
     &
     \h &: \R^{n_z} \to \R^{n_y}.
-\end{align*}
+\end{aligned}
 $$
 
 In this case, the derivatives of $J$ and $\c$ needed to implement {prf:ref}`alg:adjoint_gradient` and {prf:ref}`alg:adjoint_hessvec` can be expressed in terms of the derivatives of $g$, $R$, $\f$, and $\h$.
