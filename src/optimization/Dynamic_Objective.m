@@ -33,11 +33,37 @@ classdef Dynamic_Objective < Objective
 
     methods
 
+        %% Getters for dependent properties.
+
         function final_time = get.T(this)
             final_time = this.t_mesh(end);
         end
 
+        %% Constructor.
+
+        function this = Dynamic_Objective(n_y, n_z, T, n_t)
+            % Parameters
+            % ----------
+            % n_y : int
+            %   Dimension :math:`n_y` of the differential equation state :math:`\y`.
+            % n_z : int
+            %   Dimension :math:`n_z` of the control :math:`\z`.
+            % T : double
+            %   Final time :math:`T`.
+            % n_t : int
+            %   Number of nodes :math:`n_t` in the time mesh.
+            this.n_y = n_y;                         % ODE state dimension
+            this.n_z = n_z;                         % Control dimension
+            this.n_t = n_t;                         % Number of time nodes
+            this.t_mesh = linspace(0, T, n_t)';     % Discrete time domain
+            w = ones(n_t, 1);
+            w(2:end - 1) = 2;
+            this.w = T * w / sum(w);                % Quadrature weights for time integral
+        end
+
     end
+
+    %% Required abstract methods.
 
     methods (Abstract, Access = public)
 
@@ -109,9 +135,9 @@ classdef Dynamic_Objective < Objective
 
     end
 
-    methods (Access = public)
+    %% Implementation of parent class abstract methods.
 
-        %% Implementation of parent class abstract methods.
+    methods (Access = public)
 
         function [val, grad_u, grad_z] = J(this, u, z)
             % Evaluate the objective function and its derivatives.
@@ -164,28 +190,5 @@ classdef Dynamic_Objective < Objective
             Mv = this.R_zz_Apply(v, z);
         end
 
-        %% Constructor.
-
-        function this = Dynamic_Objective(n_y, n_z, T, n_t)
-            % Parameters
-            % ----------
-            % n_y : int
-            %   Dimension :math:`n_y` of the differential equation state :math:`\y`.
-            % n_z : int
-            %   Dimension :math:`n_z` of the control :math:`\z`.
-            % T : double
-            %   Final time :math:`T`.
-            % n_t : int
-            %   Number of nodes :math:`n_t` in the time mesh.
-            this.n_y = n_y;                         % ODE state dimension
-            this.n_z = n_z;                         % Control dimension
-            this.n_t = n_t;                         % Number of time nodes
-            this.t_mesh = linspace(0, T, n_t)';     % Discrete time domain
-            w = ones(n_t, 1);
-            w(2:end - 1) = 2;
-            this.w = T * w / sum(w);                % Quadrature weights for time integral
-        end
-
     end
-
 end

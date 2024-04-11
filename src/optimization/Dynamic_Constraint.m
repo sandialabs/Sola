@@ -50,11 +50,38 @@ classdef Dynamic_Constraint < Constraint
 
     methods
 
+        %% Getters for dependent properties.
+
         function finaltime = get.T(this)
             finaltime = this.t_mesh(end);
         end
 
+        %% Constructor.
+
+        function this = Dynamic_Constraint(n_y, n_z, T, n_t)
+            % Parameters
+            % ----------
+            % n_y : int
+            %   Dimension :math:`n_y` of the state :math:`\y_{j}` at each time.
+            % n_z : int
+            %   Dimension :math:`n_z` of the control :math:`\z`.
+            % T : double
+            %   Final time :math:`T`.
+            % n_t : int
+            %   Number of nodes :math:`N` in the time mesh.
+            this.n_y = n_y;                         % ODE state dimension
+            this.n_z = n_z;                         % control dimension
+            this.n_t = n_t;                         % Number of time nodes
+            this.t_mesh = linspace(0, T, n_t)';     % Discrete time domain
+            this.time_step_solver_options = optimoptions('fsolve', ...
+                                                         'Display', 'none', ...
+                                                         'SpecifyObjectiveGradient', true);
+            this.verbose = true;                    % Output verbosity
+        end
+
     end
+
+    %% Required abstract methods.
 
     methods (Abstract, Access = public)
 
@@ -95,117 +122,134 @@ classdef Dynamic_Constraint < Constraint
         % grad_z : :math:`n_y \times n_z` matrix
         %   Function Jacobian :math:`\h_{z}(\z)\in\R^{n_y \times n_z}`.
 
-        [y_out] = f_yy_Apply(this, y_in, y, z, t, lambda)
-        % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{y,y}(\y,\z,t)\v`.
-        %
-        % Parameters
-        % ----------
-        % y_in
-        %   Search direction :math:`\v\in\R^{n_y}`.
-        % y
-        %   Differential equation state :math:`\y\in\R^{n_y}`.
-        % z
-        %   Control :math:`\z\in\R^{n_z}`.
-        % t
-        %   Time :math:`t`.
-        % lambda
-        %   Adjoint (of :math:`\y`) :math:`\bflambda\in\R^{n_y}`.
-        %
-        % Returns
-        % -------
-        % y_out : :math:`n_y`-vector
-        %   Vector-Hessian-vector product
-        %   :math:`\bflambda\trp \f_{y,y}(\y,\z,t)\v\in\R^{n_y}`.
-
-        [y_out] = f_yz_Apply(this, z_in, y, z, t, lambda)
-        % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{y,z}(\y,\z,t)\v`.
-        %
-        % Parameters
-        % ----------
-        % z_in
-        %   Search direction :math:`\v\in\R^{n_z}`.
-        % y
-        %   Differential equation state :math:`\y\in\R^{n_y}`.
-        % z
-        %   Control :math:`\z\in\R^{n_z}`.
-        % t
-        %   Time :math:`t`.
-        % lambda
-        %   Adjoint (of :math:`\y`) :math:`\bflambda\in\R^{n_y}`.
-        %
-        % Returns
-        % -------
-        % y_out : :math:`n_y`-vector
-        %   Vector-Hessian-vector product
-        %   :math:`\bflambda\trp \f_{y,z}(\y,\z,t)\v\in\R^{n_y}`.
-
-        [z_out] = f_zy_Apply(this, y_in, y, z, t, lambda)
-        % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{z,y}(\y,\z,t)\v`.
-        %
-        % Parameters
-        % ----------
-        % y_in
-        %   Search direction :math:`\v\in\R^{n_y}`.
-        % y
-        %   Differential equation state :math:`\y\in\R^{n_y}`.
-        % z
-        %   Control :math:`\z\in\R^{n_z}`.
-        % t
-        %   Time :math:`t`.
-        % lambda
-        %   Adjoint (of :math:`\y`) :math:`\bflambda\in\R^{n_y}`.
-        %
-        % Returns
-        % -------
-        % z_out : :math:`n_z`-vector
-        %   Vector-Hessian-vector product
-        %   :math:`\bflambda\trp \f_{z,y}(\y,\z,t)\v\in\R^{n_z}`.
-
-        [z_out] = f_zz_Apply(this, z_in, y, z, t, lambda)
-        % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{z,z}(\y,\z,t)\v`.
-        %
-        % Parameters
-        % ----------
-        % z_in
-        %   Search direction :math:`\v\in\R^{n_z}`.
-        % y
-        %   Differential equation state :math:`\y\in\R^{n_y}`.
-        % z
-        %   Control :math:`\z\in\R^{n_z}`.
-        % t
-        %   Time :math:`t`.
-        % lambda
-        %   Adjoint (of :math:`\y`) :math:`\bflambda\in\R^{n_y}`.
-        %
-        % Returns
-        % -------
-        % z_out : :math:`n_z`-vector
-        %   Vector-Hessian-vector product
-        %   :math:`\bflambda\trp \f_{z,z}(\y,\z,t)\v\in\R^{n_z}`.
-
-        [z_out] = h_zz_Apply(this, z_in, z, lambda)
-        % Compute the vector-Jacobian-vector product :math:`\bflambda\trp \h_{z}(\z)\v`.
-        %
-        % Parameters
-        % ----------
-        % z_in
-        %   Search direction :math:`\v\in\R^{n_z}`.
-        % z
-        %   Control :math:`\z\in\R^{n_z}`.
-        % lambda
-        %   Adjoint (of :math:`\y`) :math:`\bflambda\in\R^{n_y}`.
-        %
-        % Returns
-        % -------
-        % z_out : :math:`n_z`-vector
-        %   Vector-Jacobian-vector product
-        %   :math:`\bflambda\trp \h_{z}(\z)\v\in\R^{n_z}`.
-
     end
 
     methods (Access = public)
 
-        %% Implement abstract methods from the parent class
+        %% Semi-abstract methods, required when Gauss_Newton_Hess = false.
+
+        function [y_out] = f_yy_Apply(this, y_in, y, z, t, lambda)
+            % *Semi-abstract method.*
+            % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{y,y}(\y,\z,t)\v`.
+            %
+            % Parameters
+            % ----------
+            % y_in
+            %   Search direction :math:`\v\in\R^{n_y}`.
+            % y
+            %   Differential equation state :math:`\y\in\R^{n_y}`.
+            % z
+            %   Control :math:`\z\in\R^{n_z}`.
+            % t
+            %   Time :math:`t`.
+            % lambda
+            %   Adjoint (of :math:`\y`) :math:`\bflambda\in\R^{n_y}`.
+            %
+            % Returns
+            % -------
+            % y_out : :math:`n_y`-vector
+            %   Vector-Hessian-vector product
+            %   :math:`\bflambda\trp \f_{y,y}(\y,\z,t)\v\in\R^{n_y}`.
+            y_out = error('f_yy_Apply() not implemented');
+        end
+
+        function [y_out] = f_yz_Apply(this, z_in, y, z, t, lambda)
+            % *Semi-abstract method.*
+            % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{y,z}(\y,\z,t)\v`.
+            %
+            % Parameters
+            % ----------
+            % z_in
+            %   Search direction :math:`\v\in\R^{n_z}`.
+            % y
+            %   Differential equation state :math:`\y\in\R^{n_y}`.
+            % z
+            %   Control :math:`\z\in\R^{n_z}`.
+            % t
+            %   Time :math:`t`.
+            % lambda
+            %   Adjoint (of :math:`\y`) :math:`\bflambda\in\R^{n_y}`.
+            %
+            % Returns
+            % -------
+            % y_out : :math:`n_y`-vector
+            %   Vector-Hessian-vector product
+            %   :math:`\bflambda\trp \f_{y,z}(\y,\z,t)\v\in\R^{n_y}`.
+            y_out = error('f_yz_Apply() not implemented');
+        end
+
+        function [z_out] = f_zy_Apply(this, y_in, y, z, t, lambda)
+            % *Semi-abstract method.*
+            % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{z,y}(\y,\z,t)\v`.
+            %
+            % Parameters
+            % ----------
+            % y_in
+            %   Search direction :math:`\v\in\R^{n_y}`.
+            % y
+            %   Differential equation state :math:`\y\in\R^{n_y}`.
+            % z
+            %   Control :math:`\z\in\R^{n_z}`.
+            % t
+            %   Time :math:`t`.
+            % lambda
+            %   Adjoint (of :math:`\y`) :math:`\bflambda\in\R^{n_y}`.
+            %
+            % Returns
+            % -------
+            % z_out : :math:`n_z`-vector
+            %   Vector-Hessian-vector product
+            %   :math:`\bflambda\trp \f_{z,y}(\y,\z,t)\v\in\R^{n_z}`.
+            z_out = error('f_zy_Apply() not implemented');
+        end
+
+        function [z_out] = f_zz_Apply(this, z_in, y, z, t, lambda)
+            % *Semi-abstract method.*
+            % Compute the vector-Hessian-vector product :math:`\bflambda\trp \f_{z,z}(\y,\z,t)\v`.
+            %
+            % Parameters
+            % ----------
+            % z_in
+            %   Search direction :math:`\v\in\R^{n_z}`.
+            % y
+            %   Differential equation state :math:`\y\in\R^{n_y}`.
+            % z
+            %   Control :math:`\z\in\R^{n_z}`.
+            % t
+            %   Time :math:`t`.
+            % lambda
+            %   Adjoint (of :math:`\y`) :math:`\bflambda\in\R^{n_y}`.
+            %
+            % Returns
+            % -------
+            % z_out : :math:`n_z`-vector
+            %   Vector-Hessian-vector product
+            %   :math:`\bflambda\trp \f_{z,z}(\y,\z,t)\v\in\R^{n_z}`.
+            z_out = error('f_zz_Apply() not implemented');
+        end
+
+        function [z_out] = h_zz_Apply(this, z_in, z, lambda)
+            % *Semi-abstract method.*
+            % Compute the vector-Jacobian-vector product :math:`\bflambda\trp \h_{z}(\z)\v`.
+            %
+            % Parameters
+            % ----------
+            % z_in
+            %   Search direction :math:`\v\in\R^{n_z}`.
+            % z
+            %   Control :math:`\z\in\R^{n_z}`.
+            % lambda
+            %   Adjoint (of :math:`\y`) :math:`\bflambda\in\R^{n_y}`.
+            %
+            % Returns
+            % -------
+            % z_out : :math:`n_z`-vector
+            %   Vector-Jacobian-vector product
+            %   :math:`\bflambda\trp \h_{z}(\z)\v\in\R^{n_z}`.
+            z_out = error('h_zz_Apply() not implemented');
+        end
+
+        %% Implementation of parent class abstract methods.
 
         function [u] = State_Solve(this, z)
             % Solve the constraint equation :math:`\c(\u,\z) = \0` by
@@ -332,30 +376,7 @@ classdef Dynamic_Constraint < Constraint
             end
         end
 
-        %% Constructor
-
-        function this = Dynamic_Constraint(n_y, n_z, T, n_t)
-            % Parameters
-            % ----------
-            % n_y : int
-            %   Dimension :math:`n_y` of the state :math:`\y_{j}` at each time.
-            % n_z : int
-            %   Dimension :math:`n_z` of the control :math:`\z`.
-            % T : double
-            %   Final time :math:`T`.
-            % n_t : int
-            %   Number of nodes :math:`N` in the time mesh.
-            this.n_y = n_y;                         % ODE state dimension
-            this.n_z = n_z;                         % control dimension
-            this.n_t = n_t;                         % Number of time nodes
-            this.t_mesh = linspace(0, T, n_t)';     % Discrete time domain
-            this.time_step_solver_options = optimoptions('fsolve', ...
-                                                         'Display', 'none', ...
-                                                         'SpecifyObjectiveGradient', true);
-            this.verbose = true;                    % Output verbosity
-        end
-
-        %% Finite difference tests
+        %% Finite difference tests.
 
         function [diffs_y, diffs_z] = f_Jacobian_Check(this, y, z, t)
             % Check the implementation of :meth:`f()`
@@ -558,7 +579,7 @@ classdef Dynamic_Constraint < Constraint
 
     end
 
-    %% Time stepping functions
+    %% Time stepping functions.
 
     methods (Access = protected)
 
