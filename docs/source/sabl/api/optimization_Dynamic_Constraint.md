@@ -45,7 +45,7 @@ See the [Inheritance Template](optimization.Dynamic_Constraint.template) to star
 ```matlab
 classdef My_Dynamic_Constraint < Dynamic_Constraint
 
-    methods (Abstract, Access = public)
+    methods (Access = public)
 
         function [f, f_y, f_z] = f(this, y, z, t)
             error('f() not implemented');

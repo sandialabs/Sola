@@ -409,7 +409,7 @@ end
 ::::{admonition} Exercise 3
 :class: exercise
 
-Implement, in a vectorized fashion, `J_zu_Apply()` for computing $\grad{zu}J(\u,\z)\v_u$ and `J_zz_Apply()` for computing $\grad{zz}J(\u,\z)\v_z$.
+Implement, in a vectorized fashion, `J_zu_Apply()` for computing $\grad{z,u}J(\u,\z)\v_u$ and `J_zz_Apply()` for computing $\grad{z,z}J(\u,\z)\v_z$.
 
 :::{admonition} Solution
 :class: solution dropdown
