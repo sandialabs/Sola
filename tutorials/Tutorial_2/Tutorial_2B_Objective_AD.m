@@ -13,19 +13,21 @@ classdef Tutorial_2B_Objective_AD < Dynamic_Objective_AD
     properties
         radius       % Target orbital radius.
         velocity     % Target angular velocity.
+        regularizer  % Regularization hyperparameter.
         n_q          % Number of controls at each fixed time.
         w_z          % Quadrature weights for the control regularization.
     end
 
     methods
 
-        function this = Tutorial_2B_Objective_AD(T, n_t, radius, velocity)
+        function this = Tutorial_2B_Objective_AD(T, n_t, radius, velocity, regularizer)
             n_q = 2;
             n_z = n_q * (n_t - 1);
             this = this@Dynamic_Objective_AD(4, n_z, T, n_t);
             this.radius = radius;
             this.velocity = velocity;
             this.n_q = n_q;
+            this.regularizer = regularizer;
 
             % Quadrature weights for the control regularization.
             w = ones(n_t - 1, 1);
@@ -70,7 +72,7 @@ classdef Tutorial_2B_Objective_AD < Dynamic_Objective_AD
 
             % Plot the state trajectory coordinates in time.
             fig = figure;
-            fig.Position(3:4) = [1100, 650];
+            fig.Position(3:4) = [830, 535];
             subplot(2, 2, 1);
             plot(t, x, '-', 'LineWidth', 2);
             hold on;
@@ -79,7 +81,7 @@ classdef Tutorial_2B_Objective_AD < Dynamic_Objective_AD
             plot(t, ones(this.n_t, 1), 'k-', 'LineWidth', 0.1);
             xlim([0, t(end)]);
             ylim([-lim, lim]);
-            xlabel('$$t$$');
+            xlabel('$$t$$', 'Interpreter', 'latex');
             title('Coordinates over time');
             legend({'$$x(t)$$', '$$y(t)$$', '', ''}, ...
                    'Location', 'southeast', 'Interpreter', 'latex');

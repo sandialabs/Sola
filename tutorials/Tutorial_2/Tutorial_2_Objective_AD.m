@@ -63,7 +63,7 @@ classdef Tutorial_2_Objective_AD < Dynamic_Objective_AD
             plot(t, ones(this.n_t, 1), 'k-', 'LineWidth', 0.1);
             xlim([0, t(end)]);
             ylim([-lim, lim]);
-            xlabel('$$t$$');
+            xlabel('$$t$$', 'Interpreter', 'latex');
             title('Coordinates over time');
             legend({'$$x(t)$$', '$$y(t)$$', '', ''}, ...
                    'Location', 'southeast', 'Interpreter', 'latex');

@@ -5,13 +5,11 @@ classdef Tutorial_2_Objective < Dynamic_Objective
     %
     % Here y = (r, r', w, w') represents radius, change in radius, angular
     % momentum, and change in angular momentum of an object. The constants
-    % r and w are the target radius and angular momentum.
+    % r and w are the target radius and angular velocity.
 
     properties
         radius       % Target orbital radius.
         velocity     % Target angular velocity.
-        n_q          % Number of controls at each fixed time.
-        w_z          % Quadrature weights for the control regularization.
     end
 
     methods
@@ -78,7 +76,7 @@ classdef Tutorial_2_Objective < Dynamic_Objective
             plot(t, ones(this.n_t, 1), 'k-', 'LineWidth', 0.1);
             xlim([0, t(end)]);
             ylim([-lim, lim]);
-            xlabel('$$t$$');
+            xlabel('$$t$$', 'Interpreter', 'latex');
             title('Coordinates over time');
             legend({'$$x(t)$$', '$$y(t)$$', '', ''}, ...
                    'Location', 'southeast', 'Interpreter', 'latex');

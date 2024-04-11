@@ -42,17 +42,19 @@ classdef Tutorial_2_Constraint < Dynamic_Constraint
         end
 
         function [y_out] = f_yy_Apply(this, y_in, y, ~, ~, lambda)
-            ijk211 = 6 * this.k * lambda(2) * y_in(1, :) / y(1)^4;
+            ijk211 = -6 * this.k * lambda(2) * y_in(1, :) / y(1)^4;
             ijk214 = 2 * lambda(2) * y(4) * y_in(4, :);
             ijk241 = 2 * lambda(2) * y(4) * y_in(1, :);
-            ijk412 = lambda(4) * y(4) * y_in(2, :) / y(1)^2;
-            ijk414 = lambda(4) * y(2) * y_in(4, :) / y(1)^2;
-            ijk421 = lambda(4) * y(2) * y_in(1, :) / y(1)^2;
-            ijk441 = lambda(4) * y(2) * y_in(1, :) / y(1)^2;
-            y_out = [ijk211 + ijk214 + ijk412 + ijk414
+            ijk244 = 2 * lambda(2) * y(1) * y_in(4, :);
+            ijk411 = -4 * lambda(4) * y(2) * y(4) * y_in(1, :) / y(1)^3;
+            ijk412 = 2 * lambda(4) * y(4) * y_in(2, :) / y(1)^2;
+            ijk414 = 2 * lambda(4) * y(2) * y_in(4, :) / y(1)^2;
+            ijk421 = 2 * lambda(4) * y(4) * y_in(1, :) / y(1)^2;
+            ijk441 = 2 * lambda(4) * y(2) * y_in(1, :) / y(1)^2;
+            y_out = [ijk211 + ijk214 + ijk411 + ijk412 + ijk414
                      ijk421
                      zeros(1, size(y_in, 2))
-                     ijk241 + ijk441];
+                     ijk241 + ijk244 + ijk441];
         end
 
         function [y_out] = f_yz_Apply(this, z_in, ~, ~, ~, ~)
