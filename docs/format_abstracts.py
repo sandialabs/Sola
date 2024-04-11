@@ -47,9 +47,8 @@ def format_code_block(codeblock: str, verbose: bool = False):
     """
     # Remove "Abstract" from the "methods (...)" delimiter.
     matches = re.findall(
-        r"methods\s*?\((.*?Abstract.*?)\)",
+        r"methods\s*?\(([\w,= ]*?Abstract[\w,= ]*?)\)",
         codeblock,
-        flags=re.DOTALL,
     )
     if not matches:
         raise RuntimeError("no 'methods (Abstract)' clause not found")
