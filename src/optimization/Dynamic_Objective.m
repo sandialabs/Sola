@@ -20,7 +20,7 @@ classdef Dynamic_Objective < Objective
     %   and :math:`w_{1} = w_{n_t} = \frac{1}{2}\delta t`.
 
     properties
-        n_y         % Dimension :math:`n_y` of the differential equation state :math:`\y`.
+        n_y         % Dimension :math:`n_y` of the differential equation state :math:`\y(t)`.
         n_z         % Dimension :math:`n_z` of the control :math:`\z`.
         n_t         % Number of nodes :math:`n_t` in the time mesh.
         t_mesh      % Time mesh :math:`(t_1,\ldots,t_{n_t})\trp`.
@@ -29,6 +29,7 @@ classdef Dynamic_Objective < Objective
 
     properties (Dependent)
         T           % Final time :math:`T = t_{n_t}`.
+        n_u         % Dimension :math:`n_u = n_y n_t` of the full optimization state.
     end
 
     methods
@@ -39,13 +40,17 @@ classdef Dynamic_Objective < Objective
             final_time = this.t_mesh(end);
         end
 
+        function n = get.n_u(this)
+            n = this.n_y * this.n_t;
+        end
+
         %% Constructor.
 
         function this = Dynamic_Objective(n_y, n_z, T, n_t)
             % Parameters
             % ----------
             % n_y : int
-            %   Dimension :math:`n_y` of the differential equation state :math:`\y`.
+            %   Dimension :math:`n_y` of the differential equation state :math:`\y(t)`.
             % n_z : int
             %   Dimension :math:`n_z` of the control :math:`\z`.
             % T : double
@@ -68,22 +73,22 @@ classdef Dynamic_Objective < Objective
     methods (Abstract, Access = public)
 
         [val, grad_y] = g(this, y, t)
-        % Evaluate the integrand :math:`g(\y,t)`
-        % and its gradient :math:`\grad{y}g(\y,t)`.
+        % Evaluate the integrand :math:`g(\y(t),t)`
+        % and its gradient :math:`\grad{y}g(\y(t),t)`.
         %
         % Parameters
         % ----------
         % y
-        %   Differential equation state :math:`\y\in\R^{n_y}`.
+        %   Differential equation state :math:`\y(t)\in\R^{n_y}`.
         % t
         %   Time :math:`t`.
         %
         % Returns
         % -------
         % val : double
-        %   Function value :math:`g(\y,t)\in\R`.
+        %   Function value :math:`g(\y(t),t)\in\R`.
         % grad_y : vector
-        %   Function gradient :math:`\grad{y}g(\y,t)\in\R^{n_y}`.
+        %   Function gradient :math:`\grad{y}g(\y(t),t)\in\R^{n_y}`.
 
         [val, grad_z] = R(this, z)
         % Evaluate the regularization term :math:`R(\z)`
@@ -102,21 +107,21 @@ classdef Dynamic_Objective < Objective
         %   Function gradient :math:`\grad{z}R(\z)\in\R^{n_z}`.
 
         [y_out] = g_yy_Apply(this, y_in, y, t)
-        % Compute the Hessian-vector product :math:`\grad{y,y}g(\y, t)\v`.
+        % Compute the Hessian-vector product :math:`\grad{y,y}g(\y(t), t)\v`.
         %
         % Parameters
         % ----------
         % y_in
         %   Search direction :math:`\v\in\R^{n_y}`.
         % y
-        %   Differential equation state :math:`\y\in\R^{n_y}`.
+        %   Differential equation state :math:`\y(t)\in\R^{n_y}`.
         % t
         %   Time :math:`t`.
         %
         % Returns
         % -------
         % y_out : vector
-        %   Hessian-vector product :math:`\grad{y,y}g(\y, t)\v\in\R^{n_y}`
+        %   Hessian-vector product :math:`\grad{y,y}g(\y(t), t)\v\in\R^{n_y}`
 
         [z_out] = R_zz_Apply(this, z_in, z)
         % Compute the Hessian-vector product :math:`\grad{z,z}R(\z)\v`.

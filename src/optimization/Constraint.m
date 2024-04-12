@@ -279,7 +279,7 @@ classdef Constraint < handle
             end
             disp('Constraint z Jacobian finite difference check');
             for k = 1:p
-                disp(['h = ', num2str(h(k)), ' and error = ', num2str(diffs_z(k))]);
+                disp(['h = ', num2str(h(k), '%.1e'), ' and error = ', num2str(diffs_z(k))]);
             end
             disp(' ');
 
