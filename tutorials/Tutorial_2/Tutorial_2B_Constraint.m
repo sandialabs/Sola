@@ -42,20 +42,22 @@ classdef Tutorial_2B_Constraint < Dynamic_Constraint
         function [f, f_y, f_z] = f(this, y, z, t)
             I = this.Input_Indices(t);
             q = z(I);
+
             f = [y(2)
-                 y(1) * y(4)^2 - (this.k / y(1)^2) + q(2)
+                 y(1) * y(4)^2 - (this.k / y(1)^2) + q(1)
                  y(4)
-                 (q(1) - 2 * y(2) * y(4)) / y(1)];
+                 (q(2) - 2 * y(2) * y(4)) / y(1)];
+
             f_y = [0, 1, 0, 0
                    y(4)^2 + 2 * (this.k / y(1)^3), 0, 0, 2 * y(1) * y(4)
                    0, 0, 0, 1
-                   -(q(1) - 2 * y(2) * y(4)) / y(1)^2, (-2 * y(4)) / y(1), 0, (-2 * y(2)) / y(1)];
+                   (2 * y(2) * y(4) - q(2)) / y(1)^2, (-2 * y(4)) / y(1), 0, (-2 * y(2)) / y(1)];
 
             f_z = zeros(this.n_y, this.n_z);
             f_z(:, I) = [0, 0
-                         0, 1
+                         1, 0
                          0, 0
-                         1 / y(1), 0];
+                         0, 1 / y(1)];
         end
 
         function [h, h_z] = h(this, ~)
@@ -66,15 +68,17 @@ classdef Tutorial_2B_Constraint < Dynamic_Constraint
         function [y_out] = f_yy_Apply(this, y_in, y, z, t, lambda)
             I = this.Input_Indices(t);
             q = z(I);
+
             ijk211 = -6 * this.k * lambda(2) * y_in(1, :) / y(1)^4;
             ijk214 = 2 * lambda(2) * y(4) * y_in(4, :);
             ijk241 = 2 * lambda(2) * y(4) * y_in(1, :);
             ijk244 = 2 * lambda(2) * y(1) * y_in(4, :);
-            ijk411 = 2 * lambda(4) * y_in(1, :) * (q(1) - 2 * y(2) * y(4)) / y(1)^3;
+            ijk411 = 2 * lambda(4) * y_in(1, :) * (q(2) - 2 * y(2) * y(4)) / y(1)^3;
             ijk412 = 2 * lambda(4) * y(4) * y_in(2, :) / y(1)^2;
             ijk414 = 2 * lambda(4) * y(2) * y_in(4, :) / y(1)^2;
             ijk421 = 2 * lambda(4) * y(4) * y_in(1, :) / y(1)^2;
             ijk441 = 2 * lambda(4) * y(2) * y_in(1, :) / y(1)^2;
+
             y_out = [ijk211 + ijk214 + ijk411 + ijk412 + ijk414
                      ijk421
                      zeros(1, size(y_in, 2))
@@ -84,13 +88,13 @@ classdef Tutorial_2B_Constraint < Dynamic_Constraint
         function [y_out] = f_yz_Apply(this, z_in, y, ~, ~, lambda)
             nvecs = size(z_in, 2);
             y_out = zeros(this.n_y, nvecs);
-            mask = 1:2:this.n_z;
+            mask = 2:2:this.n_z;
             y_out(1, :) = sum(-lambda(4) * z_in(mask, :) / y(1)^2);
         end
 
         function [z_out] = f_zy_Apply(this, y_in, y, ~, ~, lambda)
             z_out = zeros(this.n_z, 1);
-            mask = 1:2:this.n_z;
+            mask = 2:2:this.n_z;
             z_out(mask) = -lambda(4) * y_in(1) / y(1)^2;
         end
 

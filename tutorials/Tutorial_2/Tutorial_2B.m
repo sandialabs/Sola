@@ -3,30 +3,29 @@ clear;
 close all;
 clc;
 run('~/Software/SABL/src/Set_Paths');
-rng(1342);              % Random seed for reproducing exact results (optional).
+rng(1342);                              % Random seed for reproducing results (optional).
 
-%% Set dimensions and problem parameters.
-n_y = 4;
-n_q = 2;
-T = 4 * pi;
-n_t = 100;
+%% Instantiate the objective and constraints.
+T = 4 * pi;                             % Final simulation time.
+n_t = 200;                              % Number of time steps.
 
 radius = 1;
 velocity = 1;
 proportionality = radius^3 * velocity^2;
-regularizer = 5;
-r0 = 1.5;
-w0 = 2;
 
-%% Solve the optimization problem.
+regularizer = 5;                        % Control regularization parameter.
+r0 = 1.5;                               % Initial position (radius).
+w0 = 2;                                 % Initial angular velocity.
+
 objective = Tutorial_2B_Objective(T, n_t, radius, velocity, regularizer);
 constraint = Tutorial_2B_Constraint(T, n_t, r0, w0, proportionality);
-optimization = Reduced_Space_Optimization(objective, constraint);
 
-z0 = randn(objective.n_z, 1);   % Initial guess for the control.
+%% Solve the optimization problem with the Gauss-Newton Hessian approximation.
+optimizer = Reduced_Space_Optimization(objective, constraint);
+optimizer.Gauss_Newton_Hess = true;     % Use Algorithm 3, not Algorithm 2.
 
-optimization.Gauss_Newton_Hess = true;
-[u, z] = optimization.Optimize(z0);
+z0 = randn(objective.n_z, 1);           % Initial guess for the control.
+[u, z] = optimizer.Optimize(z0);
 
 %% Plot the results.
 objective.Plot(u, z);

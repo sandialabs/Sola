@@ -58,39 +58,39 @@ classdef Tutorial_2_Objective < Dynamic_Objective
             x_goal = this.radius * cos(this.velocity .* t);
             y_goal = this.radius * sin(this.velocity .* t);
 
-            ys = reshape(u, this.n_y, this.n_t);
-            r = ys(1, :);
-            theta = ys(3, :);
-            x = r .* cos(theta);
-            y = r .* sin(theta);
+            y = reshape(u, this.n_y, this.n_t);
+            r = y(1, :);
+            theta = y(3, :);
+            x1 = r .* cos(theta);
+            x2 = r .* sin(theta);
             lim = 1.2 * max(r);
 
             % Plot the state trajectory coordinates in time.
             fig = figure;
-            fig.Position(3:4) = [950, 450];
+            fig.Position(3:4) = [830, 300];
             subplot(1, 2, 1);
-            plot(t, x, '-', 'LineWidth', 2);
+            plot(t, x1, '-', 'LineWidth', 2);
             hold on;
-            plot(t, y, '-', 'LineWidth', 2);
+            plot(t, x2, '-', 'LineWidth', 2);
             plot(t, -ones(this.n_t, 1), 'k-', 'LineWidth', 0.1);
             plot(t, ones(this.n_t, 1), 'k-', 'LineWidth', 0.1);
             xlim([0, t(end)]);
             ylim([-lim, lim]);
             xlabel('$$t$$', 'Interpreter', 'latex');
-            title('Coordinates over time');
-            legend({'$$x(t)$$', '$$y(t)$$', '', ''}, ...
+            title('Position coordinates');
+            legend({'$$x_1(t)$$', '$$x_2(t)$$', '', ''}, ...
                    'Location', 'southeast', 'Interpreter', 'latex');
 
             % Plot the state trajectory in two-dimensional space.
             subplot(1, 2, 2);
             plot(x_goal, y_goal, 'k--', 'LineWidth', 2);
             hold on;
-            plot(x, y, '-', 'LineWidth', 1);
-            plot(x(1), y(1), '.', 'MarkerSize', 16);
+            plot(x1, x2, '-', 'LineWidth', 1);
+            plot(x1(1), x2(1), '.', 'MarkerSize', 16);
             xlim([-lim, lim]);
             ylim([-lim, lim]);
-            xlabel('$$x(t)$$', 'Interpreter', 'latex');
-            ylabel('$$y(t)$$', 'Interpreter', 'latex');
+            xlabel('$$x_1(t)$$', 'Interpreter', 'latex');
+            ylabel('$$x_2(t)$$', 'Interpreter', 'latex');
             title('Position');
             axis('equal');
             legend({'target trajectory', 'realized trajectory', 'initial position'}, ...
