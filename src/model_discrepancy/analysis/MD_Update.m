@@ -47,11 +47,11 @@ classdef MD_Update < handle
             Zc = this.md_post_sampling.post_data.Z(:, 2:end) - this.z_opt;
             W_z_Inv_Zc = this.md_post_sampling.post_data.W_z_inv_Z(:, 2:end) - this.md_post_sampling.post_data.W_z_inv_z_opt;
             Zc_W_z_Inv_Zc = Zc' * W_z_Inv_Zc;
-            tmp1 = Zc' * this.md_post_sampling.post_data.zbreve;
+            tmp1 = Zc' * this.md_post_sampling.post_data.z_breve;
             tmp2 = linsolve(Zc_W_z_Inv_Zc, tmp1);
             tmp3 = W_z_Inv_Zc * tmp2;
             coeff = sqrt(this.state_grad_W_u_inv_state_grad);
-            Btheta_breve = coeff * (this.md_post_sampling.post_data.zbreve - tmp3);
+            Btheta_breve = coeff * (this.md_post_sampling.post_data.z_breve - tmp3);
 
             z_update_samples = z_update_mean - this.md_hessian_analysis.Apply_RS_Hessian_Inverse(Btheta_hat + Btheta_breve, this.z_opt);
         end

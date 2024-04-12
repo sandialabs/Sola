@@ -14,7 +14,7 @@ classdef MD_Posterior_Sampling < handle
             this.data_interface = data_interface;
             this.u_prior_interface = u_prior_interface;
             this.z_prior_interface = z_prior_interface;
-            this.post_data = MD_Bayes_Posterior_Data();
+            this.post_data = MD_Posterior_Data();
             this.z_opt = data_interface.z_opt;
         end
 

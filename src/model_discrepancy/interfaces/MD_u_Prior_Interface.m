@@ -10,7 +10,7 @@ classdef MD_u_Prior_Interface < handle
 
         [u_out] = Apply_M_u(this, u_in)
 
-        [u_out] = Apply_W_u_Plus_scalar_M_u_Inverse(this, u_in, beta)
+        [u_out] = Apply_W_u_Plus_scalar_M_u_Inverse(this, u_in, scalar)
 
         [u_out] = Apply_W_u_Inverse(this, u_in)
 

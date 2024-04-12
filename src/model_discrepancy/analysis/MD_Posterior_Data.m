@@ -1,4 +1,4 @@
-classdef MD_Bayes_Posterior_Data < handle
+classdef MD_Posterior_Data < handle
 
     properties
         alpha_d
@@ -18,12 +18,12 @@ classdef MD_Bayes_Posterior_Data < handle
         num_samples
         ui_hat
         u_breve
-        zbreve
+        z_breve
     end
 
     methods
 
-        function this = MD_Bayes_Posterior_Data()
+        function this = MD_Posterior_Data()
 
         end
 
@@ -65,7 +65,7 @@ classdef MD_Bayes_Posterior_Data < handle
 
                 this.u_breve = u_prior_interface.Sample_with_Covariance_W_u_Inverse(this.num_samples);
 
-                this.zbreve = z_prior_interface.Sample_with_Covariance_W_z_Inverse(this.num_samples);
+                this.z_breve = z_prior_interface.Sample_with_Covariance_W_z_Inverse(this.num_samples);
 
             end
 
