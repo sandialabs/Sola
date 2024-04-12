@@ -76,9 +76,6 @@ classdef MD_Posterior_Sampling < handle
             delta_mean = cell(p, 1);
             delta_samples = cell(p, 1);
 
-            Zc = this.post_data.Z(:, 2:end) - this.z_opt;
-            Zc_W_z_Inv_Zc = Zc' * (this.post_data.W_z_inv_Z(:, 2:end) - this.post_data.W_z_inv_z_opt);
-
             for k = 1:p
                 dz = z(:, k) - this.z_opt;
 
@@ -100,7 +97,7 @@ classdef MD_Posterior_Sampling < handle
                 delta_samples_k = sqrt(this.post_data.alpha_d) * delta_samples_k;
 
                 W_z_Inv_dz = this.z_prior_interface.Apply_W_z_Inverse(dz);
-                tmp = dz' * W_z_Inv_dz - W_z_Inv_dz' * Zc * linsolve(Zc_W_z_Inv_Zc, Zc' * W_z_Inv_dz);
+                tmp = dz' * W_z_Inv_dz - W_z_Inv_dz' * this.post_data.Zc * linsolve(this.post_data.Zc_W_z_inv_Zc, this.post_data.Zc' * W_z_Inv_dz);
                 if tmp < -1.e-13
                     disp('Error in Posterior Discrepancy Samples: delta breve coeff < 0');
                 end

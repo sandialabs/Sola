@@ -7,6 +7,9 @@ classdef MD_Posterior_Data < handle
         D
         W_z_inv_Z
         W_z_inv_z_opt
+        Zc
+        W_z_inv_Zc
+        Zc_W_z_inv_Zc
         G
         g_vecs
         Mu
@@ -36,11 +39,16 @@ classdef MD_Posterior_Data < handle
 
             this.W_z_inv_Z = z_prior_interface.Apply_W_z_Inverse(this.Z);
             this.W_z_inv_z_opt = z_prior_interface.Apply_W_z_Inverse(z_opt);
+
+            this.Zc = this.Z(:, 2:end) - z_opt;
+            this.W_z_inv_Zc = this.W_z_inv_Z(:, 2:end) - this.W_z_inv_z_opt;
+            this.Zc_W_z_inv_Zc = this.Zc' * this.W_z_inv_Zc;
+
             this.G = (1 + this.W_z_inv_z_opt' * z_opt) - this.Z' * this.W_z_inv_z_opt - this.W_z_inv_z_opt' * this.Z + this.Z' * this.W_z_inv_Z;
             [this.g_vecs, this.Mu] = eig(this.G);
 
-            M_u_Y = u_prior_interface.Apply_M_u(this.D);
-            this.u_ell = u_prior_interface.Apply_W_u_Inverse(M_u_Y);
+            M_u_D = u_prior_interface.Apply_M_u(this.D);
+            this.u_ell = u_prior_interface.Apply_W_u_Inverse(M_u_D);
             this.u_i_ell = cell(this.N, 1);
             M_u_u_ell = u_prior_interface.Apply_M_u(this.u_ell);
             for i = 1:this.N

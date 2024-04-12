@@ -44,12 +44,9 @@ classdef MD_Update < handle
             Btheta_hat = Btheta_hat + this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(tmp, this.z_opt);
             Btheta_hat = sqrt(this.md_post_sampling.post_data.alpha_d) * Btheta_hat;
 
-            Zc = this.md_post_sampling.post_data.Z(:, 2:end) - this.z_opt;
-            W_z_Inv_Zc = this.md_post_sampling.post_data.W_z_inv_Z(:, 2:end) - this.md_post_sampling.post_data.W_z_inv_z_opt;
-            Zc_W_z_Inv_Zc = Zc' * W_z_Inv_Zc;
-            tmp1 = Zc' * this.md_post_sampling.post_data.z_breve;
-            tmp2 = linsolve(Zc_W_z_Inv_Zc, tmp1);
-            tmp3 = W_z_Inv_Zc * tmp2;
+            tmp1 = this.md_post_sampling.post_data.Zc' * this.md_post_sampling.post_data.z_breve;
+            tmp2 = linsolve(this.md_post_sampling.post_data.Zc_W_z_inv_Zc, tmp1);
+            tmp3 = this.md_post_sampling.post_data.W_z_inv_Zc * tmp2;
             coeff = sqrt(this.state_grad_W_u_inv_state_grad);
             Btheta_breve = coeff * (this.md_post_sampling.post_data.z_breve - tmp3);
 
