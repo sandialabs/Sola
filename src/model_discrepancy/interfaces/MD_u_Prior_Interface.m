@@ -21,13 +21,13 @@ classdef MD_u_Prior_Interface < handle
         % Compute samples from a mean zero Gaussian with covariance W_u^{-1}
         function [u_out] = Sample_with_Covariance_W_u_Inverse(this, num_samples)
             u_out = [];
-            disp('Sample_with_Covariance_W_u_Inverse must be implemented to use sampling algorithms');
+            disp('MD_u_Prior_Interface::Sample_with_Covariance_W_u_Inverse must be implemented to use sampling algorithms');
         end
 
         % Compute samples from a mean zero Gaussian with covariance (W_u+scalar*M_u)^{-1}
         function [u_out] = Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(this, num_samples, scalar)
             u_out = [];
-            disp('Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse must be implemented to use sampling algorithms');
+            disp('MD_u_Prior_Interface::Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse must be implemented to use sampling algorithms');
         end
 
         function this = MD_u_Prior_Interface()

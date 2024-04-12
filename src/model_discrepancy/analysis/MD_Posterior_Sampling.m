@@ -102,7 +102,7 @@ classdef MD_Posterior_Sampling < handle
                 W_z_Inv_dz = this.z_prior_interface.Apply_W_z_Inverse(dz);
                 tmp = dz' * W_z_Inv_dz - W_z_Inv_dz' * Zc * linsolve(Zc_W_z_Inv_Zc, Zc' * W_z_Inv_dz);
                 if tmp < -1.e-13
-                    disp('Error in Posterior Discrepancy Samples');
+                    disp('Error in Posterior Discrepancy Samples: delta breve coeff < 0');
                 end
                 breve_coeff = sqrt(abs(tmp));
                 delta_samples_k = delta_samples_k + breve_coeff * this.post_data.u_breve;

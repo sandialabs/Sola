@@ -21,25 +21,25 @@ classdef MD_Elliptic_z_Prior_Interface < MD_z_Prior_Interface
         % This function must be implemented to enable Hessian GEVP
         function [z_out] = Apply_E_z(this, z_in)
             z_out = [];
-            disp('Apply_E_z must be implemented to use Hessian GEVP');
+            disp('MD_Elliptic_z_Prior_Interface::Apply_E_z must be implemented to use Hessian GEVP');
         end
 
         % This function must be implemented to enable Hessian GEVP
         function [z_out] = Apply_E_z_Transpose(this, z_in)
             z_out = [];
-            disp('Apply_E_z_Transpose must be implemented to use Hessian GEVP');
+            disp('MD_Elliptic_z_Prior_Interface::Apply_E_z_Transpose must be implemented to use Hessian GEVP');
         end
 
         % This function must be implemented to enable Hessian GEVP
         function [z_out] = Apply_M_z_Inverse(this, z_in)
             z_out = [];
-            disp('Apply_M_z_Inverse must be implemented to use Hessian GEVP');
+            disp('MD_Elliptic_z_Prior_Interface::Apply_M_z_Inverse must be implemented to use Hessian GEVP');
         end
 
         % Compute samples from a mean zero Gaussian with covariance W_z^{-1}
         function [z_out] = Sample_with_Covariance_W_z_Inverse(this, num_samples)
             z_out = [];
-            disp('Sample_with_Covariance_W_z_Inverse must be implemented to use sampling algorithms');
+            disp('MD_Elliptic_z_Prior_Interface::Sample_with_Covariance_W_z_Inverse must be implemented to use sampling algorithms');
         end
 
         function this = MD_Elliptic_z_Prior_Interface(alpha_z)
