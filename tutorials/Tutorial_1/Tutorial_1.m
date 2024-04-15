@@ -1,4 +1,4 @@
-%% Clear workspace and add the SABL optimization source path.
+%% Clear workspace and add the SABL source path.
 clear;
 close all;
 clc;

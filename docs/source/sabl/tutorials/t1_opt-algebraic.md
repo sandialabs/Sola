@@ -409,7 +409,7 @@ end
 ::::{admonition} Exercise 3
 :class: exercise
 
-Implement, in a vectorized fashion, `J_zu_Apply()` for computing $\grad{zu}J(\u,\z)\v_u$ and `J_zz_Apply()` for computing $\grad{zz}J(\u,\z)\v_z$.
+Implement, in a vectorized fashion, `J_zu_Apply()` for computing $\grad{z,u}J(\u,\z)\v_u$ and `J_zz_Apply()` for computing $\grad{z,z}J(\u,\z)\v_z$.
 
 :::{admonition} Solution
 :class: solution dropdown
@@ -682,7 +682,8 @@ $$
 
 ### Constraint Implementation
 
-We now define a new class, `Tutorial_1_Constraint`, inheriting from {class}`Constraint` that implements the abstract methods, see the [inheritance template](optimization.Constraint.template) to get started.
+We now define a new class, `Tutorial_1_Constraint`, that inherits from {class}`Constraint` and implements its abstract methods.
+See the [inheritance template](optimization.Constraint.template) to get started.
 The class must be defined in a file named `Tutorial_1_Constraint.m`.
 Note that in the Jacobian methods, `u_in`, and `z_in` are always treated as matrices, not column vectors.
 
@@ -814,14 +815,14 @@ Here we are use the constants $\alpha_{1} = 7$, $\alpha_{2} = 1$, $\alpha_{3} = 
 In this case, the solution to the optimization problem is $\u = (\alpha_1,\alpha_2,\alpha_3)\trp$ and $\z = (\alpha_4,\alpha_5)\trp$.
 
 ```matlab
-% Tutorial.m
+% Tutorial_1.m
 
 %% Clear workspace and add the SABL optimization source path.
 clear;
 close all;
 clc;
-addpath('~/SABL/src/');     % MODIFY THIS TO MATCH YOUR PATH TO SABL.
-rng(1342);                  % Random seed for reproducing exact results (optional).
+run('~/Software/SABL/src/Set_Paths');   % MODIFY THIS TO MATCH YOUR PATH TO SABL.
+rng(1342);                              % Random seed for reproducing results (optional).
 
 %% Instantiate the objective and constraints.
 alphas = [7; 1; 4; 8; 8];
@@ -906,7 +907,7 @@ The error should be small for some or all step sizes, which is what we see in th
 
 ## Solving the Problem
 
-Now that we are confident that our derivatives are implemented correctly, we couple the objective and constraint by instantiating a {class}`Reduced_Space_Optimization` object.
+Now that we are confident that our derivatives are implemented correctly, we couple the objective and constraint in a {class}`Reduced_Space_Optimization` object.
 
 ```matlab
 % Tutorial_1.m (continued)

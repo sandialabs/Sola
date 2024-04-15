@@ -3,6 +3,17 @@ classdef Constraint < handle
     % :math:`\u \in \R^{n_u}` is the state and
     % :math:`\z \in \R^{n_z}` is the control.
 
+    %% Constructor (empty).
+
+    methods (Access = public)
+
+        function this = Constraint()
+        end
+
+    end
+
+    %% Required abstract methods.
+
     methods (Abstract, Access = public)
 
         [u] = State_Solve(this, z)
@@ -92,6 +103,8 @@ classdef Constraint < handle
         %   Jacobian-vector product :math:`c_z(\u,\z)\v\in\R^{n_u}`.
 
     end
+
+    %% Semi-abstract methods, required when Gauss_Newton_Hess = false.
 
     methods (Access = public)
 
@@ -212,11 +225,9 @@ classdef Constraint < handle
 
     end
 
+    %% Finite difference checks.
+
     methods (Access = public)
-
-        function this = Constraint()
-
-        end
 
         function [diffs_z, jacobian_z_transpose_check, diffs_u, jacobian_u_transpose_check, solve_res] = Finite_Difference_Constraint_Check(this, u, z)
             % Check the implementation of the following via finite differences.
@@ -268,7 +279,7 @@ classdef Constraint < handle
             end
             disp('Constraint z Jacobian finite difference check');
             for k = 1:p
-                disp(['h = ', num2str(h(k)), ' and error = ', num2str(diffs_z(k))]);
+                disp(['h = ', num2str(h(k), '%.1e'), ' and error = ', num2str(diffs_z(k))]);
             end
             disp(' ');
 

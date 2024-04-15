@@ -1,6 +1,6 @@
 # `Dynamic_Constraint`
 
-:::{admonition} Abstract Methods
+::::{admonition} Abstract Methods
 :class: abstract
 
 {class}`Dynamic_Constraint` is an abstract class.
@@ -8,11 +8,20 @@ Classes that inherit from it must implement the following methods.
 
 - {meth}`Dynamic_Constraint.f()`
 - {meth}`Dynamic_Constraint.h()`
+
+The following methods are not abstract, but they must be implemented to use {meth}`Reduced_Space_Optimization.Optimize()` with the default options ({prf:ref}`alg:adjoint_hessvec`).
+We label these _semi-abstract_.
+Set `Reduced_Space_Optimization.Gauss_Newton_Hess = true` to use {prf:ref}`alg:adjoint_gaussnewton` instead, which does not rely on these methods.
+
 - {meth}`Dynamic_Constraint.f_yy_Apply()`
 - {meth}`Dynamic_Constraint.f_yz_Apply()`
 - {meth}`Dynamic_Constraint.f_zy_Apply()`
 - {meth}`Dynamic_Constraint.f_zz_Apply()`
 - {meth}`Dynamic_Constraint.h_zz_Apply()`
+
+:::{danger}
+Because of how MATLAB's [`fminunc()`](https://www.mathworks.com/help/optim/ug/fminunc.html) is designed, the above methods must be implemented in a _vectorized_ fashion, i.e., assuming that `y_in`/`z_in` is a matrix where each column is a test direction.
+:::
 
 {class}`Dynamic_Constraint` implements the following abstract methods from its parent class, i.e., inherited classes **should not** implement these methods.
 
@@ -27,7 +36,7 @@ Classes that inherit from it must implement the following methods.
 - {meth}`Constraint.c_zz_Apply()`
 
 See the [Inheritance Template](optimization.Dynamic_Constraint.template) to start a new subclass of {class}`Dynamic_Constraint`.
-:::
+::::
 
 ## Class Definition
 
@@ -45,7 +54,7 @@ See the [Inheritance Template](optimization.Dynamic_Constraint.template) to star
 ```matlab
 classdef My_Dynamic_Constraint < Dynamic_Constraint
 
-    methods (Abstract, Access = public)
+    methods (Access = public)
 
         function [f, f_y, f_z] = f(this, y, z, t)
             error('f() not implemented');

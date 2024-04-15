@@ -7,6 +7,17 @@ classdef Objective < handle
     % :math:`\u \in \R^{n_u}` is the state and
     % :math:`\z \in \R^{n_z}` is the control.
 
+    %% Constructor (empty).
+
+    methods (Access = public)
+
+        function this = Objective()
+        end
+
+    end
+
+    %% Required abstract methods.
+
     methods (Abstract, Access = public)
 
         [val, grad_u, grad_z] = J(this, u, z)
@@ -99,13 +110,9 @@ classdef Objective < handle
 
     end
 
+    %% Finite difference checks.
+
     methods (Access = public)
-
-        function this = Objective()
-
-        end
-
-        % Finite difference test functions
 
         function [diffs_u, diffs_z] = Finite_Difference_Gradient_Check(this, u, z)
             % Check the implementation of :meth:`J()` via finite differences.

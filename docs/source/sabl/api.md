@@ -9,25 +9,17 @@ This section documents the public API for the classes defined in SABL.
    :maxdepth: 1
 
    api/optimization_Objective
+   api/automatic_differentiation_Objective_AD.md
    api/optimization_Dynamic_Objective
+   api/automatic_differentiation_Dynamic_Objective_AD.md
    api/optimization_Constraint
+   api/automatic_differentiation_Constraint_AD.md
    api/optimization_Dynamic_Constraint
+   api/automatic_differentiation_Dynamic_Constraint_AD.md
    api/optimization_Reduced_Space_Optimization
 ```
 
-### Automatic Differentiation
-
-```{eval-rst}
-.. toctree::
-   :maxdepth: 1
-
-   api/automatic_differentiation_Objective_AD.md
-   api/automatic_differentiation_Dynamic_Objective_AD.md
-   api/automatic_differentiation_Constraint_AD.md
-   api/automatic_differentiation_Dynamic_Constraint_AD.md
-```
-
-### Model Reduction
+## Model Reduction
 
 ```{eval-rst}
 .. toctree::

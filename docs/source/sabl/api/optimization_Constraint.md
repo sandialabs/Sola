@@ -1,6 +1,6 @@
 # `Constraint`
 
-:::{admonition} Abstract Methods
+::::{admonition} Abstract Methods
 :class: abstract
 
 {class}`Constraint` is an abstract class.
@@ -13,10 +13,10 @@ Classes that inherit from it must implement the following methods.
 - {meth}`Constraint.c_z_Apply()`
 
 :::{danger}
-Because of how MATLAB's [`fminunc()`](https://www.mathworks.com/help/optim/ug/fminunc.html) is designed, the `c_x_XXX()` methods (e.g., `c_z_Apply()`) must be implemented in a _vectorized_ fashion, i.e., assuming that `v` is a matrix where each column is a test direction.
+Because of how MATLAB's [`fminunc()`](https://www.mathworks.com/help/optim/ug/fminunc.html) is designed, the above methods (except `State_Solve()`) must be implemented in a _vectorized_ fashion, i.e., assuming that `u_in`/`z_in` is a matrix where each column is a test direction.
 :::
 
-The following equations are not abstract, but they must be implemented to use {meth}`Reduced_Space_Optimization.Optimize()` with the default options ({prf:ref}`alg:adjoint_hessvec`).
+The following methods are not abstract, but they must be implemented to use {meth}`Reduced_Space_Optimization.Optimize()` with the default options ({prf:ref}`alg:adjoint_hessvec`).
 We label these _semi-abstract_.
 Set `Reduced_Space_Optimization.Gauss_Newton_Hess = true` to use {prf:ref}`alg:adjoint_gaussnewton` instead, which does not rely on these methods.
 
@@ -28,7 +28,7 @@ Set `Reduced_Space_Optimization.Gauss_Newton_Hess = true` to use {prf:ref}`alg:a
 Finally, {meth}`Constraint.c()` is not abstract, but it must be implemented in order to use the finite difference check {meth}`Constraint.Finite_Difference_Constraint_Check()`.
 
 See the [Inheritance Template](optimization.Constraint.template) to start a new subclass of {class}`Constraint`.
-:::
+::::
 
 ## Class Definition
 
