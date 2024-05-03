@@ -40,11 +40,11 @@ classdef Example_1_Constraint < Constraint
         end
 
         function [z_out] = c_zu_Apply(this, u_in, u, z, lambda)
-            z_out = [0; lambda(1) * u_in(2)];
+            z_out = [lambda(2) * u_in(2); 0];
         end
 
         function [z_out] = c_zz_Apply(this, z_in, u, z, lambda)
-            z_out = [0; -2 * lambda(2) * z_in(2)];
+            z_out = [0; -2 * lambda(3) * z_in(2)];
         end
 
     end
