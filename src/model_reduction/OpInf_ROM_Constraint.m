@@ -15,7 +15,7 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
     % The system operators are determined by solving a regression problem,
     %
     % .. math::
-    %  \min_{\c,\A,\H,\B}\sum_{j=1}^{n_t}\left\|
+    %  \min_{\c,\A,\H,\B}\sum_{j=2}^{n_t}\left\|
     %  \c + \A\y_j + \H[\y_j\otimes\y_j] + \B\q_j - \dot{\y}_j
     %  \right\|_{2}^{2}
     %  + \left\|\bfGamma[~\c~~\A~~\H~~\B~]\trp\right\|_{F}^{2},
@@ -36,32 +36,41 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
     % .. math::
     %  \u = \left(\begin{array}{c}\y_1 \\ \vdots \\ \y_{n_t}\end{array}\right)\in\R^{n_u},
     %  \qquad
-    %  \z = \left(\begin{array}{c}\q_1 \\ \vdots \\ \q_{n_t}\end{array}\right)\in\R^{n_z},
+    %  \z = \left(\begin{array}{c}\q_2 \\ \vdots \\ \q_{n_t}\end{array}\right)\in\R^{n_z},
     %
-    % with :math:`n_u = n_y n_t` and :math:`n_z = n_q n_t`.
-    % Note that the state and the control share a time mesh.
+    % with :math:`n_u = n_y n_t` and :math:`n_z = n_q (n_t - 1)`.
+    % Note that the state and the control share a time mesh, which is important for the definition
+    % of the regression problem. However, the control is not measured at the initial condition
+    % because the system is solved with a one-step implicit time integration scheme.
     %
-    % The user indicates the terms to appear in the system.
+    % The user indicates which terms appear in the system via the ``operators`` argument.
     %
     % Example
     % -------
     % .. code-block:: matlab
     %
-    %  y0 = randn(20, 1);
+    %  % Define dimensions, final time, and initial conditions.
+    %  n_y = 20;            % ODE state dimension (at a fixed time).
+    %  n_q = 4;             % ODE control dimension (at a fixed time).
+    %  T = 1;               % Final simulation time.
+    %  n_t = 400;           % Number of time steps.
+    %  y0 = randn(n_y, 1);  % Initial condition.
+    %
+    %  % Define a list of operator terms and construct the constraint.
     %  operators = {Constant_Operator(), Linear_Operator(), ...
     %               Quadratic_Operator(), Input_Operator()};
-    %  constraint = OpInf_ROM_Constraint(20, 4, 1, 400, y0, operators);
+    %  constraint = OpInf_ROM_Constraint(n_y, 4, T, 400, y0, operators);
 
     properties
         regularizer         % Tikhonov regularization matrix.
         operators           % Operator objects defining the differential system.
+        y0                  % Initial condition :math:`\y(0)\in\R^{n_y}` for the ODE.
     end
 
     properties (SetAccess = protected)
         n_q                 % Dimension :math:`n_q` of the input :math:`\q(t)`.
         ds
         d                   % Number of operator entries for each system mode.
-        y0                  % Initial condition :math:`\y(0)\in\R^{n_y}` for the ODE.
         inferred_operators  % Track which operators need to be learned.
     end
 
@@ -130,6 +139,14 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             this.regularizer = reg;
         end
 
+        function set.y0(this, init)
+            % Set the initial condition.
+            if length(init) ~= this.n_y
+                error('y0 must have n_y entries');
+            end
+            this.y0 = reshape(init, this.n_y, 1);
+        end
+
     end
 
     methods (Access = public)
@@ -165,7 +182,32 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
 
         %% Training.
 
-        function [Y, dYdt] = Estimate_State_ddts(this, Y)
+        function [Y] = State_Solve2(this, Q)
+            % Solve the constraint equation :math:`\c(\u,\z) = \0` by
+            % integrating the ordinary differential equation
+            % :math:`\ddt\y(t) = \f(\y(t),\z,t),~~\y(0)=\y_0`
+            % in time using the first-order implicit Euler method.
+            %
+            % This method calls :meth:`State_Solve` with some convenience reshaping.
+            %
+            % Parameters
+            % ----------
+            % Q
+            %   Control profile :math:`\Q\in\R^{n_q\times(n_t - 1)}` representing
+            %   the :math:`n_q` control nodes at all time points except for the
+            %   initial time (because of the Backward Euler scheme).
+            %
+            % Returns
+            % -------
+            % Y : :math:`n_y \times n_t` matrix
+            %   State solution :math:`[~\y_1~~\cdots~~\y_{n_t}~]\in\R^{n_y\times n_t}`
+            %   where :math:`\y_j` is the ODE state at time :math:`t_j`.
+            Z = reshape(Q, this.n_z, 1);
+            U = this.State_Solve(Z);
+            Y = reshape(U, this.n_y, this.n_t);
+        end
+
+        function [dYdt] = Estimate_State_ddts(this, Y)
             % Use first-order backward differences to estimate the time
             % derivatives of the training states.
             %
@@ -177,16 +219,109 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             %
             % Returns
             % -------
-            % Y
-            %   State snapshots :math:`\Y \in \R^{n_y \times (n_t - 1)}`,
-            %   not including the initial condition.
             % dYdt
-            %   Time derivative of snapshots,
-            %   :math:`\dot{\Y} \in \R^{n_y \times (n_t - 1)}`.
+            %   Time derivative corresponding to the snapshots
+            %   except at the initial condition,
+            %   :math:`\dot{\Y} \in \R^{n_y \times (n_t - 1)}`,
 
             dt = this.t_mesh(2) - this.t_mesh(1);
             dYdt = (Y(:, 2:end) - Y(:, 1:(end - 1))) / dt;
-            Y = Y(:, 2:end);
+        end
+
+        function [dYdt] = Estimate_State_ddts_2ndOrder(this, Y)
+            % Use second-order differences to estimate the time
+            % derivatives of the training states.
+            %
+            % Parameters
+            % ----------
+            % Y
+            %   State snapshots :math:`\Y \in \R^{n_y \times n_t}`.
+            %   This includes the initial condition.
+            %
+            % Returns
+            % -------
+            % dYdt
+            %   Time derivative corresponding to the snapshots
+            %   except at the initial condition,
+            %   :math:`\dot{\Y} \in \R^{n_y \times (n_t - 1)}`,
+
+            dt = this.t_mesh(2) - this.t_mesh(1);
+            dYdt = zeros(size(Y));
+            % Forward difference for the first point.
+            % dYdt(:, 1) = -3 * Y(:, 1) + 4 * Y(:, 2) - Y(:, 3);
+            % Central difference for the interior points.
+            dYdt(:, 2:end - 1) = -Y(:, 1:end - 2) + Y(:, 3:end);
+            % Backward difference for the last point.
+            dYdt(:, end) = 3 * Y(:, end - 1) - 4 * Y(:, end - 2) + Y(:, end - 3);
+            dYdt = dYdt(:, 2:end) / (2 * dt);
+        end
+
+        function [dYdt] = Estimate_State_ddts_4thOrder(this, Y)
+            % Use fourth-order differences to estimate the time
+            % derivatives of the training states.
+            %
+            % Parameters
+            % ----------
+            % Y
+            %   State snapshots :math:`\Y \in \R^{n_y \times n_t}`.
+            %   This includes the initial condition.
+            %
+            % Returns
+            % -------
+            % dYdt
+            %   Time derivative corresponding to the snapshots
+            %   except at the initial condition,
+            %   :math:`\dot{\Y} \in \R^{n_y \times (n_t - 1)}`,
+            dt = this.t_mesh(2) - this.t_mesh(1);
+            dYdt = zeros(size(Y));
+            % Forward difference for the first two points.
+            for j = 2:2
+                dYdt(:, j) = -25 * Y(:, j) + 48 * Y(:, j + 1) - 36 * Y(:, j + 2) + 16 * Y(:, j + 3) - 3 * Y(:, j + 4);
+            end
+            % Central difference for the interior points.
+            dYdt(:, 3:end - 2) = Y(:, 1:end - 4) - 8 * Y(:, 2:end - 3) + 8 * Y(:, 4:end - 1) - Y(:, 5:end);
+            % Backward difference for the last three points.
+            for j = 0:1
+                dYdt(:, end - j) = 25 * Y(:, end - j) - 48 * Y(:, end - j - 1) + 36 * Y(:, end - j - 2) - 16 * Y(:, end - j - 3) + 3 * Y(:, end - j - 4);
+            end
+            dYdt = dYdt(:, 2:end) / (12 * dt);
+            % Yk = Y(:, 3:end - 2);
+            % Qk = Q(:, 2:end - 2);
+            % dYdt = (Y(:, 1:end - 4) - 8 * Y(:, 2:end - 3) + 8 * Y(:, 4:end - 1) - Y(:, 5:end)) / (12 * dt);
+        end
+
+        function [dYdt] = Estimate_State_ddts_6thOrder(this, Y)
+            % Use sixth-order differences to estimate the time
+            % derivatives of the training states.
+            %
+            % Parameters
+            % ----------
+            % Y
+            %   State snapshots :math:`\Y \in \R^{n_y \times n_t}`.
+            %   This includes the initial condition.
+            %
+            % Returns
+            % -------
+            % dYdt
+            %   Time derivative corresponding to the snapshots
+            %   except at the initial condition,
+            %   :math:`\dot{\Y} \in \R^{n_y \times (n_t - 1)}`,
+            dt = this.t_mesh(2) - this.t_mesh(1);
+            dYdt = zeros(size(Y));
+            % Forward difference for the first three points.
+            for j = 2:3
+                dYdt(:, j) = -147 * Y(:, j) + 360 * Y(:, j + 1) - 450 * Y(:, j + 2) + 400 * Y(:, j + 3) - 225 * Y(:, j + 4) + 72 * Y(:, j + 5) - 10 * Y(:, j + 6);
+            end
+            % Central difference for the interior points.
+            dYdt(:, 4:end - 3) = -Y(:, 1:end - 6) + 9 * Y(:, 2:end - 5) - 45 * Y(:, 3:end - 4) + 45 * Y(:, 5:end - 2) - 9 * Y(:, 6:end - 1) + Y(:, 7:end);
+            % Backward difference for the last three points.
+            for j = 0:2
+                dYdt(:, end - j) = 147 * Y(:, end - j) - 360 * Y(:, end - j - 1) + 450 * Y(:, end - j - 2) - 400 * Y(:, end - j - 3) + 225 * Y(:, end - j - 4) - 72 * Y(:, end - j - 5) + 10 * Y(:, end - j - 6);
+            end
+            dYdt = dYdt(:, 2:end) / (60 * dt);
+            % Yk = Y(:, 4:end - 3);
+            % Qk = Q(:, 3:end - 3);
+            % dYdt = (-Y(:, 1:end - 6) + 9 * Y(:, 2:end - 5) - 45 * Y(:, 3:end - 4) + 45 * Y(:, 5:end - 2) - 9 * Y(:, 6:end - 1) + Y(:, 7:end)) / (60 * dt);
         end
 
         function Learn_Operators(this, Y, Q, dYdt)
@@ -252,9 +387,6 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
                 end
             end
 
-            % disp(['Data matrix size: (', num2str(size(D, 1)), ', ', num2str(size(D, 2)), ')']);
-            % disp(['RHS matrix size: (', num2str(size(dYdt, 2)), ', ', num2str(size(dYdt, 1)), ')']);
-
             % Solve the regression problem for the operator entries.
             if norm(this.regularizer) > 0
                 % Tikhonov regularization.
@@ -263,8 +395,6 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
                 % No regularization.
                 Ohat = lscov(D, rhs')';
             end
-
-            % disp(['Operator matrix size: (', num2str(size(Ohat, 1)), ', ', num2str(size(Ohat, 2)), ')']);
 
             % Unpack the operator entries.
             index = 1;
@@ -277,17 +407,21 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             end
         end
 
-        function [best_reg] = Select_Regularization(this, states, controls, reg_candidates)
+        function [best_reg] = Select_Regularization(this, states, controls, reg_candidates, ddt_strategy)
             % Use a grid search to select a scalar regularization hyperparameter.
             %
             % Parameters
             % ----------
             % states
-            %   Compressed training states :math:`\uhat\in\R^{n_y'n_t\times k}`
-            %   where :math:`k` is the number of trajectories.
+            %   Compressed training states :math:`\Y_1,\ldots\Y_k\in\R^{n_y \times n_t}`
+            %   where :math:`k` is the number of trajectories. This is an
+            %   :math:`n_y \times n_t \times k` tensor or (optionally), if :math:`k = 1`,
+            %   an :math:`n_y \times n_t` matrix.
             % controls
-            %   Control profiles :math:`\z\in\R^{n_z\times k}`
-            %   corresponding to the training states.
+            %   Control profiles :math:`\Q_1,\ldots,\Q_k\in\R^{n_q \times (n_t - 1)}`
+            %   corresponding to the training states, where :math:`k` is the number of
+            %   trajectories. This is an :math:`n_q \times (n_t - 1) \times k` tensor or
+            %   (optionally), if :math:`k = 1`, an :math:`n_q \times (n_t - 1)` matrix.
             % reg_candidates
             %   Candidate regularization values to check.
             %
@@ -295,39 +429,83 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             % -------
             % best_reg : float
             %   Best regularization hyperparameter.
-            num_trajectories = size(states, 2);
+            arguments
+                this
+                states {mustBeNumeric}
+                controls {mustBeNumeric}
+                reg_candidates {mustBeNumeric}
+                ddt_strategy {mustBeText} = "bwd1"
+            end
+
+            if length(size(states)) == 2
+                states = reshape(states, size(states, 1), size(states, 2), 1);
+            end
+            if length(size(controls)) == 2
+                controls = reshape(controls, size(controls, 1), size(controls, 2), 1);
+            end
+            num_trajectories = size(states, 3);
+            num_snapshots_per_trajectory = this.n_t - 1;
+
+            if size(states, 1) ~= this.n_y
+                error('states should have n_y rows');
+            elseif size(states, 2) ~= this.n_t
+                error('states should have n_t columns');
+            elseif size(controls, 1) ~= this.n_q
+                error('controls should have n_q rows');
+            elseif size(controls, 2) ~= num_snapshots_per_trajectory
+                error('controls should have n_t - 1 columns');
+            elseif size(controls, 3) ~= num_trajectories
+                error('states and controls not aligned, different number of trajectories');
+            end
 
             % Estimate time derivatives.
-            dYdt = zeros(this.n_y, this.n_t - 1, num_trajectories);
-            Y = zeros(this.n_y, this.n_t - 1, num_trajectories);
-            for k = 1:num_trajectories
-                [Yk, dYk] = this.Estimate_State_ddts(reshape(states(:, k), this.n_y, this.n_t));
-                dYdt(:, :, k) = dYk;
-                Y(:, :, k) = Yk;
+            if ddt_strategy == "bwd1"
+                driver = @this.Estimate_State_ddts;
+            elseif ddt_strategy == "2ndOrder"
+                driver = @this.Estimate_State_ddts_2ndOrder;
+            elseif ddt_strategy == "4thOrder"
+                driver = @this.Estimate_State_ddts_4thOrder;
+            elseif ddt_strategy == "6thOrder"
+                driver = @this.Estimate_State_ddts_6thOrder;
+            else
+                error('unexpected ddt_strategy');
             end
-            Y = reshape(Y, this.n_y, (this.n_t - 1) * num_trajectories);
-            dYdt = reshape(dYdt, this.n_y, (this.n_t - 1) * num_trajectories);
-            Z = reshape(controls, this.n_q, (this.n_t - 1) * num_trajectories);
+
+            Y = zeros(this.n_y, num_snapshots_per_trajectory, num_trajectories);
+            dYdt = zeros(this.n_y, num_snapshots_per_trajectory, num_trajectories);
+            for k = 1:num_trajectories
+                dYk = driver(states(:, :, k));
+                Y(:, :, k) = states(:, 2:end, k);
+                dYdt(:, :, k) = dYk;
+            end
+
+            num_training_snapshots = num_snapshots_per_trajectory * num_trajectories;
+            Y = reshape(Y, this.n_y, num_training_snapshots);
+            dYdt = reshape(dYdt, this.n_y, num_training_snapshots);
+            Q = reshape(controls, this.n_q, num_training_snapshots);
 
             num_candidates = size(reg_candidates, 2);
             reconstruction_errors = zeros(1, num_candidates);
+            original_initial_condition = this.y0;
             disp(['Regularization selection (' num2str(num_candidates), ' candidates)']);
             for i = 1:num_candidates
                 reg = reg_candidates(i);
                 this.regularizer = reg;
-                this.Learn_Operators(Y, Z, dYdt);
+                this.Learn_Operators(Y, Q, dYdt);
 
                 % Solve the model for each training control profile.
                 total_error = 0;
                 for k = 1:num_trajectories
-                    Uk = this.State_Solve(controls(:, k));
-                    local_error = norm(Uk - states(:, k)) / norm(states(:, k));
+                    this.y0 = states(:, 1, k);
+                    Yk = this.State_Solve2(controls(:, :, k));
+                    local_error = norm(Yk - states(:, :, k)) / norm(states(:, :, k));
                     total_error = total_error + local_error;
                 end
                 reconstruction_errors(i) = total_error;
 
                 disp(['reg = ', num2str(reg), '; error = ', num2str(total_error)]);
             end
+            this.y0 = original_initial_condition;
 
             % Choose the best regularization.
             [err, idx] = min(reconstruction_errors);
@@ -335,7 +513,7 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             disp(['winner = ', num2str(best_reg), '; error = ', num2str(err)]);
 
             this.regularizer = best_reg;
-            this.Learn_Operators(Y, Z, dYdt);
+            this.Learn_Operators(Y, Q, dYdt);
         end
 
         %% Implement abstract methods from the parent class.

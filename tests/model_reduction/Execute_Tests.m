@@ -17,6 +17,7 @@ end
 test_roms = true;
 if test_roms
     run Test_OpInf_ROM_Constraint;
+    run Test_OpInf_ROM_Constraint_ddts;
 end
 
 disp('All model_reduction tests passed!');

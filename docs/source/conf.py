@@ -7,7 +7,12 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html.
 """
 
 import os
+import re
 import time
+
+
+macrowithargs = re.compile(r"\\(?:re)?newcommand\{\\(\w+?)\}\[(\d)\]\{(.+)\}")
+macroextractor = re.compile(r"\\(?:re)?newcommand\{\\(\w+?)\}\{(.+)\}")
 
 
 # -- Project information -----------------------------------------------------
@@ -80,6 +85,14 @@ rst_prolog = """
 
 """
 
+# -- Options for PDF output via LaTeX ----------------------------------------
+
+latex_engine = "pdflatex"
+latex_elements = {"preamble": r"\input{macros.tex.txt}"}
+latex_additional_files = ["macros.tex.txt"]
+latex_show_urls = "footnote"
+latex_theme = "howto"
+
 # -- Extensions --------------------------------------------------------------
 
 myst_enable_extensions = [
@@ -92,23 +105,17 @@ myst_enable_extensions = [
 myst_dmath_double_inline = True  # $$ OK if no newline before and after.
 suppress_warnings = ["myst.domains"]  # Suppress warning for using sphinx_proof
 
-# LaTeX macros.
-macros = {
-    "trp": r"{^{\mathsf{T}}}",
-    "invtrp": r"{^{-\mathsf{T}}}",
-    "grad": [r"\nabla_{\!#1}\,", 1],
-    "ddt": r"\frac{\textrm{d}}{\textup{d}t}",
-    "J": r"\mathcal{J}",
-    "N": r"\mathbb{N}",
-    "R": r"\mathbb{R}",
-}
-macros.update({x: rf"\mathbf{{{x}}}" for x in "bcfghquvwxyzABCDHIQSVWXYZ01"})
-macros.update(
-    {
-        f"bf{x}": rf"\boldsymbol{{\{x}}}"
-        for x in ["lambda", "mu", "gamma", "Gamma", "Phi", "Sigma", "Psi"]
-    }
-)
+# LaTeX macros for mathjax.
+macros = {}
+with open(latex_additional_files[0], "r") as infile:
+    rawmacros = infile.read().strip().split("\n")
+    for macro in rawmacros:
+        if results := macrowithargs.findall(macro):
+            m = results[0]
+            macros[m[0]] = [m[2], int(m[1])]
+        else:
+            m = macroextractor.findall(macro)[0]
+            macros[m[0]] = m[1]
 mathjax3_config = {"tex": {"macros": macros}}
 
 # LaTeX citations.

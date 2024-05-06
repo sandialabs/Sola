@@ -56,8 +56,8 @@ classdef Adv_Diff_Gaussian_Source_Constraint < Dynamic_Constraint
 
     methods (Access = public)
 
-        function this = Adv_Diff_Gaussian_Source_Constraint(n_y, n, T, n_t, num_space_control_nodes)
-            this = this@Dynamic_Constraint(n_y, n, T, n_t);
+        function this = Adv_Diff_Gaussian_Source_Constraint(n_y, n_z, T, n_t, num_space_control_nodes)
+            this = this@Dynamic_Constraint(n_y, n_z, T, n_t);
 
             % Peclet number
             Pe = 1;
