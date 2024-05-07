@@ -667,12 +667,12 @@ $$
     \\ \\
     \bflambda\trp \c_{z,u}(\u,\z)\v_{u}
     &= \left(\begin{array}{c}
-        0 \\ \lambda_{1}v_{2}
+        \lambda_{2}v_{2} \\ 0
     \end{array}\right),
     \\ \\
     \bflambda\trp \c_{z,z}(\u,\z)\v_{z}
     &= \left(\begin{array}{c}
-        0 \\ -2\lambda_{2}v_{2}
+        0 \\ -2\lambda_{3}v_{2}
     \end{array}\right).
 \end{aligned}
 $$
@@ -929,6 +929,7 @@ disp(obj.J(u, z));
 ```text
 >> run Tutorial_1.m
 
+                                Norm of      First-order
  Iteration        f(x)          step          optimality   CG-iterations
      0            3215.61                           355
 Objective function returned complex; trying a new point...
@@ -936,16 +937,15 @@ Objective function returned complex; trying a new point...
      2            3010.95            0.5            439           0
      3            2487.43              1            585           1
      4               1178              2            658           1
-     5             547.49        4.00167            776          50
-     6             46.374         4.1229            186           2
-     7           0.445696        4.01851           11.3           2
-     8           0.240943        1.00008           1.07           7
-     9          0.0505641           0.25          0.477           5
-    10        4.45777e-07       0.212295        0.00579           2
-    11        8.76926e-14    0.000606593       6.35e-07           2
+     5            611.478        4.31308            865           2
+     6            17.8477        4.00928            116           2
+     7         0.00974217        2.19548            1.3           2
+     8         9.9864e-09      0.0849924        0.00321           2
+     9        6.97575e-20    6.45614e-06       3.62e-09           2
 
-Optimization stopped because the relative objective function value is changing
-by less than options.FunctionTolerance = 1.000000e-06.
+Optimization completed: The first-order optimality measure, 3.618606e-09,
+is less than options.OptimalityTolerance = 1.000000e-08, and no negative/zero
+curvature is detected in the trust-region model.
 
 alphas = [7  1  4  8  8]
 
@@ -959,7 +959,7 @@ Control:
     8.0000
 
 Objective:
-   8.7693e-14
+   6.9757e-20
 ```
 
 We have successfully found the minimizer $\u^{*} = (7, 1, 4)$, $\z^{*} = (8, 8)$.
@@ -1021,16 +1021,14 @@ disp(obj.J(u, z));
 
 alphas = [1  2  3  4  5]
 
-OPTIMIZATION
-------------
 State:
-    1.3279
-    1.7193
-    3.0165
+    1.3278
+    1.7194
+    3.0166
 
 Control:
     3.0472
-    5.2391
+    5.2395
 
 Objective:
     1.1537
