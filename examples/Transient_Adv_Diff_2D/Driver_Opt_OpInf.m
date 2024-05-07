@@ -7,12 +7,12 @@ run('../../src/Set_Paths');
 
 meshfile = 'urban_canyon.mat';
 datafile = 'OpInf_Training_Data.mat';
-regenerate_data = false;
-residual_energy_threshold = 1e-5;
+regenerate_data = true;
+residual_energy_threshold = 1e-4;
 plot_basis_functions = false;
 plot_training_data = false;
-plot_training_reconstruction = true;
-basis_sizes = 2:4:40;
+plot_training_reconstruction = false;
+basis_sizes = [];  % 2:4:40;
 regularization_candidates = logspace(-3, 3, 80);
 ddt_strategy = '6thOrder';
 
@@ -48,7 +48,7 @@ if ~exist(datafile, 'file') || regenerate_data
     n_q = size(control_nodes, 2);
 
     % Time domain.
-    t = linspace(0, .2, 51);
+    t = linspace(0, .4, 101);
     n_t = length(t);
     n_z = (n_t - 1) * n_q;
 
@@ -70,17 +70,16 @@ if ~exist(datafile, 'file') || regenerate_data
         disp(['High-fidelity solve ', num2str(k)]);
 
         % Initialize the solver.
-        % model = Transient_Adv_Diff_2D.model_fromfile(meshfile);
         solver = Transient_Adv_Diff_2D(model, init_centers(:, k), ...
                                        diffusion, advection, control_nodes);
 
         % Set up a random control profile.
-        vals = [zeros(n_q, 1), -10 * rand(n_q, num_randcontrol_nodes - 1)];
+        vals = [zeros(n_q, 1), 20 * randn(n_q, num_randcontrol_nodes - 1)];
         pp = spline(randcontrol_nodes, vals);
         controller = @(tt) ppval(pp, tt);
 
         % Solve the system.
-        u_k = solver.State_Solve(controller, t, false).NodalSolution;
+        u_k = solver.State_Solve(controller, t, plot_training_data).NodalSolution;
         z_k = controller(t(2:end));
 
         % Record results.
@@ -129,7 +128,11 @@ if plot_training_data
     end
 end
 
-%% Do the experiment, varying the reduced state dimension.
+%% Learn a ROM, varying the reduced state dimension.
+
+if isempty(basis_sizes)
+    basis_sizes = [basis.r];
+end
 errors = zeros(length(basis_sizes), 1);
 for i = 1:length(basis_sizes)
     r = basis_sizes(i);
@@ -169,6 +172,43 @@ for i = 1:length(basis_sizes)
     errors(i) = total_error / num_solves;
 end
 
+if length(basis_sizes) > 1
+    figure;
+    plot(basis_sizes, errors);
+    title('POD basis vector size versus average ROM training error');
+end
+
+%% Set up and solve the optimization problem.
+
+% Make sure the initial conditions are right.
+solver.init_center = [.05; .85];
+rom.y0 = Yhats(:, 1, 1);
+
+obj_hifi = solver.Make_Objective([.6; .6], t(end), length(t), 1e-5);
+obj_lofi = Reduced_Dynamic_Objective(obj_hifi, basis.V);
+solver.Plot_Field(obj_hifi.target_weight, 'Protection zone');
+
+opt = Reduced_Space_Optimization(obj_lofi, rom);
+opt.z_lb = -100 * ones(n_z, 1);          % Lower bounds for control.
+opt.z_ub = zeros(n_z, 1);                % Upper bounds for control.
+
+tic();
+[u_lofi, z_lofi] = opt.Optimize(-rand(n_z, 1));
+time_lofioptimization = toc();
+
+% Inspect the state solution.
+u_rom = basis.Decompress(reshape(u_lofi, basis.r, n_t));
+solver.Animate_Solution(u_rom);
+
+% Inspect the control solution.
+q_rom = reshape(z_lofi, n_q, n_t - 1);
 figure;
-plot(basis_sizes, errors);
-title('POD basis vector size versus average ROM training error');
+plot(t(2:end), q_rom);
+title('Control policy');
+
+% Solve the high-fidelity model with the inferred controls.
+disp('Final high-fidelity solve');
+pp = spline(t(2:end), q_rom);
+controller = @(tt) ppval(pp, tt);
+u_hifi = solver.State_Solve(controller, t, false).NodalSolution;
+solver.Animate_Solution(u_hifi);

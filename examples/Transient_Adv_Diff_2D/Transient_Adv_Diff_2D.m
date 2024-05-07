@@ -86,6 +86,43 @@ classdef Transient_Adv_Diff_2D < handle
             this.model = model;
         end
 
+        function [objective] = Make_Objective(this, center, T, n_t, beta_reg)
+            % Construct a Transient_Adv_Diff_2D_Objective corresponding to
+            % the model mesh.
+            %
+            % Parameters
+            % ----------
+            % center : (2 x 1)
+            %   Spatial location where the objective most heavily penalizes
+            %   the presence of contaminant.
+            % T : float
+            %   Final simulation time.
+            % n_t : int
+            %   Number of time steps.
+            % beta_reg : float
+            %   Regularization constant for the control magnitudes.
+            arguments
+                this
+                center
+                T
+                n_t {mustBePositive, mustBeInteger}
+                beta_reg = 1e-3
+            end
+
+            % Extract the mass matrix from the model.
+            M = assembleFEMatrices(this.model, 'M').M;
+
+            % % Assemble the control matrix.
+            % xy = [this.x, this.y];
+            % Bq = zeros(this.n_y, this.n_q);
+            % for j = 1:this.n_q
+            %     center = this.control_nodes(:, j)';
+            %     Bq(:, n_q) = 50 * exp(-1000 .* sum((xy - this.control_nodes).^2, 1));
+            % end
+
+            objective = Transient_Adv_Diff_2D_Objective(center, this.x, this.y, M, T, n_t, this.n_q, beta_reg);
+        end
+
         %% Problem definition
         function [u0] = Initial_Condition(this, loc)
             % Initial condition: a Gaussian blob.

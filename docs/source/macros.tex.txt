@@ -10,6 +10,7 @@
 \newcommand{\f}{\mathbf{f}}
 \newcommand{\g}{\mathbf{g}}
 \newcommand{\h}{\mathbf{h}}
+\newcommand{\p}{\mathbf{p}}
 \newcommand{\q}{\mathbf{q}}
 \renewcommand{\u}{\mathbf{u}}
 \renewcommand{\v}{\mathbf{v}}
@@ -23,6 +24,7 @@
 \newcommand{\D}{\mathbf{D}}
 \renewcommand{\H}{\mathbf{H}}
 \newcommand{\I}{\mathbf{I}}
+\newcommand{\M}{\mathbf{M}}
 \newcommand{\Q}{\mathbf{Q}}
 \renewcommand{\S}{\mathbf{S}}
 \newcommand{\U}{\mathbf{U}}
