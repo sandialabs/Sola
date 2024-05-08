@@ -121,10 +121,12 @@ $$
 
 Hence, $\grad{y}g(\y(t), t) = 2(\y(t) - \boldsymbol{\alpha}(t))$.
 
-::::{admonition} Exercise 1
+:::{admonition} Exercise
 :class: exercise
 
 Calculate the Hessian action $\grad{y,y}g(\y(t), t)\v_y$ where $\v_y\in\R^{n_y}$.
+
+:::
 
 :::{admonition} Solution
 :class: solution dropdown
@@ -153,7 +155,6 @@ $$
 \end{aligned}
 $$
 :::
-::::
 
 We can now define a subclass of {class}`Dynamic_Objective` starting from its [inheritance template](optimization.Dynamic_Objective.template).
 Our new class, `Tutorial_2_Objective`, has a constructor for setting the target radius $\rho$ and angular velocity $\omega$.
@@ -208,10 +209,12 @@ end
 Note carefully that `R_zz_Apply()` is implemented in a vectorized fashion by treating the input `z_in` as a matrix with possibly more than one column.
 :::
 
-::::{admonition} Exercise 2
+:::{admonition} Exercise
 :class: exercise
 
 Implement, in a vectorized fashion, `g_yy_Apply()` for computing $\grad{y,y}g(\y(t), t)\v_y$.
+
+:::
 
 :::{admonition} Solution
 :class: solution dropdown
@@ -223,7 +226,6 @@ end
 ```
 
 :::
-::::
 
 ### Implementing the Constraint
 
@@ -257,10 +259,12 @@ $$
 \end{aligned}
 $$
 
-::::{admonition} Exercise 3
+:::{admonition} Exercise
 :class: exercise
 
 Calculate the Hessian action $\bflambda\trp\f_{y,y}(\y(t),\z,t)\v_y$.
+
+:::
 
 :::{admonition} Solution
 :class: solution dropdown
@@ -315,7 +319,6 @@ $$
 $$
 
 :::
-::::
 
 We now define a new class, `Tutorial_2_Constraint`, that inherits from {class}`Dynamic_Constraint` and implements its abstract methods.
 See the [inheritance template](optimization.Constraint.template) to get started.
@@ -390,10 +393,12 @@ classdef Tutorial_2_Constraint < Dynamic_Constraint
 end
 ```
 
-::::{admonition} Exercise 4
+:::{admonition} Exercise
 :class: exercise
 
 Implement, in a vectorized fashion, `f_yy_Apply()` for computing $\bflambda\trp\f_{y,y}(\y(t), \z, t)\v_y$.
+
+:::
 
 :::{admonition} Solution
 :class: solution dropdown
@@ -420,7 +425,6 @@ end
 ```
 
 :::
-::::
 
 <!-- TODO: ### Implementation Verification -->
 
@@ -703,11 +707,13 @@ classdef Tutorial_2B_Objective < Dynamic_Objective
 end
 ```
 
-::::{admonition} Exercise 5
+:::{admonition} Exercise
 :class: exercise
 
 Calculate the gradient $\grad{z}R(\z)$ and the Hessian action $\grad{z,z}R(\z)\v_z$.
 Then, finish implementing `R()` and `R_zz_Apply()`.
+
+:::
 
 :::{admonition} Solution
 :class: solution dropdown
@@ -749,7 +755,6 @@ end
 ```
 
 :::
-::::
 
 To simplify the implementation of the constraint, we use the Gauss--Newton Hessian approximation specified in {prf:ref}`alg:adjoint_gaussnewton`, so we do not need to implement the Hessian actions of $\f$ or $\h$.
 Because $\h$ is a constant function, its $\z$ Jacobian is the $n_y \times n_z$ zero matrix.
@@ -818,10 +823,12 @@ classdef Tutorial_2B_Constraint < Dynamic_Constraint
 end
 ```
 
-::::{admonition} Exercise 6
+:::{admonition} Exercise
 :class: exercise
 
 Calculate the Jacobian $\f_\z(\y(t), \z, t)$ and finish implementing `f()`.
+
+:::
 
 :::{admonition} Solution
 :class: solution dropdown
@@ -883,9 +890,8 @@ end
 ```
 
 :::
-::::
 
-### Solution
+### Optimization Solution
 
 We can now solve this problem with a {class}`Reduced_Space_Optimization` object.
 See `tutorials/Tutorial_2/Tutorial_2B_Objective.m` in the source code for the `Plot()` method.
@@ -1031,7 +1037,7 @@ end
 
 :::
 
-:::{admonition} Exercise 7
+:::{admonition} Exercise
 :class: exercise
 
 Experiment with different values of $\gamma$ by changing `regularizer` in `Tutorial_2B.m`.
