@@ -2,8 +2,8 @@
 clear;
 close all;
 clc;
-addpath('~/Software/SABL/src/');     % MODIFY THIS TO MATCH YOUR PATH TO SABL.
-rng(1342);              % Random seed for reproducing exact results (optional).
+run('~/Software/SABL/src/Set_Paths');   % MODIFY THIS TO MATCH YOUR PATH TO SABL.
+rng(1342);                              % Random seed for reproducing results (optional).
 
 %% Instantiate the objective and constraints.
 alphas = [7; 1; 4; 8; 8];

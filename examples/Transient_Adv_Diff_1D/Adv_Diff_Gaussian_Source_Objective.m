@@ -25,12 +25,12 @@ classdef Adv_Diff_Gaussian_Source_Objective < Dynamic_Objective
             val = .5 * z' * grad_z;
         end
 
-        function [Mv] = g_yy_Apply(this, v, ~, ~)
-            Mv = this.M * v;
+        function [y_out] = g_yy_Apply(this, y_in, ~, ~)
+            y_out = this.M * y_in;
         end
 
-        function [Mv] = R_zz_Apply(this, v, ~)
-            Mv = this.beta_reg * (kron(diag(this.time_weights(2:end)), this.Br' * this.M * this.Br)) * v;
+        function [z_out] = R_zz_Apply(this, z_in, ~)
+            z_out = this.beta_reg * (kron(diag(this.time_weights(2:end)), this.Br' * this.M * this.Br)) * z_in;
         end
 
     end
@@ -44,6 +44,7 @@ classdef Adv_Diff_Gaussian_Source_Objective < Dynamic_Objective
             this.x = linspace(0, 1, n_y)';
             h = this.x(2) - this.x(1);
 
+            % Mass matrix
             M = diag(4 * ones(1, n_y)) + diag(ones(1, n_y - 1), 1) + diag(ones(1, n_y - 1), -1);
             M(1, 1) = .5 * M(1, 1);
             M(end, end) = .5 * M(end, end);
@@ -53,7 +54,7 @@ classdef Adv_Diff_Gaussian_Source_Objective < Dynamic_Objective
             % this.beta_reg = 10^-3;
             this.beta_reg = 10^-12;
 
-            % Trapazoid rule for time integration
+            % Trapezoid rule for time integration
             time_weights = ones(n_t, 1);
             time_weights(1) = .5 * time_weights(1);
             time_weights(end) = .5 * time_weights(end);

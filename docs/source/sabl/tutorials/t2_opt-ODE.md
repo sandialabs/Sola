@@ -578,7 +578,7 @@ $$
 \end{aligned}
 $$
 
-The control $\z$ collects the values of $q_1(t)$ and $q_2(t)$ at all time mesh points $t_1,\ldots,t_{n_t}$ where the state is recorded **except** for the initial time (this is because the time stepper uses a first-order backward Euler scheme to solve the ODE).
+The control $\z$ collects the values of $q_1(t)$ and $q_2(t)$ at all time mesh points where the state is recorded **except** for the initial time (this is because the time stepper uses a first-order backward Euler scheme to solve the ODE), i.e., $t_2,\ldots,t_{n_t}$.
 Hence, the control dimension is $n_z = 2(n_t - 1)$ where $n_t$ is the number of points in the temporal discretization.
 In this example, we order the entries of the control as
 
@@ -712,7 +712,7 @@ Then, finish implementing `R()` and `R_zz_Apply()`.
 :::{admonition} Solution
 :class: solution dropdown
 
-Let us rewrite the entries of the weight vector $\w$ as $\w = (\tilde{w}_1,\ldots,\tilde{w}_{n_z})\trp$.
+Let us rewrite the entries of the weight vector as $\w = (\tilde{w}_1,\ldots,\tilde{w}_{n_z})\trp$.
 Then we have
 
 $$

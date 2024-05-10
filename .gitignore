@@ -11,6 +11,9 @@ main.pdf
 *.mat
 AdiGator_Files/
 .formatter_changes.txt
+rw3dm/
+*.3dm
+*.json
 
 ### Boilerplate latex ignore file:
 ## Latex Ignore:
