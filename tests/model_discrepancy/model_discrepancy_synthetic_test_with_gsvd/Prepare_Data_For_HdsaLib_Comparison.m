@@ -40,7 +40,7 @@ md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 Z_test = randn(m, 3);
 Z_test(:, 1:2) = md_post_sampling.post_data.Z;
 Z_test(:, 3) = 1.5 * ones(m, 1);
-[post_delta_mean, post_delta_samples]= md_post_sampling.Posterior_Discrepancy_Samples(Z_test);
+[post_delta_mean, post_delta_samples] = md_post_sampling.Posterior_Discrepancy_Samples(Z_test);
 
 %%
 opt_prob_interface = MD_Opt_Prob_Interface_synthetic_test_with_gsvd(m);

@@ -53,6 +53,10 @@ classdef Randomized_GSVD < handle
 
             [U, Sigma, V] = svd(R_B');
 
+            scale = sign(V(1, :));
+            V = V .* (ones(size(V, 1), 1) * scale);
+            U = U .* (ones(size(U, 1), 1) * scale);
+
             sing_vecs_input = Q_B * V;
             sing_vecs_output = Q * U;
             sing_vals = diag(Sigma);
