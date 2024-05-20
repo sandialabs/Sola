@@ -22,6 +22,7 @@ classdef Transient_Adv_Diff_2D < handle
         diffusion       % Diffusion coefficient (default = 0.05).
         advection       % Advection coefficient (default = 4.00).
         init_center     % Center of the initial condition blob (2 x 1).
+        v_weights       % Weights forcing the velocity to obey no-slip conditions.
     end
 
     properties (Dependent)
@@ -79,6 +80,19 @@ classdef Transient_Adv_Diff_2D < handle
                 this.control_nodes = nodes;
             end
 
+            % Calculate velocity weights.
+            boundaryNodes = findNodes(model.Mesh, 'region', 'edge', 1:model.Geometry.NumEdges);
+            coordinates = model.Mesh.Nodes(:, boundaryNodes);
+            num_elements = size(model.Mesh.Nodes, 2);
+            distances = zeros(num_elements, 1);
+            for i = 1:num_elements
+                node = model.Mesh.Nodes(:, i);
+                nearest_index = dsearchn(coordinates', node');
+                nearest_Bnode = coordinates(:, nearest_index);
+                distances(i) = sum((nearest_Bnode - node).^2);
+            end
+            this.v_weights = 1 - exp(-1000 .* distances);
+
             % Save the model.
             this.diffusion = diffusion_coeff;
             this.advection = advection_coeff;
@@ -129,7 +143,7 @@ classdef Transient_Adv_Diff_2D < handle
             u0 = 20 * exp(-100 .* sum(([loc.x; loc.y] - this.init_center).^2, 1));
         end
 
-        function [v] = Velocity(this, x, ~)
+        function [v] = Velocity(this, x, y)
             % Constant velocity field: constant -> in x, sin(x) in y.
             %
             % Parameters
@@ -138,7 +152,6 @@ classdef Transient_Adv_Diff_2D < handle
             %   x coordinates at which to evaluate the velocity field.
             % y : (n x 1)
             %   y coordinates at which to evaluate the velocity field.
-            %   (not used because velocity depends on x only).
             %
             % Returns
             % -------
@@ -157,6 +170,9 @@ classdef Transient_Adv_Diff_2D < handle
                 sinangl = sin(angl);
                 rotation = [cosangl -sinangl; sinangl cosangl];
                 flow(i, :) = flow(i, :) * rotation';
+                % % Weight velocity field for no-slip condition. EXPENSIVE!
+                % idx = dsearchn(this.model.Mesh.Nodes', [x(i), y(i)]);
+                % flow(i, :) = flow(i, :) * this.v_weights(idx);
             end
             v = this.advection * flow;
         end
