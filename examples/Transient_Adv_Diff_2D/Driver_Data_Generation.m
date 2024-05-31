@@ -49,7 +49,8 @@ control_nodes = [
 % model = Transient_Adv_Diff_2D.model_default(.05);
 model = Transient_Adv_Diff_2D.model_fromfile('urban_canyon.mat');
 solver = Transient_Adv_Diff_2D(model, [.05; .85], .01, 4, control_nodes);
-t = linspace(0, .2, 400);
+% t = linspace(0, .2, 400);
+t = linspace(0, .4, 101);
 
 %% Visualize the solver geometry.
 solver.Plot_Control_Nodes();

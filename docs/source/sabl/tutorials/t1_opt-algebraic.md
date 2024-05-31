@@ -120,10 +120,12 @@ $$
 \end{aligned}
 $$
 
-::::{admonition} Exercise 1
+:::{admonition} Exercise
 :class: exercise
 
 Calculate the gradient $\grad{z}J(\u,\z)$.
+:::
+
 :::{admonition} Solution
 :class: solution dropdown
 
@@ -142,7 +144,6 @@ $$
 \end{aligned}
 $$
 :::
-::::
 
 ### Objective Hessians
 
@@ -231,10 +232,12 @@ $$
 We will use this strategy for computing the constraint Hessian actions.
 ::: -->
 
-::::{admonition} Exercise 2
+:::{admonition} Exercise
 :class: exercise
 
 Calculate the Hessian actions $\grad{u,z}J(\u,\z)\v_u$, $\grad{z,u}J(\u,\z)\v_z$, and $\grad{z,z}J(\z,\z)\v_z$, where $\v_z\in\R^{n_z}$.
+
+:::
 
 :::{admonition} Solution
 :class: solution dropdown
@@ -308,7 +311,6 @@ $$
 $$
 
 :::
-::::
 
 ### Objective Implementation
 
@@ -406,10 +408,11 @@ end
 
 :::
 
-::::{admonition} Exercise 3
+:::{admonition} Exercise
 :class: exercise
 
 Implement, in a vectorized fashion, `J_zu_Apply()` for computing $\grad{z,u}J(\u,\z)\v_u$ and `J_zz_Apply()` for computing $\grad{z,z}J(\u,\z)\v_z$.
+:::
 
 :::{admonition} Solution
 :class: solution dropdown
@@ -429,7 +432,6 @@ end
 ```
 
 :::
-::::
 
 ## Implementing the Constraint
 
@@ -516,10 +518,11 @@ $$
 \end{aligned}
 $$
 
-::::{admonition} Exercise 4
+:::{admonition} Exercise
 :class: exercise
 
 Calculate the Jacobian $\c_z(\u,\z)$.
+:::
 
 :::{admonition} Solution
 :class: solution dropdown
@@ -541,7 +544,6 @@ $$
 $$
 
 :::
-::::
 
 To facilitate {prf:ref}`alg:adjoint_gradient`, we need implementations for solving the linear system $\c_u(\u,\z)\trp\bflambda = \v_u$ (equivalently, computing the inverse-transpose Jacobian-vector product $\c_u(\u,\z)^{-\mathsf{T}}\v_u$) and computing $\c_z(\u,\z)\trp\v_z$, where $\v_u\in\R^{n_u}$ and $\v_z\in\R^{n_z}$ as before.
 Furthermore, {prf:ref}`alg:adjoint_hessvec` and {prf:ref}`alg:adjoint_gaussnewton` require computing $\c_z(\u,\z)\v_z$ and solving the linear system $\c_u(\u,\z)\bfmu = \v_u$ (computing $\c_u(\u,\z)^{-1}\v_u$).
@@ -564,10 +566,11 @@ $$
 \end{aligned}
 $$
 
-::::{admonition} Exercise 5
+:::{admonition} Exercise
 :class: exercise
 
 Calculate $\c_z(\u,\z)\trp\v_u$, $\c_u(\u,\z)^{-1}\v_u$, and $\c_z(\u,\z)\v_z$.
+:::
 
 :::{admonition} Solution
 :class: solution dropdown
@@ -618,7 +621,6 @@ $$
 $$
 
 :::
-::::
 
 ### Constraint Hessians
 
@@ -650,10 +652,11 @@ $$
 \end{aligned}
 $$
 
-::::{admonition} Exercise 6
+:::{admonition} Exercise
 :class: exercise
 
 Calculate the Hessian actions $\bflambda\trp\c_{u,z}(\u,\z)\v_z$, $\bflambda\trp\c_{z,u}(\u,\z)\v_u$, and $\bflambda\trp\c_{z,z}(\u,\z)\v_z$.
+:::
 
 :::{admonition} Solution
 :class: solution dropdown
@@ -678,7 +681,6 @@ $$
 $$
 
 :::
-::::
 
 ### Constraint Implementation
 
@@ -747,7 +749,7 @@ classdef Tutorial_1_Constraint < Constraint
 end
 ```
 
-::::{admonition} Exercise 7
+:::{admonition} Exercise
 :class: exercise
 
 Implement the following Jacobian methods in a vectorized fashion.
@@ -762,6 +764,7 @@ These need not be vectorized.
 - `c_uz_Apply()` for computing $\bflambda\trp\c_{u,z}(\u,\z)\v_z$
 - `c_zu_Apply()` for computing $\bflambda\trp\c_{z,u}(\u,\z)\v_u$
 - `c_zz_Apply()` for computing $\bflambda\trp\c_{z,z}(\u,\z)\v_z$
+:::
 
 :::{admonition} Solution
 :class: solution dropdown
@@ -805,7 +808,6 @@ end
 ```
 
 :::
-::::
 
 ## Implementation Verification
 
@@ -964,7 +966,7 @@ Objective:
 
 We have successfully found the minimizer $\u^{*} = (7, 1, 4)$, $\z^{*} = (8, 8)$.
 
-:::{admonition} Exercise 8
+:::{admonition} Exercise
 :class: exercise
 
 By default, {meth}`Reduced_Space_Optimization.Optimize` uses {prf:ref}`alg:adjoint_hessvec` for estimating the Hessian action of the reduced-space objective $\hat{J}(\z) = J(\S(\z),\z)$.
@@ -1034,7 +1036,7 @@ Objective:
     1.1537
 ```
 
-:::{admonition} Exercise 7
+:::{admonition} Exercise
 :class: exercise
 
 Since the control $\z$ has only entries, we can roughly verify the solution to this problem with a dense grid search of the two-dimensional control space.

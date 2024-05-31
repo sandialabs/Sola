@@ -7,11 +7,11 @@ run('../../src/Set_Paths');
 
 meshfile = 'urban_canyon.mat';
 datafile = 'OpInf_Training_Data.mat';
-regenerate_data = true;
+regenerate_data = false;
 residual_energy_threshold = 1e-4;
-plot_basis_functions = false;
-plot_training_data = false;
-plot_training_reconstruction = false;
+plot_basis_functions = true;
+plot_training_data = true;
+plot_training_reconstruction = true;
 basis_sizes = [];  % 2:4:40;
 regularization_candidates = logspace(-3, 3, 80);
 ddt_strategy = '6thOrder';
@@ -74,7 +74,7 @@ if ~exist(datafile, 'file') || regenerate_data
                                        diffusion, advection, control_nodes);
 
         % Set up a random control profile.
-        vals = [zeros(n_q, 1), 20 * randn(n_q, num_randcontrol_nodes - 1)];
+        vals = [zeros(n_q, 1), -20 * rand(n_q, num_randcontrol_nodes - 1)];
         pp = spline(randcontrol_nodes, vals);
         controller = @(tt) ppval(pp, tt);
 
@@ -99,7 +99,7 @@ T = t(end);
 n_u = size(U_train, 1);
 num_solves = size(U_train, 2);
 n_y = n_u / n_t;  % = size(solver.model.Mesh.Nodes, 2);
-% mass_matrix = assembleFEMatrices(solver.model, 'M').M;
+mass_matrix = assembleFEMatrices(solver.model, 'M').M;
 n_z = size(Z_train, 1);
 n_q = n_z / (n_t - 1);  % = solver.n_q;
 disp(['Using ', num2str(num_solves), ' training trajectories']);
@@ -107,9 +107,9 @@ disp(['Using ', num2str(num_solves), ' training trajectories']);
 %% Learn a POD basis.
 
 states = reshape(U_train, n_y, n_t * num_solves);
-basis = POD_Basis(states, false);  % , full(mass_matrix));
+basis = POD_Basis(states, false, full(mass_matrix));
 basis.Set_Reduced_Dimension_From_Residual_Energy(residual_energy_threshold);
-% disp(['Selected reduced dimension r = ', num2str(basis.r)]);
+disp(['Selected reduced dimension r = ', num2str(basis.r)]);
 
 if plot_basis_functions
     for j = 1:basis.r
@@ -212,3 +212,15 @@ pp = spline(t(2:end), q_rom);
 controller = @(tt) ppval(pp, tt);
 u_hifi = solver.State_Solve(controller, t, false).NodalSolution;
 solver.Animate_Solution(u_hifi);
+
+save('OptimizationSolution.mat', "solver", "u_hifi", "t", "z_lofi", "n_q");
+
+%% Load and visualize results later.
+% load('OptimizationSolution.mat', "solver", "u_hifi", "t", "z_lofi", "n_q");
+% n_t = length(t);
+% q_rom = reshape(z_lofi, n_q, n_t - 1);
+% figure;
+% plot(t(2:end), q_rom);
+% title('Control policy');
+%
+% solver.Animate_Solution(u_hifi);
