@@ -69,12 +69,12 @@ cd(working_path);
 
 figure;
 hold on;
-plot(x, md_update.post_data.D(:, 1), 'color', 'cyan', 'LineWidth', 3);
+plot(x, md_update.md_post_sampling.post_data.D(:, 1), 'color', 'cyan', 'LineWidth', 3);
 plot(x, delta_mean{1}, '--', 'color', 'red', 'LineWidth', 3);
 for k = 1:num_post_samples
     plot(x, delta_samples{1}(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
 end
-plot(x, md_update.post_data.D(:, 1), 'color', 'cyan', 'LineWidth', 3);
+plot(x, md_update.md_post_sampling.post_data.D(:, 1), 'color', 'cyan', 'LineWidth', 3);
 plot(x, delta_mean{1}, '--', 'color', 'red', 'LineWidth', 3);
 xlabel('$x$', 'Interpreter', 'latex');
 ylabel('Discrepancy');
@@ -87,12 +87,12 @@ cd(working_path);
 
 figure;
 hold on;
-plot(x, md_update.post_data.D(:, 2), 'color', 'cyan', 'LineWidth', 3);
+plot(x, md_update.md_post_sampling.post_data.D(:, 2), 'color', 'cyan', 'LineWidth', 3);
 plot(x, delta_mean{2}, '--', 'color', 'red', 'LineWidth', 3);
 for k = 1:num_post_samples
     plot(x, delta_samples{2}(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
 end
-plot(x, md_update.post_data.D(:, 2), 'color', 'cyan', 'LineWidth', 3);
+plot(x, md_update.md_post_sampling.post_data.D(:, 2), 'color', 'cyan', 'LineWidth', 3);
 plot(x, delta_mean{2}, '--', 'color', 'red', 'LineWidth', 3);
 xlabel('$x$', 'Interpreter', 'latex');
 ylabel('Discrepancy');

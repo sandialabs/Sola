@@ -34,6 +34,12 @@ classdef MD_Elliptic_z_Prior_Interface_Diff < MD_Elliptic_z_Prior_Interface
             z_out = linsolve(this.M, z_in);
         end
 
+        % Compute samples from a mean zero Gaussian with covariance W_z^{-1}
+        function [z_out] = Sample_with_Covariance_W_z_Inverse(this, num_samples)
+            R = chol(this.M);
+            z_out = sqrt(this.alpha_z) * linsolve(this.E_z, R' * randn(size(R, 1), num_samples));
+        end
+
         function this = MD_Elliptic_z_Prior_Interface_Diff(alpha_z, sabl_opt)
             this@MD_Elliptic_z_Prior_Interface(alpha_z);
 

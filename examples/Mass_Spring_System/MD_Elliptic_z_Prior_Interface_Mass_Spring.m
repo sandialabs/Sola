@@ -21,6 +21,12 @@ classdef MD_Elliptic_z_Prior_Interface_Mass_Spring < MD_Elliptic_z_Prior_Interfa
             z_out = this.P_z' * this.M * this.P_z * z_in;
         end
 
+        % Compute samples from a mean zero Gaussian with covariance W_z^{-1}
+        function [z_out] = Sample_with_Covariance_W_z_Inverse(this, num_samples)
+            R = chol(this.P_z' * this.M * this.P_z);
+            z_out = sqrt(this.alpha_z) * linsolve(this.P_z' * this.E_z * this.P_z, R' * randn(size(R, 1), num_samples));
+        end
+
         % This function must be implemented to enable Hessian GEVP
         function [z_out] = Apply_E_z(this, z_in)
             z_out = this.P_z' * this.E_z * this.P_z * z_in;

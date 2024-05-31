@@ -45,7 +45,6 @@ xlabel('Time');
 ylabel('$v_1$', 'Interpreter', 'latex');
 set(gca, 'fontsize', 18);
 
-% z_samples = md_prior_sampling.Prior_z_Samples(5);
 z_samples = z_prior_interface.Sample_with_Covariance_W_z_Inverse(5);
 figure;
 hold on;
