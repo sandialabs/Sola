@@ -202,9 +202,9 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             % Y : :math:`n_y \times n_t` matrix
             %   State solution :math:`[~\y_1~~\cdots~~\y_{n_t}~]\in\R^{n_y\times n_t}`
             %   where :math:`\y_j` is the ODE state at time :math:`t_j`.
-            Z = reshape(Q, this.n_z, 1);
-            U = this.State_Solve(Z);
-            Y = reshape(U, this.n_y, this.n_t);
+            z = reshape(Q, this.n_z, 1);
+            u = this.State_Solve(z);
+            Y = reshape(u, this.n_y, this.n_t);
         end
 
         function [dYdt] = Estimate_State_ddts(this, Y)
@@ -414,9 +414,9 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             % ----------
             % states
             %   Compressed training states :math:`\Y_1,\ldots\Y_k\in\R^{n_y \times n_t}`
-            %   where :math:`k` is the number of trajectories. This is an
-            %   :math:`n_y \times n_t \times k` tensor or (optionally), if :math:`k = 1`,
-            %   an :math:`n_y \times n_t` matrix.
+            %   where :math:`k` is the number of trajectories. This is either a cell of
+            %   :math:`k` matrices of sizes :math:`\times n_y \times n_t` or (optionally),
+            %   if :math:`k = 1`, a single :math:`n_y \times n_t` matrix.
             % controls
             %   Control profiles :math:`\Q_1,\ldots,\Q_k\in\R^{n_q \times (n_t - 1)}`
             %   corresponding to the training states, where :math:`k` is the number of
@@ -431,34 +431,27 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             %   Best regularization hyperparameter.
             arguments
                 this
-                states {mustBeNumeric}
-                controls {mustBeNumeric}
+                states {OpInf_ROM_Constraint.mustBeNumericOrCell}
+                controls {OpInf_ROM_Constraint.mustBeNumericOrCell}
                 reg_candidates {mustBeNumeric}
                 ddt_strategy {mustBeText} = "bwd1"
             end
 
-            if length(size(states)) == 2
-                states = reshape(states, size(states, 1), size(states, 2), 1);
+            if ~iscell(states)
+                states = {states};
             end
-            if length(size(controls)) == 2
-                controls = reshape(controls, size(controls, 1), size(controls, 2), 1);
+            if ~iscell(controls)
+                controls = {controls};
             end
-            num_trajectories = size(states, 3);
-            num_snapshots_per_trajectory = this.n_t - 1;
 
-            if size(states, 1) ~= this.n_y
-                error('states should have n_y rows');
-            elseif size(states, 2) ~= this.n_t
-                error('states should have n_t columns');
-            elseif size(controls, 1) ~= this.n_q
-                error('controls should have n_q rows');
-            elseif size(controls, 2) ~= num_snapshots_per_trajectory
-                error('controls should have n_t - 1 columns');
-            elseif size(controls, 3) ~= num_trajectories
+            % Check states and controls are aligned.
+            num_trajectories = length(states);
+            num_snapshots_per_trajectory = this.n_t - 1;
+            if length(controls) ~= num_trajectories
                 error('states and controls not aligned, different number of trajectories');
             end
 
-            % Estimate time derivatives.
+            % Select time derivative estimation strategy.
             if ddt_strategy == "bwd1"
                 driver = @this.Estimate_State_ddts;
             elseif ddt_strategy == "2ndOrder"
@@ -471,34 +464,51 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
                 error('unexpected ddt_strategy');
             end
 
-            Y = zeros(this.n_y, num_snapshots_per_trajectory, num_trajectories);
-            dYdt = zeros(this.n_y, num_snapshots_per_trajectory, num_trajectories);
+            % Check shapes and estimate time derivatives.
+            Y = cell(num_trajectories);
+            dYdt = cell(num_trajectories);
             for k = 1:num_trajectories
-                dYk = driver(states(:, :, k));
-                Y(:, :, k) = states(:, 2:end, k);
-                dYdt(:, :, k) = dYk;
+                Yk = states{k};
+                Qk = controls{k};
+
+                % Check shapes.
+                if size(Yk, 1) ~= this.n_y
+                    error('each state matrix should have n_y rows');
+                elseif size(Yk, 2) ~= this.n_t
+                    error('each state matrix should have n_t columns');
+                elseif size(Qk, 1) ~= this.n_q
+                    error('each control matrix should have n_q rows');
+                elseif size(Qk, 2) ~= num_snapshots_per_trajectory
+                    error('each control matrix should have n_t - 1 columns');
+                end
+
+                % Estimate time derivatives and strip off initial state.
+                dYdt{k} = driver(Yk);
+                Y{k} = Yk(:, 2:end);
             end
 
-            num_training_snapshots = num_snapshots_per_trajectory * num_trajectories;
-            Y = reshape(Y, this.n_y, num_training_snapshots);
-            dYdt = reshape(dYdt, this.n_y, num_training_snapshots);
-            Q = reshape(controls, this.n_q, num_training_snapshots);
+            % Concatenate data from all trajectories.
+            states_all = horzcat(Y{:});
+            ddts_all = horzcat(dYdt{:});
+            controls_all = horzcat(controls{:});
+            original_initial_condition = this.y0;
 
             num_candidates = size(reg_candidates, 2);
             reconstruction_errors = zeros(1, num_candidates);
-            original_initial_condition = this.y0;
             disp(['Regularization selection (' num2str(num_candidates), ' candidates)']);
             for i = 1:num_candidates
+                % Calibrate the model with the i-th regularization candidate.
                 reg = reg_candidates(i);
                 this.regularizer = reg;
-                this.Learn_Operators(Y, Q, dYdt);
+                this.Learn_Operators(states_all, controls_all, ddts_all);
 
-                % Solve the model for each training control profile.
+                % Solve the model for each training controller.
                 total_error = 0;
                 for k = 1:num_trajectories
-                    this.y0 = states(:, 1, k);
-                    Yk = this.State_Solve2(controls(:, :, k));
-                    local_error = norm(Yk - states(:, :, k)) / norm(states(:, :, k));
+                    Yk_data = states{k};
+                    this.y0 = Yk_data(:, 1);
+                    Yk_rom = this.State_Solve2(controls{k});
+                    local_error = norm(Yk_rom - Yk_data) / norm(Yk_data);
                     total_error = total_error + local_error;
                 end
                 reconstruction_errors(i) = total_error;
@@ -507,13 +517,13 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             end
             this.y0 = original_initial_condition;
 
-            % Choose the best regularization.
+            % Choose the best regularization out of the candidates.
             [err, idx] = min(reconstruction_errors);
             best_reg = reg_candidates(idx);
             disp(['winner = ', num2str(best_reg), '; error = ', num2str(err)]);
 
             this.regularizer = best_reg;
-            this.Learn_Operators(Y, Q, dYdt);
+            this.Learn_Operators(states_all, controls_all, ddts_all);
         end
 
         %% Implement abstract methods from the parent class.
@@ -596,6 +606,29 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             end
             idx = t_index - 1;
             mask = (this.n_q * (idx - 1) + 1):(this.n_q * idx);
+        end
+
+    end
+
+    methods (Static, Access = private)
+
+        function mustBeNumericOrCell(value)
+            % Check if the value is numeric.
+            if isnumeric(value)
+                return
+            end
+
+            % If it's a cell, check each entry for being numeric.
+            if iscell(value)
+                if all(cellfun(@isnumeric, value))
+                    return
+                else
+                    error('All cell entries must be numeric.');
+                end
+            end
+
+            % If neither condition is met, throw an error
+            error('Input must be either numeric or a cell array of numerics.');
         end
 
     end

@@ -8,12 +8,12 @@ run('../../src/Set_Paths');
 meshfile = 'urban_canyon.mat';
 datafile = 'OpInf_Training_Data.mat';
 regenerate_data = false;
-residual_energy_threshold = 1e-4;
-plot_basis_functions = true;
-plot_training_data = true;
-plot_training_reconstruction = true;
+residual_energy_threshold = 1e-2;
+plot_basis_functions = false;
+plot_training_data = false;
+plot_training_reconstruction = false;
 basis_sizes = [];  % 2:4:40;
-regularization_candidates = logspace(-3, 3, 80);
+regularization_candidates = logspace(-8, 3, 80);
 ddt_strategy = '6thOrder';
 
 %% Generate training data if needed.
@@ -79,12 +79,12 @@ if ~exist(datafile, 'file') || regenerate_data
         controller = @(tt) ppval(pp, tt);
 
         % Solve the system.
-        u_k = solver.State_Solve(controller, t, plot_training_data).NodalSolution;
-        z_k = controller(t(2:end));
+        Yk = solver.State_Solve(controller, t, plot_training_data).NodalSolution;
+        Qk = controller(t(2:end));
 
         % Record results.
-        U_train(:, k) = reshape(u_k, [], 1);
-        Z_train(:, k) = reshape(z_k, [], 1);
+        U_train(:, k) = reshape(Yk, [], 1);
+        Z_train(:, k) = reshape(Qk, [], 1);
     end
     time_trainingdata = toc();
 
@@ -106,8 +106,17 @@ disp(['Using ', num2str(num_solves), ' training trajectories']);
 
 %% Learn a POD basis.
 
-states = reshape(U_train, n_y, n_t * num_solves);
-basis = POD_Basis(states, false, full(mass_matrix));
+% Unpack the states and controls by training trajectory.
+states = cell(num_solves);
+controls = cell(num_solves);
+for k = 1:num_solves
+    states{k} = reshape(U_train(:, k), n_y, n_t);
+    controls{k} = reshape(Z_train(:, k), n_q, n_t - 1);
+end
+
+% Learn a POD basis from the collection of all state snapshots.
+states_all = horzcat(states{:});
+basis = POD_Basis(states_all, false, full(mass_matrix));
 basis.Set_Reduced_Dimension_From_Residual_Energy(residual_energy_threshold);
 disp(['Selected reduced dimension r = ', num2str(basis.r)]);
 
@@ -119,9 +128,8 @@ if plot_basis_functions
 end
 
 if plot_training_data
-    Ys = reshape(states, n_y, n_t, num_solves);
     for k = 1:num_solves
-        Yhatk = basis.Compress(Ys(:, :, k));
+        Yhatk = basis.Compress(states{k});
         figure;
         plot(t, Yhatk);
         title(['compressed state training data, trajectory', num2str(k)]);
@@ -140,33 +148,36 @@ for i = 1:length(basis_sizes)
     disp(' ');
     disp(['POD with ' num2str(r), ' basis vectors']);
 
-    % Check projection error.
-    states_lofi = basis.Compress(states);
-    states_projected = basis.Decompress(states_lofi);
-    state_projection_error = norm(states_projected - states) / norm(states);
-    disp(['Projection error of training states: ', num2str(100 * state_projection_error), '%']);
+    % Compress states and check projection error.
+    states_lofi = cell(num_solves);
+    for k = 1:num_solves
+        states_lofi{k} = basis.Compress(states{k});
+        Yk_proj = basis.Decompress(states_lofi{k});
+        proj_err_k = norm(Yk_proj - states{k}) / norm(states{k});
+        disp(['Projection error of training states for trajectory ', ...
+              num2str(k), ': ', ...
+              num2str(100 * proj_err_k), '%']);
+    end
 
     %% Learn an OpInf ROM from the data.
 
     operators = {Linear_Operator(), Input_Operator()};
     rom = OpInf_ROM_Constraint(basis.r, n_q, T, n_t, zeros(basis.r, 1), operators);
-    Yhats = reshape(states_lofi, basis.r, n_t, num_solves);
-    Qs = reshape(Z_train, n_q, n_t - 1, num_solves);
     tic();
-    rom.Select_Regularization(Yhats, Qs, regularization_candidates, ddt_strategy);
+    rom.Select_Regularization(states_lofi, controls, regularization_candidates, ddt_strategy);
     time_opinfcalibration = toc();
 
     % Solve the ROM for each of the training controls.
     total_error = 0;
     for k = 1:num_solves
-        u_k = reshape(U_train(:, k), n_y, n_t);
-        rom.y0 = Yhats(:, 1, k);
-        u_rom_k = basis.Decompress(rom.State_Solve2(Qs(:, :, k)));
-        state_error = norm(u_k - u_rom_k) / norm(u_k);
+        Yk_data = states{k};
+        rom.y0 = states_lofi{k}(:, 1);
+        Yk_rom = basis.Decompress(rom.State_Solve2(controls{k}));
+        state_error = norm(Yk_data - Yk_rom) / norm(Yk_data);
         disp(['ROM reconstruction error for training set ', num2str(k), ': ', num2str(100 * state_error), '%']);
         total_error = total_error + state_error;
         if plot_training_reconstruction
-            solver.Animate_Solution(u_rom_k);
+            solver.Animate_Solution(Yk_rom);
         end
     end
     errors(i) = total_error / num_solves;
@@ -182,45 +193,43 @@ end
 
 % Make sure the initial conditions are right.
 solver.init_center = [.05; .85];
-rom.y0 = Yhats(:, 1, 1);
+rom.y0 = states_lofi{1}(:, 1);
 
 obj_hifi = solver.Make_Objective([.6; .6], t(end), length(t), 1e-5);
 obj_lofi = Reduced_Dynamic_Objective(obj_hifi, basis.V);
 solver.Plot_Field(obj_hifi.target_weight, 'Protection zone');
 
 opt = Reduced_Space_Optimization(obj_lofi, rom);
-opt.z_lb = -100 * ones(n_z, 1);          % Lower bounds for control.
-opt.z_ub = zeros(n_z, 1);                % Upper bounds for control.
+opt.z_lb = -100 * ones(n_z, 1);             % Lower bounds for control.
+opt.z_ub = zeros(n_z, 1);                   % Upper bounds for control.
 
 tic();
 [u_lofi, z_lofi] = opt.Optimize(-rand(n_z, 1));
 time_lofioptimization = toc();
 
 % Inspect the state solution.
-u_rom = basis.Decompress(reshape(u_lofi, basis.r, n_t));
-solver.Animate_Solution(u_rom);
+Y_rom = basis.Decompress(reshape(u_lofi, basis.r, n_t));
+solver.Animate_Solution(Y_rom);             % ROM state with ROM controller
 
 % Inspect the control solution.
-q_rom = reshape(z_lofi, n_q, n_t - 1);
+Q_rom = reshape(z_lofi, n_q, n_t - 1);
 figure;
-plot(t(2:end), q_rom);
-title('Control policy');
+plot(t(2:end), Q_rom);
+title('Optimal controls (optimized with an OpInf ROM surrogate)');
 
 % Solve the high-fidelity model with the inferred controls.
 disp('Final high-fidelity solve');
-pp = spline(t(2:end), q_rom);
+pp = spline(t(2:end), Q_rom);
 controller = @(tt) ppval(pp, tt);
-u_hifi = solver.State_Solve(controller, t, false).NodalSolution;
-solver.Animate_Solution(u_hifi);
+Y_hifi = solver.State_Solve(controller, t, false).NodalSolution;
+solver.Animate_Solution(Y_hifi);            % FOM state with ROM controller
 
-save('OptimizationSolution.mat', "solver", "u_hifi", "t", "z_lofi", "n_q");
+save('OptimizationSolution.mat', "solver", "Y_hifi", "Y_rom", "t", "Q_rom", "n_q");
 
 %% Load and visualize results later.
-% load('OptimizationSolution.mat', "solver", "u_hifi", "t", "z_lofi", "n_q");
-% n_t = length(t);
-% q_rom = reshape(z_lofi, n_q, n_t - 1);
+% load('OptimizationSolution.mat', "solver", "Y_hifi", "t", "z_lofi", "n_q");
 % figure;
-% plot(t(2:end), q_rom);
-% title('Control policy');
-%
-% solver.Animate_Solution(u_hifi);
+% plot(t(2:end), Q_rom);
+% title('Optimal controls (optimized with an OpInf ROM surrogate)');
+% solver.Animate_Solution(Y_rom);   % ROM state with ROM controller
+% solver.Animate_Solution(Y_hifi);  % FOM state with ROM controller

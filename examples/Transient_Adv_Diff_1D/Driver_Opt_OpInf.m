@@ -13,7 +13,7 @@ ddt_strategy = '6thOrder';
 plot_basis_functions = true;
 plot_training_data = true;
 plot_optimization_solution = true;
-solve_hifi_problem = false;
+solve_hifi_problem = true;
 
 %% Generate or load training data.
 
@@ -41,8 +41,7 @@ if ~exist(datafile, 'file') || regenerate_data
 
     % Solve the state equation for several random controls.
     num_solves = 5;
-    spln_nodes = 4;
-    % Z_train = 10 * randn(n_z, num_solves);
+    spln_nodes = 6;
     Z_train = zeros(n_z, num_solves);
     U_train = zeros(n_y * n_t, num_solves);
     for k = 1:num_solves
@@ -67,8 +66,17 @@ obj_hifi = Adv_Diff_Gaussian_Source_Objective(n_y, n_z, T, n_t, n_q);
 t = obj_hifi.t_mesh;
 x = obj_hifi.x;
 
-states = reshape(U_train, n_y, n_t * num_solves);
-basis = POD_Basis(states, false, obj_hifi.M);
+% Unpack the states and controls by training trajectory.
+states = cell(num_solves);
+controls = cell(num_solves);
+for k = 1:num_solves
+    states{k} = reshape(U_train(:, k), n_y, n_t);
+    controls{k} = reshape(Z_train(:, k), n_q, n_t - 1);
+end
+
+% Learn a POD basis from the collection of all state snapshots.
+states_all = horzcat(states{:});
+basis = POD_Basis(states_all, false, obj_hifi.M);
 basis.Set_Reduced_Dimension_From_Residual_Energy(residual_energy_threshold);
 obj_lofi = Reduced_Dynamic_Objective(obj_hifi, basis.V);
 disp(['Selected reduced dimension r = ', num2str(basis.r)]);
@@ -83,23 +91,26 @@ if plot_basis_functions
     title('POD basis functions');
 end
 
-% Check projection error.
-states_lofi = basis.Compress(states);
-states_projected = basis.Decompress(states_lofi);
-state_projection_error = norm(states_projected - states) / norm(states);
-disp(['Projection error of training states: ', num2str(state_projection_error)]);
-Yhats = reshape(states_lofi, basis.r, n_t, num_solves);
-Qs = reshape(Z_train, n_q, [], num_solves);
+% Check the projection error for each trajectory.
+states_lofi = cell(num_solves);
+for k = 1:num_solves
+    states_lofi{k} = basis.Compress(states{k});
+    Yk_proj = basis.Decompress(states_lofi{k});
+    proj_err_k = norm(Yk_proj - states{k}) / norm(states{k});
+    disp(['Projection error of training states for trajectory ', ...
+          num2str(k), ': ', ...
+          num2str(proj_err_k)]);
+end
 
 if plot_training_data
     for k = 1:num_solves
         fig = figure();
         fig.Position(3:4) = [830, 300];
         subplot(1, 2, 1);
-        plot(t(2:end), Qs(:, :, k));
+        plot(t(2:end), controls{k});
         title(['training controls, trajectory', num2str(k)]);
         subplot(1, 2, 2);
-        plot(t, Yhats(:, :, k));
+        plot(t, states_lofi{k});
         title(['compressed training states, trajectory ', num2str(k)]);
     end
 end
@@ -114,22 +125,24 @@ disp(['Average projection error of target state: ', num2str(mean(target_projecti
 
 %% Initialize and calibrate Operator Inference constraint.
 
+y0 = zeros(basis.r, 1);
 operators = {Linear_Operator(), Input_Operator()};
-rom = OpInf_ROM_Constraint(basis.r, n_q, T, n_t, zeros(basis.r, 1), operators);
+rom = OpInf_ROM_Constraint(basis.r, n_q, T, n_t, y0, operators);
 
 tic();
-rom.Select_Regularization(Yhats, Qs, regularization_candidates, ddt_strategy);
+rom.Select_Regularization(states_lofi, controls, regularization_candidates, ddt_strategy);
 time_opinfcalibration = toc();
 
 % Validate the Operator Inference constraint by solving
 % the ROM for each of the training controls.
 for k = 1:num_solves
-    u = reshape(U_train(:, k), n_y, n_t);
-    rom.y0 = Yhats(:, 1, k);
-    u_rom_k = basis.Decompress(rom.State_Solve2(Qs(:, :, k)));
-    state_error = norm(u - u_rom_k) / norm(u);
-    disp(['ROM reconstruction error for training set ', num2str(k), ': ', num2str(100 * state_error), '%']);
+    Yk_data = states{k};
+    rom.y0 = states_lofi{k}(:, 1);
+    Yk_rom = basis.Decompress(rom.State_Solve2(controls{k}));
+    state_error = norm(Yk_data - Yk_rom) / norm(Yk_data);
+    disp(['ROM reconstruction error for trajectory ', num2str(k), ': ', num2str(100 * state_error), '%']);
 end
+rom.y0 = y0;
 
 %% Solve the optimization problem.
 
@@ -137,17 +150,18 @@ opt = Reduced_Space_Optimization(obj_lofi, rom);
 z0 = randn(n_z, 1);
 
 tic();
-[u_reduced, z_lofi] = opt.Optimize(z0);
+[u_lofi, z_lofi] = opt.Optimize(z0);
 time_lofioptimization = toc();
 
-u_rom = basis.Decompress(reshape(u_reduced, basis.r, n_t));
+Y_rom = basis.Decompress(reshape(u_lofi, basis.r, n_t));
+u_rom = reshape(Y_rom, [], 1);
 
 if ~solve_hifi_problem
     if plot_optimization_solution
         figure;
         for k = 1:n_t
             target = obj_hifi.Evaluate_Target(t(k), x);
-            plot(x, u_rom(:, k), '-', x, target, '--', 'LineWidth', 3);
+            plot(x, Y_rom(:, k), '-', x, target, '--', 'LineWidth', 3);
             title('Optimal states and target function');
             legend({'State (ROM)', 'Target'});
             xlim([0 1]);
@@ -157,9 +171,9 @@ if ~solve_hifi_problem
 
         figure;
         hold on;
-        z_lofi_reshape = reshape(z_lofi, n_q, n_t - 1);
+        Q_rom = reshape(z_lofi, n_q, n_t - 1);
         for i = 1:n_q
-            plot(t(2:end), z_lofi_reshape(i, :), ...
+            plot(t(2:end), Q_rom(i, :), ...
                  '-', 'LineWidth', 1, 'Color', "#0072BD");
             plot(t(2:end), 10 * atan(10 * t(2:end)) .* cos(2 * pi * (t(2:end) - (i - 1) / n_q)), ...
                  '--', 'LineWidth', 1, 'Color', "#EDB120");
@@ -178,9 +192,9 @@ tic();
 [u_true, z_hifi] = opt_hifi.Optimize(z0);
 time_hifioptimization = toc();
 
-u_true = reshape(u_true, n_y, n_t);
 diff_state = norm(u_rom - u_true) / norm(u_true);
-diff_control = norm(z_hifi - z_lofi) / norm(z_hifi);
+diff_control = norm(z_lofi - z_hifi) / norm(z_hifi);
+Y_true = reshape(u_true, n_y, n_t);
 
 %% Compare the optimal state to the target.
 
@@ -193,10 +207,10 @@ end
 for k = 1:n_t
     target = obj_hifi.Evaluate_Target(t(k), x);
     denom = norm(target);
-    err1(k) = norm(target - u_rom(:, k)) / denom;
-    err2(k) = norm(target - u_true(:, k)) / denom;
+    err1(k) = norm(target - Y_rom(:, k)) / denom;
+    err2(k) = norm(target - Y_true(:, k)) / denom;
     if plot_optimization_solution
-        plot(x, u_rom(:, k), '-', x, u_true(:, k), ':', x, target, '--', 'LineWidth', 3);
+        plot(x, Y_rom(:, k), '-', x, Y_true(:, k), ':', x, target, '--', 'LineWidth', 3);
         title('Optimal states and target function');
         legend({'State (ROM)', 'State (FOM)', 'Target'});
         xlim([0 1]);
@@ -212,12 +226,12 @@ if plot_optimization_solution
 
     figure;
     hold on;
-    z_hifi_reshape = reshape(z_hifi, n_q, n_t - 1);
-    z_lofi_reshape = reshape(z_lofi, n_q, n_t - 1);
+    Q_hifi = reshape(z_hifi, n_q, n_t - 1);
+    Q_rom = reshape(z_lofi, n_q, n_t - 1);
     for i = 1:n_q
-        plot(t(2:end), z_lofi_reshape(i, :), ...
+        plot(t(2:end), Q_rom(i, :), ...
              '-', 'LineWidth', 1, 'Color', "#0072BD");
-        plot(t(2:end), z_hifi_reshape(i, :), ...
+        plot(t(2:end), Q_hifi(i, :), ...
              ':', 'LineWidth', 1, 'Color', "#D95319");
         plot(t(2:end), 10 * atan(10 * t(2:end)) .* cos(2 * pi * (t(2:end) - (i - 1) / n_q)), ...
              '--', 'LineWidth', 1, 'Color', "#EDB120");
