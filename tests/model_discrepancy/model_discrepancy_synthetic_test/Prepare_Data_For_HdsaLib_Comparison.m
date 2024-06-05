@@ -35,7 +35,7 @@ md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_pr
 alpha_d = 1.e-5;
 num_post_samples = 100;
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
-Z_test = randn(m, 3);
+Z_test = zeros(m, 3);
 Z_test(:, 1:2) = md_post_sampling.post_data.Z;
 Z_test(:, 3) = 1.5 * ones(m, 1);
 [post_delta_mean, post_delta_samples] = md_post_sampling.Posterior_Discrepancy_Samples(Z_test);
