@@ -27,8 +27,9 @@ classdef Randomized_GEVP < handle
         function [evecs, evals] = Compute_GEVP(this, num_evals, oversampling)
 
             kpp = num_evals + oversampling;
-            tmp = this.Generate_Random_Samples(kpp);
-            Y = this.Apply_Weighting_Operator_Inverse(tmp);
+            tmp1 = this.Generate_Random_Samples(kpp);
+            tmp2 = this.Apply_Operator(tmp1);
+            Y = this.Apply_Weighting_Operator_Inverse(tmp2);
 
             Q = this.CholQR(Y, 'weighting');
 
