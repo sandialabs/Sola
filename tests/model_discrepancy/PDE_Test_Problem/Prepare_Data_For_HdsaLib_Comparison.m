@@ -4,7 +4,7 @@ close all;
 addpath(genpath('../../../src'));
 rng(1234423);
 
-random_numbers = randn(4*10^5, 1);
+random_numbers = randn(4 * 10^5, 1);
 writematrix(random_numbers, 'random_numbers.txt');
 
 rng(1234423);
@@ -63,4 +63,3 @@ md_update = MD_Update(md_post_samples, md_hessian_analysis);
 %%
 post_delta_mean = reshape(cell2mat(post_delta_mean), 200, 3);
 save('Sabl_Output.mat', 'prior_delta', 'prior_delta_z_opt', 'post_delta_mean', 'post_delta_samples', 'post_z_mean', 'post_z_samples');
-

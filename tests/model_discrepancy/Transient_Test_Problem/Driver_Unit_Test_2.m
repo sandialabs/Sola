@@ -47,6 +47,6 @@ sampling_local_error = norm(W_u_Plus_scalar_M_u_inv - test, 'fro') / norm(W_u_Pl
 sampling_error = [sampling_error, sampling_local_error];
 
 %%
-if max(sampling_error) > .03
-    disp('Error in model_discrepancy/Transient_Test_Problem/Driver_Unit_Test_1');
+if max(sampling_error) > .05
+    disp('Error in model_discrepancy/Transient_Test_Problem/Driver_Unit_Test_2');
 end

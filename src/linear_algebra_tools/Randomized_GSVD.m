@@ -67,8 +67,8 @@ classdef Randomized_GSVD < handle
         end
 
         function [Q, WQ] = CholQR(this, Z, type)
-            R_Z = chol(Z'*Z);
-            Q_Z = Z*linsolve(R_Z,eye(size(R_Z,1)));
+            R_Z = chol(Z' * Z);
+            Q_Z = Z * linsolve(R_Z, eye(size(R_Z, 1)));
             if strcmp(type, 'input_weighting_inverse')
                 W_Q_Z = this.Apply_Input_Weighting_Operator_Inverse(Q_Z);
             elseif strcmp(type, 'output_weighting')

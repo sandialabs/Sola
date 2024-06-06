@@ -21,7 +21,7 @@ classdef MD_Transient_Prior_Covariance_Sabl < MD_Transient_Prior_Covariance
 
             this@MD_Transient_Prior_Covariance(beta_t, beta_i, M_t, S_t, n_y);
             num_evals = n_t;
-            oversampling = 20;
+            oversampling = 0;
             this.Compute_Time_Covariance_GEVP(num_evals, oversampling);
         end
 
