@@ -3,7 +3,7 @@ close all;
 addpath(genpath('../../../src'));
 rng(1431242);
 
-suppress_figures = false; % true;
+suppress_figures = true;
 
 m = 50;
 gevp = Randomized_GEVP_Test(m);
