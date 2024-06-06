@@ -21,8 +21,8 @@ classdef Randomized_GEVP_Test < Randomized_GEVP
 
         function [samples] = Generate_Random_Samples(this, num_samples)
             R = chol(this.M);
-            tmp = randn(size(R,1),num_samples);
-            samples = linsolve(R,tmp);      
+            tmp = randn(size(R, 1), num_samples);
+            samples = linsolve(R, tmp);
         end
 
     end
