@@ -41,6 +41,9 @@ classdef Randomized_GEVP < handle
             [~, WQ, R] = this.CholQR(M, 'weighting_inverse');
             [U_M, Sigma_M, ~] = svd(R);
 
+            scale = sign(U_M(1, :));
+            U_M = U_M .* (ones(size(U_M, 1), 1) * scale);
+
             evecs = WQ * U_M(:, 1:num_evals);
             evals = diag(Sigma_M(1:num_evals, 1:num_evals)).^2;
         end
