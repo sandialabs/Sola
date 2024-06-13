@@ -52,21 +52,30 @@ classdef MD_Data_Interface_Diff_React < MD_Data_Interface
             end
         end
 
+        function Set_Z_and_D(this, Z, D)
+            this.Z = Z;
+            this.D = D;
+        end
+
         function this = MD_Data_Interface_Diff_React(varargin)
-            % This Operator is overloaded to allow for (Z, D); (Z, D, u_opt, z_opt); or (e_k, e_i, type)
+            % This Operator is overloaded to allow for (u_opt, z_opt); (u_opt, z_opt, Z, D); or (e_k, e_i, type)
             % This is temporarily done to preserve backward-compatibility with OED Drivers
-            if nargin == 4
-                this.Z = varargin{1};
-                this.D = varargin{2};
-                this.u_opt = varargin{3};
-                this.z_opt = varargin{4};
-            elseif nargin == 3
-                this.ensemble_id_k = varargin{1};
-                this.ensemble_id_i = varargin{2};
-                this.design_type = varargin{3};
-            elseif nargin == 2
-                this.Z = varargin{1};
-                this.D = varargin{2};
+            % Also, automatically loads data so it doesn't have to be repeated in MD_Data_Interface
+            switch nargin
+                case 2
+                    this.u_opt = varargin{1};
+                    this.z_opt = varargin{2};
+                case 3
+                    this.ensemble_id_k = varargin{1};
+                    this.ensemble_id_i = varargin{2};
+                    this.design_type = varargin{3};
+                case 4
+                    this.u_opt = varargin{1};
+                    this.z_opt = varargin{2};
+                    this.Z = varargin{3};
+                    this.D = varargin{4};
+                otherwise
+                    error("Please enter the correct number of inputs into MD_Data_Interface_Diff_React.");
             end
         end
 
