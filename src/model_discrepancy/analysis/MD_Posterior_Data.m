@@ -45,8 +45,14 @@ classdef MD_Posterior_Data < handle
             this.Zc_W_z_inv_Zc = this.Zc' * this.W_z_inv_Zc;
 
             this.G = (1 + this.W_z_inv_z_opt' * z_opt) - this.Z' * this.W_z_inv_z_opt - this.W_z_inv_z_opt' * this.Z + this.Z' * this.W_z_inv_Z;
-            [this.g_vecs, this.Mu] = eigs(this.G, this.N);
-            this.g_vecs = this.g_vecs .* (ones(this.N, 1) * sign(this.g_vecs(1, :)));
+
+            if isscalar(this.G) && this.G == 1 && isscalar(this.N) && this.N == 1
+                this.g_vecs = 1;
+                this.Mu = 1;
+            else
+                [this.g_vecs, this.Mu] = eigs(this.G, this.N);
+                this.g_vecs = this.g_vecs .* (ones(this.N, 1) * sign(this.g_vecs(1, :)));
+            end
 
             M_u_D = u_prior_interface.Apply_M_u(this.D);
             this.u_ell = u_prior_interface.Apply_W_u_Inverse(M_u_D);

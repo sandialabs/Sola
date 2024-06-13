@@ -105,10 +105,3 @@ plot(x, con_hifi.State_Solve(z_update_mean), "DisplayName", "Updated State");
 plot(x, obj.T, "DisplayName", "Target");
 title("States for Lo-Fi & Hi-Fi Controls");
 legend("Location", "best");
-
-function [D] = Evaluate_Discrepancy(con_hifi, con_lofi, Z)
-    % D is not preallocated, so might not be efficient
-    for i = 1:size(Z, 2)
-        D(:, i) = con_hifi.State_Solve(Z(:, i)) - con_lofi.State_Solve(Z(:, i));
-    end
-end

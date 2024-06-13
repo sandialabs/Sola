@@ -58,10 +58,12 @@ classdef MD_Data_Interface_Diff_React < MD_Data_Interface
         end
 
         function this = MD_Data_Interface_Diff_React(varargin)
-            % This Operator is overloaded to allow for (u_opt, z_opt); (u_opt, z_opt, Z, D); or (e_k, e_i, type)
+            % This Operator is overloaded to allow for z_opt; (u_opt, z_opt); (u_opt, z_opt, Z, D); or (e_k, e_i, type)
             % This is temporarily done to preserve backward-compatibility with OED Drivers
             % Also, automatically loads data so it doesn't have to be repeated in MD_Data_Interface
             switch nargin
+                case 1
+                    this.z_opt = varargin{1};
                 case 2
                     this.u_opt = varargin{1};
                     this.z_opt = varargin{2};
