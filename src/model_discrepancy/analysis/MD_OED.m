@@ -90,7 +90,18 @@ classdef MD_OED < handle
             else
                 options = optimoptions('fminunc', 'Algorithm', 'quasi-newton', 'Display', 'None', 'MaxIterations', 5000, 'SpecifyObjectiveGradient', true);
             end
-            beta = fminunc(@(beta)this.Evaluate_OED_Objective(beta, alpha_d, reg_coeff), beta_0, options);
+            beta = fminunc(@(beta) this.Evaluate_OED_Objective(beta, alpha_d, reg_coeff), beta_0, options);
+            Z = this.data_interface.z_opt + this.offline_data.V * reshape(beta, size(this.offline_data.V, 2), []);
+            Z = [this.data_interface.z_opt, Z];
+        end
+
+        function [beta_new, Z] = Generate_Sequentially_Fixed_Optimal_Design(this, beta_0, alpha_d, reg_coeff, betas_old)
+            if this.verbosity
+                options = optimoptions('fminunc', 'Algorithm', 'quasi-newton', 'Display', 'iter', 'MaxIterations', 5000, 'SpecifyObjectiveGradient', true);
+            else
+                options = optimoptions('fminunc', 'Algorithm', 'quasi-newton', 'Display', 'None', 'MaxIterations', 5000, 'SpecifyObjectiveGradient', true);
+            end
+            beta_new = fminunc(@(beta_new)this.Evaluate_OED_Objective([betas_old; beta_new], alpha_d, reg_coeff), [betas_old; beta_0], options);
             Z = this.data_interface.z_opt + this.offline_data.V * reshape(beta, size(this.offline_data.V, 2), []);
             Z = [this.data_interface.z_opt, Z];
         end
@@ -98,8 +109,8 @@ classdef MD_OED < handle
         function [val, grad] = Evaluate_OED_Objective(this, beta, alpha_d, reg_coeff)
             [val1, grad1] = this.Evaluate_Posterior_Cov_Trace(beta, alpha_d);
             [val2, grad2] = this.Evaluate_Regularization(beta);
-            val = -val1 + reg_coeff * val2;
-            grad = -grad1 + reg_coeff * grad2;
+            val = real(-val1 + reg_coeff * val2);
+            grad = real(-grad1 + reg_coeff * grad2);
         end
 
         function [val, grad] = Evaluate_Posterior_Cov_Trace(this, beta, alpha_d)

@@ -62,6 +62,8 @@ classdef MD_Data_Interface_Diff_React < MD_Data_Interface
             % This is temporarily done to preserve backward-compatibility with OED Drivers
             % Also, automatically loads data so it doesn't have to be repeated in MD_Data_Interface
             switch nargin
+                case 0
+                    % do nothing
                 case 1
                     this.z_opt = varargin{1};
                 case 2

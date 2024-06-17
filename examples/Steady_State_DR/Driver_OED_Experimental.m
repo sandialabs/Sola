@@ -48,30 +48,30 @@ md_oed = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_i
 md_oed.Offline_Computation();
 
 % Set Parameters for OED
-N = 5;
-rng(1);
+N = 100;
+rng(0);
 beta_0 = randn(num_evals * (N - 1), 1);
 alpha_d = 1.e-4;
 reg_coeff = 1.e-6;
-% [betas, Z] = md_oed.Generate_Optimal_Design(beta_0, alpha_d, reg_coeff);
+[betas, Z] = md_oed.Generate_Optimal_Design(beta_0, alpha_d, reg_coeff);
 
 % Generate Design (Generate_Random_Design(N), Generate_Random_Design_from_Subspace(N), Generate_Optimal_Design(...))
-Z = md_oed.Generate_Random_Design(N);
+% Z = md_oed.Generate_Random_Design(N);
 D = Evaluate_Discrepancy(con_hifi, con_lofi, Z);
 data_interface.Set_Z_and_D(Z, D);
 
 % % Sample from Posterior (i.e., solve problem) - USES DATA INTERFACE
-num_post_samples = 20;
+num_post_samples = 1;
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
-[delta_mean, delta_samples] = md_post_sampling.Posterior_Discrepancy_Samples(Z);
+% [delta_mean, delta_samples] = md_post_sampling.Posterior_Discrepancy_Samples(Z);
 
 % % Sample from Posterior of Optimal Solution
 md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
 
 % Sample from Design Prior of Z
-num_prior_samples = 20;
+num_prior_samples = 1;
 Z_prior_samps = md_oed.Generate_Random_Design(num_prior_samples);
 
 % Evaluate Objectives
@@ -84,24 +84,33 @@ fprintf("\nError of Lo-Fi Control: \t" + oed_z_error_fn(z_lofi));
 fprintf("\nError of Updated Control: \t" + oed_z_error_fn(z_update_mean));
 
 % Comparison of Lo-Fi and Hi-Fi Control Solutions
-figure;
-hold on;
-plot(x, Z_prior_samps, "Color", [0.9, 0.9, 0.7], "HandleVisibility", "off");
-plot(x, z_update_samples, "Color", [0.7, 0.9, 0.9], "HandleVisibility", "off");
-plot(x, z_lofi, "Color", 0.5 * [0.9, 0.9, 0.3], "DisplayName", "Lo-Fi Sol.");
-plot(x, z_hifi, "DisplayName", "Hi-Fi Sol.");
-plot(x, z_update_mean, "Color", 0.5 * [0.3, 0.9, 0.9], "DisplayName", "Updated Sol.");
-title("Lo-Fi & Hi-Fi Controls");
-legend("Location", "best");
-% z_prior_samples_w = z_prior_interface.Sample_with_sCovariance_W_z_Inverse(10);
 % figure;
-% plot(x, z_prior_samples)
+% hold on;
+% plot(x, Z_prior_samps, "Color", [0.9, 0.9, 0.7], "HandleVisibility", "off");
+% plot(x, z_update_samples, "Color", [0.7, 0.9, 0.9], "HandleVisibility", "off");
+% plot(x, z_lofi, "Color", 0.5 * [0.9, 0.9, 0.3], "DisplayName", "Lo-Fi Sol.");
+% plot(x, z_hifi, "DisplayName", "Hi-Fi Sol.");
+% plot(x, z_update_mean, "Color", 0.5 * [0.3, 0.9, 0.9], "DisplayName", "Updated Sol.");
+% title("Lo-Fi & Hi-Fi Controls");
+% legend("Location", "best");
+% % z_prior_samples_w = z_prior_interface.Sample_with_sCovariance_W_z_Inverse(10);
+% % figure;
+% % plot(x, z_prior_samples)
 % Comparison of Lo-Fi and Hi-Fi State Solutions
 figure;
 hold on;
-plot(x, con_hifi.State_Solve(z_lofi), "DisplayName", "Lo-Fi Sol.");
-plot(x, con_hifi.State_Solve(z_hifi), "DisplayName", "Hi-Fi Sol.");
-plot(x, con_hifi.State_Solve(z_update_mean), "DisplayName", "Updated State");
-plot(x, obj.T, "DisplayName", "Target");
+plot(x, con_hifi.State_Solve(z_lofi), "r-", "DisplayName", "Lo-Fi Sol.");
+plot(x, con_hifi.State_Solve(z_hifi), "k--", "DisplayName", "Hi-Fi Sol.");
+plot(x, con_hifi.State_Solve(z_update_mean), "b-", "DisplayName", "Updated Sol.");
+% plot(x, obj.T, "DisplayName", "Target");
 title("States for Lo-Fi & Hi-Fi Controls");
+legend("Location", "best");
+
+figure;
+hold on;
+plot(x, z_lofi, "r-", "DisplayName", "Lo-Fi Sol.");
+plot(x, z_hifi, "k--", "DisplayName", "Hi-Fi Sol.");
+plot(x, z_update_mean, "b-", "DisplayName", "Updated Sol.");
+% plot(x, obj.T, "DisplayName", "Target");
+title("Lo-Fi & Hi-Fi Controls");
 legend("Location", "best");

@@ -20,7 +20,7 @@ con_hifi = Diff_React_HiFi_Constraint(con_lofi);
 opt_hifi = Reduced_Space_Optimization(obj, con_hifi);
 x = con_lofi.x;
 
-% Load Data (NOTE: FROM Optimization_Results.mat) - PROCEED WITH CAUTION ON ANYTHING USING DATA_INTERFACE!
+% Load Data
 data_interface = MD_Data_Interface_Diff_React();
 data_interface.Load_Data();
 
@@ -44,8 +44,8 @@ oed_interface = MD_OED_Interface_Diff_React(data_interface, con_lofi, alpha_zd, 
 md_oed = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
 md_oed.Offline_Computation();
 
-samps_per_N = 5;
-N_range = (2:4)';
+samps_per_N = 1;
+N_range = (2:7)';
 p = length(N_range);
 
 oed_beta_samps = cell(p, samps_per_N);
@@ -60,6 +60,7 @@ subrand_D_samps = cell(p, samps_per_N);
 
 % k dictates what N is
 for k = 1:p
+    disp(k);
     N = N_range(k);
     for i = 1:samps_per_N
         beta_0 = randn(num_evals * (N - 1), 1);
