@@ -24,7 +24,15 @@ classdef MD_OED_Interface_Diff_React < MD_OED_Interface
 
     methods
 
-        function this = MD_OED_Interface_Diff_React(data_interface, con, alpha_zd, beta_zd)
+        function this = MD_OED_Interface_Diff_React(varargin)
+            if nargin == 4
+                [data_interface, con, alpha_zd, beta_zd] = deal(varargin{:});
+            elseif nargin == 3
+                [con, alpha_zd, beta_zd] = deal(varargin{:});
+                data_interface = NaN;
+            else
+                error("Not enough (or too many) inputs.");
+            end
             this@MD_OED_Interface(data_interface);
             this.M = con.M;
             this.R = chol(this.M); % M = R^T*R

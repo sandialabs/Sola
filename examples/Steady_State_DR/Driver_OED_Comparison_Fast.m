@@ -5,7 +5,7 @@
 addpath(genpath('../../src'));
 load OED_Ensemble_Results.mat;
 clear data_interface Z D;
-
+p = 5;
 num_post_samps = 1;
 
 Jhat_lofi = opt_hifi.Jhat(z_lofi);
@@ -61,7 +61,7 @@ hold on;
 xlim([0 p + 1]);
 plot(xlim, 0 * xlim + Jhat_hifi, "k--", "DisplayName", "Hi-Fi");
 plot(xlim, 0 * xlim + Jhat_lofi, "r--", "DisplayName", "Lo-Fi");
-plot([0:p + 1], [Jhat_lofi; Jhat_oed], "b.-", "DisplayName", "Standard OED");
+plot([0:p + 1], [Jhat_lofi; Jhat_oed], ".-", "Color", "#1F618D", "DisplayName", "Standard OED");
 xlabel("Evaluations ($N$)", "Interpreter", "latex");
 ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
 legend("location", "east", "Interpreter", "latex");

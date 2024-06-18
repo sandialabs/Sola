@@ -65,19 +65,13 @@ classdef MD_Data_Interface_Diff_React < MD_Data_Interface
                 case 0
                     % do nothing
                 case 1
-                    this.z_opt = varargin{1};
+                    [this.z_opt] = deal(varargin{:});
                 case 2
-                    this.u_opt = varargin{1};
-                    this.z_opt = varargin{2};
+                    [this.u_opt, this.z_opt] = deal(varargin{:});
                 case 3
-                    this.ensemble_id_k = varargin{1};
-                    this.ensemble_id_i = varargin{2};
-                    this.design_type = varargin{3};
+                    [this.ensemble_id_k, this.ensemble_id_i, this.design_type] = deal(varargin{:});
                 case 4
-                    this.u_opt = varargin{1};
-                    this.z_opt = varargin{2};
-                    this.Z = varargin{3};
-                    this.D = varargin{4};
+                    [this.u_opt, this.z_opt, this.Z, this.D] = deal(varargin{:});
                 otherwise
                     error("Please enter the correct number of inputs into MD_Data_Interface_Diff_React.");
             end

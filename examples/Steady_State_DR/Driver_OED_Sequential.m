@@ -26,8 +26,8 @@ x = con_lofi.x;
 fprintf("\nStep 0:\n-------------");
 Jhat_lofi = opt_hifi.Jhat(z_lofi);
 Jhat_hifi = opt_hifi.Jhat(z_hifi);
-fprintf('Objective of z_lofi: \t%.2f\n', Jhat_lofi);
-fprintf('Objective of z_hifi: \t%.2f\n\n', Jhat_hifi);
+fprintf('Objective of z_lofi: \t%.3f\n', Jhat_lofi);
+fprintf('Objective of z_hifi: \t%.3f\n\n', Jhat_hifi);
 
 % Set Data Interface (no data there yet, except for z_lofi/u_lofi)
 data_interface = MD_Data_Interface_Diff_React(u_lofi, z_lofi);
@@ -53,61 +53,71 @@ md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversa
 alpha_zd = 1.e-2;
 beta_zd = 1.e-2;
 reg_coeff = 1.e-6;
-beta_0 = randn(num_evals * (N - 1), 1);
+beta_0 = randn(num_evals, 1);
+data_interface = MD_Data_Interface_Diff_React(u_lofi, z_lofi);
+oed_interface = MD_OED_Interface_Diff_React(con_lofi, alpha_zd, beta_zd);
 % oed_interface = MD_OED_Interface_Diff_React(data_interface, con_lofi, alpha_zd, beta_zd);
 % md_oed = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
 % md_oed.Offline_Computation();
 % Z_random_samples = md_oed.Generate_Random_Design(100);
 
-% figure;
-% hold on;
-% plot(x, con_hifi.State_Solve(z_lofi), "r-", "DisplayName", "$S(\tilde{z})$");
-% plot(x, con_hifi.State_Solve(z_hifi), "k--", "DisplayName", "$S(z^*)$");
-% % plot(x, obj.T, "DisplayName", "Target");
-% title("Seq-OED State (Iteration 0)");
-% ylim([10 17]);
-% legend("Location", "northwest", "interpreter", "latex");
-
+figure;
+hold on;
+plot(x, con_hifi.State_Solve(z_lofi), "r-", "DisplayName", "$S(\tilde{z})$");
+plot(x, con_hifi.State_Solve(z_hifi), "k--", "DisplayName", "$S(z^*)$");
+% plot(x, obj.T, "DisplayName", "Target");
+title("Seq-OED State (Iteration 0)");
+ylim([10 17]);
+legend("Location", "northwest", "interpreter", "latex");
+% saveas(gcf, "SeqOED_N_0.png")
 %% Iterate for each data point
-N = 5;
+N = 6;
 Jhat_oed = zeros(N, 1);
 oed_z_error = zeros(N, 1);
 z_bar = z_lofi;
 Z = [];
+D = [];
+betas = [];
 for p = 1:N
     % Update Data Interface (BEWARE: the change affects the dependencies directly!)
     fprintf('\nStep %d:\n-------------\n', p);
-    updated_data_interface = MD_Data_Interface_Diff_React(u_lofi, z_bar);
 
-    % oed_interface = MD_OED_Interface_Diff_React(updated_data_interface, con_lofi, alpha_zd, beta_zd);
-    % md_oed = MD_OED(opt_prob_interface, updated_data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
-    % md_oed.Offline_Computation();
+    % Sequential OED
+    md_oed = MD_OED_Seq(opt_prob_interface, u_lofi, z_lofi, z_bar, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
+    md_oed.Offline_Computation();
 
     % Set Parameters for OED
-    % [betas, Z] = md_oed.Generate_Optimal_Design(beta_0, alpha_d, reg_coeff);
+    if p == 1
+        z_p = z_lofi;
+    else
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, reg_coeff, betas);
+        betas = [betas; beta_new];
+        z_p = z_p(:, end);
+    end
 
     % Obtain Discrepancies
     % Z = Z_random_samples(:, 1:p);
     % Z = [Z z_bar+(Z_random_samples(:, p)-z_lofi)];
-    Z = [Z z_bar];
-    D = Evaluate_Discrepancy(con_hifi, con_lofi, Z);
-    updated_data_interface.Set_Z_and_D(Z, D);
+    % Z = [Z z_bar];
+    Z = [Z z_p];
+    D_p = Evaluate_Discrepancy(con_hifi, con_lofi, z_p);
+    D = [D D_p];
+    data_interface.Set_Z_and_D(Z, D);
 
-    % % Obtain Optimal Solution Update
-    % The below code ensures that W_\theta uses the updated z
-    % MD_Posterior_Data does not have direct access to data_interface, so modifying it won't affect it
-    % MD_Update uses z_opt for Hessian/Jacobian, but we can maneuver around that by re-initializing w/ z_lofi
-    md_post_sampling = MD_Posterior_Sampling(updated_data_interface, u_prior_interface, z_prior_interface);
+    % Perform Posterior Sampling
+    data_interface.z_opt = z_bar;
+    md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
     md_post_sampling.Compute_Posterior_Data(alpha_d, 1);
-    updated_data_interface.z_opt = z_lofi;
-    updated_data_interface.u_opt = u_lofi;
+
+    % Obtain Optimal Solution Update
+    data_interface.z_opt = z_lofi;
     md_update = MD_Update(md_post_sampling, md_hessian_analysis);
     z_bar = md_update.Posterior_Update_Mean();
 
     % Display Stats
     Jhat_oed(p) = opt_hifi.Jhat(z_bar);
     oed_z_error(p) = oed_z_error_fn(z_bar);
-    fprintf('Objective of z_bar: \t%.2f\n', Jhat_oed(p));
+    fprintf('Objective of z_bar: \t%.3f\n', Jhat_oed(p));
     % fprintf('Rel. Err of z_bar: \t%.2f%%\n', 100 * oed_z_error(p));
     % fprintf('Diff. w/ z_hifi obj.: \t%.2f%%\n', 100 * (Jhat_oed(p) - Jhat_hifi) / (Jhat_hifi));
     if p == 1
@@ -124,26 +134,26 @@ for p = 1:N
     % title("Lo-Fi & Hi-Fi Controls (Iteration " + p + ")");
     % legend("Location", "best");
 
-    % figure;
-    % hold on;
-    % plot(x, con_hifi.State_Solve(z_lofi), "r-", "DisplayName", "$S(\tilde{z})$");
-    % plot(x, con_hifi.State_Solve(z_hifi), "k--", "DisplayName", "$S(z^*)$");
-    % plot(x, con_hifi.State_Solve(z_bar), "b-", "DisplayName", "$S(\bar{z})$");
-    % ylim([10 17]);
-    % % plot(x, obj.T, "DisplayName", "Target");
-    % title("Seq-OED State (Iteration " + p + ")");
-    % legend("Location", "northwest", "interpreter", "latex");
-    % % saveas(gcf, "SeqOED_N_"+p+".png")
+    figure;
+    hold on;
+    plot(x, con_hifi.State_Solve(z_lofi), "r-", "DisplayName", "$S(\tilde{z})$");
+    plot(x, con_hifi.State_Solve(z_hifi), "k--", "DisplayName", "$S(z^*)$");
+    plot(x, con_hifi.State_Solve(z_bar), "b-", "DisplayName", "$S(\bar{z})$");
+    ylim([10 17]);
+    % plot(x, obj.T, "DisplayName", "Target");
+    title("Seq-OED State (Iteration " + p + ")");
+    legend("Location", "northwest", "interpreter", "latex");
+    % saveas(gcf, "SeqOED_N_"+p+".png")
 
 end
 
 % figure;
 % hold on;
 % xlim([0 N])
-% plot(xlim, 0*xlim+Jhat_hifi, "k--", "DisplayName", "Hi-Fi")
-% plot(xlim, 0*xlim+Jhat_lofi, "r--", "DisplayName", "Lo-Fi")
-% plot(0:N, [Jhat_lofi; old_oed(1:N)], ".-", "Color", "#1F618D", "DisplayName", "Standard OED")
-% plot(0:N, [Jhat_lofi; Jhat_oed], ".-", "Color", "#00C83A", "DisplayName", "Sequential")
+% yline(Jhat_hifi, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1)
+% yline(Jhat_lofi, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1)
+% % plot(0:N, [Jhat_lofi; old_oed(1:N)], ".-", "Color", "#1F618D", "DisplayName", "Standard OED")
+% plot(0:N, [Jhat_lofi; Jhat_oed], ".-", "Color", "#00C83A", "DisplayName", "Sequential OED")
 % xlabel("Evaluations ($N$)", "Interpreter", "latex")
 % ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex")
 % legend("location", "east", "Interpreter", "latex")
