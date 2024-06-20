@@ -2,9 +2,7 @@ classdef MD_OED_Seq < handle
 
     properties
         opt_prob_interface
-        u_lofi
-        z_lofi
-        z_bar
+        data_interface
         beta_bar
         u_prior_interface
         z_prior_interface
@@ -17,16 +15,14 @@ classdef MD_OED_Seq < handle
 
     methods
 
-        function this = MD_OED_Seq(opt_prob_interface, u_lofi, z_lofi, z_bar, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface)
+        function this = MD_OED_Seq(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface)
             this.opt_prob_interface = opt_prob_interface;
-            this.u_lofi = u_lofi;
-            this.z_lofi = z_lofi;
-            this.z_bar = z_bar;
+            this.data_interface = data_interface;
             this.u_prior_interface = u_prior_interface;
             this.z_prior_interface = z_prior_interface;
             this.md_hessian_analysis = md_hessian_analysis;
             this.oed_interface = oed_interface;
-            this.verbosity = true;
+            this.verbosity = false;
         end
 
         function this = Offline_Computation(this)
@@ -37,8 +33,8 @@ classdef MD_OED_Seq < handle
             this.offline_data.Rho = this.md_hessian_analysis.evals;
             this.offline_data.r = length(this.offline_data.Rho);
 
-            this.beta_bar = this.offline_data.V \ (this.z_bar - this.z_lofi);
-            if ~ismembertol(this.z_bar, this.z_lofi + this.offline_data.V * this.beta_bar, 1e-12)
+            this.beta_bar = this.offline_data.V \ (this.data_interface.z_opt - this.data_interface.z_init);
+            if ~ismembertol(this.data_interface.z_opt, this.data_interface.z_init + this.offline_data.V * this.beta_bar, 1e-12)
                 error("z_bar is not in the range of V. This situation is currently unsupported.");
             end
 
@@ -46,8 +42,8 @@ classdef MD_OED_Seq < handle
             Mu_Wu_inv_V_acute = zeros(length(this.opt_prob_interface.u_current), this.offline_data.r);
             Vt_Wz_inv_V = zeros(this.offline_data.r, this.offline_data.r);
             for k = 1:this.offline_data.r
-                tmp = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian(this.offline_data.V(:, k), this.z_lofi);
-                V_acute(:, k) = this.opt_prob_interface.Apply_Misfit_Hessian(tmp, this.u_lofi, this.z_lofi);
+                tmp = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian(this.offline_data.V(:, k), this.data_interface.z_init);
+                V_acute(:, k) = this.opt_prob_interface.Apply_Misfit_Hessian(tmp, this.data_interface.u_init, this.data_interface.z_init);
 
                 tmp = this.u_prior_interface.Apply_W_u_Inverse(V_acute(:, k));
                 Mu_Wu_inv_V_acute(:, k) = this.u_prior_interface.Apply_M_u(tmp);
@@ -59,7 +55,7 @@ classdef MD_OED_Seq < handle
             this.offline_data.Mu_Wu_inv_V_acute = Mu_Wu_inv_V_acute;
             this.offline_data.Vt_Wz_inv_V = Vt_Wz_inv_V;
 
-            Ju = this.opt_prob_interface.Misfit_Gradient(this.u_lofi, this.z_lofi);
+            Ju = this.opt_prob_interface.Misfit_Gradient(this.data_interface.u_init, this.data_interface.z_init);
             tmp = this.u_prior_interface.Apply_W_u_Inverse(Ju);
             this.offline_data.Ju = Ju;
             this.offline_data.Mu_Wu_inv_Ju = this.u_prior_interface.Apply_M_u(tmp);
@@ -69,16 +65,16 @@ classdef MD_OED_Seq < handle
         end
 
         function [Z] = Generate_Random_Design(this, N)
-            Omega = randn(length(this.z_lofi), N - 1);
-            Z = this.z_lofi + this.oed_interface.Apply_Design_Cov_Factor(Omega);
-            Z = [this.z_lofi, Z];
+            Omega = randn(length(this.data_interface.z_init), N - 1);
+            Z = this.data_interface.z_init + this.oed_interface.Apply_Design_Cov_Factor(Omega);
+            Z = [this.data_interface.z_init, Z];
         end
 
         function [Z] = Generate_Random_Design_from_Subspace(this, N)
             v = randn(size(this.offline_data.V, 2), N - 1);
-            coeff = length(this.z_lofi) / trace(this.offline_data.Vt_Design_Cov_Inv_V);
+            coeff = length(this.data_interface.z_init) / trace(this.offline_data.Vt_Design_Cov_Inv_V);
             Z_tmp = sqrt(coeff) * this.offline_data.V * v;
-            Z = [this.z_lofi, this.z_lofi + Z_tmp];
+            Z = [this.data_interface.z_init, this.data_interface.z_init + Z_tmp];
         end
 
         function [beta, Z, post_var, reg_val] = L_Curve_Analysis(this, beta_0, alpha_d, reg_coeffs)
@@ -101,23 +97,22 @@ classdef MD_OED_Seq < handle
                 options = optimoptions('fminunc', 'Algorithm', 'quasi-newton', 'Display', 'None', 'MaxIterations', 5000, 'SpecifyObjectiveGradient', true);
             end
             beta = fminunc(@(beta) this.Evaluate_OED_Objective(beta, alpha_d, reg_coeff), beta_0, options);
-            Z = this.z_lofi + this.offline_data.V * reshape(beta, size(this.offline_data.V, 2), []);
-            Z = [this.z_lofi, Z];
+            Z = this.data_interface.z_init + this.offline_data.V * reshape(beta, size(this.offline_data.V, 2), []);
+            Z = [this.data_interface.z_init, Z];
         end
 
-        function [beta_new, Z_new] = Generate_Seq_Optimal_Design(this, beta_0, alpha_d, reg_coeff, betas_old)
+        function [beta_new, Z_new] = Generate_Seq_Optimal_Design(this, beta_0, alpha_d, reg_coeff, betas)
             if this.verbosity
                 options = optimoptions('fminunc', 'Algorithm', 'quasi-newton', 'Display', 'iter', 'MaxIterations', 5000, 'SpecifyObjectiveGradient', true);
             else
                 options = optimoptions('fminunc', 'Algorithm', 'quasi-newton', 'Display', 'None', 'MaxIterations', 5000, 'SpecifyObjectiveGradient', true);
             end
-            beta_new = fminunc(@(beta_new)this.Evaluate_OED_Objective_Seq([betas_old; beta_new], alpha_d, reg_coeff), beta_0, options);
-            Z_new = this.z_lofi + this.offline_data.V * beta_new;
+            beta_new = fminunc(@(beta_new)this.Evaluate_OED_Objective_Seq([betas; beta_new], alpha_d, reg_coeff), beta_0, options);
+            Z_new = this.data_interface.z_init + this.offline_data.V * beta_new;
         end
 
         function [val, grad] = Evaluate_OED_Objective_Seq(this, beta, alpha_d, reg_coeff)
             [val, grad_full] = this.Evaluate_OED_Objective(beta, alpha_d, reg_coeff);
-            % return last r of gradient
             grad = grad_full(end - this.offline_data.r + 1:end);
         end
 

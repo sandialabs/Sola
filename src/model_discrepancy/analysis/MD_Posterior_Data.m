@@ -7,6 +7,7 @@ classdef MD_Posterior_Data < handle
         D
         W_z_inv_Z
         W_z_inv_z_opt
+        z_opt
         Zc
         W_z_inv_Zc
         Zc_W_z_inv_Zc
@@ -30,21 +31,22 @@ classdef MD_Posterior_Data < handle
 
         end
 
-        function [] = Compute_Posterior_Data(this, data_interface, u_prior_interface, z_prior_interface, alpha_d_in, z_opt, num_samples)
+        function [] = Compute_Posterior_Data(this, data_interface, u_prior_interface, z_prior_interface, alpha_d_in, num_samples)
             this.alpha_d = alpha_d_in;
             this.num_samples = num_samples;
+            this.z_opt = data_interface.z_opt;
             this.Z = data_interface.Z;
             this.D = data_interface.D;
             this.N = size(this.D, 2);
 
             this.W_z_inv_Z = z_prior_interface.Apply_W_z_Inverse(this.Z);
-            this.W_z_inv_z_opt = z_prior_interface.Apply_W_z_Inverse(z_opt);
+            this.W_z_inv_z_opt = z_prior_interface.Apply_W_z_Inverse(this.z_opt);
 
-            this.Zc = this.Z(:, 2:end) - z_opt;
+            this.Zc = this.Z(:, 2:end) - this.z_opt;
             this.W_z_inv_Zc = this.W_z_inv_Z(:, 2:end) - this.W_z_inv_z_opt;
             this.Zc_W_z_inv_Zc = this.Zc' * this.W_z_inv_Zc;
 
-            this.G = (1 + this.W_z_inv_z_opt' * z_opt) - this.Z' * this.W_z_inv_z_opt - this.W_z_inv_z_opt' * this.Z + this.Z' * this.W_z_inv_Z;
+            this.G = (1 + this.W_z_inv_z_opt' * this.z_opt) - this.Z' * this.W_z_inv_z_opt - this.W_z_inv_z_opt' * this.Z + this.Z' * this.W_z_inv_Z;
 
             if isscalar(this.G) && this.G == 1 && isscalar(this.N) && this.N == 1
                 this.g_vecs = 1;
@@ -65,7 +67,7 @@ classdef MD_Posterior_Data < handle
             this.a_ell = zeros(this.N, 1);
             this.b_i_ell = zeros(this.N, this.N);
             for ell = 1:this.N
-                this.a_ell(ell) = 1 - this.W_z_inv_z_opt' * (this.Z(:, ell) - z_opt);
+                this.a_ell(ell) = 1 - this.W_z_inv_z_opt' * (this.Z(:, ell) - this.z_opt);
                 for i = 1:this.N
                     this.b_i_ell(i, ell) = (this.Z * this.g_vecs(:, i))' * (this.W_z_inv_Z(:, ell) - this.W_z_inv_z_opt) + sum(this.g_vecs(:, i)) * this.a_ell(ell);
                 end

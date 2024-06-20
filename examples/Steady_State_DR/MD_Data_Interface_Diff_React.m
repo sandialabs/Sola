@@ -9,25 +9,15 @@ classdef MD_Data_Interface_Diff_React < MD_Data_Interface
     methods
 
         function [u_opt] = Load_Optimal_u(this)
-            if isempty(this.u_opt)
-                u_opt = load('Optimization_Results.mat').u_lofi;
-            else
-                u_opt = this.u_opt;
-            end
+            u_opt = load('Optimization_Results.mat').u_lofi;
         end
 
         function [z_opt] = Load_Optimal_z(this)
-            if isempty(this.z_opt)
-                z_opt = load('Optimization_Results.mat').z_lofi;
-            else
-                z_opt = this.z_opt;
-            end
+            z_opt = load('Optimization_Results.mat').z_lofi;
         end
 
         function [Z] = Load_Z_Data(this)
-            if ~isempty(this.Z)
-                Z = this.Z;
-            elseif isempty(this.ensemble_id_i)
+            if isempty(this.ensemble_id_i)
                 Z = load('Optimization_Results.mat').Z;
             elseif strcmp(this.design_type, 'OED')
                 Z = load('OED_Ensemble_Results.mat', 'oed_Z_samps').oed_Z_samps{this.ensemble_id_k, this.ensemble_id_i};
@@ -39,9 +29,7 @@ classdef MD_Data_Interface_Diff_React < MD_Data_Interface
         end
 
         function [D] = Load_d_Data(this)
-            if ~isempty(this.D)
-                D = this.D;
-            elseif isempty(this.ensemble_id_i)
+            if isempty(this.ensemble_id_i)
                 D = load('Optimization_Results.mat').D;
             elseif strcmp(this.design_type, 'OED')
                 D = load('OED_Ensemble_Results.mat', 'oed_D_samps').oed_D_samps{this.ensemble_id_k, this.ensemble_id_i};
@@ -52,28 +40,20 @@ classdef MD_Data_Interface_Diff_React < MD_Data_Interface
             end
         end
 
-        function Set_Z_and_D(this, Z, D)
-            this.Z = Z;
-            this.D = D;
-        end
-
         function this = MD_Data_Interface_Diff_React(varargin)
-            % This Operator is overloaded to allow for z_opt; (u_opt, z_opt); (u_opt, z_opt, Z, D); or (e_k, e_i, type)
-            % This is temporarily done to preserve backward-compatibility with OED Drivers
-            % Also, automatically loads data so it doesn't have to be repeated in MD_Data_Interface
             switch nargin
                 case 0
                     % do nothing
-                case 1
-                    [this.z_opt] = deal(varargin{:});
                 case 2
-                    [this.u_opt, this.z_opt] = deal(varargin{:});
+                    [this.u_init, this.z_init] = deal(varargin{:});
                 case 3
                     [this.ensemble_id_k, this.ensemble_id_i, this.design_type] = deal(varargin{:});
-                case 4
-                    [this.u_opt, this.z_opt, this.Z, this.D] = deal(varargin{:});
                 otherwise
                     error("Please enter the correct number of inputs into MD_Data_Interface_Diff_React.");
+            end
+
+            if isempty(this.z_opt)
+                this.z_opt = this.z_init;
             end
         end
 

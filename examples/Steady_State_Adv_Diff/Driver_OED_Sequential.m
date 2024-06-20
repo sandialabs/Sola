@@ -10,7 +10,7 @@ set(0, "DefaultAxesFontSize", 20);
 set(0, "DefaultLineLineWidth", 3);
 set(0, "DefaultLineMarkerSize", 20);
 
-show_figures = false;
+show_figures = true;
 save_figures = false;
 
 % Retrieve Model Parameters (D, Z, diff/reg/react_coeff, m, u_lofi, z_hifi/lofi; remove Z and D though)
@@ -18,11 +18,11 @@ load Optimization_Results.mat;
 clear Z D;
 
 % Set Hi-Fi and Lo-Fi Objectives and Constraints
-obj = Diff_React_Objective(m, reg_coeff);
-con_lofi = Diff_React_Constraint(m, diff_coeff, react_coeff);
-opt_lofi = Reduced_Space_Optimization(obj, con_lofi);
-con_hifi = Diff_React_HiFi_Constraint(con_lofi);
+obj = Adv_Diff_Objective(m, reg_coeff);
+con_hifi = Adv_Diff_Constraint(m, diff_coeff, vel_coeff, robin_coeff);
+con_lofi = Diff_Constraint(con_hifi);
 opt_hifi = Reduced_Space_Optimization(obj, con_hifi);
+opt_lofi = Reduced_Space_Optimization(obj, con_lofi);
 x = con_lofi.x;
 
 % Show initial objective
@@ -33,14 +33,14 @@ fprintf('Objective of z_lofi: \t%.3f\n', Jhat_lofi);
 fprintf('Objective of z_hifi: \t%.3f\n\n', Jhat_hifi);
 
 % Set Data Interface (no data there yet, except for z_lofi/u_lofi)
-data_interface = MD_Data_Interface_Diff_React(u_lofi, z_lofi);
+data_interface = MD_Data_Interface_Diff(u_lofi, z_lofi);
 
 % Generate Priors for u and z
-alpha_u = 2^2;
-alpha_z = 1.e-10;
-alpha_d = 1.e-4;
-u_prior_interface = MD_Elliptic_u_Prior_Interface_Diff_React(alpha_u, opt_lofi);
-z_prior_interface = MD_Elliptic_z_Prior_Interface_Diff_React(alpha_z, opt_lofi);
+alpha_u = (1 / 2)^2;
+alpha_z = (1 / 100)^2;
+alpha_d = 1.e-2;
+u_prior_interface = MD_Elliptic_u_Prior_Interface_Diff(alpha_u, opt_lofi);
+z_prior_interface = MD_Elliptic_z_Prior_Interface_Diff(alpha_z, opt_lofi);
 
 % Error with z_hifi
 oed_z_error_fn = @(z) sqrt((z - z_hifi)' * z_prior_interface.Apply_M_z(z - z_hifi)) / sqrt(z_hifi' * z_prior_interface.Apply_M_z(z_hifi));
@@ -53,11 +53,10 @@ oversampling = 20;
 md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_init, num_evals, oversampling);
 
 % Perform Offline OED Computations - This is used to generate many random designs (to avoid OED in next steps)
-alpha_zd = 1.e-2;
-beta_zd = 1.e-2;
+
 reg_coeff = 1.e-6;
 beta_0 = randn(num_evals, 1);
-oed_interface = MD_OED_Interface_Diff_React(data_interface, con_lofi, alpha_zd, beta_zd);
+oed_interface = MD_OED_Interface_Diff(data_interface, con_lofi);
 
 % Plot low-fidelity and high-fidelity states
 if show_figures
@@ -65,7 +64,7 @@ if show_figures
     hold on;
     plot(x, con_hifi.State_Solve(z_lofi), "r-", "DisplayName", "$S(\tilde{z})$");
     plot(x, con_hifi.State_Solve(z_hifi), "k--", "DisplayName", "$S(z^*)$");
-    % plot(x, obj.T, "DisplayName", "Target");
+    % plot(x, obj.T, "k:", "DisplayName", "Target");
     title("Seq-OED State (Iteration 0)");
     fixed_ylim = ylim;
     legend("Location", "northwest", "interpreter", "latex");
@@ -107,7 +106,7 @@ for p = 1:N
     D = [D D_p];
     data_interface.Set_Z_and_D(Z, D);
 
-    % Perform Posterior Sampling
+    % Perform Posterior Sampling (TODO: Reuse data)
     md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
     md_post_sampling.Compute_Posterior_Data(alpha_d, 1);
 
