@@ -40,10 +40,6 @@ assert(size(CY, 1) == n_y);
 assert(size(CY, 2) == n_t);
 assert(all(CY(:, 1) == C));
 
-opr = op.Galerkin(Vr);
-assert(size(opr.entries, 1) == r);
-assert(size(opr.entries, 2) == 1);
-
 assert(Constant_Operator.Column_Dimension() == 1);
 
 op.Finite_Difference_Check(n_t);
@@ -67,10 +63,6 @@ AJac = op.Jacobian_y(Y, Q);
 assert(size(AJac, 1) == n_y);
 assert(size(AJac, 2) == n_y);
 assert(all(AJac == A, 'all'));
-
-opr = op.Galerkin(Vr);
-assert(size(opr.entries, 1) == r);
-assert(size(opr.entries, 2) == r);
 
 assert(Linear_Operator.Column_Dimension(r) == r);
 
@@ -119,10 +111,6 @@ HHess_V = op.Hessian_yy_Apply(Vr, y, q, y);
 assert(size(HHess_V, 1) == n_y);
 assert(size(HHess_V, 2) == size(Vr, 2));
 
-opr = op.Galerkin(Vr, Vr);
-assert(size(opr.entries, 1) == r);
-assert(size(opr.entries, 2) == r * (r + 1) / 2);
-
 assert(Quadratic_Operator.Column_Dimension(r) == r * (r + 1) / 2);
 
 op.Finite_Difference_Check(n_t);
@@ -146,10 +134,6 @@ BJac = op.Jacobian_q(Y, Q);
 assert(size(BJac, 1) == n_y);
 assert(size(BJac, 2) == n_q);
 assert(all(BJac == B, 'all'));
-
-opr = op.Galerkin(Vr);
-assert(size(opr.entries, 1) == r);
-assert(size(opr.entries, 2) == n_q);
 
 assert(Input_Operator.Column_Dimension(r, n_q) == n_q);
 

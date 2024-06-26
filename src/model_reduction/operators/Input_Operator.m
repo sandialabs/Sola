@@ -73,25 +73,6 @@ classdef Input_Operator < OpInf_Operator
             jac = this.entries;
         end
 
-        function [reduced] = Galerkin(this, Vr, ~)
-            % Compute the Galerkin projection of this operator
-            % :math:`\A\in\R^{n_y \times n_y}` with respect to a trial basis
-            % :math:`\V_r\in\R^{n_y \times n_y'}`, i.e,
-            % :math:`\hat{\B} = \V_r\trp\B\in \R^{n_y' \times n_q}`.
-            %
-            % Parameters
-            % ----------
-            % Vr
-            %   Basis matrix :math:`\V_r\in\R^{n_y \times n_y'}` for the trial space.
-            %
-            % Returns
-            % -------
-            % reduced : Input_Operator
-            %   Galerkin projection of this operator (a new object).
-            reduced = Input_Operator();
-            reduced.Set_Entries(Vr' * this.entries);
-        end
-
         function Finite_Difference_Check(this, n_t)
             % Check consistency between :meth:`Apply()` and :meth:`Datablock()`
             % and do finite difference checks for :meth:`Jacobian_q()`.

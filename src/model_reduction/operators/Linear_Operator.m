@@ -64,39 +64,6 @@ classdef Linear_Operator < OpInf_Operator
             jac = this.entries;
         end
 
-        function [reduced] = Galerkin(this, Vr, Wr)
-            % Compute the Galerkin projection of this operator
-            % :math:`\A\in\R^{n_y \times n_y}` with respect to a trial basis
-            % :math:`\V_r\in\R^{n_y \times n_y'}` and a test basis
-            % :math:`\W_r\in\R^{n_y \times n_y'}`, i.e,
-            % :math:`\hat{\A} = \V_r\trp\A\W_r \in \R^{n_y' \times n_y'}`.
-            %
-            % Parameters
-            % ----------
-            % Vr
-            %   Basis matrix :math:`\V_r\in\R^{n_y \times n_y'}` for the trial space.
-            % Wr
-            %   _Optional_ Basis matrix :math:`\W_r\in\R^{n_y \times n_y'}`
-            %   for the test space. If not given, set ``Wr = Vr``.
-            %
-            % Returns
-            % -------
-            % reduced : Linear_Operator
-            %   Galerkin projection of this operator (a new object).
-            arguments
-                this
-                Vr (:, :) {mustBeNumeric}
-                Wr (:, :) {mustBeNumeric} = []
-            end
-
-            if size(Wr, 1) == 0
-                Wr = Vr;
-            end
-
-            reduced = Linear_Operator();
-            reduced.Set_Entries(Vr' * this.entries * Wr);
-        end
-
     end
 
     methods (Static, Access = public)

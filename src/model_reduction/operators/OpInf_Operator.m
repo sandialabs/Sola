@@ -190,26 +190,6 @@ classdef OpInf_Operator < handle
             Mv = 0;
         end
 
-        %% Galerkin projection (dimensionality reduction).
-
-        function [reduced] = Galerkin(this, Vr, Wr)
-            % Compute the Galerkin projection of this operator with respect to
-            % :math:`n_y'`-dimensional trial and test bases.
-            %
-            % Parameters
-            % ----------
-            % Vr
-            %   Basis matrix :math:`\V_r\in\R^{n_y \times n_y'}` for the trial space.
-            % Wr
-            %   Basis matrix :math:`\W_r\in\R^{n_y \times n_y'}` for the test space.
-            %
-            % Returns
-            % -------
-            % reduced : OpInf_Operator
-            %   Galerkin projection of this operator (a new object).
-            error('Galerkin() not implemented');
-        end
-
         %% Verification.
 
         function Finite_Difference_Check(this, n_t)

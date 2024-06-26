@@ -38,15 +38,15 @@ classdef Quadratic_Operator < OpInf_Operator
             ncols = size(H, 2);
 
             % Get the compressed Kronecker mask.
-            mask = zeros(r2, 2);
+            msk = zeros(r2, 2);
             count = 1;
             for i = 1:n_y
                 for j = 1:i
-                    mask(count, :) = [i j];
+                    msk(count, :) = [i j];
                     count = count + 1;
                 end
             end
-            this.mask = mask;
+            this.mask = msk;
 
             % Get both the full and compressed representations.
             if ncols == n_y^2
@@ -105,7 +105,7 @@ classdef Quadratic_Operator < OpInf_Operator
             jac = this.prejac * kron(eye(this.n_y), y);
         end
 
-        function [Mv] = Hessian_yy_Apply(this, v, y, q, lambda)
+        function [Mv] = Hessian_yy_Apply(this, v, ~, ~, lambda)
             % Compute the action of the :math:`y,y` Hessian of the operator.
             %
             % Parameters
@@ -130,38 +130,6 @@ classdef Quadratic_Operator < OpInf_Operator
             for j = 1:num_vecs
                 Mv(:, j) = this.Jacobian_y(v(:, j))' * lambda;
             end
-        end
-
-        function [reduced] = Galerkin(this, Vr, Wr)
-            % Compute the Galerkin projection of this operator
-            % :math:`\H\in\R^{n_y \times n_y^2}` with respect to a trial basis
-            % :math:`\V_r\in\R^{n_y \times n_y'}` and a test basis
-            % :math:`\W_r\in\R^{n_y \times n_y'}`, i.e,
-            % :math:`\hat{\H} = \V_r\trp\H[\W_r\otimes\W_r] \in \R^{n_y' \times (n_y')^2}`.
-            %
-            % Parameters
-            % ----------
-            % Vr
-            %   Basis matrix :math:`\V_r\in\R^{n_y \times n_y'}` for the trial space.
-            % Wr
-            %   Basis matrix :math:`\W_r\in\R^{n_y \times n_y'}` for the test space.
-            %
-            % Returns
-            % -------
-            % reduced : Quadratic_Operator
-            %   Galerkin projection of this operator (a a new object).
-            arguments
-                this
-                Vr (:, :) {mustBeNumeric}
-                Wr (:, :) {mustBeNumeric} = []
-            end
-
-            if size(Wr, 1) == 0
-                Wr = Vr;
-            end
-
-            reduced = Quadratic_Operator();
-            reduced.Set_Entries(Vr' * this.expand_quadratic(this.entries) * kron(Wr, Wr));
         end
 
     end
