@@ -496,7 +496,7 @@ The following figure plots the state trajectory `u`.
 :align: center
 :width: 100 %
 
-Figure 1: Results of `Tutorial_1.m`.
+Results of `Tutorial_1.m`.
 :::
 
 :::{admonition} Plotting code
@@ -959,7 +959,7 @@ by less than options.FunctionTolerance = 1.000000e-06.
 :align: center
 :width: 100 %
 
-Figure 2: Results of `Tutorial_2.m`.
+Results of `Tutorial_2.m`.
 :::
 
 :::{admonition} Plotting code
