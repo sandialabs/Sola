@@ -1,0 +1,273 @@
+classdef OpInf_Operator_Multi < handle
+    % Base class for operators acting on multilithic states.
+    %
+    % Writing the state vector :math:`\y\in\R^{n_y}` as
+    %
+    % .. math::
+    %    \y = \left[\begin{array}{c}
+    %    \y_1 \\ \vdots \\ \y_L
+    %    \end{array}\right]
+    %
+    % where each :math:`\y_\ell\in\R^{n_\ell}` with
+    % :math:`\sum_{\ell=1}^{L}n_\ell = n_y`, this class represents operators
+    % :math:`\mathcal{F}:\R^{n_y}\times\R^{n_q}\to\R^{n_\ell}`
+    % for some :math:`\ell`.
+
+    properties (SetAccess = protected)
+        state_dimensions  % Dimensions :math:`n_1,\ldots,n_L` of the substates.
+        n_y               % Dimension :math:`n_y` of the ODE state :math:`\y(t)`.
+        entries           % Matrix representation of the operator.
+    end
+
+    properties (Access = protected)
+        state_indices
+    end
+
+    methods (Abstract, Access = public)
+
+        [out] = Apply(this, y, q)
+        % Apply the operator to the given state and input.
+        %
+        % Parameters
+        % ----------
+        % y
+        %   Differential equation state :math:`\y(t)\in\R^{n_y}`,
+        %   or an :math:`n_y \times n_t` collection of these.
+        % q
+        %   Input :math:`\q(t)\in\R^{n_q}`,
+        %   or an :math:`n_q \times n_t` collection of these.
+        %
+        % Returns
+        % -------
+        % out : vector or matrix
+        %   Application of the operator to ``(y,q)``, either an
+        %   :math:`n_\ell`-vector or an :math:`n_\ell\times n_t` matrix,
+        %   where :math:`n_\ell` is the dimension of one of the substates.
+
+        [d] = Column_Dimension(this)
+        % Column dimension of the operator entries.
+        %
+        % Parameters
+        % ----------
+        % n_y
+        %   Dimension :math:`n_y` of the ODE state :math:`\y(t)`.
+        % n_q
+        %   Dimension :math:`n_q` of the input :math:`\q(t)`.
+        %
+        % Returns
+        % -------
+        % d : uint8
+        %   Column dimension of the operator entries.
+
+        [block] = Datablock(this, Y, Q)
+        % Construct the data matrix block corresponding to the operator.
+        %
+        % Let :math:`\A(\y,\q)` represent the operator acting on a pair of
+        % state and input vectors. The data matrix block is the matrix
+        % :math:`\D` containing the state and input data such that
+        %
+        % .. math::
+        %  \min_{\A}\sum_{j=1}^{n_t}\left\| \A(\y_j, \q_j)\right\|_{2}^{2},
+        %
+        % can be written equivalently as
+        %
+        % .. math:: \min_{\X}\left\| \X\D \right\|_{F}^{2}
+        %
+        % where :math:`\X` are the operator entries.
+        %
+        % Parameters
+        % ----------
+        % Y
+        %   State data :math:`\Y\in\R^{n_y \times n_t}`.
+        %   Each column is a single state vector :math:`\y(t_j)`.
+        % Q
+        %   Input data :math:`\Q\in\R^{n_q \times n_t}`.
+        %   Each column is a single input vector :math:`\q(t_j)`.
+        %
+        % Returns
+        % -------
+        % block : :math:`d \times n_t` matrix
+        %     Data matrix block :math:`\D\in\R^{d \times n_t}`.
+
+    end
+
+    methods (Access = public)
+
+        %% Constructor and Initializer.
+
+        function this = OpInf_Operator_Multi(state_dimensions, entries)
+            % Initialize the operator and (optionally) set its entries.
+            %
+            % Parameters
+            % ----------
+            % state_dimensions
+            %   Dimensions :math:`n_1,\ldots,n_L` of the substates.
+            % entries
+            %   (Optional) Operator entries.
+            arguments
+                state_dimensions
+                entries (:, :) {mustBeNumeric} = []
+            end
+
+            this.state_dimensions = reshape(state_dimensions, [], 1);
+            this.state_indices = cumsum([1; state_dimensions]);
+            this.n_y = sum(this.state_dimensions);
+
+            if size(entries, 1) > 0
+                this.Set_Entries(entries);
+            end
+        end
+
+        function Set_Entries(this, entries)
+            % Set the entries of the operator.
+            this.entries = entries;
+        end
+
+        function [substate] = Get_Substate(this, index, state)
+            % Extract one of the substates.
+            %
+            % Parameters
+            % ----------
+            % index
+            %   Which substate to extract.
+            % state
+            %   Differential equation state :math:`\y(t)\in\R^{n_y}` to extract from.
+            %
+            % Returns
+            % -------
+            % substate : :math:`n_i` vector
+            first = this.state_indices(index);
+            last = this.state_indices(index + 1) - 1;
+            substate = state(first:last);
+        end
+
+        %% Operator derivatives.
+        % If these are not implemented by child classes,
+        % they are assumed to be zero.
+
+        function [jac] = Jacobian_y(this, y, q)
+            % Construct the partial state Jacobian of the operator.
+            %
+            % Parameters
+            % ----------
+            % y
+            %   Differential equation state :math:`\y(t)\in\R^{n_y}` at time :math:`t`.
+            % q
+            %   Input :math:`\q(t)\in\R^{n_q}` at time :math:`t`.
+            %
+            % Returns
+            % -------
+            % jac : :math:`n_\ell \times n_y` matrix
+            %   Partial state Jacobian
+            %   :math:`\mathcal{F}_{y}(\y,\q)\in\R^{n_\ell \times n_y}`.
+            jac = 0;
+        end
+
+        function [jac] = Jacobian_q(this, y, q)
+            % Construct the partial input Jacobian of the operator.
+            %
+            % Parameters
+            % ----------
+            % y
+            %   Differential equation state :math:`\y(t)\in\R^{n_y}` at time :math:`t`.
+            % q
+            %   Input :math:`\q(t)\in\R^{n_q}` at time :math:`t`.
+            %
+            % Returns
+            % -------
+            % jac : :math:`n_\ell \times n_q` matrix
+            %   Partial input Jacobian
+            %   :math:`\mathcal{F}_{q}(\y,\q)\in\R^{n_\ell \times n_q}`.
+            jac = 0;
+        end
+
+        function [Mv] = Hessian_yy_Apply(this, v, y, q, lambda)
+            % Compute the action of the :math:`y,y` Hessian of the operator.
+            %
+            % Parameters
+            % ----------
+            % v
+            %   Search direction :math:`\v\in\R^{n_y}`.
+            % y
+            %   Differential equation state :math:`\y(t)\in\R^{n_y}` at time :math:`t`.
+            % q
+            %   Input :math:`\q(t)\in\R^{n_q}` at time :math:`t`.
+            % lambda
+            %   Adjoint state :math:`\lambda(t)\in\R^{n_y}` at time :math:`t`.
+            %
+            % Returns
+            % -------
+            % Mv : :math:`n_y`-vector
+            %   Vector-Hessian-vector product
+            %   :math:`\bflambda\trp\mathcal{F}_{y,y}(\y,\q)\v\in\R^{n_y}`.
+            Mv = 0;
+        end
+
+        function [Mv] = Hessian_yq_Apply(this, v, y, q, lambda)
+            % Compute the action of the :math:`y,q` Hessian of the operator.
+            %
+            % Parameters
+            % ----------
+            % v
+            %   Search direction :math:`\v\in\R^{n_q}`.
+            % y
+            %   Differential equation state :math:`\y(t)\in\R^{n_y}` at time :math:`t`.
+            % q
+            %   Input :math:`\q(t)\in\R^{n_q}` at time :math:`t`.
+            % lambda
+            %   Adjoint state :math:`\lambda(t)\in\R^{n_y}` at time :math:`t`.
+            %
+            % Returns
+            % -------
+            % Mv : :math:`n_y`-vector
+            %   Vector-Hessian-vector product
+            %   :math:`\bflambda\trp\mathcal{F}_{y,q}(\y,\q)\v\in\R^{n_y}`.
+            Mv = 0;
+        end
+
+        function [Mv] = Hessian_qy_Apply(this, v, y, q, lambda)
+            % Compute the action of the :math:`q,y` Hessian of the operator.
+            %
+            % Parameters
+            % ----------
+            % v
+            %   Search direction :math:`\v\in\R^{n_y}`.
+            % y
+            %   Differential equation state :math:`\y(t)\in\R^{n_y}` at time :math:`t`.
+            % q
+            %   Input :math:`\q(t)\in\R^{n_q}` at time :math:`t`.
+            % lambda
+            %   Adjoint state :math:`\lambda(t)\in\R^{n_y}` at time :math:`t`.
+            %
+            % Returns
+            % -------
+            % Mv : :math:`n_q`-vector
+            %   Vector-Hessian-vector product
+            %   :math:`\bflambda\trp\mathcal{F}_{q,y}(\y,\q)\v\in\R^{n_q}`.
+            Mv = 0;
+        end
+
+        function [Mv] = Hessian_qq_Apply(this, v, y, q, lambda)
+            % Compute the action of the :math:`q,q` Hessian of the operator.
+            %
+            % Parameters
+            % ----------
+            % v
+            %   Search direction :math:`\v\in\R^{n_q}`.
+            % y
+            %   Differential equation state :math:`\y(t)\in\R^{n_y}` at time :math:`t`.
+            % q
+            %   Input :math:`\q(t)\in\R^{n_q}` at time :math:`t`.
+            % lambda
+            %   Adjoint state :math:`\lambda(t)\in\R^{n_y}` at time :math:`t`.
+            %
+            % Returns
+            % -------
+            % Mv : :math:`n_q`-vector
+            %   Vector-Hessian-vector product
+            %   :math:`\bflambda\trp\mathcal{F}_{q,q}(\y,\q)\v\in\R^{n_q}`.
+            Mv = 0;
+        end
+
+    end
+end
