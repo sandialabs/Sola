@@ -10,8 +10,8 @@ T = 1;
 num_space_control_nodes = 10;
 reg_coeff = 1.e-6;
 diff_coeff = 1;
-vel_coeff_lofi = 1;
-vel_coeff_hifi = 5;
+vel_coeff_lofi = 0;
+vel_coeff_hifi = 200;
 
 n_z = num_space_control_nodes * (n_t - 1);
 obj = Adv_Diff_Gaussian_Source_Objective(n_y, n_z, T, n_t, num_space_control_nodes, reg_coeff);

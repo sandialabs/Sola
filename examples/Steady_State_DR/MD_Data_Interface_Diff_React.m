@@ -49,7 +49,7 @@ classdef MD_Data_Interface_Diff_React < MD_Data_Interface
                 case 3
                     [this.ensemble_id_k, this.ensemble_id_i, this.design_type] = deal(varargin{:});
                 otherwise
-                    error("Please enter the correct number of inputs into MD_Data_Interface_Diff_React.");
+                    error("Please enter the correct number of inputs into the data interface.");
             end
 
             if isempty(this.z_opt)
