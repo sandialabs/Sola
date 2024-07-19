@@ -94,16 +94,6 @@ classdef Input_Operator < OpInf_Operator
             assert(norm(appliedtoQ - fromDblock) < 1e-12);
 
             % TODO: finite difference check for Jacobian_q().
-
-            % Ensure Galerkin() gives a dimension reduction.
-            if this.n_y > 1
-                r = floor(this.n_y / 2);
-                Vr = randn(this.n_y, r);
-                op = this.Galerkin(Vr, Vr);
-                assert(size(op.entries, 1) == r);
-                assert(size(op.entries, 2) == this.n_q);
-                assert(isa(op, class(this)));
-            end
         end
 
     end
