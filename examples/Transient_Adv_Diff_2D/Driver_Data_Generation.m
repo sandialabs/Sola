@@ -68,8 +68,8 @@ u = solver.State_Solve(controller, t, true);
 solver.Plot_Field(u.NodalSolution(:, 1), 'Initial condition');
 
 %% Save the results.
-save('solver.mat', 'solver');
-save('solution.mat', 'u');
+% save('solver.mat', 'solver');
+% save('solution.mat', 'u');
 
 % % For later: load and animate the results again.
 % load('solver.mat', 'solver');

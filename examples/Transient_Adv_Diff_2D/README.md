@@ -44,7 +44,7 @@ $$
     \frac{1}{2}\int_{0}^{T}\|\mathbf{y}(t) \odot \mathbf{p}\|_{\mathbf{M}}^2\,dt
     + \frac{\gamma}{2}\int_{t_2}^{T}\|\mathbf{q}(t)\|_2^2\,dt
     \\
-    &\textrm{subject to }~~(\mathbf{y}(t),\mathbf{q}(t))~~\textrm{ jointly solves the PDE (1)}
+    &\textrm{subject to }~~(\mathbf{y}(t),\mathbf{q}(t))~~\textrm{ jointly solves the (discretized) PDE (1)}
     \\
     &\textrm{and }~~q_i(t) \le 0~~\textrm{ for all }~~i=1,\ldots,m~~\textrm{ and }~~t > 0.
 \end{aligned}
@@ -71,7 +71,7 @@ This would be perhaps a better representation of the actual source term, but it 
 We've defined a rudimentary urban canyon mesh (two-dimensional with some holes) using MATLAB's PDE Modeler tool.
 This section describes how to modify, export, and use the mesh.
 
-- Within MATLAB, start the PDE Modeler with `> pdeModeler`
+- Within MATLAB, start the PDE Modeler with `>> pdeModeler`
 - Load the existing mesh: `File > Open...` and select the file (e.g., `canyon.m`).
 - Make edits: add new boundaries, specify boundary conditions, set the mesh size, and so on.
 - Export the boundary geometry and conditions: `Boundary > Export Decomposed Geometry, Boundary Cond's...`, then type `decgeometry bcs` in the dialogue box. This adds variables called `geometry` and `bcs` to the current MATLAB workspace.

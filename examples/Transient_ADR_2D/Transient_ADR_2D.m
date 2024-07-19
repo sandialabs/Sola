@@ -75,6 +75,8 @@ classdef Transient_ADR_2D < handle
             %   Diffusion coefficients. Larger means more diffusion.
             % advection_coeffs : [float, float]
             %   Advection coefficients. Larger means more advection.
+            % reaction_coeff : float
+            %   Reaction coefficient. Larger means more reaction.
             % nodes : int or str
             %   Number of sources OR a 2xn_q matrix of center coordinates.
 
@@ -302,6 +304,13 @@ classdef Transient_ADR_2D < handle
             else
                 fig = figure();
                 fig.Position(3:4) = [830, 300];
+            end
+
+            if size(y, 2) == 1
+                y_new = zeros(this.n_x, 2);
+                y_new(:, 1) = y(1:this.n_x, 1);
+                y_new(:, 2) = y(this.n_x + 1:end, 1);
+                y = y_new;
             end
 
             for i = 1:2
