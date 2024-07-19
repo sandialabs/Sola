@@ -17,6 +17,7 @@ classdef OpInf_Operator_Multi < handle
         state_dimensions  % Dimensions :math:`n_1,\ldots,n_L` of the substates.
         n_y               % Dimension :math:`n_y` of the ODE state :math:`\y(t)`.
         entries           % Matrix representation of the operator.
+        out_index         % Index :math:`\ell` of the substate that this operator maps to.
     end
 
     properties (Access = protected)
@@ -46,13 +47,6 @@ classdef OpInf_Operator_Multi < handle
 
         [d] = Column_Dimension(this)
         % Column dimension of the operator entries.
-        %
-        % Parameters
-        % ----------
-        % n_y
-        %   Dimension :math:`n_y` of the ODE state :math:`\y(t)`.
-        % n_q
-        %   Dimension :math:`n_q` of the input :math:`\q(t)`.
         %
         % Returns
         % -------
@@ -95,23 +89,34 @@ classdef OpInf_Operator_Multi < handle
 
         %% Constructor and Initializer.
 
-        function this = OpInf_Operator_Multi(state_dimensions, entries)
+        function this = OpInf_Operator_Multi(out_index, state_dimensions, entries)
             % Initialize the operator and (optionally) set its entries.
             %
             % Parameters
             % ----------
+            % out_index
+            %   Integer index :math:`\ell` of the substate that this operator
+            %   maps to.
             % state_dimensions
             %   Dimensions :math:`n_1,\ldots,n_L` of the substates.
             % entries
             %   (Optional) Operator entries.
             arguments
+                out_index
                 state_dimensions
                 entries (:, :) {mustBeNumeric} = []
             end
 
             this.state_dimensions = reshape(state_dimensions, [], 1);
-            this.state_indices = cumsum([1; state_dimensions]);
+            this.state_indices = cumsum([1; this.state_dimensions]);
             this.n_y = sum(this.state_dimensions);
+            this.entries = [];
+            nstates = size(this.state_dimensions, 1);
+
+            if (out_index < 1) || (out_index > nstates)
+                error('out_index not aligned with state_dimensions');
+            end
+            this.out_index = out_index;
 
             if size(entries, 1) > 0
                 this.Set_Entries(entries);
@@ -138,7 +143,7 @@ classdef OpInf_Operator_Multi < handle
             % substate : :math:`n_i` vector
             first = this.state_indices(index);
             last = this.state_indices(index + 1) - 1;
-            substate = state(first:last);
+            substate = state(first:last, :);
         end
 
         %% Operator derivatives.
@@ -267,6 +272,76 @@ classdef OpInf_Operator_Multi < handle
             %   Vector-Hessian-vector product
             %   :math:`\bflambda\trp\mathcal{F}_{q,q}(\y,\q)\v\in\R^{n_q}`.
             Mv = 0;
+        end
+
+        %% Verification.
+
+        function Finite_Difference_Check(this, n_t, hasinputs)
+            % Check consistency between :meth:`Apply()` and :meth:`Datablock()`
+            % and do a finite difference checks for :meth:`Jacobian_y()`
+            % and :meth:`Hessian_yy()`.
+            arguments
+                this
+                n_t uint8 = 30
+                hasinputs = false
+            end
+
+            % Ensure consistency with Apply() and Datablock().
+            Y = randn(this.n_y, n_t);
+            Q = randn(1, n_t);
+            if hasinputs
+                Q = randn(this.n_q, n_t);
+            end
+            D = this.Datablock(Y, Q);
+            assert(size(D, 1) == this.Column_Dimension());
+            assert(size(D, 2) == n_t);
+            appliedtoY = this.Apply(Y, Q);
+            fromDblock = this.entries * D;
+            assert(size(appliedtoY, 1) == size(fromDblock, 1));
+            assert(size(appliedtoY, 2) == n_t);
+            assert(size(fromDblock, 2) == n_t);
+            assert(norm(appliedtoY - fromDblock) < 1e-12);
+
+            % Finite difference check for Jacobian_y().
+            y = Y(:, 1);
+            q = Q(:, 1);
+            v = randn(this.n_y, 1);
+            v = v / norm(v);
+            h = 10.^(-2:-1:-9);
+            p = length(h);
+            out = this.Apply(y, q);
+            jac = this.Jacobian_y(y, q);
+            jac_v = jac * v;
+            if norm(jac_v) > 0
+                disp(' ');
+                disp(['Finite difference check for ', class(this), '.Jacobian_y()']);
+                for k = 1:p
+                    out_k = this.Apply(y + h(k) * v);
+                    diff = norm(jac_v - (out_k - out) / h(k)) / norm(jac_v);
+                    disp(['h = ', num2str(h(k)), ' error = ', num2str(diff)]);
+                end
+                disp(' ');
+            end
+
+            % Finite difference check for Hessian_yy().
+            lambda = randn(this.n_y, 1);
+            Mv = this.Hessian_yy_Apply(v, y, q, lambda);
+            if norm(Mv) > 0
+                disp(' ');
+                disp(['Finite difference check for ', class(this), '.Hessian_yy_Apply()']);
+                first = this.state_indices(this.out_index);
+                last = this.state_indices(this.out_index + 1) - 1;
+                fulljac = zeros(this.n_y, this.n_y);
+                fulljac(first:last, :) = jac;
+                for k = 1:p
+                    out_k = zeros(this.n_y, this.n_y);
+                    out_k(first:last, :) = this.Jacobian_y(y + h(k) * v);
+                    fd_Mv = (out_k' * lambda - fulljac' * lambda) / h(k);
+                    diff = norm(fd_Mv - Mv) / norm(Mv);
+                    disp(['h = ', num2str(h(k)), ' error = ', num2str(diff)]);
+                end
+                disp(' ');
+            end
         end
 
     end

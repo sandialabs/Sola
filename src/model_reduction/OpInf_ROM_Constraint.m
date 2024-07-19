@@ -2,7 +2,7 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
     % Operator Inference Reduced-order Model.
     %
     % This class represents systems of ordinary differential equations (ODEs)
-    % with the polynomial
+    % with the polynomial form
     %
     % .. math:: \ddt\y(t) = \c + \A\y(t) + \H[\y(t)\otimes\y(t)] + \B\q(t),
     %
