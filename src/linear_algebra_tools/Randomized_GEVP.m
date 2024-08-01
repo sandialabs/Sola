@@ -36,16 +36,22 @@ classdef Randomized_GEVP < handle
             AQ = this.Apply_Operator(Q);
             T = Q' * AQ;
 
-            R_T = chol(T);
-            M = AQ * linsolve(R_T, eye(size(R_T, 1)));
-            [~, WQ, R] = this.CholQR(M, 'weighting_inverse');
-            [U_M, Sigma_M, ~] = svd(R);
+            try
+                R_T = chol(T);
+                M = AQ * linsolve(R_T, eye(size(R_T, 1)));
+                [~, WQ, R] = this.CholQR(M, 'weighting_inverse');
+                [U_M, Sigma_M, ~] = svd(R);
 
-            scale = sign(U_M(1, :));
-            U_M = U_M .* (ones(size(U_M, 1), 1) * scale);
+                scale = sign(U_M(1, :));
+                U_M = U_M .* (ones(size(U_M, 1), 1) * scale);
 
-            evecs = WQ * U_M(:, 1:num_evals);
-            evals = diag(Sigma_M(1:num_evals, 1:num_evals)).^2;
+                evecs = WQ * U_M(:, 1:num_evals);
+                evals = diag(Sigma_M(1:num_evals, 1:num_evals)).^2;
+            catch
+                [S, Lambda] = eig(T, 'vector');
+                evecs = Q * S(:, 1:num_evals);
+                evals = Lambda(1:num_evals);
+            end
         end
 
         function [Q, WQ, R] = CholQR(this, Z, type)
