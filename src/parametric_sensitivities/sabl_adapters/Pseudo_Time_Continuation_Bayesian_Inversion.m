@@ -20,7 +20,11 @@ classdef Pseudo_Time_Continuation_Bayesian_Inversion < Pseudo_Time_Continuation
         end
 
         function [] = Compute_Nominal_Hessian(this, rank, oversampling)
-            [this.lis_evecs, this.lis_evals] = this.gevp.Compute_Hessian_GEVP(rank, oversampling);
+            [this.lis_evecs, this.lis_evals, u, z, lambda, theta] = this.gevp.Compute_Hessian_GEVP(rank, oversampling);
+            this.sen_op.current_u = u;
+            this.sen_op.current_z = z;
+            this.sen_op.current_lambda = lambda;
+            this.sen_op.current_theta = theta;
         end
 
         function this = Pseudo_Time_Continuation_Bayesian_Inversion(z_bar, theta_bar, sen_op, bayes_inv)

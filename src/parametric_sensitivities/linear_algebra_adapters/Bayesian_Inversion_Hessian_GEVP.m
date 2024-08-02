@@ -50,11 +50,15 @@ classdef Bayesian_Inversion_Hessian_GEVP < Randomized_GEVP
             this.Gauss_Newton_Hess = false;
         end
 
-        function [evecs, evals] = Compute_Hessian_GEVP(this, num_evals, oversampling)
+        function [evecs, evals, u, z, lambda, theta] = Compute_Hessian_GEVP(this, num_evals, oversampling)
             this.u = this.bayes_inv.con.State_Solve(this.z);
             [~, grad_u] = this.bayes_inv.obj.J(this.u, this.z);
             this.lambda = this.bayes_inv.con.c_u_Transpose_Inverse_Apply(-grad_u, this.u, this.z);
             [evecs, evals] = this.Compute_GEVP(num_evals, oversampling);
+            u = this.u;
+            z = this.z;
+            lambda = this.lambda;
+            theta = this.theta;
         end
 
     end

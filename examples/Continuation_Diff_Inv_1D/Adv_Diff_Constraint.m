@@ -9,6 +9,8 @@ classdef Adv_Diff_Constraint < Parameterized_Constraint
         robin_bc
         forcing
         alpha
+        num_state_solves
+        num_adjoint_solves
     end
 
     methods (Access = public)
@@ -19,6 +21,7 @@ classdef Adv_Diff_Constraint < Parameterized_Constraint
             f = this.B * this.forcing;
             A = D + Vel + this.alpha * this.robin_bc;
             u = linsolve(A, f);
+            this.num_state_solves = this.num_state_solves + 1;
         end
 
         function [u_out] = Parameterized_c_u_Transpose_Inverse_Apply(this, u_in, u, z, theta)
@@ -26,6 +29,7 @@ classdef Adv_Diff_Constraint < Parameterized_Constraint
             Vel = this.Velocity_Assembly(theta);
             c_u = D + Vel + this.alpha * this.robin_bc;
             u_out = linsolve(c_u', u_in);
+            this.num_adjoint_solves = this.num_adjoint_solves + size(u_in, 2);
         end
 
         function [z_out] = Parameterized_c_z_Transpose_Apply(this, u_in, u, z, theta)
@@ -38,6 +42,7 @@ classdef Adv_Diff_Constraint < Parameterized_Constraint
             Vel = this.Velocity_Assembly(theta);
             c_u = D + Vel + this.alpha * this.robin_bc;
             u_out = linsolve(c_u, u_in);
+            this.num_adjoint_solves = this.num_adjoint_solves + size(u_in, 2);
         end
 
         function [u_out] = Parameterized_c_z_Apply(this, z_in, u, z, theta)
@@ -250,6 +255,9 @@ classdef Adv_Diff_Constraint < Parameterized_Constraint
             this.robin_bc = robin_bc;
 
             this.alpha = 1;
+
+            this.num_state_solves = 0;
+            this.num_adjoint_solves = 0;
         end
 
         % Method of manufactured solutions test for solver

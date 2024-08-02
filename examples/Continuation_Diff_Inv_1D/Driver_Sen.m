@@ -24,29 +24,31 @@ sen = Pseudo_Time_Continuation_Bayesian_Inversion(z_bar, theta_bar, sen_op, baye
 
 theta_star = 1.0 + 0.2 * (1 - con.x).^2;
 
+con.num_state_solves = 0;
+con.num_adjoint_solves = 0;
 [z_k_linear_approx, grad_k_linear_approx] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_star, 1);
-num_state_solves_linear_approx = sen.sen_op.num_state_solves;
-num_adjoint_solves_linear_approx = sen.sen_op.num_adjoint_solves;
+num_state_solves_linear_approx = con.num_state_solves;
+num_adjoint_solves_linear_approx = con.num_adjoint_solves;
 
-sen.sen_op.num_state_solves = 0;
-sen.sen_op.num_adjoint_solves = 0;
+con.num_state_solves = 0;
+con.num_adjoint_solves = 0;
 rank = 8;
 oversampling = 10;
 sen.Compute_Nominal_Hessian(rank, oversampling);
 N_fe = 30;
 [z_k_fe, grad_k_fe] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_star, N_fe);
-num_state_solves_fe = sen.sen_op.num_state_solves;
-num_adjoint_solves_fe = sen.sen_op.num_adjoint_solves;
+num_state_solves_fe = con.num_state_solves;
+num_adjoint_solves_fe = con.num_adjoint_solves;
 
-sen.sen_op.num_state_solves = 0;
-sen.sen_op.num_adjoint_solves = 0;
+con.num_state_solves = 0;
+con.num_adjoint_solves = 0;
 rank = 8;
 oversampling = 10;
 sen.Compute_Nominal_Hessian(rank, oversampling);
 N_me = 15;
 [z_k_me, grad_k_me] = sen.Pseudo_Time_Continuation_Modified_Euler(theta_star, N_me);
-num_state_solves_me = sen.sen_op.num_state_solves;
-num_adjoint_solves_me = sen.sen_op.num_adjoint_solves;
+num_state_solves_me = con.num_state_solves;
+num_adjoint_solves_me = con.num_adjoint_solves;
 
 grad_norm_nom = norm(sen_op.Gradient(z_bar, theta_bar));
 bayes_inv.con.theta_current = theta_star;

@@ -1,7 +1,7 @@
 clear;
 close all;
 clc;
-addpath('../../src/');
+addpath(genpath('../../src/'));
 rng(154);
 
 write_figure_to_file = false;
