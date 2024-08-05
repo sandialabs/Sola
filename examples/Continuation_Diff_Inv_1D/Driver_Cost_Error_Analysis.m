@@ -25,8 +25,8 @@ sen = Pseudo_Time_Continuation_Bayesian_Inversion(z_bar, theta_bar, sen_op, baye
 theta_star = 1.0 + 0.2 * (1 - con.x).^2;
 
 [z_k_linear_approx, grad_k_linear_approx] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_star, 1);
-num_state_solves_linear_approx = sen.sen_op.num_state_solves;
-num_adjoint_solves_linear_approx = sen.sen_op.num_adjoint_solves;
+num_state_solves_linear_approx = con.num_state_solves;
+num_adjoint_solves_linear_approx = con.num_adjoint_solves;
 linear_approx_cost = num_state_solves_linear_approx + num_adjoint_solves_linear_approx;
 
 %%
@@ -53,24 +53,24 @@ bayes_inv.con.theta_current = theta_bar;
 for k = 1:length(N_range)
 
     %% FE without BFGS
-    sen.sen_op.num_state_solves = 0;
-    sen.sen_op.num_adjoint_solves = 0;
+    con.num_state_solves = 0;
+    con.num_adjoint_solves = 0;
     sen.use_bfgs_prec = false;
     N_fe = N_range(k);
     [z_k_fe, grad_k_fe] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_star, N_fe);
-    num_state_solves_fe = sen.sen_op.num_state_solves;
-    num_adjoint_solves_fe = sen.sen_op.num_adjoint_solves;
+    num_state_solves_fe = con.num_state_solves;
+    num_adjoint_solves_fe = con.num_adjoint_solves;
     fe_error(k) = sqrt((z_star - z_k_fe(:, end))' * con.M * (z_star - z_k_fe(:, end))) / normalization;
     fe_cost(k) = num_state_solves_fe + num_adjoint_solves_fe;
 
     %% ME without BFGS
-    sen.sen_op.num_state_solves = 0;
-    sen.sen_op.num_adjoint_solves = 0;
+    con.num_state_solves = 0;
+    con.num_adjoint_solves = 0;
     sen.use_bfgs_prec = false;
     N_me =  N_range(k) / 2;
     [z_k_me, grad_k_me] = sen.Pseudo_Time_Continuation_Modified_Euler(theta_star, N_me);
-    num_state_solves_me = sen.sen_op.num_state_solves;
-    num_adjoint_solves_me = sen.sen_op.num_adjoint_solves;
+    num_state_solves_me = con.num_state_solves;
+    num_adjoint_solves_me = con.num_adjoint_solves;
     me_error(k) = sqrt((z_star - z_k_me(:, end))' * con.M * (z_star - z_k_me(:, end))) / normalization;
     me_cost(k) = num_state_solves_me + num_adjoint_solves_me;
 
@@ -79,30 +79,30 @@ end
 %% With BFGS
 for k = 1:length(N_range)
     %% FE with BFGS
-    sen.sen_op.num_state_solves = 0;
-    sen.sen_op.num_adjoint_solves = 0;
+    con.num_state_solves = 0;
+    con.num_adjoint_solves = 0;
     sen.use_bfgs_prec = true;
     rank = 8;
     oversampling = 10;
     sen.Compute_Nominal_Hessian(rank, oversampling);
     N_fe =  N_range(k);
     [z_k_fe, grad_k_fe] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_star, N_fe);
-    num_state_solves_fe = sen.sen_op.num_state_solves;
-    num_adjoint_solves_fe = sen.sen_op.num_adjoint_solves;
+    num_state_solves_fe = con.num_state_solves;
+    num_adjoint_solves_fe = con.num_adjoint_solves;
     fe_bfgs_error(k) = sqrt((z_star - z_k_fe(:, end))' * con.M * (z_star - z_k_fe(:, end))) / normalization;
     fe_bfgs_cost(k) = num_state_solves_fe + num_adjoint_solves_fe;
 
     %% ME with BFGS
-    sen.sen_op.num_state_solves = 0;
-    sen.sen_op.num_adjoint_solves = 0;
+    con.num_state_solves = 0;
+    con.num_adjoint_solves = 0;
     sen.use_bfgs_prec = true;
     rank = 8;
     oversampling = 10;
     sen.Compute_Nominal_Hessian(rank, oversampling);
     N_me = N_range(k) / 2;
     [z_k_me, grad_k_me] = sen.Pseudo_Time_Continuation_Modified_Euler(theta_star, N_me);
-    num_state_solves_me = sen.sen_op.num_state_solves;
-    num_adjoint_solves_me = sen.sen_op.num_adjoint_solves;
+    num_state_solves_me = con.num_state_solves;
+    num_adjoint_solves_me = con.num_adjoint_solves;
     me_bfgs_error(k) = sqrt((z_star - z_k_me(:, end))' * con.M * (z_star - z_k_me(:, end))) / normalization;
     me_bfgs_cost(k) = num_state_solves_me + num_adjoint_solves_me;
 

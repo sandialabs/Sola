@@ -10,7 +10,7 @@ classdef Pseudo_Time_Continuation_Bayesian_Inversion < Pseudo_Time_Continuation
     methods (Access = public)
 
         % Overloading with an initialization that exploits structure
-        function [z_out] = Apply_Initial_BFGS_Inverse_Hessian(this, z_in)
+        function [z_out] = Apply_Initial_Inverse_BFGS_Hessian(this, z_in)
             z_out = this.bayes_inv.prior.Prior_Covariance_Apply(z_in);
             if ~isempty(this.lis_evals)
                 tmp = this.lis_evecs' * z_in;
