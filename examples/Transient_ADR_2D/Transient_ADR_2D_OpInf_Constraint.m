@@ -453,8 +453,8 @@ classdef Transient_ADR_2D_OpInf_Constraint < Dynamic_Constraint
             %   Best regularization hyperparameters [ABreg; Hreg].
             arguments
                 this
-                states {OpInf_ROM_Constraint.mustBeNumericOrCell}
-                controls {OpInf_ROM_Constraint.mustBeNumericOrCell}
+                states {Transient_ADR_2D_OpInf_Constraint.mustBeNumericOrCell}
+                controls {Transient_ADR_2D_OpInf_Constraint.mustBeNumericOrCell}
                 ABreg_candidates {mustBeNumeric}
                 Hreg_candidates {mustBeNumeric}
                 ddt_strategy {mustBeText} = "bwd1"
@@ -524,7 +524,7 @@ classdef Transient_ADR_2D_OpInf_Constraint < Dynamic_Constraint
             disp(['Regularization selection (' num2str(num_experiments), ' candidates)']);
             for j = 1:num_Hcandidates
                 Hreg = Hreg_candidates(j);
-                for i = 1:num_Hcandidates
+                for i = 1:num_ABcandidates
                     ABreg = ABreg_candidates(i);
                     this.Learn_Operators(states_all, controls_all, ddts_all, ABreg, Hreg);
 
@@ -536,7 +536,7 @@ classdef Transient_ADR_2D_OpInf_Constraint < Dynamic_Constraint
                         local_error = norm(Yk_rom - Yk_data) / norm(Yk_data);
                         total_error = total_error + local_error;
                     end
-                    reconstruction_errors(i, j) = total_error;
+                    reconstruction_errors(i, j) = total_error / num_trajectories;
 
                     fprintf('ABreg: %.2e, Hreg: %.2e; error = %.2e\n', ABreg, Hreg, total_error);
                 end
@@ -549,7 +549,7 @@ classdef Transient_ADR_2D_OpInf_Constraint < Dynamic_Constraint
             best_ABreg = ABreg_candidates(rowIndex);
             best_Hreg = Hreg_candidates(colIndex);
             best_err = reconstruction_errors(rowIndex, colIndex);
-            fprintf('Best (ABreg, Hreg) = (%.2e, %.2e); error = %.2e', best_ABreg, best_Hreg, best_err);
+            fprintf('Best (ABreg, Hreg) = (%.2e, %.2e); error = %.2e\n', best_ABreg, best_Hreg, best_err);
 
             % Solve the problem again with the best hyperparameters.
             this.Learn_Operators(states_all, controls_all, ddts_all, best_ABreg, best_Hreg);
@@ -566,24 +566,24 @@ classdef Transient_ADR_2D_OpInf_Constraint < Dynamic_Constraint
             % Evaluate the operators for the first equation.
             f_1 = zeros(this.n_1, 1);
             f_y_1 = zeros(this.n_1, this.n_y);
-            for op = [this.A_1; this.H_1]
-                f_1 = f_1 + op.Apply(y, q);
-                f_y_1 = f_y_1 + op.Jacobian_y(y, q);
+            for op = {this.A_1, this.H_1}
+                f_1 = f_1 + op{1}.Apply(y, q);
+                f_y_1 = f_y_1 + op{1}.Jacobian_y(y, q);
             end
 
             % Evaluate the operators for the second equation.
             f_2 = zeros(this.n_2, 1);
             f_y_2 = zeros(this.n_2, this.n_y);
-            for op = [this.A_2; this.H_2; this.B_2]
-                f_2 = f_2 + op.Apply(y, q);
-                f_y_2 = f_y_2 + op.Jacobian_y(y, q);
+            for op = {this.A_2, this.H_2, this.B_2}
+                f_2 = f_2 + op{1}.Apply(y, q);
+                f_y_2 = f_y_2 + op{1}.Jacobian_y(y, q);
             end
 
             % Piece together the two results.
             f = [f_1; f_2];
             f_y = [f_y_1; f_y_2];
             f_z = zeros(this.n_y, this.n_z);
-            f_z(this.n_1 + 1:end, :) = this.B_2.Jacobian_q(y, q);
+            f_z(this.n_1 + 1:end, I) = this.B_2.Jacobian_q(y, q);
         end
 
         function [Mv] = f_yy_Apply(this, v, ~, ~, ~, lambda)

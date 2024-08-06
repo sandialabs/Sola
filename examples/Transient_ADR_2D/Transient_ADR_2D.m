@@ -377,12 +377,6 @@ classdef Transient_ADR_2D < handle
         end
 
         function Animate_Solution(this, u)
-            n_t = size(u, 3);
-            waittime = 2 / n_t;
-            umax = max(abs(u), [], "all");
-            umin = min(abs(u), [], "all");
-            limits = [umin, umax];
-
             fig = figure(50);
             fig.Position(3:4) = [830, 300];
 
@@ -392,6 +386,12 @@ classdef Transient_ADR_2D < handle
                 unew(:, 2, :) = u(this.n_x + 1:end, :);
                 u = unew;
             end
+
+            n_t = size(u, 3);
+            waittime = 2 / n_t;
+            umax = max(abs(u), [], "all");
+            umin = min(abs(u), [], "all");
+            limits = [umin, umax];
 
             for j = 1:n_t
                 ys = [u(:, 1, j), u(:, 2, j)];
