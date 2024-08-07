@@ -75,6 +75,8 @@ classdef Transient_ADR_2D < handle
             %   Diffusion coefficients. Larger means more diffusion.
             % advection_coeffs : [float, float]
             %   Advection coefficients. Larger means more advection.
+            % reaction_coeff : float
+            %   Reaction coefficient. Larger means more reaction.
             % nodes : int or str
             %   Number of sources OR a 2xn_q matrix of center coordinates.
 
@@ -304,6 +306,13 @@ classdef Transient_ADR_2D < handle
                 fig.Position(3:4) = [830, 300];
             end
 
+            if size(y, 2) == 1
+                y_new = zeros(this.n_x, 2);
+                y_new(:, 1) = y(1:this.n_x, 1);
+                y_new(:, 2) = y(this.n_x + 1:end, 1);
+                y = y_new;
+            end
+
             for i = 1:2
                 subplot(1, 2, i);
                 pdeplot(this.model.Mesh, XYData = y(:, i), ColorMap = "parula");
@@ -368,12 +377,6 @@ classdef Transient_ADR_2D < handle
         end
 
         function Animate_Solution(this, u)
-            n_t = size(u, 3);
-            waittime = 2 / n_t;
-            umax = max(abs(u), [], "all");
-            umin = min(abs(u), [], "all");
-            limits = [umin, umax];
-
             fig = figure(50);
             fig.Position(3:4) = [830, 300];
 
@@ -383,6 +386,12 @@ classdef Transient_ADR_2D < handle
                 unew(:, 2, :) = u(this.n_x + 1:end, :);
                 u = unew;
             end
+
+            n_t = size(u, 3);
+            waittime = 2 / n_t;
+            umax = max(abs(u), [], "all");
+            umin = min(abs(u), [], "all");
+            limits = [umin, umax];
 
             for j = 1:n_t
                 ys = [u(:, 1, j), u(:, 2, j)];

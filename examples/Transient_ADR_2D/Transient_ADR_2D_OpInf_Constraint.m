@@ -1,143 +1,61 @@
-classdef OpInf_ROM_Constraint < Dynamic_Constraint
-    % Operator Inference Reduced-order Model.
+classdef Transient_ADR_2D_OpInf_Constraint < Dynamic_Constraint
+    % Operator Inference Reduced-order Model for a two-species
+    % advection-diffusion-reaction system.
     %
-    % This class represents systems of ordinary differential equations (ODEs)
-    % with the polynomial form
-    %
-    % .. math:: \ddt\y(t) = \c + \A\y(t) + \H[\y(t)\otimes\y(t)] + \B\q(t),
-    %
-    % where
-    %
-    % * :math:`\y(t)\in\R^{n_y}` is the ODE state,
-    % * :math:`\q(t)\in\R^{n_q}` is the time-dependent (state-independent) input, and
-    % * :math:`\c,\A,\H,\B` are the system "operators".
-    %
-    % The system operators are determined by solving a regression problem,
+    % This class represents a system of ordinary differential equations for
+    % a state variable :math:`\y(t)\in\R^{n_y}` which can be partitioned into
+    % two substates:
     %
     % .. math::
-    %  \min_{\c,\A,\H,\B}\sum_{j=2}^{n_t}\left\|
-    %  \c + \A\y_j + \H[\y_j\otimes\y_j] + \B\q_j - \dot{\y}_j
-    %  \right\|_{2}^{2}
-    %  + \left\|\bfGamma[~\c~~\A~~\H~~\B~]\trp\right\|_{F}^{2},
+    %  \y(t) = \left[\begin{array}{c}
+    %  \y_1(t) \\ \y_2(t)
+    %  \end{array}\right]
     %
-    % where
+    % where each :math:`\y_\ell\in\R^{n_\ell}`, with
+    % :math:`n_1 + n_2 = n_y`. The ODE system is given by
     %
-    % * :math:`\y_j\in\R^{n_y}` is a snapshot :math:`\y(t_j)` of the ODE state at time :math:`t_j`,
-    % * :math:`\q_j\in\R^{n_q}` is the input :math:`\q(t_j)` at time :math:`t_j`,
-    % * :math:`\dot{\y}_j\in\R^{n_y}` is the time derivative of the ODE state at time :math:`t_j`,
-    %   i.e., :math:`\ddt\y(t)\big|_{t = t_j}`,
-    % * :math:`n_t \in \N` is the number of snapshots, and
-    % * :math:`\bfGamma\in\R^{d \times d}` is a Tikhonov regularization matrix.
+    % .. math::
+    %  \ddt\y_1(t) = \A_1\y_1(t) + \H_1[\y_1(t)\otimes\y_2(t)],
+    %  \\
+    %  \ddt\y_2(t) = \A_2\y_2(t) + \H_2[\y_1(t)\otimes\y_2(t)] + \B\q(t),
+    %
+    % where :math:`\A_\ell\in\R^{n_\ell\times n_\ell}`,
+    % :math:`\H_\ell\in\R^{n_\ell\times n_1 n_2}`,
+    % and :math:`\B\in\R^{n_2\times n_q}`.
     %
     % This class inherits from :class:`Dynamic_Constraint`, hence the model is integrated in time
     % using the implicit Euler method. In this context, the optimization state and control are
     % given by
     %
     % .. math::
-    %  \u = \left(\begin{array}{c}\y_1 \\ \vdots \\ \y_{n_t}\end{array}\right)\in\R^{n_u},
+    %  \u = \left(\begin{array}{c}\y(t_1) \\ \vdots \\ \y(t_{n_t})\end{array}\right)\in\R^{n_u},
     %  \qquad
-    %  \z = \left(\begin{array}{c}\q_2 \\ \vdots \\ \q_{n_t}\end{array}\right)\in\R^{n_z},
+    %  \z = \left(\begin{array}{c}\q(t_2) \\ \vdots \\ \q(t_{n_t})\end{array}\right)\in\R^{n_z},
     %
     % with :math:`n_u = n_y n_t` and :math:`n_z = n_q (n_t - 1)`.
     % Note that the state and the control share a time mesh, which is important for the definition
     % of the regression problem. However, the control is not measured at the initial condition
     % because the system is solved with a one-step implicit time integration scheme.
-    %
-    % The user indicates which terms appear in the system via the ``operators`` argument.
-    %
-    % Example
-    % -------
-    % .. code-block:: matlab
-    %
-    %  % Define dimensions, final time, and initial conditions.
-    %  n_y = 20;            % ODE state dimension (at a fixed time).
-    %  n_q = 4;             % ODE control dimension (at a fixed time).
-    %  T = 1;               % Final simulation time.
-    %  n_t = 400;           % Number of time steps.
-    %  y0 = randn(n_y, 1);  % Initial condition.
-    %
-    %  % Define a list of operator terms and construct the constraint.
-    %  operators = {Constant_Operator(), Linear_Operator(), ...
-    %               Quadratic_Operator(), Input_Operator()};
-    %  constraint = OpInf_ROM_Constraint(n_y, 4, T, 400, y0, operators);
 
     properties
-        regularizer         % Tikhonov regularization matrix.
-        operators           % Operator objects defining the differential system.
+        toinfer             % Which operators to infer the entries of.
         y0                  % Initial condition :math:`\y(0)\in\R^{n_y}` for the ODE.
     end
 
     properties (SetAccess = protected)
         n_q                 % Dimension :math:`n_q` of the input :math:`\q(t)`.
-        ds
-        d                   % Number of operator entries for each system mode.
-        inferred_operators  % Track which operators need to be learned.
+        n_1                 % Dimension of the first substate, :math:`n_1`.
+        n_2                 % Dimension of the second substate, :math:`n_2`.
+        d_1                 % First operator dimension, :math:`d_1 = n_1 + n_1 n_2`.
+        d_2                 % Second operator dimension, :math:`d_2 = n_2 + n_1 n_2 + n_q`.
+        A_1                 % Linear term for the first variable, :math:`\A_1\y_1(t)`.
+        H_1                 % Quadratic term for the first variable, :math:`\H_1\[y_1(t)\otimes\y_2(t)]`.
+        A_2                 % Linear term for the second variable, :math:`\A_2\y_2(t)`.
+        H_2                 % Quadratic term for the second variable, :math:`\H_2\[y_1(t)\otimes\y_2(t)]`.
+        B_2                 % Input term for the second variable, :math:`\B\q(t)`.
     end
 
     methods
-
-        %% Property setters.
-
-        function set.operators(this, operators)
-            % Set the dynamical system operators. These may be uninitialized,
-            % meaning Set_Operators() has not been called.
-            num_operators = length(operators);
-            this.ds = zeros(num_operators, 1);
-            this.inferred_operators = zeros(num_operators, 1);
-            for i = 1:num_operators
-                op = operators{i};
-                this.ds(i) = op.Column_Dimension(this.n_y, this.n_q);
-                if size(op.entries, 1) == 0
-                    this.inferred_operators(i) = 1;
-                end
-            end
-            this.d = sum(this.ds);
-            this.operators = operators;
-        end
-
-        function set.regularizer(this, reg)
-            % Set the Tikhonov regularizer.
-            %
-            % Parameters
-            % ----------
-            % reg
-            %   Tikhonov regularization, one of the following:
-            %
-            %   * scalar: regularizer = reg * I
-            %   * vector of length ``length(this.operators)``:
-            %     regularizer = diag(reg(1)I_1, reg(2)I_2, ...) where each I_i
-            %     is the column dimension of the ith operator.
-            %   * vector of length d: regularizer = diag(reg)
-            %   * matrix of size (d, d): regularizer = reg.
-
-            % Scalar regularizer.
-            if isscalar(reg)
-                % Scalar regularizer --> Gamma = regularizer * I
-                reg = reg * eye(this.d);
-            end
-
-            % Vector regularizer.
-            num_operators = length(this.operators);
-            if min(size(reg)) == 1
-                % Vector regularizer
-                if length(reg) == num_operators
-                    % Scalar regularizer for each operator
-                    newreg = [];
-                    for i = 1:num_operators
-                        newreg = horzcat(newreg, reg(i) * ones(1, this.ds(i)));
-                    end
-                    reg = newreg;
-                end
-                reg = diag(reg);
-            end
-
-            % Matrix regularizer.
-            if size(reg, 1) ~= this.d || size(reg, 2) ~= this.d
-                error('invalid regularizer');
-            end
-
-            this.regularizer = reg;
-        end
 
         function set.y0(this, init)
             % Set the initial condition.
@@ -153,40 +71,56 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
 
         %% Constructor.
 
-        function this = OpInf_ROM_Constraint(n_y, n_q, T, n_t, y0, operators)
+        function this = Transient_ADR_2D_OpInf_Constraint(n_1, n_2, n_q, T, n_t, y0)
             % Parameters
             % ----------
-            % n_y
-            %   Dimension :math:`n_y` of the state :math:`\y_{j}` at each time.
-            %   Note that if this is a reduced-order model, this is the REDUCED
-            %   state dimension, denoted elsewhere as :math:`n_y'`.
+            % n_1
+            %   Dimension :math:`n_1` of the first substate, :math:`\y_1(t)`.
+            % n_2
+            %   Dimension :math:`n_2` of the second substate, :math:`\y_2(t)`.
+            %   The full state dimension is :math:`n_y = n_1 + n_2`.
             % n_q
-            %   Dimension :math:`n_q` of the input :math:`\q`.
+            %   Dimension :math:`n_q` of the input :math:`\q(t)`.
             % T
             %   Final time :math:`T > 0`.
             % n_t
             %   Number of nodes :math:`n_t` in the time mesh.
             % y0
             %   Initial condition :math:`\y(0)\in\R^{n_y}` for the ODE.
-            % operators
-            %   ODE system operators. These may be uninitialized,
-            %   i.e., with null entries.
 
+            n_y = n_1 + n_2;
             this@Dynamic_Constraint(n_y, n_q * (n_t - 1), T, n_t);
             % Note: no control at the initial time step b/c bkwd Euler.
+
+            % Dimensions.
+            this.n_1 = n_1;
+            this.n_2 = n_2;
+            n1n2 = n_1 * n_2;
+            this.d_1 = n_1 + n1n2;
+            this.d_2 = n_2 + n1n2 + n_q;
             this.n_q = n_q;
+
+            % Operators.
+            dims = [n_1; n_2];
+            this.A_1 = Linear_Operator_Multi(1, 1, dims);
+            this.H_1 = Quadratic_Operator_Multi(1, 1, 2, dims);
+            this.A_2 = Linear_Operator_Multi(2, 2, dims);
+            this.H_2 = Quadratic_Operator_Multi(2, 1, 2, dims);
+            this.B_2 = Input_Operator_Multi(2, n_q, dims);
+
+            % Operator Inference hyperparameters.
+            this.toinfer = [1; 1; 1; 1; 1];
+
+            % Initial condition.
             this.y0 = y0;
-            this.operators = operators;
-            this.regularizer = 0;
         end
 
         %% Training.
 
         function [Y] = State_Solve2(this, Q)
             % Solve the constraint equation :math:`\c(\u,\z) = \0` by
-            % integrating the ordinary differential equation
-            % :math:`\ddt\y(t) = \f(\y(t),\z,t),~~\y(0)=\y_0`
-            % in time using the first-order implicit Euler method.
+            % integrating the model in time using the first-order implicit
+            % Euler method.
             %
             % This method calls :meth:`State_Solve` with some convenience reshaping.
             %
@@ -200,14 +134,14 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             % Returns
             % -------
             % Y : :math:`n_y \times n_t` matrix
-            %   State solution :math:`[~\y_1~~\cdots~~\y_{n_t}~]\in\R^{n_y\times n_t}`
-            %   where :math:`\y_j` is the ODE state at time :math:`t_j`.
+            %   State solution
+            %   :math:`[~\y(t_1)~~\cdots~~\y(t_{n_t})~]\in\R^{n_y\times n_t}`.
             z = reshape(Q, this.n_z, 1);
             u = this.State_Solve(z);
             Y = reshape(u, this.n_y, this.n_t);
         end
 
-        function [dYdt] = Estimate_State_ddts(this, Y)
+        function [dYdt] = Estimate_State_ddts_1stOrder(this, Y)
             % Use first-order backward differences to estimate the time
             % derivatives of the training states.
             %
@@ -324,27 +258,53 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             % dYdt = (-Y(:, 1:end - 6) + 9 * Y(:, 2:end - 5) - 45 * Y(:, 3:end - 4) + 45 * Y(:, 5:end - 2) - 9 * Y(:, 6:end - 1) + Y(:, 7:end)) / (60 * dt);
         end
 
-        function Learn_Operators(this, Y, Q, dYdt)
+        function [Reg1, Reg2] = Assemble_Regularizer(this, ABreg, Hreg)
+            % Assemble Tikhonov regularization matrices for each regression.
+            %
+            % Parameters
+            % ----------
+            % ABreg
+            %   Regularization scalar for linear and input terms.
+            % Hreg
+            %   Regularization scalar for linear and input terms.
+
+            arguments
+                this
+                ABreg {mustBeNumeric}
+                Hreg {mustBeNumeric}
+            end
+
+            % [A_1 H_1]
+            Reg1 = zeros(this.d_1, 1);
+            Reg1(1:this.n_1) = ABreg;
+            Reg1(this.n_1 + 1:end) = Hreg;
+            Reg1 = diag(Reg1);
+
+            % [A_2 H_2 B_2]
+            Reg2 = zeros(this.d_2, 1);
+            Reg2(1:this.n_2) = ABreg;
+            Reg2(this.n_2 + 1:this.n_2 + (this.n_1 * this.n_2)) = Hreg;
+            Reg2(this.n_2 + (this.n_1 * this.n_2) + 1:end) = ABreg;
+            Reg2 = diag(Reg2);
+        end
+
+        function Learn_Operators(this, Y, Q, dYdt, abreg, hreg)
             % Infer the entries of the system operators by solving the
-            % regression problem
+            % regression problems
             %
             % .. math::
-            %  \min_{\c,\A,\H,\B}\sum_{j=1}^{n_t}\left\|
-            %  \c + \A\y_j + \H[\y_j\otimes\y_j] + \B\q_j - \dot{\y}_j
+            %  \min_{\A_1,\H_1}\sum_{j=1}^{n_t}\left\|
+            %  \A_1\y_1(t_j) + \H_1[\y_1(t_j)\otimes\y_2(t_j)] - \dot{\y}_1(t_j)
             %  \right\|_{2}^{2}
-            %  + \left\|\bfGamma[~\c~~\A~~\H~~\B~]\trp\right\|_{F}^{2}
-            %
-            % where
-            %
-            % * :math:`\Y = [~\y_1~~\cdots~~\y_{n_t}~] \in \R^{n_y \times n_t}`
-            %   are state snapshots,
-            % * :math:`\dot{\Y} = [~\dot{\y}_1~~\cdots~~\dot{\y}_{n_t}~]
-            %   \in \R^{n_y \times n_t}` collects the time derivative of the
-            %   state snapshots,
-            % * :math:`\Q = [~\q_1~~\cdots~~\q_{n_t}~] \in \R^{n_q \times n_t}`
-            %   are the corresponding inputs, and
-            % * :math:`\bfGamma\in\R^{d \times d}` is a Tikhonov regularization
-            %   matrix (the ``regularizer`` property).
+            %  + \gamma_1^2\|\A_1\|_{F}^{2}
+            %  + \gamma_2^2\|\H_1\|_{F}^{2},
+            %  \\
+            %  \min_{\A_2,\H_2,\B_2}\sum_{j=1}^{n_t}\left\|
+            %  \A_2\y_2(t_j) + \H_2[\y_1(t_j)\otimes\y_2(t_j)] + \B_2\q(t_j) - \dot{\y}_2(t_j)
+            %  \right\|_{2}^{2}
+            %  + \gamma_1^2\|\A_2\|_{F}^{2}
+            %  + \gamma_2^2\|\H_2\|_{F}^{2}
+            %  + \gamma_1^2\|\B_2\|_{F}^{2}.
             %
             % Parameters
             % ----------
@@ -360,80 +320,143 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
                 Y (:, :) {mustBeNumeric}
                 Q (:, :) {mustBeNumeric}
                 dYdt (:, :) {mustBeNumeric}
-            end
-
-            % Check that there is something to do.
-            if sum(this.inferred_operators) == 0
-                error('All operator entries already populated');
+                abreg = 0
+                hreg = 0
             end
 
             % Check that Y, Q, and dYdt have appropriate sizes.
-            if ~isequal(size(Y, 2), size(Q, 2))
+            k = size(Y, 2);
+            if ~isequal(size(Q, 2), k)
                 error('Y and Q not aligned');
             elseif ~isequal(size(Y), size(dYdt))
                 error('Y and dYdt not aligned');
             end
 
-            % Construct the data matrix.
-            rhs = dYdt;
-            num_operators = length(this.operators);
-            D = [];
-            for i = 1:num_operators
-                op = this.operators{i};
-                if this.inferred_operators(i) == 1
-                    D = horzcat(D, op.Datablock(Y, Q)');
-                else
-                    rhs = rhs - op.Apply(Y, Q);
-                end
+            % Construct the data matrices.
+            rhs1 = dYdt(1:this.n_1, :);
+            D1 = [];
+
+            if this.toinfer(1) == 1
+                D1 = vertcat(D1, this.A_1.Datablock(Y, Q));
+            else
+                rhs1 = rhs1 - this.A_1.Apply(Y, Q);
             end
 
+            if this.toinfer(2) == 1
+                D1 = vertcat(D1, this.H_1.Datablock(Y, Q));
+            else
+                rhs1 = rhs1 - this.H_1.Apply(Y, Q);
+            end
+
+            D2 = [];
+            rhs2 = dYdt(this.n_1 + 1:end, :);
+
+            if this.toinfer(3) == 1
+                D2 = vertcat(D2, this.A_2.Datablock(Y, Q));
+            else
+                rhs2 = rhs2 - this.A_2.Apply(Y, Q);
+            end
+
+            if this.toinfer(4) == 1
+                D2 = vertcat(D2, this.H_2.Datablock(Y, Q));
+            else
+                rhs2 = rhs2 - this.H_2.Apply(Y, Q);
+            end
+
+            if this.toinfer(5) == 1
+                D2 = vertcat(D2, this.B_2.Datablock(Y, Q));
+            else
+                rhs2 = rhs2 - this.B_2.Apply(Y, Q);
+            end
+
+            D1 = D1';
+            D2 = D2';
+
+            [Reg1, Reg2] = this.Assemble_Regularizer(abreg, hreg);
+
             % Solve the regression problem for the operator entries.
-            if norm(this.regularizer) > 0
+            if norm(Reg1) > 0
                 % Tikhonov regularization.
-                Ohat = lscov([D; this.regularizer], [rhs'; zeros(this.d, this.n_y)])';
+                Ohat1 = lscov([D1; Reg1], [rhs1'; zeros(this.d_1, this.n_1)])';
             else
                 % No regularization.
-                Ohat = lscov(D, rhs')';
+                Ohat1 = lscov(D1, rhs1')';
+            end
+
+            if norm(Reg2) > 0
+                % Tikhonov regularization.
+                Ohat2 = lscov([D2; Reg2], [rhs2'; zeros(this.d_2, this.n_2)])';
+            else
+                % No regularization.
+                Ohat2 = lscov(D2, rhs2')';
             end
 
             % Unpack the operator entries.
             index = 1;
-            for i = 1:num_operators
-                if this.inferred_operators(i) == 1
-                    newindex = index + this.ds(i);
-                    this.operators{i}.Set_Entries(Ohat(:, index:(newindex - 1)));
-                    index = newindex;
-                end
+            if this.toinfer(1) == 1
+                newindex = index + this.n_1;
+                this.A_1.Set_Entries(Ohat1(:, index:(newindex - 1)));
+                index = newindex;
+            end
+
+            if this.toinfer(2) == 1
+                newindex = index + (this.n_1 * this.n_2);
+                this.H_1.Set_Entries(Ohat1(:, index:(newindex - 1)));
+            end
+
+            index = 1;
+            if this.toinfer(3) == 1
+                newindex = index + this.n_2;
+                this.A_2.Set_Entries(Ohat2(:, index:(newindex - 1)));
+                index = newindex;
+            end
+
+            if this.toinfer(4) == 1
+                newindex = index + (this.n_1 * this.n_2);
+                this.H_2.Set_Entries(Ohat2(:, index:(newindex - 1)));
+                index = newindex;
+            end
+
+            if this.toinfer(5) == 1
+                newindex = index + this.n_q;
+                this.B_2.Set_Entries(Ohat2(:, index:(newindex - 1)));
             end
         end
 
-        function [best_reg] = Select_Regularization(this, states, controls, reg_candidates, ddt_strategy)
-            % Use a grid search to select a scalar regularization hyperparameter.
+        function [best_reg] = Select_Regularization(this, states, controls, ABreg_candidates, Hreg_candidates, ddt_strategy)
+            % Use a grid search to select regularization hyperparameters.
             %
             % Parameters
             % ----------
             % states
-            %   Compressed training states :math:`\Y_1,\ldots\Y_k\in\R^{n_y \times n_t}`
-            %   where :math:`k` is the number of trajectories. This is either a cell of
-            %   :math:`k` matrices of sizes :math:`\times n_y \times n_t` or (optionally),
+            %   Compressed training states. This is either a cell of :math:`k`
+            %   matrices of sizes :math:`\times n_y \times n_t` or (optionally),
             %   if :math:`k = 1`, a single :math:`n_y \times n_t` matrix.
             % controls
-            %   Control profiles :math:`\Q_1,\ldots,\Q_k\in\R^{n_q \times (n_t - 1)}`
-            %   corresponding to the training states, where :math:`k` is the number of
-            %   trajectories. This is an :math:`n_q \times (n_t - 1) \times k` tensor or
-            %   (optionally), if :math:`k = 1`, an :math:`n_q \times (n_t - 1)` matrix.
-            % reg_candidates
-            %   Candidate regularization values to check.
+            %   Training control profiles corresponding to the training states.
+            %   This is either a cell of :math:`k` matrices of sizes
+            %   :math:`n_q \times (n_t - 1)` or (optionally), if :math:`k = 1`,
+            %   a single :math:`n_q \times (n_t - 1)` matrix.
+            % ABreg_candidates
+            %   Candidate regularization values for linear model terms.
+            % Hreg_candidates
+            %   Candidate regularization values for quadratic model terms.
+            % ddt_strategy
+            %   Which finite difference strategy to use when estimating the
+            %   time derivatives of the training states, one of
+            %   ``"bwd1"`` (default), ``"2ndOrder"``, ``"4thOrder"``, or
+            %   ``"6thOrder"``.
             %
             % Returns
             % -------
-            % best_reg : float
-            %   Best regularization hyperparameter.
+            % best_regs : [float; float]
+            %   Best regularization hyperparameters [ABreg; Hreg].
             arguments
                 this
-                states {OpInf_ROM_Constraint.mustBeNumericOrCell}
-                controls {OpInf_ROM_Constraint.mustBeNumericOrCell}
-                reg_candidates {mustBeNumeric}
+                states {Transient_ADR_2D_OpInf_Constraint.mustBeNumericOrCell}
+                controls {Transient_ADR_2D_OpInf_Constraint.mustBeNumericOrCell}
+                ABreg_candidates {mustBeNumeric}
+                Hreg_candidates {mustBeNumeric}
                 ddt_strategy {mustBeText} = "bwd1"
             end
 
@@ -453,13 +476,13 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
 
             % Select time derivative estimation strategy.
             if ddt_strategy == "bwd1"
-                driver = @this.Estimate_State_ddts;
+                ddt_estimator = @this.Estimate_State_ddts_1stOrder;
             elseif ddt_strategy == "2ndOrder"
-                driver = @this.Estimate_State_ddts_2ndOrder;
+                ddt_estimator = @this.Estimate_State_ddts_2ndOrder;
             elseif ddt_strategy == "4thOrder"
-                driver = @this.Estimate_State_ddts_4thOrder;
+                ddt_estimator = @this.Estimate_State_ddts_4thOrder;
             elseif ddt_strategy == "6thOrder"
-                driver = @this.Estimate_State_ddts_6thOrder;
+                ddt_estimator = @this.Estimate_State_ddts_6thOrder;
             else
                 error('invalid ddt_strategy');
             end
@@ -483,7 +506,7 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
                 end
 
                 % Estimate time derivatives and strip off initial state.
-                dYdt{k} = driver(Yk);
+                dYdt{k} = ddt_estimator(Yk);
                 Y{k} = Yk(:, 2:end);
             end
 
@@ -493,37 +516,43 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             controls_all = horzcat(controls{:});
             original_initial_condition = this.y0;
 
-            num_candidates = size(reg_candidates, 2);
-            reconstruction_errors = zeros(1, num_candidates);
-            disp(['Regularization selection (' num2str(num_candidates), ' candidates)']);
-            for i = 1:num_candidates
-                % Calibrate the model with the i-th regularization candidate.
-                reg = reg_candidates(i);
-                this.regularizer = reg;
-                this.Learn_Operators(states_all, controls_all, ddts_all);
+            % Search the regularization space for the best performer.
+            num_ABcandidates = numel(ABreg_candidates);
+            num_Hcandidates = numel(Hreg_candidates);
+            reconstruction_errors = zeros(num_ABcandidates, num_Hcandidates);
+            num_experiments = num_ABcandidates * num_Hcandidates;
+            disp(['Regularization selection (' num2str(num_experiments), ' candidates)']);
+            for j = 1:num_Hcandidates
+                Hreg = Hreg_candidates(j);
+                for i = 1:num_ABcandidates
+                    ABreg = ABreg_candidates(i);
+                    this.Learn_Operators(states_all, controls_all, ddts_all, ABreg, Hreg);
 
-                % Solve the model for each training controller.
-                total_error = 0;
-                for k = 1:num_trajectories
-                    Yk_data = states{k};
-                    this.y0 = Yk_data(:, 1);
-                    Yk_rom = this.State_Solve2(controls{k});
-                    local_error = norm(Yk_rom - Yk_data) / norm(Yk_data);
-                    total_error = total_error + local_error;
+                    total_error = 0;
+                    for k = 1:num_trajectories
+                        Yk_data = states{k};
+                        this.y0 = Yk_data(:, 1);
+                        Yk_rom = this.State_Solve2(controls{k});
+                        local_error = norm(Yk_rom - Yk_data) / norm(Yk_data);
+                        total_error = total_error + local_error;
+                    end
+                    reconstruction_errors(i, j) = total_error / num_trajectories;
+
+                    fprintf('ABreg: %.2e, Hreg: %.2e; error = %.2e\n', ABreg, Hreg, total_error);
                 end
-                reconstruction_errors(i) = total_error;
-
-                disp(['reg = ', num2str(reg), '; error = ', num2str(total_error)]);
             end
             this.y0 = original_initial_condition;
 
             % Choose the best regularization out of the candidates.
-            [err, idx] = min(reconstruction_errors);
-            best_reg = reg_candidates(idx);
-            disp(['winner = ', num2str(best_reg), '; error = ', num2str(err)]);
+            [~, linearIndex] = min(reconstruction_errors(:));
+            [rowIndex, colIndex] = ind2sub(size(reconstruction_errors), linearIndex);
+            best_ABreg = ABreg_candidates(rowIndex);
+            best_Hreg = Hreg_candidates(colIndex);
+            best_err = reconstruction_errors(rowIndex, colIndex);
+            fprintf('Best (ABreg, Hreg) = (%.2e, %.2e); error = %.2e\n', best_ABreg, best_Hreg, best_err);
 
-            this.regularizer = best_reg;
-            this.Learn_Operators(states_all, controls_all, ddts_all);
+            % Solve the problem again with the best hyperparameters.
+            this.Learn_Operators(states_all, controls_all, ddts_all, best_ABreg, best_Hreg);
         end
 
         %% Implement abstract methods from the parent class.
@@ -534,61 +563,52 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             I = this.Input_Indices(t);
             q = z(I);
 
-            % Allocate space for outputs.
-            f = zeros(this.n_y, 1);
-            f_y = zeros(this.n_y, this.n_y);
-            f_z = zeros(this.n_y, this.n_z);
-
-            % Evaluate each operator.
-            for i = 1:length(this.operators)
-                op = this.operators{i};
-                f = f + op.Apply(y, q);
-                f_y = f_y + op.Jacobian_y(y, q);
-                f_z(:, I) = f_z(:, I) + op.Jacobian_q(y, q);
+            % Evaluate the operators for the first equation.
+            f_1 = zeros(this.n_1, 1);
+            f_y_1 = zeros(this.n_1, this.n_y);
+            for op = {this.A_1, this.H_1}
+                f_1 = f_1 + op{1}.Apply(y, q);
+                f_y_1 = f_y_1 + op{1}.Jacobian_y(y, q);
             end
+
+            % Evaluate the operators for the second equation.
+            f_2 = zeros(this.n_2, 1);
+            f_y_2 = zeros(this.n_2, this.n_y);
+            for op = {this.A_2, this.H_2, this.B_2}
+                f_2 = f_2 + op{1}.Apply(y, q);
+                f_y_2 = f_y_2 + op{1}.Jacobian_y(y, q);
+            end
+
+            % Piece together the two results.
+            f = [f_1; f_2];
+            f_y = [f_y_1; f_y_2];
+            f_z = zeros(this.n_y, this.n_z);
+            f_z(this.n_1 + 1:end, I) = this.B_2.Jacobian_q(y, q);
+        end
+
+        function [Mv] = f_yy_Apply(this, v, ~, ~, ~, lambda)
+            % I = this.Input_Indices(t);
+            % q = z(I);
+            Mv_1 = this.H_1.Hessian_yy_Apply(v, [], [], lambda);
+            Mv_2 = this.H_2.Hessian_yy_Apply(v, [], [], lambda);
+            Mv = Mv_1 + Mv_2;
+        end
+
+        function [Mv] = f_yz_Apply(this, v, ~, ~, ~, ~)
+            Mv = zeros(this.n_y, size(v, 2));
+        end
+
+        function [Mv] = f_zy_Apply(this, v, ~, ~, ~, ~)
+            Mv = zeros(this.n_z, size(v, 2));
+        end
+
+        function [Mv] = f_zz_Apply(this, v, ~, ~, ~, ~)
+            Mv = zeros(this.n_z, size(v, 2));
         end
 
         function [h, h_z] = h(this, ~)
             h = this.y0;
             h_z = zeros(this.n_y, this.n_z);
-        end
-
-        function [Mv] = f_yy_Apply(this, v, y, z, t, lambda)
-            I = this.Input_Indices(t);
-            q = z(I);
-            Mv = zeros(this.n_y, size(v, 2));
-            for i = 1:length(this.operators)
-                Mv = Mv + this.operators{i}.Hessian_yy_Apply(v, y, q, lambda);
-            end
-        end
-
-        function [Mv] = f_yz_Apply(this, v, y, z, t, lambda)
-            I = this.Input_Indices(t);
-            q = z(I);
-            vt = v(I, :);
-            Mv = zeros(this.n_y, size(v, 2));
-            for i = 1:length(this.operators)
-                Mv = Mv + this.operators{i}.Hessian_yq_Apply(vt, y, q, lambda);
-            end
-        end
-
-        function [Mv] = f_zy_Apply(this, v, y, z, t, lambda)
-            I = this.Input_Indices(t);
-            q = z(I);
-            Mv = zeros(this.n_z, size(v, 2));
-            for i = 1:length(this.operators)
-                Mv(I, :) = Mv(I, :) + this.operators{i}.Hessian_qy_Apply(v, y, q, lambda);
-            end
-        end
-
-        function [Mv] = f_zz_Apply(this, v, y, z, t, lambda)
-            I = this.Input_Indices(t);
-            q = z(I);
-            vt = v(I, :);
-            Mv = zeros(this.n_z, size(v, 2));
-            for i = 1:length(this.operators)
-                Mv(I, :) = Mv(I, :) + this.operators{i}.Hessian_yq_Apply(vt, y, q, lambda);
-            end
         end
 
         function [Mv] = h_zz_Apply(this, v, ~, ~)
