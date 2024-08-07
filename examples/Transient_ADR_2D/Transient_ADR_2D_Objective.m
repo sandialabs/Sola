@@ -9,7 +9,7 @@ classdef Transient_ADR_2D_Objective < Dynamic_Objective
     %    \frac{1}{2}\int_0^T \|\y_1(t) \ast \p\|_{\M}^{2}\dt
     %    + \frac{\gamma}{2}\int_{t_2}^T \|\q(t)\|_{2}^{2}\dt
     %
-    % where :math:`\p \in \R^{n_y}` is a discretization of a wide Gaussian
+    % where :math:`\p \in \R^{n_x}` is a discretization of a wide Gaussian
     % function centered over a protection zone and in which :math:`\ast`
     % denotes the Hadamard (element-wise) product.
 
@@ -51,9 +51,9 @@ classdef Transient_ADR_2D_Objective < Dynamic_Objective
         end
 
         function [y_out] = g_yy_Apply(this, y_in, ~, ~)
-            y_in1 = y_in(1:this.n_x);
-            y_out = zeros(this.n_y, 1);
-            y_out(1:this.n_x) = this.pMp * y_in1;
+            y_in1 = y_in(1:this.n_x, :);
+            y_out = zeros(this.n_y, size(y_in, 2));
+            y_out(1:this.n_x, :) = this.pMp * y_in1;
         end
 
         function [z_out] = R_zz_Apply(this, z_in, ~)
@@ -78,7 +78,7 @@ classdef Transient_ADR_2D_Objective < Dynamic_Objective
             end
 
             % Dimensions.
-            n_x = length(x);
+            n_x = numel(x);
             n_y = 2 * n_x;
             % n_q = size(Bq, 2);
             n_z = n_q * (n_t - 1);

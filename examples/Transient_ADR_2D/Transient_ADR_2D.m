@@ -145,6 +145,7 @@ classdef Transient_ADR_2D < handle
 
             % Extract the mass matrix from the model.
             M = assembleFEMatrices(this.model, 'M').M;
+            M = M(1:this.n_x, 1:this.n_x);  % Otherwise shape is 2n_x by 2n_x.
 
             % % Assemble the control matrix.
             % xy = [this.x, this.y];
@@ -309,14 +310,16 @@ classdef Transient_ADR_2D < handle
             if size(y, 2) == 1
                 y_new = zeros(this.n_x, 2);
                 y_new(:, 1) = y(1:this.n_x, 1);
-                y_new(:, 2) = y(this.n_x + 1:end, 1);
+                if size(y, 1) == 2 * this.n_x
+                    y_new(:, 2) = y(this.n_x + 1:end, 1);
+                end
                 y = y_new;
             end
 
             for i = 1:2
                 subplot(1, 2, i);
                 pdeplot(this.model.Mesh, XYData = y(:, i), ColorMap = "parula");
-                if logscale
+                if logscale && min(y(:, i), [], "all") > 0
                     set(gca, 'ColorScale', 'log');
                 end
                 colorbar;
@@ -377,6 +380,12 @@ classdef Transient_ADR_2D < handle
         end
 
         function Animate_Solution(this, u)
+            arguments
+                this
+                u
+                % exportto {mustBeText} = "lastAnimation.mp4"
+            end
+
             fig = figure(50);
             fig.Position(3:4) = [830, 300];
 
@@ -393,6 +402,10 @@ classdef Transient_ADR_2D < handle
             umin = min(abs(u), [], "all");
             limits = [umin, umax];
 
+            % outputVideo = VideoWriter(exportto, 'MPEG-4');
+            % outputVideo.FrameRate = 10;
+            % open(outputVideo)
+
             for j = 1:n_t
                 ys = [u(:, 1, j), u(:, 2, j)];
                 this.Plot_Field(abs(ys), ['t = t_{', num2str(j), '}'], true, true);
@@ -400,8 +413,12 @@ classdef Transient_ADR_2D < handle
                 clim(limits);
                 subplot(1, 2, 2);
                 clim(limits);
+                % drawnow;
+                % writeVideo(outputVideo, getframe(gcf));
                 pause(waittime);
             end
+
+            % close(outputVideo);
         end
 
     end

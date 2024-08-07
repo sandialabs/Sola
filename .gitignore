@@ -14,6 +14,7 @@ AdiGator_Files/
 rw3dm/
 *.3dm
 *.json
+*.mp4
 
 ### Boilerplate latex ignore file:
 ## Latex Ignore:
