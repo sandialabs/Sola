@@ -150,11 +150,7 @@ solver.Animate_Solution(u.NodalSolution);
 
 ## Reduced-order Modeling
 
-```{admonition} TODO
-The implementation of this part is a work in progress.
-```
-
-The script [Driver_Opt_Opinf.m](./Driver_Opt_OpInf.m) uses the `Transient_ADR_2D` solver to generate training data, learn a [POD basis](../../src/model_reduction/POD_Basis.m), and calibrate a reduced-order model through [Operator Inference](../../src/model_reduction/OpInf_ROM_Constraint_Multi.m):
+The script [Driver_Opt_OpInf_Multi.m](./Driver_Opt_OpInf_Multi.m) uses the `Transient_ADR_2D` solver to generate training data, learn a [POD basis](../../src/model_reduction/POD_Basis.m), and calibrate a reduced-order model through [Operator Inference](../../src/model_reduction/OpInf_ROM_Constraint_Multi.m):
 
 $$
 \begin{aligned}
@@ -176,7 +172,7 @@ We then have reduced states $\mathbf{y}_{i}(t) \in \mathbb{R}^{r_i}$ and "operat
 
 The regression is populated with sixth-order finite difference estimates of the time derivatives of the training states.
 
-**Remark**. It will be easier to start with a monolithic model:
+**Remark**. It may be easier to start with a monolithic model:
 
 $$
 \begin{aligned}
@@ -190,6 +186,10 @@ $$
 $$
 
 The two-state ROM preserves a little more structure (no linear interactions between $\mathbf{y}_1$ and $\mathbf{y}_2$, no input terms on $\mathbf{y}_1$, etc.) but if the monolithic model works well that will be easier to use.
+
+```{warning}
+With a monolithic basis approach, the state variables will probably have to be scaled carefully (possibly centered too) before compression.
+```
 
 **Remark**. We could specify $\hat{\mathbf{B}}$ intrusively by constructing the control matrix $\mathbf{B}$ and setting $\hat{\mathbf{B}} = \mathbf{V}_{2}^\mathsf{T}\mathbf{B}$.
 Likewise, since the nonlinearity $u_1 u_2$ is local, we can construct each $\hat{\mathbf{H}}_i$ intrusively if we like.
