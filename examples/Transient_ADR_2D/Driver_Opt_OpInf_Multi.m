@@ -7,11 +7,13 @@ run('../../src/Set_Paths');
 
 meshfile = 'urban_canyon.mat';
 datafile = 'OpInf_Training_Data.mat';
+
 regenerate_data = false;
-residual_energies = [1e-3];
 plot_basis_functions = false;
 plot_training_data = false;
 plot_training_reconstruction = false;
+
+residual_energies = [1e-3, 1e-6];
 ABregularization_candidates = [0, 1, 10, 100];
 Hregularization_candidates = logspace(2, 6, 21);
 ddt_strategy = '6thOrder';

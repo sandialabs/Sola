@@ -215,3 +215,379 @@ where $\odot$ is the Khatri-Rao product.
 Hence, $\hat{\mathbf{H}}_i = \mathbf{V}_i^\mathsf{T}(\mathbf{V}_{\!1}^{\mathsf{T}} \odot \mathbf{V}_{\!2}^{\mathsf{T}})^\mathsf{T}$.
 
 (This is a mixed-product property, proven in Theorem 1 of [this paper](https://link.springer.com/article/10.1007/BF02733426)).
+
+## Detailed Guide of `Driver_Opt_OpInf_Multi.m`
+
+This section explains [Driver_Opt_OpInf_Multi.m](./Driver_Opt_OpInf_Multi.m), a script that
+
+1. Generates full-order solutions to be used as training data,
+2. Trains an OpInf ROM with the `Transient_ADR_2D_OpInf_Constraint` class,
+3. Solves an optimization problem using the ROM as a surrogate, and
+4. Visualizes results.
+
+### Preliminaries
+
+```matlab
+clear;
+close all;
+clc;
+run('../../src/Set_Paths');
+
+%% Experiment parameters.
+
+meshfile = 'urban_canyon.mat';
+datafile = 'OpInf_Training_Data.mat';
+
+regenerate_data = false;
+plot_basis_functions = false;
+plot_training_data = false;
+plot_training_reconstruction = false;
+
+residual_energies = [1e-3];
+ABregularization_candidates = [0, 1, 10, 100];
+Hregularization_candidates = logspace(2, 6, 21);
+ddt_strategy = '6thOrder';
+```
+
+Data variables:
+
+- `meshfile`: file that contains the 2D geometry of the problem, [generated earlier](#custom-mesh-generation) with `pdeModeler`.
+- `datafile`: file to save the high-fidelity training data (state snapshots and control profile) to.
+
+Script directives:
+
+- `regenerate_data`: if `true`, run the high-fidelity solver even if the `datafile` already exists and overwrite the `datafile` with the new training data.
+- `plot_basis_functions`: if `true`, visualize the first $\min\{r_1,r_2\}$ POD basis vectors over the 2D spatial domain. Each pair of basis vectors is displayed in a separate figure, so this will make lots of figures.
+- `plot_training_data`: if `true`, animate the high-fidelity solves when each is produced and, later, plot the compressed data in the coordinates of the POD bases.
+- `plot_training_reconstruction`: if `true`, animate the training states over the 2D domain after projection to the space spanned by the POD basis functions.
+
+OpInf parameters:
+
+- `residual_energies`: the number of POD basis vectors is based on the residual energy level (a singular value criterion). For each entry of this vector, an OpInf ROM is learned (including regularization selection) and the training error is reported. This is more of a verification step than anything: only the final ROM is used for the optimization.
+- `ABregularization_candidates`: potential scalars to regularize the linear terms in the model.
+- `Hregularization_candidates`: potential scalars to regularize the quadratic terms in the model.
+- `ddt_strategy`: how to estimate the time derivatives of the training states for the operator inference.
+
+### Generate full-order solutions
+
+```matlab
+%% Generate training data if needed.
+
+if ~exist(datafile, 'file') || regenerate_data
+    disp('Generating training data');
+
+    tic();
+    % Initial condition parameters.
+    init_center = [.05; .85];
+    num_solves = 5;
+
+    % Input function parameters.
+    control_nodes = [0.1 0.5
+                     0.1 0.9
+                     0.1 1.1
+                     0.3 0.7
+                     0.3 0.9
+                     0.3 1.1
+                     0.5 0.3
+                     0.5 0.5
+                     0.5 0.7
+                     0.7 0.7
+                     0.9 0.3
+                     0.9 1.1
+                     1.1 0.7
+                     1.1 0.9]';
+    n_q = size(control_nodes, 2);
+```
+
+- The initial conditions are a Gaussian blob centered in space at `init_center`. Each run uses the same initial conditions, but different random controls. See the `Initial_Condition()` and `Initial_Contaminant()` methods of the `Transient_ADR_2D` class.
+- `num_solves` is the number of high-fidelity solves to use for training data.
+- The controls are Gaussian blob sources centered in space at the coordinates given in `control_nodes`. Physically, these nodes mark the locations where we can deploy species 2 (the decontaminant). See `Transient_ADR_2D.SourceTerm()`.
+- `n_q` is the number of control nodes.
+
+```matlab
+    % Time domain.
+    t = linspace(0, .4, 101);
+    n_t = length(t);
+    n_z = (n_t - 1) * n_q;
+
+    % Load spatial geometry and mesh.
+    model = Transient_ADR_2D.model_fromfile(meshfile);
+    n_x = size(model.Mesh.Nodes, 2);
+    n_y = 2 * n_x;
+    n_u = n_y * n_t;
+
+    % Model and input parameters.
+    diffusion = [0.10, 0.10];
+    advection = [4.00, 4.00];
+    reaction = 2;
+    num_randcontrol_nodes = 4;
+    randcontrol_nodes = linspace(t(1), t(end), num_randcontrol_nodes);
+```
+
+- The controls are measured at each time step except the initial time, so the total control dimension is $n_z = n_q (n_t - 1)$.
+- There are two species, so the total state dimension is $n_y = 2n_x$ where $n_x$ is the number of spatial nodes.
+- `diffusion`, `advection`, and `reaction` are the (fixed) scalar parameters in the governing equations. In the language of this document, `diffusion` is $(\kappa_1, \kappa_2)$, `advection` is $(\alpha_1,\alpha_2)$, and `reaction` is $\rho_1 = \rho_2$.
+- The training trajectories have random control profiles constructed as random splines with `num_randcontrol_nodes` nodes. For each source term, each of the nodes will be assigned a random positive value.
+
+```matlab
+    Z_train = zeros(n_z, num_solves);
+    U_train = zeros(n_u, num_solves);
+
+    for k = 1:num_solves
+        disp(['High-fidelity solve ', num2str(k)]);
+
+        % Initialize the solver.
+        solver = Transient_ADR_2D(model, init_center, ...
+                                  diffusion, advection, reaction, control_nodes);
+
+        % Set up a random control profile.
+        vals = [zeros(n_q, 1), 50 * rand(n_q, num_randcontrol_nodes - 1)];
+        pp = spline(randcontrol_nodes, vals);
+        controller = @(tt) ppval(pp, tt);
+
+        % Solve the system.
+        Yk = solver.State_Solve(controller, t).NodalSolution;
+
+        if plot_training_data
+            solver.Animate_Solution(Yk);
+        end
+
+        Qk = controller(t(2:end));
+
+        % Record results.
+        U_train(:, k) = reshape(Yk, [], 1);
+        Z_train(:, k) = reshape(Qk, [], 1);
+    end
+    time_trainingdata = toc();
+
+    save(datafile, "t", "solver", "U_train", "Z_train", "time_trainingdata");
+end
+```
+
+- `Yk` is the high-fidelity state solution and `Qk` is the corresponding control. Each are flattened and stored as columns of `U_train` and `Z_train`, respectively.
+
+```matlab
+%% Load training data.
+
+load(datafile);
+n_t = length(t);
+T = t(end);
+n_u = size(U_train, 1);
+num_solves = size(U_train, 2);
+n_y = n_u / n_t;
+n_x = n_y / 2;  % = size(solver.model.Mesh.Nodes, 2);
+mass_matrix = assembleFEMatrices(solver.model, 'M').M;
+mass_matrix = mass_matrix(1:n_x, 1:n_x);
+
+n_z = size(Z_train, 1);
+n_q = n_z / (n_t - 1);  % = solver.n_q;
+disp(['Using ', num2str(num_solves), ' training trajectories']);
+```
+
+- This section loads all variables from the `datafile`, even if the file was just generated.
+- The mass matrix resulting from `assembleFEMatrices()` is $n_y \times n_y$ (or $2n_x\times 2n_x$), but this is just one $n_x \times n_x$ matrix repeated twice in block diagonal form, so we pull out the top left block.
+
+```matlab
+%% Learn a POD basis for each variable.
+
+% Unpack the states and controls by training trajectory.
+states = cell(num_solves);
+controls = cell(num_solves);
+for k = 1:num_solves
+    states{k} = reshape(U_train(:, k), n_y, n_t);
+    controls{k} = reshape(Z_train(:, k), n_q, n_t - 1);
+end
+
+% Learn POD bases from the collection of all state snapshots.
+states_all = horzcat(states{:});
+basis1 = POD_Basis(states_all(1:n_x, :), false);  % , full(mass_matrix));
+basis1.Set_Reduced_Dimension_From_Residual_Energy(residual_energies(1));
+basis2 = POD_Basis(states_all(n_x + 1:end, :), false);  % , full(mass_matrix));
+basis2.Set_Reduced_Dimension_From_Residual_Energy(residual_energies(1));
+```
+
+- First we reshape the training trajectories from $n_u \times 1$ to $n_y \times n_t$ (call these $\mathbf{Y}_k$) and the controls from $n_z \times 1$ to $n_q \times (n_t - 1)$.
+- Next we concatenate the training trajectories to $\mathbf{Y} = [~~\mathbf{Y}_1~\cdots~\mathbf{Y}_{n_\text{trajectories}}~~]$. We take SVD of the first $n_x$ rows of $\mathbf{Y}$ to form the POD basis for the first species, and the SVD of the last $n_x$ rows of $\mathbf{Y}$ for the POD basis for the second species.
+- The mass matrix is neglected by default because inverting the mass matrix takes a long time, but they can be included by using `basis1 = POD_Basis(states_all(1:n_x, :), false, full(mass_matrix));` and similar for `basis2`.
+
+```matlab
+if plot_basis_functions
+    for i = 1:min(basis1.r, basis2.r)
+        solver.Plot_Field([basis1.V(:, i), basis2.V(:, i)]);
+        title(['POD basis function ', num2str(i)]);
+    end
+end
+
+if plot_training_data
+    for k = 1:num_solves
+        Yhatk_1 = basis1.Compress(states{k}(1:n_x, :));
+        Yhatk_2 = basis2.Compress(states{k}(n_x + 1:end, :));
+        Yhatk = [Yhatk_1; Yhatk_2];
+        figure;
+        plot(t, Yhatk);
+        title(['compressed state training data, trajectory', num2str(k)]);
+    end
+end
+```
+
+- Basis functions are visualized over the 2D spatial domain.
+- The training data are compressed in the POD space, then we plot the POD coefficients as a function of time.
+
+### Train an OpInf ROM
+
+The next block loops through the `residual_energies` and does OpInf for each choice of residual energy, which dictates the number of POD basis vectors for each state.
+
+```matlab
+%% Learn a ROM, varying the reduced state dimension.
+
+errors = zeros(length(residual_energies), 1);
+for i = 1:length(residual_energies)
+    res_energy = residual_energies(i);
+    fprintf('\nUsing %.2e residual energy\n', res_energy);
+
+    basis1.Set_Reduced_Dimension_From_Residual_Energy(res_energy);
+    basis2.Set_Reduced_Dimension_From_Residual_Energy(res_energy);
+    r_1 = basis1.r;
+    r_2 = basis2.r;
+    n_yr = r_1 + r_2;
+
+    fprintf('POD with r_1 = %d and r_2 = %d basis vectors\n', r_1, r_2);
+
+    % Compress states and check projection error.
+    states_lofi = cell(num_solves);
+    for k = 1:num_solves
+        Yhat_1 = basis1.Compress(states{k}(1:n_x, :));
+        Yhat_2 = basis2.Compress(states{k}(n_x + 1:end, :));
+        states_lofi{k} = [Yhat_1; Yhat_2];
+        Yproj_1 = basis1.Decompress(Yhat_1);
+        Yproj_2 = basis2.Decompress(Yhat_2);
+        Yproj = [Yproj_1; Yproj_2];
+        proj_err = norm(Yproj - states{k}) / norm(states{k});
+        fprintf("Projection error of trajectory %d: %.4f%%\n", k, 100 * proj_err);
+    end
+```
+
+- The states are compressed to the POD basis as `states_lofi`.
+- As a check, the compressed states are decompressed and compared to the original states.
+
+```matlab
+    %% Learn an OpInf ROM from the data.
+
+    rom = Transient_ADR_2D_OpInf_Constraint(r_1, r_2, n_q, T, n_t, zeros(n_yr, 1));
+    tic();
+    rom.Select_Regularization(states_lofi, controls, ...
+                              ABregularization_candidates, ...
+                              Hregularization_candidates, ...
+                              ddt_strategy);
+    time_opinfcalibration = toc();
+```
+
+The `Select_Regularization` method estimates the time derivatives of the training states (`ddt_strategy`), uses each combination of entries from `ABregularization_candidates` and `Hregularization_candidates` to define Tikhonov regularizers, and solves the ROM for each set of training controls. The regularizer that produces the least training error is deemed the winner.
+
+```matlab
+    % Solve the ROM for each of the training controls.
+    total_error = 0;
+    for k = 1:num_solves
+        Yk_data = states{k};
+        rom.y0 = states_lofi{k}(:, 1);
+        Yk_rom_compressed = rom.State_Solve2(controls{k});
+        Yk_rom_1 = basis1.Decompress(Yk_rom_compressed(1:r_1, :));
+        Yk_rom_2 = basis2.Decompress(Yk_rom_compressed(r_1 + 1:end, :));
+        Yk_rom = [Yk_rom_1; Yk_rom_2];
+        state_error = norm(Yk_data - Yk_rom) / norm(Yk_data);
+        fprintf('ROM reconstruction error for training set %d: %.2f%%\n', ...
+                k, 100 * state_error);
+        total_error = total_error + state_error;
+        if plot_training_reconstruction
+            solver.Animate_Solution(Yk_rom);
+        end
+    end
+    errors(i) = total_error / num_solves;
+end
+
+if length(residual_energies) > 1
+    figure;
+    semilogx(residual_energies, errors);
+    title('Residual energy versus average ROM training error');
+end
+```
+
+- The best-regularization ROM is solved for each set of training controls and the results are compared to the true states. This is a check that the ROM is reasonable: if these numbers are bad, there is little hope for the optimization.
+- At the end of the loop, we plot the average reconstruction error for each choice of residual energy (each basis size).
+- Only the final ROM (the one with residual energy `residual_energies(end)`) is used in the next step for optimization.
+
+### Optimization with the OpInf ROM
+
+```matlab
+%% Set up and solve the optimization problem (using last trained ROM).
+
+% Make sure the initial conditions are right.
+solver.init_center = [.05; .85];
+rom.y0 = states_lofi{1}(:, 1);
+
+obj_hifi = solver.Make_Objective([.6; .6], t(end), length(t), 1e-5);
+Vfull = blkdiag(basis1.V, basis2.V);
+obj_lofi = Reduced_Dynamic_Objective(obj_hifi, Vfull);
+solver.Plot_Field(obj_hifi.target_weight, 'Protection zone');
+```
+
+- The `Reduced_Dynamic_Objective` class (see docs) modifies the high-fidelity objective for POD-style reduced states.
+- We plot the section of the 2D domain that we want to protect from the first species (the contaminant).
+- In `solver.Make_Objective`, the `1e-5` controls the strength of the regularizer on the control. Increasing this number should increasingly penalize the total amount of decontaminant used.
+
+```matlab
+opt = Reduced_Space_Optimization(obj_lofi, rom);
+opt.z_lb = zeros(n_z, 1);                   % Lower bounds for control.
+opt.z_ub = 100 * ones(n_z, 1);              % Upper bounds for control.
+
+tic();
+[u_lofi, z_lofi] = opt.Optimize(rand(n_z, 1));
+time_lofioptimization = toc();
+```
+
+- `opt.z_lb` and `opt.z_ub` set lower and upper bounds, respectively, on the controls. The controls should be positive in this setup.
+- This step will take a while, even with a ROM surrogate, but it shouldn't take more than an hour or so.
+
+### Visualize Results
+
+```matlab
+%% Visualize optimization results.
+
+% Inspect the state solution.
+u_lofi_reshape = reshape(u_lofi, n_yr, n_t);
+Y_rom_1 = basis1.Decompress(u_lofi_reshape(1:r_1, :));
+Y_rom_2 = basis2.Decompress(u_lofi_reshape(r_1 + 1:end, :));
+Y_rom = [Y_rom_1; Y_rom_2];
+solver.Animate_Solution(Y_rom);             % ROM state with ROM controller
+
+% Inspect the control solution.
+Q_rom = reshape(z_lofi, n_q, n_t - 1);
+figure;
+plot(t(2:end), Q_rom);
+title('Optimal controls (optimized with an OpInf ROM surrogate)');
+```
+
+- `Y_rom` is the state solution to the surrogate-driven optimization problem, mapped back to the original state space.
+- `Q_rom` is the control solution. We plot the controls pointwise, which tells us how much each source is being turned on as a function of time (how much contaminant is being deployed at a particular location).
+
+```matlab
+% Solve the high-fidelity model with the inferred controls.
+disp('Final high-fidelity solve');
+pp = spline(t(2:end), Q_rom);
+controller = @(tt) ppval(pp, tt);
+Y_hifi = solver.State_Solve(controller, t).NodalSolution;
+solver.Animate_Solution(Y_hifi);            % FOM state with ROM controller
+
+save('OptimizationSolution.mat', "solver", "Y_hifi", "Y_rom", "t", "Q_rom", "n_q");
+
+%% Load and visualize results later.
+% load('OptimizationSolution.mat', "solver", "Y_hifi", "Y_rom", "t", "Q_rom", "n_q");
+% figure;
+% plot(t(2:end), Q_rom);
+% title('Optimal controls (optimized with an OpInf ROM surrogate)');
+% solver.Animate_Solution(Y_rom);   % ROM state with ROM controller
+% solver.Animate_Solution(Y_hifi);  % FOM state with ROM controller
+```
+
+This final block solves the high-fidelity system with the control profile produced by the surrogate-driven optimization.
+The results are saved for later, and you can load the results using the last bit of commented code.
