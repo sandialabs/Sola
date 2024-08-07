@@ -8,12 +8,12 @@ run('../../src/Set_Paths');
 meshfile = 'urban_canyon.mat';
 datafile = 'OpInf_Training_Data.mat';
 regenerate_data = false;
-residual_energies = [1e-2; 1e-3; 1e-4; 1e-5; 1e-6; 1e-7];
+residual_energies = [1e-3];
 plot_basis_functions = false;
 plot_training_data = false;
 plot_training_reconstruction = false;
-ABregularization_candidates = [0, 1e-8, 1e-4, 1];
-Hregularization_candidates = logspace(3, 7, 20);
+ABregularization_candidates = [0, 1, 10, 100];
+Hregularization_candidates = logspace(2, 6, 21);
 ddt_strategy = '6thOrder';
 
 %% Generate training data if needed.
@@ -227,6 +227,8 @@ tic();
 [u_lofi, z_lofi] = opt.Optimize(rand(n_z, 1));
 time_lofioptimization = toc();
 
+%% Visualize optimization results.
+
 % Inspect the state solution.
 u_lofi_reshape = reshape(u_lofi, n_yr, n_t);
 Y_rom_1 = basis1.Decompress(u_lofi_reshape(1:r_1, :));
@@ -244,13 +246,13 @@ title('Optimal controls (optimized with an OpInf ROM surrogate)');
 disp('Final high-fidelity solve');
 pp = spline(t(2:end), Q_rom);
 controller = @(tt) ppval(pp, tt);
-Y_hifi = solver.State_Solve(controller, t, false).NodalSolution;
+Y_hifi = solver.State_Solve(controller, t).NodalSolution;
 solver.Animate_Solution(Y_hifi);            % FOM state with ROM controller
 
 save('OptimizationSolution.mat', "solver", "Y_hifi", "Y_rom", "t", "Q_rom", "n_q");
 
 %% Load and visualize results later.
-% load('OptimizationSolution.mat', "solver", "Y_hifi", "t", "z_lofi", "n_q");
+% load('OptimizationSolution.mat', "solver", "Y_hifi", "Y_rom", "t", "Q_rom", "n_q");
 % figure;
 % plot(t(2:end), Q_rom);
 % title('Optimal controls (optimized with an OpInf ROM surrogate)');
