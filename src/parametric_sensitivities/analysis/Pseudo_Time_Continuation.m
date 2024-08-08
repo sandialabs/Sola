@@ -116,7 +116,10 @@ classdef Pseudo_Time_Continuation < handle
                 grad_k(:, k + 1) = this.sen_op.Gradient(z_k(:, k + 1), this.theta_bar + k * dt * d_theta);
 
                 s_k(:, k) = z_k(:, k + 1) - z_k(:, k);
-                y_k(:, k) = grad_k(:, k + 1) - grad_k(:, k) - dt * B;
+                % I'm seeing better imperical results using "B" rather than
+                % "B_tmp" but the theory indicates that "B_tmp" is the
+                % correct term. I need to look into this more deeply.
+                y_k(:, k) = grad_k(:, k + 1) - grad_k(:, k) - dt * B_tmp;
                 rho_k(k) = 1 / (s_k(:, k)' * y_k(:, k));
                 if rho_k(k) < 0.0
                     error(['Error: rho = ', num2str(rho_k(k))]);
