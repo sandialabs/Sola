@@ -120,12 +120,12 @@ classdef Quadratic_Operator_Multi < OpInf_Operator_Multi
             jac(:, first2:last2) = this.entries * kron(y1, eye(n2));
         end
 
-        function [Mv] = Hessian_yy_Apply(this, v, ~, ~, lambda)
-            num_vecs = size(v, 2);
-            Mv = zeros(this.n_y, num_vecs);
+        function [y_out] = Hessian_yy_Apply(this, y_in, ~, ~, lambda)
+            num_vecs = size(y_in, 2);
+            y_out = zeros(this.n_y, num_vecs);
             subadjoint = this.Get_Substate(this.out_index, lambda);
             for j = 1:num_vecs
-                Mv(:, j) = this.Jacobian_y(v(:, j))' * subadjoint;
+                y_out(:, j) = this.Jacobian_y(y_in(:, j))' * subadjoint;
             end
         end
 

@@ -121,6 +121,34 @@ assert(op.Hessian_qq_Apply(q, y, q, y) == 0);
 
 op.Finite_Difference_Check(30, true);
 
+%% Test Input_Squared_Operator_Multi.
+
+op = Input_Squared_Operator_Multi(1, n_q, ns);
+assert(numel(op.entries) == 0);
+block = op.Datablock(Y, Q);
+assert(size(block, 1) == n_q);
+assert(size(block, 2) == n_t);
+assert(op.Column_Dimension() == n_q);
+assert(allclose(block, Q .* Q));
+
+B = randn(ns(1), n_q);
+op.Set_Entries(B);
+Bq = op.Apply(y, q);
+assert(size(Bq, 1) == ns(1));
+assert(size(Bq, 2) == 1);
+jac = op.Jacobian_q(y, q);
+assert(size(jac, 1) == ns(1));
+assert(size(jac, 2) == n_q);
+
+assert(op.Jacobian_y(y, q) == 0);
+assert(op.Hessian_yy_Apply(y, y, q, y) == 0);
+assert(op.Hessian_yq_Apply(q, y, q, y) == 0);
+assert(op.Hessian_qy_Apply(y, y, q, y) == 0);
+B_qq = op.Hessian_qq_Apply(q, y, q, y);
+assert(size(B_qq, 1) == n_q);
+
+op.Finite_Difference_Check(30, true);
+
 %% Helper functions
 
 function [result] = allclose(A1, A2)
