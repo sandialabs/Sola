@@ -318,12 +318,29 @@ classdef OpInf_Operator_Multi < handle
                 for k = 1:p
                     out_k = this.Apply(y + h(k) * v);
                     diff = norm(jac_v - (out_k - out) / h(k)) / norm(jac_v);
-                    disp(['h = ', num2str(h(k)), ' error = ', num2str(diff)]);
+                    fprintf('h = %.2e error = %.3e\n', h(k), diff);
                 end
                 disp(' ');
             end
 
-            % Finite difference check for Hessian_yy().
+            % Finite difference check for Jacobian_q().
+            if hasinputs
+                vq = randn(this.n_q, 1);
+                vq = vq / norm(vq);
+                jacq = this.Jacobian_q(y, q);
+                jacq_v = jacq * vq;
+                if norm(jacq_v) > 0
+                    disp(' ');
+                    disp(['Finite difference check for ', class(this), '.Jacobian_q()']);
+                    for k = 1:p
+                        out_k = this.Apply(y, q + h(k) * vq);
+                        diff = norm(jacq_v - (out_k - out) / h(k)) / norm(jacq_v);
+                        fprintf('h = %.2e error = %.3e\n', h(k), diff);
+                    end
+                end
+            end
+
+            % Finite difference check for Hessian_yy_Apply().
             lambda = randn(this.n_y, 1);
             Mv = this.Hessian_yy_Apply(v, y, q, lambda);
             if norm(Mv) > 0
@@ -338,10 +355,34 @@ classdef OpInf_Operator_Multi < handle
                     out_k(first:last, :) = this.Jacobian_y(y + h(k) * v);
                     fd_Mv = (out_k' * lambda - fulljac' * lambda) / h(k);
                     diff = norm(fd_Mv - Mv) / norm(Mv);
-                    disp(['h = ', num2str(h(k)), ' error = ', num2str(diff)]);
+                    fprintf('h = %.2e error = %.3e\n', h(k), diff);
                 end
                 disp(' ');
             end
+
+            if ~hasinputs
+                return
+            end
+
+            % Finite difference check for Hessian_qq_Apply().
+            Mv = this.Hessian_qq_Apply(vq, y, q, lambda);
+            if norm(Mv) > 0
+                disp(' ');
+                disp(['Finite difference check for ', class(this), '.Hessian_qq_Apply()']);
+                first = this.state_indices(this.out_index);
+                last = this.state_indices(this.out_index + 1) - 1;
+                fulljac = zeros(this.n_y, this.n_q);
+                fulljac(first:last, :) = jacq;
+                for k = 1:p
+                    out_k = zeros(this.n_y, this.n_q);
+                    out_k(first:last, :) = this.Jacobian_q(y, q + h(k) * vq);
+                    fd_Mv = (out_k' * lambda - fulljac' * lambda) / h(k);
+                    diff = norm(fd_Mv - Mv) / norm(Mv);
+                    fprintf('h = %.2e error = %.3e\n', h(k), diff);
+                end
+                disp(' ');
+            end
+
         end
 
     end

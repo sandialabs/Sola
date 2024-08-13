@@ -17,11 +17,12 @@ classdef Transient_ADR_2D_OpInf_Constraint < Dynamic_Constraint
     % .. math::
     %  \ddt\y_1(t) = \A_1\y_1(t) + \H_1[\y_1(t)\otimes\y_2(t)],
     %  \\
-    %  \ddt\y_2(t) = \A_2\y_2(t) + \H_2[\y_1(t)\otimes\y_2(t)] + \B\q(t),
+    %  \ddt\y_2(t) = \A_2\y_2(t) + \H_2[\y_1(t)\otimes\y_2(t)] + \B[\q(t)\ast\q(t)],
     %
     % where :math:`\A_\ell\in\R^{n_\ell\times n_\ell}`,
     % :math:`\H_\ell\in\R^{n_\ell\times n_1 n_2}`,
     % and :math:`\B\in\R^{n_2\times n_q}`.
+    % Here, :math:`\ast` is the Hadamard product (elementwise multiplication).
     %
     % This class inherits from :class:`Dynamic_Constraint`, hence the model is integrated in time
     % using the implicit Euler method. In this context, the optimization state and control are
@@ -106,7 +107,7 @@ classdef Transient_ADR_2D_OpInf_Constraint < Dynamic_Constraint
             this.H_1 = Quadratic_Operator_Multi(1, 1, 2, dims);
             this.A_2 = Linear_Operator_Multi(2, 2, dims);
             this.H_2 = Quadratic_Operator_Multi(2, 1, 2, dims);
-            this.B_2 = Input_Operator_Multi(2, n_q, dims);
+            this.B_2 = Input_Squared_Operator_Multi(2, n_q, dims);
 
             % Operator Inference hyperparameters.
             this.toinfer = [1; 1; 1; 1; 1];
@@ -553,6 +554,7 @@ classdef Transient_ADR_2D_OpInf_Constraint < Dynamic_Constraint
 
             % Solve the problem again with the best hyperparameters.
             this.Learn_Operators(states_all, controls_all, ddts_all, best_ABreg, best_Hreg);
+            best_reg = [best_ABreg; best_Hreg];
         end
 
         %% Implement abstract methods from the parent class.
@@ -602,8 +604,12 @@ classdef Transient_ADR_2D_OpInf_Constraint < Dynamic_Constraint
             Mv = zeros(this.n_z, size(v, 2));
         end
 
-        function [Mv] = f_zz_Apply(this, v, ~, ~, ~, ~)
+        function [Mv] = f_zz_Apply(this, v, y, z, t, lambda)
+            I = this.Input_Indices(t);
+            q = z(I);
+            vt = v(I, :);
             Mv = zeros(this.n_z, size(v, 2));
+            Mv(I, :) = this.B_2.Hessian_qq_Apply(vt, y, q, lambda);
         end
 
         function [h, h_z] = h(this, ~)

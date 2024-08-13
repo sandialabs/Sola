@@ -159,7 +159,7 @@ $$
     \\
     \frac{\textrm{d}}{\textrm{d}t}\hat{\mathbf{y}}_2(t)
     &= \hat{\mathbf{A}}_2\hat{\mathbf{y}}_2(t) + \hat{\mathbf{H}}_2[\hat{\mathbf{y}}_1\otimes\hat{\mathbf{y}}_2] +
-    \hat{\mathbf{B}}\mathbf{q}(t),
+    \hat{\mathbf{B}}[\mathbf{q}(t) \ast \mathbf{q}(t)],
     \\
     \mathbf{y}_i(t)
     &\approx \mathbf{V}_{\!i}\hat{\mathbf{y}}_{i}(t), \quad i=1,2.
@@ -169,27 +169,9 @@ $$
 Here, $\mathbf{V}_{i}\in\mathbb{R}^{n_x \times r_i}$ is a rank-$r_i$ POD basis learned from $\mathbf{y}_i(t)$ data.
 Note that $r_1$ and $r_2$ do not have to be equal.
 We then have reduced states $\mathbf{y}_{i}(t) \in \mathbb{R}^{r_i}$ and "operators" $\hat{\mathbf{A}}_i\in\mathbb{R}^{r_i\times r_i}$ and $\hat{\mathbf{H}}_i\in\mathbb{R}^{r_i \times r_1 r_2}$ for $i=1,2$, as well as $\hat{\mathbf{B}}\in\mathbb{R}^{r_2 \times n_q}$.
+The Hadamard product $\ast$ is employed to ensure positivity in the control.
 
 The regression is populated with sixth-order finite difference estimates of the time derivatives of the training states.
-
-**Remark**. It may be easier to start with a monolithic model:
-
-$$
-\begin{aligned}
-    \frac{\textrm{d}}{\textrm{d}t}\hat{\mathbf{y}}(t)
-    = \hat{\mathbf{A}}\hat{\mathbf{y}}(t) + \hat{\mathbf{H}}[\hat{\mathbf{y}}\otimes\hat{\mathbf{y}}] +
-    \hat{\mathbf{B}}\mathbf{q}(t),
-    \qquad
-    \mathbf{y}(t)
-    \approx \mathbf{V}\hat{\mathbf{y}}(t).
-\end{aligned}
-$$
-
-The two-state ROM preserves a little more structure (no linear interactions between $\mathbf{y}_1$ and $\mathbf{y}_2$, no input terms on $\mathbf{y}_1$, etc.) but if the monolithic model works well that will be easier to use.
-
-```{warning}
-With a monolithic basis approach, the state variables will probably have to be scaled carefully (possibly centered too) before compression.
-```
 
 **Remark**. We could specify $\hat{\mathbf{B}}$ intrusively by constructing the control matrix $\mathbf{B}$ and setting $\hat{\mathbf{B}} = \mathbf{V}_{2}^\mathsf{T}\mathbf{B}$.
 Likewise, since the nonlinearity $u_1 u_2$ is local, we can construct each $\hat{\mathbf{H}}_i$ intrusively if we like.
@@ -247,6 +229,7 @@ residual_energies = [1e-3];
 ABregularization_candidates = [0, 1, 10, 100];
 Hregularization_candidates = logspace(2, 6, 21);
 ddt_strategy = '6thOrder';
+control_regularization = 5e-2;
 ```
 
 Data variables:
@@ -267,6 +250,10 @@ OpInf parameters:
 - `ABregularization_candidates`: potential scalars to regularize the linear terms in the model.
 - `Hregularization_candidates`: potential scalars to regularize the quadratic terms in the model.
 - `ddt_strategy`: how to estimate the time derivatives of the training states for the operator inference.
+
+Optimization parameters:
+
+- `control_regularization`: the scalar $\gamma$ used to penalize the controls in the objective function.
 
 ### Generate full-order solutions
 
@@ -378,14 +365,16 @@ n_y = n_u / n_t;
 n_x = n_y / 2;  % = size(solver.model.Mesh.Nodes, 2);
 mass_matrix = assembleFEMatrices(solver.model, 'M').M;
 mass_matrix = mass_matrix(1:n_x, 1:n_x);
+stiffness_matrix = assembleFEMatrices(solver.model, 'K').K;
+stiffness_matrix = stiffness_matrix(1:n_x, 1:n_x);
 
 n_z = size(Z_train, 1);
 n_q = n_z / (n_t - 1);  % = solver.n_q;
-disp(['Using ', num2str(num_solves), ' training trajectories']);
+fprintf('Using %d training trajectories\n', num_solves);
 ```
 
 - This section loads all variables from the `datafile`, even if the file was just generated.
-- The mass matrix resulting from `assembleFEMatrices()` is $n_y \times n_y$ (or $2n_x\times 2n_x$), but this is just one $n_x \times n_x$ matrix repeated twice in block diagonal form, so we pull out the top left block.
+- The mass matrix resulting from `assembleFEMatrices()` is $n_y \times n_y$ (or $2n_x\times 2n_x$), but this is just one $n_x \times n_x$ matrix repeated twice in block diagonal form, so we pull out the top left block. Same for the stiffness matrix, which is not used in this script but which is needed for the model discrepancy.
 
 ```matlab
 %% Learn a POD basis for each variable.
@@ -393,9 +382,11 @@ disp(['Using ', num2str(num_solves), ' training trajectories']);
 % Unpack the states and controls by training trajectory.
 states = cell(num_solves);
 controls = cell(num_solves);
+controls_romtraining = cell(num_solves);
 for k = 1:num_solves
     states{k} = reshape(U_train(:, k), n_y, n_t);
     controls{k} = reshape(Z_train(:, k), n_q, n_t - 1);
+    controls_romtraining{k} = sqrt(abs(controls{k}));
 end
 
 % Learn POD bases from the collection of all state snapshots.
@@ -407,8 +398,9 @@ basis2.Set_Reduced_Dimension_From_Residual_Energy(residual_energies(1));
 ```
 
 - First we reshape the training trajectories from $n_u \times 1$ to $n_y \times n_t$ (call these $\mathbf{Y}_k$) and the controls from $n_z \times 1$ to $n_q \times (n_t - 1)$.
+- `controls_romtraining` is the square root of the controls so that, if $\mathbf{q}(t)$ is `controls_romtraining`, $\mathbf{q}(t)\ast\mathbf{q}(t)$ recovers the original `controls`.
 - Next we concatenate the training trajectories to $\mathbf{Y} = [~~\mathbf{Y}_1~\cdots~\mathbf{Y}_{n_\text{trajectories}}~~]$. We take SVD of the first $n_x$ rows of $\mathbf{Y}$ to form the POD basis for the first species, and the SVD of the last $n_x$ rows of $\mathbf{Y}$ for the POD basis for the second species.
-- The mass matrix is neglected by default because inverting the mass matrix takes a long time, but they can be included by using `basis1 = POD_Basis(states_all(1:n_x, :), false, full(mass_matrix));` and similar for `basis2`.
+- The mass matrix is neglected by default because inverting the mass matrix takes a long time, but it can be included by using `basis1 = POD_Basis(states_all(1:n_x, :), false, full(mass_matrix));` and similar for `basis2`.
 
 ```matlab
 if plot_basis_functions
@@ -450,7 +442,6 @@ for i = 1:length(residual_energies)
     r_1 = basis1.r;
     r_2 = basis2.r;
     n_yr = r_1 + r_2;
-
     fprintf('POD with r_1 = %d and r_2 = %d basis vectors\n', r_1, r_2);
 
     % Compress states and check projection error.
@@ -475,7 +466,7 @@ for i = 1:length(residual_energies)
 
     rom = Transient_ADR_2D_OpInf_Constraint(r_1, r_2, n_q, T, n_t, zeros(n_yr, 1));
     tic();
-    rom.Select_Regularization(states_lofi, controls, ...
+    rom.Select_Regularization(states_lofi, controls_romtraining, ...
                               ABregularization_candidates, ...
                               Hregularization_candidates, ...
                               ddt_strategy);
@@ -490,7 +481,7 @@ The `Select_Regularization` method estimates the time derivatives of the trainin
     for k = 1:num_solves
         Yk_data = states{k};
         rom.y0 = states_lofi{k}(:, 1);
-        Yk_rom_compressed = rom.State_Solve2(controls{k});
+        Yk_rom_compressed = rom.State_Solve2(controls_romtraining{k});
         Yk_rom_1 = basis1.Decompress(Yk_rom_compressed(1:r_1, :));
         Yk_rom_2 = basis2.Decompress(Yk_rom_compressed(r_1 + 1:end, :));
         Yk_rom = [Yk_rom_1; Yk_rom_2];
@@ -519,13 +510,13 @@ end
 ### Optimization with the OpInf ROM
 
 ```matlab
-%% Set up and solve the optimization problem (using last trained ROM).
+%% Set up the optimization objective.
 
 % Make sure the initial conditions are right.
 solver.init_center = [.05; .85];
 rom.y0 = states_lofi{1}(:, 1);
 
-obj_hifi = solver.Make_Objective([.6; .6], t(end), length(t), 1e-5);
+obj_hifi = solver.Make_Objective([.6; .6], t(end), length(t), control_regularization);
 Vfull = blkdiag(basis1.V, basis2.V);
 obj_lofi = Reduced_Dynamic_Objective(obj_hifi, Vfull);
 solver.Plot_Field(obj_hifi.target_weight, 'Protection zone');
@@ -533,12 +524,15 @@ solver.Plot_Field(obj_hifi.target_weight, 'Protection zone');
 
 - The `Reduced_Dynamic_Objective` class (see docs) modifies the high-fidelity objective for POD-style reduced states.
 - We plot the section of the 2D domain that we want to protect from the first species (the contaminant).
-- In `solver.Make_Objective`, the `1e-5` controls the strength of the regularizer on the control. Increasing this number should increasingly penalize the total amount of decontaminant used.
+- In `solver.Make_Objective`, `control_regularization` sets the strength of the regularizer on the control, $\gamma$. Increasing this number should increasingly penalize the total amount of decontaminant used.
 
 ```matlab
+%% Set up and solve the optimization problem (using last trained ROM).
+
 opt = Reduced_Space_Optimization(obj_lofi, rom);
-opt.z_lb = zeros(n_z, 1);                   % Lower bounds for control.
-opt.z_ub = 100 * ones(n_z, 1);              % Upper bounds for control.
+% opt.z_lb = zeros(n_z, 1);                   % Lower bounds for control.
+% opt.z_ub = 25 * ones(n_z, 1);               % Upper bounds for control.
+opt.max_cg_iter = 200;
 
 tic();
 [u_lofi, z_lofi] = opt.Optimize(rand(n_z, 1));
@@ -561,14 +555,14 @@ Y_rom = [Y_rom_1; Y_rom_2];
 solver.Animate_Solution(Y_rom);             % ROM state with ROM controller
 
 % Inspect the control solution.
-Q_rom = reshape(z_lofi, n_q, n_t - 1);
+Q_rom = reshape(z_lofi, n_q, n_t - 1).^2;
 figure;
 plot(t(2:end), Q_rom);
 title('Optimal controls (optimized with an OpInf ROM surrogate)');
 ```
 
 - `Y_rom` is the state solution to the surrogate-driven optimization problem, mapped back to the original state space.
-- `Q_rom` is the control solution. We plot the controls pointwise, which tells us how much each source is being turned on as a function of time (how much contaminant is being deployed at a particular location).
+- `Q_rom` is the control solution. Note that we square the ROM controls to get FOM controls. We plot the controls pointwise, which tells us how much each source is being turned on as a function of time (how much contaminant is being deployed at a particular location).
 
 ```matlab
 % Solve the high-fidelity model with the inferred controls.
