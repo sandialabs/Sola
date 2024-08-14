@@ -46,8 +46,8 @@ classdef Transient_ADR_2D_Objective < Dynamic_Objective
 
         function [val, grad_z] = R(this, z)
             % :math:`\gamma \int_{t_2}^{T} || q(t) ||_2^2 dt / 2`
-            val = .5 * this.beta_reg * this.w_z' * (z.^2);
-            grad_z = this.beta_reg * this.w_z .* z;
+            val = .5 * this.beta_reg * this.w_z' * (z.^4);
+            grad_z = 2 * this.beta_reg * this.w_z .* (z.^3);
         end
 
         function [y_out] = g_yy_Apply(this, y_in, ~, ~)
@@ -56,8 +56,8 @@ classdef Transient_ADR_2D_Objective < Dynamic_Objective
             y_out(1:this.n_x, :) = this.pMp * y_in1;
         end
 
-        function [z_out] = R_zz_Apply(this, z_in, ~)
-            z_out = this.beta_reg * this.w_z .* z_in;
+        function [z_out] = R_zz_Apply(this, z_in, z)
+            z_out = 6 * this.beta_reg * this.w_z .* (z_in .* z.^2);
         end
 
     end

@@ -17,7 +17,7 @@ residual_energies = [1e-5];
 ABregularization_candidates = [1e-6, 1e-2, 1e1];
 Hregularization_candidates = logspace(3, 5, 21);
 ddt_strategy = '6thOrder';
-control_regularization = 5e-2;
+control_regularization = 1.e-4;
 
 %% Generate training data if needed.
 
