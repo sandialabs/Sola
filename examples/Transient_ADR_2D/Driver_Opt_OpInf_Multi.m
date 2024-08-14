@@ -108,8 +108,9 @@ n_y = n_u / n_t;
 n_x = n_y / 2;  % = size(solver.model.Mesh.Nodes, 2);
 mass_matrix = assembleFEMatrices(solver.model, 'M').M;
 mass_matrix = mass_matrix(1:n_x, 1:n_x);
-stiffness_matrix = assembleFEMatrices(solver.model, 'K').K;
-stiffness_matrix = stiffness_matrix(1:n_x, 1:n_x);
+% stiffness_matrix = assembleFEMatrices(solver.model, 'K').K;
+% stiffness_matrix = stiffness_matrix(1:n_x, 1:n_x);
+% save("fem_matrices.mat", "mass_matrix", "stiffness_matrix");
 
 n_z = size(Z_train, 1);
 n_q = n_z / (n_t - 1);  % = solver.n_q;
