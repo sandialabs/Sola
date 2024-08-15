@@ -410,9 +410,9 @@ classdef Transient_ADR_2D < handle
                 ys = [u(:, 1, j), u(:, 2, j)];
                 this.Plot_Field(abs(ys), ['t = t_{', num2str(j), '}'], true, true);
                 subplot(1, 2, 1);
-                clim(limits);
+                caxis(limits);
                 subplot(1, 2, 2);
-                clim(limits);
+                caxis(limits);
                 % drawnow;
                 % writeVideo(outputVideo, getframe(gcf));
                 pause(waittime);
