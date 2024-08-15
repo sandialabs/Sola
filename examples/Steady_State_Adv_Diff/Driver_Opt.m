@@ -4,7 +4,7 @@ clc;
 addpath(genpath('../../src'));
 
 m = 200;
-diff_coeff = 1;
+diff_coeff = 0.5;
 vel_coeff = 3;
 robin_coeff = 2;
 reg_coeff = 10;

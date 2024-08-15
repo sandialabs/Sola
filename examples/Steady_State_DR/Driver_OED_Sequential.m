@@ -8,7 +8,7 @@ set(0, "DefaultLineLineWidth", 3);
 set(0, "DefaultLineMarkerSize", 20);
 
 show_figures = true;
-save_figures = false;
+save_figures = true;
 
 % Retrieve Model Parameters (D, Z, diff/reg/react_coeff, m, u_lofi, z_hifi/lofi; remove Z and D though)
 load Optimization_Results.mat;
@@ -138,14 +138,14 @@ for p = 1:N
         figure;
         hold on;
         plot(x, con_hifi.State_Solve(z_lofi), "r-", "DisplayName", "$S(\tilde{z})$");
+        plot(x, con_hifi.State_Solve(z_bar), "g-", "DisplayName", "$S(\bar{z})$");
         plot(x, con_hifi.State_Solve(z_hifi), "k--", "DisplayName", "$S(z^*)$");
-        plot(x, con_hifi.State_Solve(z_bar), "b-", "DisplayName", "$S(\bar{z})$");
         % plot(x, obj.T, "k:", "DisplayName", "Target");
         ylim(fixed_ylim);
-        title("Seq-OED State (Iteration " + p + ")");
+        title("Optimization State (N = " + p + ")");
         legend("Location", "northwest", "interpreter", "latex");
         if save_figures
-            saveas(gcf, "SeqOED_N_" + p + ".png");
+            saveas(gcf, "SeqOED_N_" + p + ".svg");
         end
         % figure;
         % hold on;
@@ -165,10 +165,13 @@ if show_figures
     xlim([0 N]);
     yline(Jhat_hifi, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
     yline(Jhat_lofi, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
-    % plot(0:N, [Jhat_lofi; old_oed(1:N)], ".-", "Color", "#1F618D", "DisplayName", "Standard OED")
-    plot(0:N, [Jhat_lofi; Jhat_oed], ".-", "Color", "#00C83A", "DisplayName", "Sequential OED");
+    plot(0:N, [Jhat_lofi; old_oed(1:N)], ".-", "Color", "#1F618D", "DisplayName", "Ensemble")
+    plot(0:N, [Jhat_lofi; Jhat_oed], ".-", "Color", "#00C83A", "DisplayName", "Sequential");
     xlabel("Evaluations ($N$)", "Interpreter", "latex");
     ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
     legend("location", "east", "Interpreter", "latex");
     title("Optimization Objective over Evals");
+    if save_figures
+        saveas(gcf, "SeqOED_Objs.svg");
+    end
 end
