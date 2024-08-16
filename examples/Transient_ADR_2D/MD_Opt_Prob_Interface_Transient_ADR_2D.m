@@ -32,20 +32,21 @@ classdef MD_Opt_Prob_Interface_Transient_ADR_2D < MD_Opt_Prob_Interface
                 this.u_current = this.hessian_data(1:this.m);
             end
 
+            num_vecs = size(u_in, 2);
             full_dim = length(this.basis1.ybar);
             r1 = this.basis1.r;
             r2 = this.basis2.r;
             n_t = this.opt.con.n_t;
-            u_in_1_tmp = zeros(r1 * n_t, 1);
-            u_in_2_tmp = zeros(r2 * n_t, 1);
-            u_in_1 = u_in(1:full_dim * n_t);
-            u_in_2 = u_in((full_dim * n_t + 1):end);
+            u_in_1_tmp = zeros(r1 * n_t, num_vecs);
+            u_in_2_tmp = zeros(r2 * n_t, num_vecs);
+            u_in_1 = u_in(1:full_dim * n_t, :);
+            u_in_2 = u_in((full_dim * n_t + 1):end, :);
             for k = 1:this.opt.con.n_t
-                tmpk = u_in_1((1 + (k - 1) * full_dim):(k * full_dim));
-                u_in_1_tmp((1 + (k - 1) * r1):(k * r1)) = this.basis1.Compress(tmpk);
+                tmpk = u_in_1((1 + (k - 1) * full_dim):(k * full_dim), :);
+                u_in_1_tmp((1 + (k - 1) * r1):(k * r1), :) = this.basis1.Compress(tmpk);
 
-                tmpk = u_in_2((1 + (k - 1) * full_dim):(k * full_dim));
-                u_in_2_tmp((1 + (k - 1) * r2):(k * r2)) = this.basis2.Compress(tmpk);
+                tmpk = u_in_2((1 + (k - 1) * full_dim):(k * full_dim), :);
+                u_in_2_tmp((1 + (k - 1) * r2):(k * r2), :) = this.basis2.Compress(tmpk);
             end
 
             u_in_tmp = [u_in_1_tmp; u_in_2_tmp];

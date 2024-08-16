@@ -11,6 +11,8 @@ M = kron(eye(2), M1);
 S1 = load('fem_matrices.mat', 'stiffness_matrix').stiffness_matrix;
 S = kron(eye(2), S1);
 load('OptimizationSolution.mat');
+basis1.Set_Reduced_Dimension_From_Residual_Energy(residual_energies(1));
+basis2.Set_Reduced_Dimension_From_Residual_Energy(residual_energies(1));
 
 data_interface = MD_Data_Interface_Transient_ADR_2D();
 data_interface.Load_Data();
@@ -97,8 +99,6 @@ if ~suppress_figures
 end
 
 %%
-
-% Need to update MD_Opt_Prob_Interface with a custom ROM class
 opt_prob_interface = MD_Opt_Prob_Interface_Transient_ADR_2D(opt, obj_hifi, basis1, basis2, z_lofi);
 
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
@@ -125,3 +125,26 @@ if ~suppress_figures
     semilogy(t(2:end), Q);
     title('HiFi Optimal controls');
 end
+
+%%
+Q_lofi = reshape(z_lofi, n_q, n_t - 1).^2;
+pp = spline(t(2:end), Q_lofi);
+controller = @(tt) ppval(pp, tt);
+Y_lofi = solver.State_Solve(controller, t).NodalSolution;
+u_tmp1 = Y_lofi(:, 1, :);
+u_tmp1 = u_tmp1(:);
+u_tmp2 = Y_lofi(:, 2, :);
+u_tmp2 = u_tmp2(:);
+u_lofi = [u_tmp1; u_tmp2];
+obj_lofi = obj_hifi.J(u_lofi, z_lofi);
+
+Q_update_mean = reshape(z_update_mean, n_q, n_t - 1).^2;
+pp = spline(t(2:end), Q_update_mean);
+controller = @(tt) ppval(pp, tt);
+Y_update_mean = solver.State_Solve(controller, t).NodalSolution;
+u_tmp1 = Y_update_mean(:, 1, :);
+u_tmp1 = u_tmp1(:);
+u_tmp2 = Y_update_mean(:, 2, :);
+u_tmp2 = u_tmp2(:);
+u_update_mean = [u_tmp1; u_tmp2];
+obj_update_mean = obj_hifi.J(u_update_mean, z_update_mean);
