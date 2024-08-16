@@ -7,10 +7,9 @@ set(0, "DefaultAxesFontSize", 20);
 set(0, "DefaultLineLineWidth", 3);
 set(0, "DefaultLineMarkerSize", 20);
 
-
 % Set Python environment and variables
-pyenv('Version', '/usr/local/anaconda3/envs/FenicsEnvCompat/bin/python'); 
 setenv('PKG_CONFIG_PATH', '/usr/local/anaconda3/envs/FenicsEnvCompat/lib/pkgconfig');
+pyenv('Version', '/usr/local/anaconda3/envs/FenicsEnvCompat/bin/python', 'ExecutionMode', 'InProcess');
 pythonFilePath = 'python';
 if count(py.sys.path, pythonFilePath) == 0
     insert(py.sys.path, int32(0), pythonFilePath);
@@ -28,14 +27,23 @@ con_lofi = Tracer_LoFi_Constraint();
 opt_lofi = Reduced_Space_Optimization(obj, con_lofi);
 con_hifi = Tracer_HiFi_Constraint();
 opt_hifi = Reduced_Space_Optimization(obj, con_hifi);
-% x = con_lofi.x;
-disp("Breakpoint 1")
+x = con_lofi.x;
+
+% HIFI JHAT
+Jhat_hifi_fn = @(z) obj.J(con_hifi.State_Solve(z), z);
+Jhat_lofi_fn = @(z) obj.J(con_lofi.State_Solve(z), z);
+
+% Show initial objective
+fprintf("\nStep 0:\n-------------");
+Jhat_lofi = Jhat_hifi_fn(z_lofi);
+Jhat_hifi = Jhat_hifi_fn(z_hifi);
+fprintf('Objective of z_lofi: \t%.3f\n', Jhat_lofi);
+fprintf('Objective of z_hifi: \t%.3f\n\n', Jhat_hifi);
 
 % Obtain high-fidelity and low-fidelity optimizersß
 z_lofi = load("data/lofi_optim_sol.mat").k0_opt_lofi;
 u_lofi = load("data/lofi_optim_sol.mat").k_opt_lofi;
 z_hifi = load("data/hifi_optim_sol.mat").k0_hifi;
-
 
 % Set Data Interface
 data_interface = MD_Data_Interface_Tracer(u_lofi, z_lofi);
@@ -46,24 +54,82 @@ alpha_z = 1.e-10;
 alpha_d = 1.e-4;
 u_prior_interface = MD_Elliptic_u_Prior_Interface_Tracer(alpha_u, opt_lofi);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Tracer(alpha_z, opt_lofi);
-disp("Breakpoint 2")
 
 % Error with z_hifi
 oed_z_error_fn = @(z) sqrt((z - z_hifi)' * z_prior_interface.Apply_M_z(z - z_hifi)) / sqrt(z_hifi' * z_prior_interface.Apply_M_z(z_hifi));
 
-
 % Perform Hessian Analysis
-opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
+opt_prob_interface = MD_Opt_Prob_Interface_Python(data_interface);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 num_evals = 4;
 oversampling = 1;
-disp("Breakpoint 3")
+disp("Computing Hessian GEVP...");
 
 md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_init, num_evals, oversampling);
 
+% Perform Offline OED Computations
+alpha_zd = 1.e-2;
+beta_zd = 1.e-2;
+reg_coeff = 1.e-6;
+beta_0 = randn(num_evals, 1);
+oed_interface = MD_OED_Interface_Tracer(data_interface, con_lofi, alpha_zd, beta_zd);
 
+% Plot low-fidelity and high-fidelity states
+pyplot(x, con_hifi.State_Solve(z_lofi), 'r-', x, con_hifi.State_Solve(z_hifi), 'k--', 'Legend', {'Low-Fidelity', 'High-Fidelity'});
 
-% TODO: Give access to x-values & compute vertex values for plotting
+%% Iterate for each data point
+N = 2;
+Jhat_oed = zeros(N, 1);
+oed_z_error = zeros(N, 1);
+Z = [];
+D = [];
+betas = [];
+z_bar = z_lofi;
 
+for p = 1:N
+    % Update Data Interface (with prior center)
+    fprintf('\nStep %d:\n-------------\n', p);
+    data_interface.Update_z_opt(z_bar);
 
-% 
+    % Sequential OED
+    md_oed = MD_OED_Seq(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
+    md_oed.Offline_Computation();
+
+    % Set Parameters for OED
+    if p == 1
+        z_p = z_lofi;
+        % betas = [betas; 0*beta_0]; % This is for the updated sequential OED
+    else
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, reg_coeff, betas);
+        betas = [betas; beta_new];
+        z_p = z_p(:, end); % Redundancy for standard OED.
+    end
+
+    % Obtain Discrepancies
+    Z = [Z z_p];
+    D_p = Evaluate_Discrepancy(con_hifi, con_lofi, z_p);
+    D = [D D_p];
+
+    % Update data_interface
+    data_interface.Set_Z_and_D(Z, D);
+    data_interface.Update_z_opt(z_bar);
+
+    % Perform Posterior Sampling (TODO: Avoid recomputing computed data points)
+    md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
+    md_post_sampling.Compute_Posterior_Data(alpha_d, 1);
+
+    % Obtain Optimal Solution Update
+    md_update = MD_Update(md_post_sampling, md_hessian_analysis);
+    z_bar = md_update.Posterior_Update_Mean();
+
+    % Display Stats
+    Jhat_oed(p) = Jhat_hifi_fn(z_bar);
+    fprintf('Objective of z_bar: \t%.3f\n', Jhat_oed(p));
+    if p == 1
+        fprintf('Percent Improvement: \t%.2f%%\n\n', 100 * (Jhat_lofi - Jhat_oed(p)) / (Jhat_lofi - Jhat_hifi));
+    else
+        fprintf('Percent Improvement: \t%.2f%%\n\n', 100 * (Jhat_oed(p - 1) - Jhat_oed(p)) / (Jhat_oed(p - 1) - Jhat_hifi));
+    end
+end
+
+pyplot(0:N, [Jhat_lofi; Jhat_oed], '.-', 'Title', 'Optimization Objective over Evals');

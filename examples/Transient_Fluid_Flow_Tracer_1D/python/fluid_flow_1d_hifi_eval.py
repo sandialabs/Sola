@@ -1,4 +1,4 @@
-from fenics_helpers import *
+from fenics_helpers_noadj import *
 
 N = 30;
 unit_mesh = UnitIntervalMesh(N);
@@ -68,7 +68,7 @@ T = 0.1
 num_steps = 25
 dt = Constant(T/num_steps)
 gamma = Constant(0.025)
-reac_fn = lambda c: Constant(0.1) * c
+reac_fn = lambda c: Constant(1) * c
 alpha = Constant(1)
 rcv = Constant(1)
 
@@ -82,11 +82,11 @@ F = F_1 + F_2 + F_3 + F_4 + F_c
 
 assemble(F); # This is just to get FFC JIT started well before PDE solve.
 
-def state_solve(c0, return_type: Literal["vertex", "vector", "petsc", "function"] = "vertex", plot_c=False):
+def state_solve(c0, return_type: Literal["vertex", "vector", "petsc", "function"], plot_c=False):
     global t
 
     # Reset initial conditions
-    c_n.assign(fenics_convert(c0, "function"))
+    c_n.assign(fenics_convert(c0, "function", C))
     u_n = interpolate(u0_exp, U)
     p_n = interpolate(p0_exp, P) # just a newton guess
     r_n = interpolate(r0_exp, R)

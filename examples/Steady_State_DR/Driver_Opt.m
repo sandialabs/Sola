@@ -35,7 +35,6 @@ legend({'Target', '$\tilde{S}(\tilde{z})$'}, 'location', 'southeast', 'Interpret
 set(gca, 'FontSize', 20);
 saveas(gcf, "Lo-Fi State.svg");
 
-
 figure;
 hold on;
 plot(x, T, "k--", 'LineWidth', 3);
@@ -68,7 +67,7 @@ plot(x, z_lofi, "r-", 'LineWidth', 3);
 xlabel('$x$', 'Interpreter', 'latex');
 ylabel('Source');
 legend({'Lo-Fi Sol.'}, 'location', 'northeast', 'Interpreter', 'latex');
-title("Optimal Control Solutions")
+title("Optimal Control Solutions");
 set(gca, 'FontSize', 20);
 saveas(gcf, "OC-Sols.svg");
 set(gcf, 'Color', 'White');

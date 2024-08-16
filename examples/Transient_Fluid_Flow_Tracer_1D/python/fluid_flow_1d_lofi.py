@@ -1,4 +1,5 @@
 from fenics_helpers import * 
+from pyadjoint.reduced_functional_numpy import ReducedFunctionalNumPy
 from scipy.io import loadmat
 # Note that fenics_helpers assumes interval of [0, 1] to remove bug from ds
 
@@ -12,6 +13,8 @@ P1 = FiniteElement('CG', unit_mesh.ufl_cell(), 1)
 P2 = FiniteElement('CG', unit_mesh.ufl_cell(), 2)
 U = FunctionSpace(unit_mesh, P2) # Velocity
 K = FunctionSpace(unit_mesh, P1) # Tracer
+mesh_coordinates = K.tabulate_dof_coordinates()
+
 # Define Temporal Mesh
 T = 0.1
 num_steps = 25
@@ -28,13 +31,13 @@ reac_fn = lambda c: Constant(1) * c
 # Store Mass Matrix for Future
 M = assemble(TrialFunction(K) * TestFunction(K) * dx).array()
 K_mat = assemble(TrialFunction(K).dx(0) * TestFunction(K).dx(0) * dx).array()
-jacobian = None; jac_k0 = None; jac_kt = None;
+
 
 # Initial setup for inverse problem
 k_terminal = fenics_convert(loadmat('data/terminal_state.mat', squeeze_me=True)["k_terminal"], "function", fun_space=K)
 beta = Constant(1e-5)
 
-def state_solve(k0_input, return_type: Literal["vertex", "vector", "petsc", "function"] = "vertex", plot_k=False, annotate=False, verbose=True):
+def state_solve(k0_input, return_type: Literal["vertex", "vector", "petsc", "function"], plot_k=False, annotate=True, verbose=False):
     # Handle annotation and verbosity
     if annotate: get_working_tape().clear_tape()
     else: pause_annotation()
@@ -70,42 +73,25 @@ def state_solve(k0_input, return_type: Literal["vertex", "vector", "petsc", "fun
     # Return final state
     return fenics_convert(k_n, return_type, K)
 
-def J(k0_guess, k_n, return_gradients=True):
+def J(k0, kt):
     # Convert inputs to functions
-    k0_guess = fenics_convert(k0_guess, "function", fun_space=K)
-    k_n = fenics_convert(k_n, "function", fun_space=K)
-
-    val = assemble(0.5*inner(k_n - k_terminal, k_n - k_terminal)*dx + 0.5 * beta * inner(k0_guess.dx(0), k0_guess.dx(0)) * dx)
-    if not return_gradients: return val
-    grad_u = M @ (k_n.vector()[:] - k_terminal.vector()[:]);
-    grad_z = float(beta) * K_mat @ k0_guess.vector()[:];
-    return [val, grad_z, grad_u]
-
-def J_uu_apply(k0_guess, k_n, v):
-    return M @ fenics_convert(v, "vector", K)
-    
-def J_zz_apply(k0_guess, k_n, v):
-    return float(beta) * K_mat @ fenics_convert(v, "vector", K)
-    
-def setup_inverse_problem(k0_guess, k_n, k_terminal_input=None, beta_input=None):
-    # Set global beta & k_terminal
-    global beta, k_terminal, J_hat
-    if beta_input is not None: beta.assign(beta_input)
-    if beta_input is not None: print("Deprecation of beta-input via setup_inverse_problem.")
-    k0_guess = fenics_convert(k0_guess, "function", fun_space=K)
-    k_n = fenics_convert(k_n, "function", fun_space=K)
-
-    J_inv = J(k0_guess, k_n, return_gradients=False)
-    control = Control(k0_guess)
-    J_hat = ReducedFunctional(J_inv, control)
-    return J_hat
-
-def J_hat_hessian(k0, k0_in):
     k0 = fenics_convert(k0, "function", fun_space=K)
-    k0_in = fenics_convert(k0_in, "function", fun_space=K)
-    J_hat(k0);
-    return fenics_convert(J_hat.hessian(k0_in), "vector")
+    kt = fenics_convert(kt, "function", fun_space=K)
+    val = assemble(0.5*inner(kt - k_terminal, kt - k_terminal)*dx + 0.5 * beta * inner(k0.dx(0), k0.dx(0)) * dx)
+    return val
 
+J_hat_np = None;
+def reduced_functional_J_hat(k0):
+    global J_hat_np;
+    # Set global beta & k_terminal
+    k0 = fenics_convert(k0, "function", fun_space=K)
+    kt = state_solve(k0, "function")
+
+    J_inv = J(k0, kt)
+    control = Control(k0)
+    J_hat = ReducedFunctional(J_inv, control)
+    J_hat_np = ReducedFunctionalNumPy(J_hat)
+    return J_hat_np
 
 def callback_call(J_hat, full=True):
     c_test = Function(K)
@@ -125,64 +111,33 @@ def callback_call(J_hat, full=True):
     
     return callback_fn
 
-def eval_c(k0, kt, return_type="function", fun_space=K):
-    k0 = fenics_convert(k0, "function", fun_space=K)
-    kt = fenics_convert(kt, "function", fun_space=K)
-    c = Function(K)
-    c.assign(state_solve(k0, return_type="function", verbose=False, annotate=True) - kt)
-    return fenics_convert(c, return_type)
-
-def compute_jacobian(c, control):
-    global jacobian
-    print("Building Jacobian [this may take some time]...")
-    # Initialize an empty list to store the Jacobian rows
-    jacobian_rows = []
-    
-    # Loop over each degree of freedom
-    for i in range(K.dim()):
-        # Create a unit vector in the direction of the i-th degree of freedom
-        unit_vector = Function(K)
-        unit_vector.vector()[i] = 1.0
-        
-        # Compute the derivative of the i-th component of c with respect to the control
-        dci_dk = compute_gradient(assemble(inner(c, unit_vector) * dx), control)
-        jacobian_rows.append(dci_dk.vector()[:])
-    
-    jacobian = np.linalg.solve(M, np.array(jacobian_rows)).T;
-
-def c_z_transpose_apply_built(kt_in, k0, kt):
-    global jac_k0, jac_kt # cached jacobian inputs
-    k0 = fenics_convert(k0, "function", fun_space=K)
-    kt = fenics_convert(kt, "function", fun_space=K)
-    if jacobian is None or not np.allclose(jac_k0, k0.vector()[:]) or not np.allclose(jac_kt, kt.vector()[:]):
-        c = eval_c(k0, kt)
-        compute_jacobian(c, Control(k0));
-        jac_k0 = k0.vector()[:]; jac_kt = kt.vector()[:]
-    return jacobian.T @ fenics_convert(kt_in, "vector")
-
-def c_z_transpose_apply(kt_in, k0, kt):
+# Functions to be called by Matlab Interface
+def apply_solution_operator_z_jacobian_transpose(kt_in, k0):
+    # Multiply by inv(M) to compensate for assembly in L2
+    kt_in = np.linalg.solve(M, fenics_convert(kt_in, "vector", fun_space=K))
     kt_in = fenics_convert(kt_in, "function", fun_space=K)
     k0 = fenics_convert(k0, "function", fun_space=K)
-    kt = fenics_convert(kt, "function", fun_space=K)
-    c = eval_c(k0, kt)
-    return compute_gradient(assemble(inner(c, kt_in) * dx), Control(k0)).vector()[:]
+    kt = state_solve(k0, return_type="function")
+    return compute_gradient(assemble(inner(kt, kt_in) * dx), Control(k0)).vector()[:]
 
-def c_z_apply(k0_in, k0, kt):
-    global jac_k0, jac_kt # cached jacobian inputs
+def misfit_gradient(kt, k0):
+    return M @ (fenics_convert(kt, "vector", K)  - fenics_convert(k_terminal, "vector"));
+
+def apply_misfit_hessian(kt_in, k0, kt):
+    return M @ fenics_convert(kt_in, "vector", K)
+
+def apply_rs_hessian(k0_in, k0):
+    k0 = fenics_convert(k0, "vector")
+    k0_in = fenics_convert(k0_in, "vector")
+    if J_hat_np is None: reduced_functional_J_hat(k0); 
+    return np.column_stack([J_hat_np.hessian(k0, k0_in[:, col]) for col in range(k0_in.shape[1])])
+
+def apply_solution_operator_z_jacobian(k0_in, k0):
+    k0_in = fenics_convert(k0_in, "function", fun_space=K)
     k0 = fenics_convert(k0, "function", fun_space=K)
-    kt = fenics_convert(kt, "function", fun_space=K)
-    if jacobian is None or not np.allclose(jac_k0, k0.vector()[:]) or not np.allclose(jac_kt, kt.vector()[:]):
-        c = eval_c(k0, kt)
-        compute_jacobian(c, Control(k0))
-        jac_k0 = k0.vector()[:]; jac_kt = kt.vector()[:]
-    return jacobian @ fenics_convert(k0_in, "vector")
+    kt = state_solve(k0, return_type="function")
+    return compute_jacobian_action(kt, Control(k0), k0_in).vector()[:]
+        
 
-def c_u_inv_apply(kt_in, k0, kt):
-    kt_in = fenics_convert(kt_in, "vector", fun_space=K)
-    return - kt_in
-
-def c_u_inv_transpose_apply(kt_in, k0, kt):
-    kt_in = fenics_convert(kt_in, "vector", fun_space=K)
-    return - kt_in
-    
 print(f"Succesfully imported {__name__}")
+

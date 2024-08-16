@@ -2,37 +2,6 @@ import numpy as np
 from typing import Literal
 from array import array
 from dolfin import *
-from dolfin_adjoint import *
-from pyadjoint.enlisting import Enlist
-
-# Handy Helpers to pause verbosity and annotation in one go:
-class stop_annotate_verbose(object):
-    def __enter__(self): pause_annotation(); set_log_active(False)
-    def __exit__(self, *args): continue_annotation(); set_log_active(True)
-class stop_verbose(object):
-    def __enter__(self): set_log_active(False)
-    def __exit__(self, *args): set_log_active(True)
-
-
-def compute_jacobian_action(J, m, m_dot):
-    tape = get_working_tape()
-    tape.reset_tlm_values()
-    m_dot = Enlist(m_dot); m = Enlist(m)
-
-    for i in range(len(m_dot)):
-        m[i].tlm_value = m_dot[i]
-
-    with stop_annotating():
-        with tape.marked_nodes(m):
-            tape.evaluate_tlm()
-            if isinstance(J.block_variable.tlm_value, np.ndarray):
-                raise NotImplementedError("J.block_variable.tlm_value returns array.")
-            else:
-                Jmdots = J.block_variable.tlm_value
-    
-    return Jmdots
-
-
 
 # Fix Boundary Measure
 class MeasureDiff(object):
@@ -94,18 +63,13 @@ def convert_to_function(fenics_input, fun_space=None):
         # output.vector()[:] = np.array(fenics_input).flatten();
         output.vector()[:] = fenics_input;
         return output
-    elif isinstance(fenics_input, memoryview):
-        output = Function(fun_space);
-        output.vector()[:] = np.array(fenics_input).flatten();
-        return output
     else:
-        raise TypeError(f"Input can only be of type(s): str, fenics.Expression, fenics.Function, numpy.ndarray, array.array, memoryview \n Recieved input of type: {type(fenics_input)}")
+        print(np.array(fenics_input))
+        raise TypeError(f"Input can only be of type(s): str, fenics.Expression, fenics.Function, or numpy.ndarray \n Recieved input of type: {type(fenics_input)}")
 
 def convert_to_numpy_vector(fenics_input, fun_space=None):
-    if isinstance(fenics_input, np.ndarray) or isinstance(fenics_input, memoryview) or isinstance(fenics_input, array):
-        return np.array(fenics_input);
-    elif isinstance(fenics_input, PETScVector):
-        return fenics_input.vector()[:]
+    if isinstance(fenics_input, np.ndarray):
+        return fenics_input
     fenics_function = convert_to_function(fenics_input);
     return fenics_function.vector()[:]
 

@@ -14,7 +14,7 @@ classdef Tracer_Optimization < handle
         %% Optimization functions
 
         function [u, z] = Optimize(this, z0)
-            
+
         end
 
         function [val, grad, hessian_data] = Jhat(this, z)
@@ -47,7 +47,7 @@ classdef Tracer_Optimization < handle
             %   :math:`\bflambda\trp\grad{z,z}\hat{J}(\z)\v\in\R^{n_z}`.
 
             % Extract state, control, and adjoint from hessian_data.
-            
+
         end
 
         %% Finite difference tests

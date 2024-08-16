@@ -165,7 +165,7 @@ if show_figures
     xlim([0 N]);
     yline(Jhat_hifi, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
     yline(Jhat_lofi, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
-    plot(0:N, [Jhat_lofi; old_oed(1:N)], ".-", "Color", "#1F618D", "DisplayName", "Ensemble")
+    % plot(0:N, [Jhat_lofi; old_oed(1:N)], ".-", "Color", "#1F618D", "DisplayName", "Ensemble");
     plot(0:N, [Jhat_lofi; Jhat_oed], ".-", "Color", "#00C83A", "DisplayName", "Sequential");
     xlabel("Evaluations ($N$)", "Interpreter", "latex");
     ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
