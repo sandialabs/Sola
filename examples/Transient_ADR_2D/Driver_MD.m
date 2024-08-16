@@ -97,7 +97,10 @@ if ~suppress_figures
 end
 
 %%
-opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
+
+% Need to update MD_Opt_Prob_Interface with a custom ROM class
+opt_prob_interface = MD_Opt_Prob_Interface_Transient_ADR_2D(opt, obj_hifi, basis1, basis2, z_lofi);
+
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 num_evals = 26; % Need to look at this more closely
 oversampling = 20;

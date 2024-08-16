@@ -261,7 +261,7 @@ controller = @(tt) ppval(pp, tt);
 Y_hifi = solver.State_Solve(controller, t).NodalSolution;
 solver.Animate_Solution(Y_hifi);            % FOM state with ROM controller
 
-save('OptimizationSolution.mat', "solver", "Y_hifi", "Y_rom", "t", "Q_rom", "n_q", "opt");
+save('OptimizationSolution.mat', "solver", "Y_hifi", "Y_rom", "t", "Q_rom", "n_q", "opt", "basis1", "basis2", "obj_hifi");
 
 %% Load and visualize results later.
 % load('OptimizationSolution.mat', "solver", "Y_hifi", "Y_rom", "t", "Q_rom", "n_q");
