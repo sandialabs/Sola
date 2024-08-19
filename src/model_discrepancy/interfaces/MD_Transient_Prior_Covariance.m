@@ -30,6 +30,10 @@ classdef MD_Transient_Prior_Covariance < handle
             this.M_t_inv_evecs = this.M_t \ this.evecs;
         end
 
+        function [samples] = Sample_Time_Series(this, num_samples)
+            samples = this.M_t_inv_evecs * diag(sqrt(this.evals)) * randn(this.n_t, num_samples);
+        end
+
     end
 
 end

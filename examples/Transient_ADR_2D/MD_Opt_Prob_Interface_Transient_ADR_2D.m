@@ -32,6 +32,10 @@ classdef MD_Opt_Prob_Interface_Transient_ADR_2D < MD_Opt_Prob_Interface
                 this.u_current = this.hessian_data(1:this.m);
             end
 
+            for k = 1:size(u_in, 2)
+                u_in(:, k) = this.Reorder_u(u_in(:, k));
+            end
+
             num_vecs = size(u_in, 2);
             full_dim = length(this.basis1.ybar);
             r1 = this.basis1.r;
@@ -64,11 +68,36 @@ classdef MD_Opt_Prob_Interface_Transient_ADR_2D < MD_Opt_Prob_Interface
         end
 
         function [grad_u] = Misfit_Gradient(this, u, z)
+            u = this.Reorder_u(u);
             [~, grad_u, ~] = this.obj_hifi.J(u, z);
+            grad_u = this.Reorder_u_Inverse(grad_u);
         end
 
         function [u_out] = Apply_Misfit_Hessian(this, u_in, u, z)
+            for k = 1:size(u_in, 2)
+                u_in(:, k) = this.Reorder_u(u_in(:, k));
+            end
+            u = this.Reorder_u(u);
             u_out = this.obj_hifi.J_uu_Apply(u_in, u, z);
+            for k = 1:size(u_in, 2)
+                u_out(:, k) = this.Reorder_u_Inverse(u_out(:, k));
+            end
+        end
+
+        function [u_reorder] = Reorder_u(this, u)
+            u1 = u(1:this.obj_hifi.n_x * this.obj_hifi.n_t);
+            u2 = u((this.obj_hifi.n_x * this.obj_hifi.n_t + 1):end);
+            u1 = reshape(u1, this.obj_hifi.n_x, this.obj_hifi.n_t);
+            u2 = reshape(u2, this.obj_hifi.n_x, this.obj_hifi.n_t);
+            u_reorder = [u1; u2];
+            u_reorder = u_reorder(:);
+        end
+
+        function [u] = Reorder_u_Inverse(this, u_reorder)
+            u_reorder = reshape(u_reorder, 2 * this.obj_hifi.n_x, this.obj_hifi.n_t);
+            u1 = u_reorder(1:this.obj_hifi.n_x, :);
+            u2 = u_reorder((this.obj_hifi.n_x + 1):end, :);
+            u = [u1(:); u2(:)];
         end
 
     end
