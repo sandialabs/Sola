@@ -76,7 +76,7 @@ if ~exist(datafile, 'file') || regenerate_data
 
         % Set up a random control profile.
         vals = [zeros(n_q, 1), 50 * rand(n_q, num_randcontrol_nodes - 1)];
-        pp = spline(randcontrol_nodes, vals);
+        pp = pchip(randcontrol_nodes, vals);
         controller = @(tt) ppval(pp, tt);
 
         % Solve the system.
@@ -256,7 +256,7 @@ title('Optimal controls (optimized with an OpInf ROM surrogate)');
 
 % Solve the high-fidelity model with the inferred controls.
 disp('Final high-fidelity solve');
-pp = spline(t(2:end), Q_rom);
+pp = pchip(t, [Q_rom(:, 1), Q_rom]);
 controller = @(tt) ppval(pp, tt);
 Y_hifi = solver.State_Solve(controller, t).NodalSolution;
 solver.Animate_Solution(Y_hifi);            % FOM state with ROM controller
