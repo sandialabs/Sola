@@ -25,6 +25,7 @@ classdef Transient_ADR_2D < handle
         reactant        % Reaction coefficient (default = 0.01).
         init_center     % Center of the initial condition blob (2 x 1).
         v_weights       % Weights forcing the velocity to obey no-slip conditions.
+        vel_params      % Vector of parameters defining velocity field
     end
 
     properties (Dependent)
@@ -117,6 +118,7 @@ classdef Transient_ADR_2D < handle
             this.advection = reshape(advection_coeffs, 2, 1);
             this.reactant = reaction_coeff;
             this.init_center = reshape(init_center, 2, 1);
+            this.vel_params = [1; 1; 10; 75];
             this.model = model;
         end
 
@@ -189,10 +191,10 @@ classdef Transient_ADR_2D < handle
             xmax = max(xx);
             xspan = xmax - xmin;
             n = size(xx, 1);
-            flow = [ones(n, 1), sin(10 * pi .* xx) / 2];
+            flow = [this.vel_params(1) * ones(n, 1), this.vel_params(2) * sin(this.vel_params(3) * pi .* xx) / 2];
             for i = 1:n
-                dt = (xx(i) - xmin) / xspan;
-                angl = pi * (-75 * dt) / 180;
+                dx = (xx(i) - xmin) / xspan;
+                angl = pi * (-this.vel_params(4) * dx) / 180;
                 cosangl = cos(angl);
                 sinangl = sin(angl);
                 rotation = [cosangl -sinangl; sinangl cosangl];

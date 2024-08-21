@@ -4,12 +4,13 @@ close all;
 clc;
 run('../../src/Set_Paths');
 
-suppress_figures = false;
+suppress_figures = true;
 
 M1 = load('fem_matrices.mat', 'mass_matrix').mass_matrix;
 M = kron(eye(2), M1);
 S1 = load('fem_matrices.mat', 'stiffness_matrix').stiffness_matrix;
 S = kron(eye(2), S1);
+
 load('OptimizationSolution.mat');
 basis1.Set_Reduced_Dimension_From_Residual_Energy(residual_energies(1));
 basis2.Set_Reduced_Dimension_From_Residual_Energy(residual_energies(1));
@@ -22,16 +23,16 @@ T = t(end);
 n_t = length(t);
 n_y = solver.n_y;
 n_q = solver.n_q;
-beta_t = 1.e-1;
-beta_i = 1.e1;
+beta_t = 1.e0;
+beta_i = 1.e0;
 transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(beta_t, beta_i, T, n_t, n_y);
 time_series_samples_u = transient_prior_cov.Sample_Time_Series(10);
 
-alpha_u = 2^2;
+alpha_u = (1 / 2)^2;
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface_Transient_ADR_2D(alpha_u, transient_prior_cov, M, S);
 
-beta_t = 1.e-1;
-beta_i = 0.1;
+beta_t = 1.e0;
+beta_i = 1.e0;
 transient_prior_cov_z = MD_Transient_Prior_Covariance_Sabl(beta_t, beta_i, t(end - 1), n_t - 1, n_q);
 time_series_samples_z = transient_prior_cov_z.Sample_Time_Series(10);
 z_prior_interface = MD_z_Prior_Interface_Transient_ADR_2D(transient_prior_cov_z, n_q);
@@ -40,7 +41,7 @@ z_prior_interface = MD_z_Prior_Interface_Transient_ADR_2D(transient_prior_cov_z,
 num_prior_samples = 10;
 md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 
-delta_samples = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
+prior_delta_samples_z_opt = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
 if ~suppress_figures
 
     u = data_interface.D;
@@ -57,7 +58,7 @@ if ~suppress_figures
     delta2_min = zeros(n_t, num_prior_samples);
     delta2_max = zeros(n_t, num_prior_samples);
     for k = 1:num_prior_samples
-        u = delta_samples(:, k);
+        u = prior_delta_samples_z_opt(:, k);
         u_tmp = reshape(u, n_y, n_t);
         u1 = u_tmp(1:(n_y / 2), :);
         u2 = u_tmp((n_y / 2 + 1):end, :);
@@ -88,19 +89,19 @@ if ~suppress_figures
     title('Discrepancy 2 Magnitude');
 
     k = 1;
-    time_step = 25;
+    time_step = 1;
 
     u = reshape(data_interface.D, n_y, n_t);
     figure;
     pdeplot(solver.model.Mesh, XYData = u(1:(n_y / 2), time_step), colormap = 'parula');
-    u = reshape(delta_samples(:, k), n_y, n_t);
+    u = reshape(prior_delta_samples_z_opt(:, k), n_y, n_t);
     figure;
     pdeplot(solver.model.Mesh, XYData = u(1:(n_y / 2), time_step), colormap = 'parula');
 
     u = reshape(data_interface.D, n_y, n_t);
     figure;
     pdeplot(solver.model.Mesh, XYData = u((n_y / 2 + 1):end, time_step), colormap = 'parula');
-    u = reshape(delta_samples(:, k), n_y, n_t);
+    u = reshape(prior_delta_samples_z_opt(:, k), n_y, n_t);
     figure;
     pdeplot(solver.model.Mesh, XYData = u((n_y / 2 + 1):end, time_step), colormap = 'parula');
 
@@ -119,14 +120,14 @@ if ~suppress_figures
     end
 end
 
-delta_prior_samples = md_prior_sampling.Prior_Discrepancy_Samples(z, num_prior_samples);
+prior_delta_samples = md_prior_sampling.Prior_Discrepancy_Samples(z, num_prior_samples);
 if ~suppress_figures
 
     k = 5;
-    u = reshape(delta_prior_samples{k}, n_y, n_t);
+    u = reshape(prior_delta_samples{k}, n_y, n_t);
     figure;
     pdeplot(solver.model.Mesh, XYData = u((n_y / 2 + 1):end, time_step), colormap = 'parula');
-    u = reshape(delta_samples(:, k), n_y, n_t);
+    u = reshape(prior_delta_samples_z_opt(:, k), n_y, n_t);
     figure;
     pdeplot(solver.model.Mesh, XYData = u((n_y / 2 + 1):end, time_step), colormap = 'parula');
 
@@ -141,15 +142,15 @@ md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 Z_test = zeros(length(z_lofi), 2);
 Z_test(:, 1) = z_lofi;
 Z_test(:, 2) = z_lofi .* 1.2;
-[delta_mean, delta_samples] = md_post_sampling.Posterior_Discrepancy_Samples(Z_test);
+[post_delta_mean, post_delta_samples] = md_post_sampling.Posterior_Discrepancy_Samples(Z_test);
 
-data_fit_error_mean = norm(md_post_sampling.post_data.D(:, 1) - delta_mean{1}) / norm(md_post_sampling.post_data.D(:, 1));
+data_fit_error_mean = norm(md_post_sampling.post_data.D(:, 1) - post_delta_mean{1}) / norm(md_post_sampling.post_data.D(:, 1));
 
 data_fit_error_samples_1 = zeros(num_post_samples, 1);
 data_fit_error_samples_2 = zeros(num_post_samples, 1);
 for k = 1:num_post_samples
-    data_fit_error_samples_1(k) = norm(md_post_sampling.post_data.D(:, 1) - delta_samples{1}(:, k)) / norm(md_post_sampling.post_data.D(:, 1));
-    data_fit_error_samples_2(k) = norm(md_post_sampling.post_data.D(:, 1) - delta_samples{2}(:, k)) / norm(md_post_sampling.post_data.D(:, 1));
+    data_fit_error_samples_1(k) = norm(md_post_sampling.post_data.D(:, 1) - post_delta_samples{1}(:, k)) / norm(md_post_sampling.post_data.D(:, 1));
+    data_fit_error_samples_2(k) = norm(md_post_sampling.post_data.D(:, 1) - post_delta_samples{2}(:, k)) / norm(md_post_sampling.post_data.D(:, 1));
 end
 
 %%
@@ -180,20 +181,18 @@ Q_lofi = reshape(z_lofi, n_q, n_t - 1).^2;
 pp = pchip(t, [Q_lofi(:, 1), Q_lofi]);
 controller = @(tt) ppval(pp, tt);
 Y_lofi = solver.State_Solve(controller, t).NodalSolution;
-u_tmp1 = Y_lofi(:, 1, :);
-u_tmp1 = u_tmp1(:);
-u_tmp2 = Y_lofi(:, 2, :);
-u_tmp2 = u_tmp2(:);
-u_lofi = [u_tmp1; u_tmp2];
+u_tmp1 = reshape(Y_lofi(:, 1, :), [], n_t);
+u_tmp2 = reshape(Y_lofi(:, 2, :), [], n_t);
+utmp = [u_tmp1; u_tmp2];
+u_lofi = utmp(:);
 obj_lofi = obj_hifi.J(u_lofi, z_lofi);
 
 Q_update_mean = reshape(z_update_mean, n_q, n_t - 1).^2;
 pp = pchip(t, [Q_update_mean(:, 1), Q_update_mean]);
 controller = @(tt) ppval(pp, tt);
 Y_update_mean = solver.State_Solve(controller, t).NodalSolution;
-u_tmp1 = Y_update_mean(:, 1, :);
-u_tmp1 = u_tmp1(:);
-u_tmp2 = Y_update_mean(:, 2, :);
-u_tmp2 = u_tmp2(:);
-u_update_mean = [u_tmp1; u_tmp2];
+u_tmp1 = reshape(Y_update_mean(:, 1, :), [], n_t);
+u_tmp2 = reshape(Y_update_mean(:, 2, :), [], n_t);
+utmp = [u_tmp1; u_tmp2];
+u_update_mean = utmp(:);
 obj_update_mean = obj_hifi.J(u_update_mean, z_update_mean);

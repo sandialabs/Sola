@@ -254,6 +254,10 @@ title('Optimal controls (optimized with an OpInf ROM surrogate)');
 
 %% Visualize the FOM with the ROM optimization results.
 
+vel_params_rom = solver.vel_params;
+vel_params_hifi = [1.2; 0.9; 11.5; 72];
+solver.vel_params = vel_params_hifi;
+
 % Solve the high-fidelity model with the inferred controls.
 disp('Final high-fidelity solve');
 pp = pchip(t, [Q_rom(:, 1), Q_rom]);
@@ -261,7 +265,7 @@ controller = @(tt) ppval(pp, tt);
 Y_hifi = solver.State_Solve(controller, t).NodalSolution;
 solver.Animate_Solution(Y_hifi);            % FOM state with ROM controller
 
-save('OptimizationSolution.mat', "solver", "Y_hifi", "Y_rom", "t", "Q_rom", "n_q", "opt", "basis1", "basis2", "obj_hifi", "residual_energies");
+save('OptimizationSolution.mat', "solver", "Y_hifi", "Y_rom", "t", "Q_rom", "n_q", "opt", "basis1", "basis2", "obj_hifi", "residual_energies", "vel_params_rom", "vel_params_hifi");
 
 %% Load and visualize results later.
 % load('OptimizationSolution.mat', "solver", "Y_hifi", "Y_rom", "t", "Q_rom", "n_q");
