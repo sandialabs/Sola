@@ -1,7 +1,7 @@
 clear;
 close all;
 clc;
-addpath('../../src/');
+addpath(genpath('../../src/'));
 rng(154);
 
 write_figure_to_file = false;
@@ -20,7 +20,8 @@ bayes_inv.opt.opt_tol = 1.e-10;
 z_bar = load('Optimization_Results.mat', 'z_opt').z_opt;
 
 sen_op = Sensitivity_Operators_Sabl(bayes_inv.obj, con);
-sen = Pseudo_Time_Continuation_Bayesian_Inversion(z_bar, theta_bar, sen_op, bayes_inv);
+qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
+sen = Pseudo_Time_Continuation(z_bar, theta_bar, sen_op, qn_prec);
 
 theta_star = 1.0 + 0.2 * (1 - con.x).^2;
 
@@ -32,9 +33,15 @@ num_adjoint_solves_linear_approx = con.num_adjoint_solves;
 
 con.num_state_solves = 0;
 con.num_adjoint_solves = 0;
+
 rank = 8;
 oversampling = 10;
-sen.Compute_Nominal_Hessian(rank, oversampling);
+[u, z, lambda, theta] = sen.qn_prec.Compute_Nominal_Hessian(rank, oversampling);
+sen.sen_op.current_u = u;
+sen.sen_op.current_z = z;
+sen.sen_op.current_lambda = lambda;
+sen.sen_op.current_theta = theta;
+
 N_fe = 30;
 [z_k_fe, grad_k_fe] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_star, N_fe);
 num_state_solves_fe = con.num_state_solves;
@@ -42,9 +49,15 @@ num_adjoint_solves_fe = con.num_adjoint_solves;
 
 con.num_state_solves = 0;
 con.num_adjoint_solves = 0;
+
 rank = 8;
 oversampling = 10;
-sen.Compute_Nominal_Hessian(rank, oversampling);
+[u, z, lambda, theta] = sen.qn_prec.Compute_Nominal_Hessian(rank, oversampling);
+sen.sen_op.current_u = u;
+sen.sen_op.current_z = z;
+sen.sen_op.current_lambda = lambda;
+sen.sen_op.current_theta = theta;
+
 N_me = 15;
 [z_k_me, grad_k_me] = sen.Pseudo_Time_Continuation_Modified_Euler(theta_star, N_me);
 num_state_solves_me = con.num_state_solves;

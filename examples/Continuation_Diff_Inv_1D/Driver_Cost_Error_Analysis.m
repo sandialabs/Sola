@@ -19,12 +19,14 @@ bayes_inv.opt.fun_tol = 1.e-10;
 bayes_inv.opt.opt_tol = 1.e-10;
 z_bar = load('Optimization_Results.mat', 'z_opt').z_opt;
 
-sen_op = Sensitivity_Operators_Sabl(bayes_inv.obj, con);
-sen = Pseudo_Time_Continuation_Bayesian_Inversion(z_bar, theta_bar, sen_op, bayes_inv);
-
 theta_star = 1.0 + 0.2 * (1 - con.x).^2;
 
+sen_op = Sensitivity_Operators_Sabl(bayes_inv.obj, con);
+qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
+sen = Pseudo_Time_Continuation(z_bar, theta_bar, sen_op, qn_prec);
+sen.use_qn_prec = false;
 [z_k_linear_approx, grad_k_linear_approx] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_star, 1);
+
 num_state_solves_linear_approx = con.num_state_solves;
 num_adjoint_solves_linear_approx = con.num_adjoint_solves;
 linear_approx_cost = num_state_solves_linear_approx + num_adjoint_solves_linear_approx;
@@ -33,12 +35,16 @@ linear_approx_cost = num_state_solves_linear_approx + num_adjoint_solves_linear_
 N_range = (6:2:30)';
 fe_error = 0 * N_range;
 fe_cost = 0 * N_range;
-fe_bfgs_error = 0 * N_range;
-fe_bfgs_cost = 0 * N_range;
+fe_param_qn_error = 0 * N_range;
+fe_param_qn_cost = 0 * N_range;
+fe_qn_error = 0 * N_range;
+fe_qn_cost = 0 * N_range;
 me_error = 0 * N_range;
 me_cost = 0 * N_range;
-me_bfgs_error = 0 * N_range;
-me_bfgs_cost = 0 * N_range;
+me_param_qn_error = 0 * N_range;
+me_param_qn_cost = 0 * N_range;
+me_qn_error = 0 * N_range;
+me_qn_cost = 0 * N_range;
 
 bayes_inv.con.theta_current = theta_star;
 [~, z_star] = bayes_inv.Compute_MAP_Point(z_bar);
@@ -49,62 +55,146 @@ linear_approx_error = sqrt((z_star - z_k_linear_approx(:, end))' * con.M * (z_st
 
 bayes_inv.con.theta_current = theta_bar;
 
-%% Without BFGS
+%%
 for k = 1:length(N_range)
 
-    %% FE without BFGS
+    %% FE without QN
+    disp(['Working on FE without QN with k = ', num2str(k)]);
     con.num_state_solves = 0;
     con.num_adjoint_solves = 0;
-    sen.use_bfgs_prec = false;
+
+    sen_op = Sensitivity_Operators_Sabl(bayes_inv.obj, con);
+    qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
+    sen = Pseudo_Time_Continuation(z_bar, theta_bar, sen_op, qn_prec);
+    sen.use_qn_prec = false;
+
     N_fe = N_range(k);
     [z_k_fe, grad_k_fe] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_star, N_fe);
+
     num_state_solves_fe = con.num_state_solves;
     num_adjoint_solves_fe = con.num_adjoint_solves;
     fe_error(k) = sqrt((z_star - z_k_fe(:, end))' * con.M * (z_star - z_k_fe(:, end))) / normalization;
     fe_cost(k) = num_state_solves_fe + num_adjoint_solves_fe;
 
-    %% ME without BFGS
+    %% ME without QN
+    disp(['Working on ME without QN with k = ', num2str(k)]);
     con.num_state_solves = 0;
     con.num_adjoint_solves = 0;
-    sen.use_bfgs_prec = false;
+
+    sen_op = Sensitivity_Operators_Sabl(bayes_inv.obj, con);
+    qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
+    sen = Pseudo_Time_Continuation(z_bar, theta_bar, sen_op, qn_prec);
+    sen.use_qn_prec = false;
+
     N_me =  N_range(k) / 2;
     [z_k_me, grad_k_me] = sen.Pseudo_Time_Continuation_Modified_Euler(theta_star, N_me);
+
     num_state_solves_me = con.num_state_solves;
     num_adjoint_solves_me = con.num_adjoint_solves;
     me_error(k) = sqrt((z_star - z_k_me(:, end))' * con.M * (z_star - z_k_me(:, end))) / normalization;
     me_cost(k) = num_state_solves_me + num_adjoint_solves_me;
 
-end
-
-%% With BFGS
-for k = 1:length(N_range)
-    %% FE with BFGS
+    %% FE with only parametric QN
+    disp(['Working on FE with PQN with k = ', num2str(k)]);
     con.num_state_solves = 0;
     con.num_adjoint_solves = 0;
-    sen.use_bfgs_prec = true;
+
+    sen_op = Sensitivity_Operators_Sabl(bayes_inv.obj, con);
+    qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
+    qn_prec.tau = inf;
+    sen = Pseudo_Time_Continuation(z_bar, theta_bar, sen_op, qn_prec);
+
     rank = 8;
     oversampling = 10;
-    sen.Compute_Nominal_Hessian(rank, oversampling);
+    [u, z, lambda, theta] = sen.qn_prec.Compute_Nominal_Hessian(rank, oversampling);
+    sen.sen_op.current_u = u;
+    sen.sen_op.current_z = z;
+    sen.sen_op.current_lambda = lambda;
+    sen.sen_op.current_theta = theta;
+
     N_fe =  N_range(k);
     [z_k_fe, grad_k_fe] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_star, N_fe);
+
     num_state_solves_fe = con.num_state_solves;
     num_adjoint_solves_fe = con.num_adjoint_solves;
-    fe_bfgs_error(k) = sqrt((z_star - z_k_fe(:, end))' * con.M * (z_star - z_k_fe(:, end))) / normalization;
-    fe_bfgs_cost(k) = num_state_solves_fe + num_adjoint_solves_fe;
+    fe_param_qn_error(k) = sqrt((z_star - z_k_fe(:, end))' * con.M * (z_star - z_k_fe(:, end))) / normalization;
+    fe_param_qn_cost(k) = num_state_solves_fe + num_adjoint_solves_fe;
 
-    %% ME with BFGS
+    %% ME with only parametric QN
+    disp(['Working on ME with PQN with k = ', num2str(k)]);
     con.num_state_solves = 0;
     con.num_adjoint_solves = 0;
-    sen.use_bfgs_prec = true;
+
+    sen_op = Sensitivity_Operators_Sabl(bayes_inv.obj, con);
+    qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
+    qn_prec.tau = inf;
+    sen = Pseudo_Time_Continuation(z_bar, theta_bar, sen_op, qn_prec);
+
     rank = 8;
     oversampling = 10;
-    sen.Compute_Nominal_Hessian(rank, oversampling);
-    N_me = N_range(k) / 2;
+    [u, z, lambda, theta] = sen.qn_prec.Compute_Nominal_Hessian(rank, oversampling);
+    sen.sen_op.current_u = u;
+    sen.sen_op.current_z = z;
+    sen.sen_op.current_lambda = lambda;
+    sen.sen_op.current_theta = theta;
+
+    N_me =  N_range(k) / 2;
     [z_k_me, grad_k_me] = sen.Pseudo_Time_Continuation_Modified_Euler(theta_star, N_me);
+
     num_state_solves_me = con.num_state_solves;
     num_adjoint_solves_me = con.num_adjoint_solves;
-    me_bfgs_error(k) = sqrt((z_star - z_k_me(:, end))' * con.M * (z_star - z_k_me(:, end))) / normalization;
-    me_bfgs_cost(k) = num_state_solves_me + num_adjoint_solves_me;
+    me_param_qn_error(k) = sqrt((z_star - z_k_me(:, end))' * con.M * (z_star - z_k_me(:, end))) / normalization;
+    me_param_qn_cost(k) = num_state_solves_me + num_adjoint_solves_me;
+
+    %% FE with QN
+    disp(['Working on FE with QN with k = ', num2str(k)]);
+    con.num_state_solves = 0;
+    con.num_adjoint_solves = 0;
+
+    sen_op = Sensitivity_Operators_Sabl(bayes_inv.obj, con);
+    qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
+    sen = Pseudo_Time_Continuation(z_bar, theta_bar, sen_op, qn_prec);
+
+    rank = 8;
+    oversampling = 10;
+    [u, z, lambda, theta] = sen.qn_prec.Compute_Nominal_Hessian(rank, oversampling);
+    sen.sen_op.current_u = u;
+    sen.sen_op.current_z = z;
+    sen.sen_op.current_lambda = lambda;
+    sen.sen_op.current_theta = theta;
+
+    N_fe =  N_range(k);
+    [z_k_fe, grad_k_fe] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_star, N_fe);
+
+    num_state_solves_fe = con.num_state_solves;
+    num_adjoint_solves_fe = con.num_adjoint_solves;
+    fe_qn_error(k) = sqrt((z_star - z_k_fe(:, end))' * con.M * (z_star - z_k_fe(:, end))) / normalization;
+    fe_qn_cost(k) = num_state_solves_fe + num_adjoint_solves_fe;
+
+    %% ME with QN
+    disp(['Working on ME with QN with k = ', num2str(k)]);
+    con.num_state_solves = 0;
+    con.num_adjoint_solves = 0;
+
+    sen_op = Sensitivity_Operators_Sabl(bayes_inv.obj, con);
+    qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
+    sen = Pseudo_Time_Continuation(z_bar, theta_bar, sen_op, qn_prec);
+
+    rank = 8;
+    oversampling = 10;
+    [u, z, lambda, theta] = sen.qn_prec.Compute_Nominal_Hessian(rank, oversampling);
+    sen.sen_op.current_u = u;
+    sen.sen_op.current_z = z;
+    sen.sen_op.current_lambda = lambda;
+    sen.sen_op.current_theta = theta;
+
+    N_me = N_range(k) / 2;
+    [z_k_me, grad_k_me] = sen.Pseudo_Time_Continuation_Modified_Euler(theta_star, N_me);
+
+    num_state_solves_me = con.num_state_solves;
+    num_adjoint_solves_me = con.num_adjoint_solves;
+    me_qn_error(k) = sqrt((z_star - z_k_me(:, end))' * con.M * (z_star - z_k_me(:, end))) / normalization;
+    me_qn_cost(k) = num_state_solves_me + num_adjoint_solves_me;
 
 end
 
@@ -112,10 +202,12 @@ end
 figure;
 hold on;
 plot(fe_cost, fe_error, '--', 'LineWidth', 3, 'color', "#0072BD");
-plot(fe_bfgs_cost, fe_bfgs_error, '-', 'LineWidth', 3, 'color', "#0072BD");
+plot(fe_param_qn_cost, fe_param_qn_error, ':', 'LineWidth', 3, 'color', "#0072BD");
+plot(fe_qn_cost, fe_qn_error, '-', 'LineWidth', 3, 'color', "#0072BD");
 plot(me_cost, me_error, '--', 'LineWidth', 3, 'color', "#D95319");
-plot(me_bfgs_cost, me_bfgs_error, '-', 'LineWidth', 3, 'color', "#D95319");
-legend({'FE', 'FE+BFGS', 'ME', 'ME+BFGS'});
+plot(me_param_qn_cost, me_param_qn_error, ':', 'LineWidth', 3, 'color', "#D95319");
+plot(me_qn_cost, me_qn_error, '-', 'LineWidth', 3, 'color', "#D95319");
+legend({'FE', 'FE+PQN', 'FE+FQN', 'ME', 'ME+PQN', 'ME+FQN'});
 xlim([170, 870]);
 xlabel('Cost (# of PDE solves)');
 ylabel('Relative Error');
@@ -125,3 +217,5 @@ if write_figure_to_file
     saveas(gca, 'cost_error_comparison', 'epsc');
     cd(working_path);
 end
+
+save('Cost_Error_Analysis.mat');

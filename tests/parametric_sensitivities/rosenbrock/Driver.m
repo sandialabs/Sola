@@ -21,7 +21,8 @@ verbose = 'iter';
 z_bar = ones(3, 1);
 
 sen_op = Sensitivity_Operators_Rosenbrock(rosenbrock);
-sen = Pseudo_Time_Continuation(z_bar, theta_bar, sen_op);
+qn_prec = Quasi_Newton_Preconditioner();
+sen = Pseudo_Time_Continuation(z_bar, theta_bar, sen_op, qn_prec);
 
 theta_star = 1.2 * ones(d - 1, 1);
 z_star = rosenbrock.Solve_Optimization_Problem(z_bar, theta_star, verbose);

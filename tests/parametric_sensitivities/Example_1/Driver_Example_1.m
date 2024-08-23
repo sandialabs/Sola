@@ -2,8 +2,8 @@
 clear;
 close all;
 clc;
-addpath('../../../src/optimization/');
-addpath('../../../src/parametric_sensitivities/');
+addpath(genpath('../../../src/optimization/'));
+addpath(genpath('../../../src/parametric_sensitivities/'));
 rng(1342);
 
 %% Instantiate the optimization problem.
@@ -24,7 +24,8 @@ z0 = rand(2, 1);
 [~, z_nom] = opt.Optimize(z0);
 
 sen_op = Sensitivity_Operators_Sabl(obj, pcon);
-sen = Pseudo_Time_Continuation(z_nom, theta_nom, sen_op);
+qn_prec = Quasi_Newton_Preconditioner();
+sen = Pseudo_Time_Continuation(z_nom, theta_nom, sen_op, qn_prec);
 
 sen_op.Finite_Difference_Gradient_Check(z, theta);
 sen_op.Finite_Difference_Hessian_Check(z, theta);
