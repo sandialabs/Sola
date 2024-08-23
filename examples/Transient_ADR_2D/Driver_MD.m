@@ -196,3 +196,6 @@ u_tmp2 = reshape(Y_update_mean(:, 2, :), [], n_t);
 utmp = [u_tmp1; u_tmp2];
 u_update_mean = utmp(:);
 obj_update_mean = obj_hifi.J(u_update_mean, z_update_mean);
+
+%%
+save('MD_Results.mat', 'z_lofi', 'z_update_mean', 'z_update_samples', 'Y_lofi', 'Y_update_mean');
