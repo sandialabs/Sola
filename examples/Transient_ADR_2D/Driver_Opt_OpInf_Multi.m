@@ -221,8 +221,7 @@ solver.init_center = [.05; .85];
 rom.y0 = states_lofi{1}(:, 1);
 
 obj_hifi = solver.Make_Objective([.6; .6], t(end), length(t), control_regularization);
-Vfull = blkdiag(basis1.V, basis2.V);
-obj_lofi = Reduced_Dynamic_Objective(obj_hifi, Vfull);
+obj_lofi = Transient_ADR_2D_Reduced_Objective(obj_hifi, basis1.V, basis2.V);
 solver.Plot_Field(obj_hifi.target_weight, 'Protection zone');
 
 %% Set up and solve the optimization problem (using last trained ROM).
