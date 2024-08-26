@@ -26,9 +26,6 @@ classdef Transient_ADR_2D_Objective < Dynamic_Objective
         % Bq              % Control nodes spatial discretization.
         w_z             % Weights for the time integral in the control regularization.
         target_weight   % Weight vector :math:`\p` for measuring contaminant in target areas.
-    end
-
-    properties (Access = protected)
         pMp             % Mass matrix with target weights broadcast to rows and columns.
     end
 
