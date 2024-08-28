@@ -49,6 +49,9 @@ classdef Randomized_GEVP < handle
                 evals = diag(Sigma_M(1:num_evals, 1:num_evals)).^2;
             catch
                 [S, Lambda] = eig(T, 'vector');
+                [~, I] = sort(Lambda, 'descend');
+                S = S(:, I);
+                Lambda = Lambda(I);
                 evecs = Q * S(:, 1:num_evals);
                 evals = Lambda(1:num_evals);
             end

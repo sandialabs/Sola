@@ -39,19 +39,15 @@ classdef Quasi_Newton_Preconditioner < handle
 
         function [] = Add_Block_Quasi_Newton_Data(this, P, W)
 
-            A = P' * W;
-            [L, D, perm] = ldl(A, 'vector');
             tmp = vecnorm(P)';
-            tmp = tmp(perm);
-            indices = diag(D) > this.tau * tmp;
-            Pr = P(:, perm(indices));
-            Wr = W(:, perm(indices));
-            Lr = L(indices, indices);
-            Dr = D(indices, indices);
+            D = diag(P' * W);
+            indices = D > this.tau * tmp;
+            Pr = P(:, indices);
+            Wr = W(:, indices);
+            Dr = D(indices);
 
             this.block_current_data_step = this.block_current_data_step + 1;
             this.block_qn_data{this.block_current_data_step} = struct;
-            this.block_qn_data{this.block_current_data_step}.Lr = Lr;
             this.block_qn_data{this.block_current_data_step}.Dr = Dr;
             this.block_qn_data{this.block_current_data_step}.Pr = Pr;
             this.block_qn_data{this.block_current_data_step}.Wr = Wr;
@@ -80,22 +76,19 @@ classdef Quasi_Newton_Preconditioner < handle
 
             else
 
-                L = this.block_qn_data{block_counter}.Lr;
                 D = this.block_qn_data{block_counter}.Dr;
                 P = this.block_qn_data{block_counter}.Pr;
                 W = this.block_qn_data{block_counter}.Wr;
 
-                tmp1 = linsolve(L, P' * z_in);
-                tmp1 = linsolve(D, tmp1);
-                tmp1 = linsolve(L', tmp1);
+                tmp1 = P' * z_in;
+                tmp1 = tmp1 ./ D;
                 tmp2 = P * tmp1;
                 tmp1 = z_in - W * tmp1;
 
                 tmp_out = this.Apply_QN_Inverse_Hessian_Approximation(tmp1, param_counter, block_counter - 1);
 
-                tmp3 = linsolve(L, W' * tmp_out);
-                tmp3 = linsolve(D, tmp3);
-                tmp3 = linsolve(L', tmp3);
+                tmp3 = W' * tmp_out;
+                tmp3 = tmp3 ./ D;
                 tmp3 = tmp_out - P * tmp3;
 
                 z_out = tmp3 + tmp2;
