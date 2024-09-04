@@ -39,6 +39,6 @@
 \newcommand{\bfmu}{\boldsymbol{\mu}}
 \newcommand{\bfgamma}{\boldsymbol{\gamma}}
 \newcommand{\bfGamma}{\boldsymbol{\Gamma}}
-\newcommand{\bfPhi}{\boldsymbol{\laPhi}}
+\newcommand{\bfPhi}{\boldsymbol{\Phi}}
 \newcommand{\bfSigma}{\boldsymbol{\Sigma}}
 \newcommand{\bfPsi}{\boldsymbol{\Psi}}
