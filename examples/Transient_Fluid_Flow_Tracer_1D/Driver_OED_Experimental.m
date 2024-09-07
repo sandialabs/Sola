@@ -33,6 +33,11 @@ x = con_lofi.x;
 Jhat_hifi_fn = @(z) obj.J(con_hifi.State_Solve(z), z);
 Jhat_lofi_fn = @(z) obj.J(con_lofi.State_Solve(z), z);
 
+% Obtain high-fidelity and low-fidelity optimizersß
+z_lofi = load("data/lofi_optim_sol_2.mat").k0_opt_lofi;
+u_lofi = load("data/lofi_optim_sol.mat").k_opt_lofi;
+z_hifi = load("data/hifi_optim_sol.mat").k0_hifi;
+
 % Show initial objective
 fprintf("\nStep 0:\n-------------");
 Jhat_lofi = Jhat_hifi_fn(z_lofi);
@@ -40,18 +45,13 @@ Jhat_hifi = Jhat_hifi_fn(z_hifi);
 fprintf('Objective of z_lofi: \t%.3f\n', Jhat_lofi);
 fprintf('Objective of z_hifi: \t%.3f\n\n', Jhat_hifi);
 
-% Obtain high-fidelity and low-fidelity optimizersß
-z_lofi = load("data/lofi_optim_sol.mat").k0_opt_lofi;
-u_lofi = load("data/lofi_optim_sol.mat").k_opt_lofi;
-z_hifi = load("data/hifi_optim_sol.mat").k0_hifi;
-
 % Set Data Interface
 data_interface = MD_Data_Interface_Tracer(u_lofi, z_lofi);
 
 % Generate Priors for u and z
-alpha_u = 2^2;
-alpha_z = 1.e-10;
-alpha_d = 1.e-4;
+alpha_u = 2^4;
+alpha_z = 1.e-2;
+alpha_d = 1.e-3;
 u_prior_interface = MD_Elliptic_u_Prior_Interface_Tracer(alpha_u, opt_lofi);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Tracer(alpha_z, opt_lofi);
 
@@ -78,7 +78,7 @@ oed_interface = MD_OED_Interface_Tracer(data_interface, con_lofi, alpha_zd, beta
 pyplot(x, con_hifi.State_Solve(z_lofi), 'r-', x, con_hifi.State_Solve(z_hifi), 'k--', 'Legend', {'Low-Fidelity', 'High-Fidelity'});
 
 %% Iterate for each data point
-N = 2;
+N = 3;
 Jhat_oed = zeros(N, 1);
 oed_z_error = zeros(N, 1);
 Z = [];

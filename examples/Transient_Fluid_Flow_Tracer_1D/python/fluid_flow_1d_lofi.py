@@ -1,6 +1,9 @@
 from fenics_helpers import * 
+from pathlib import Path
 from pyadjoint.reduced_functional_numpy import ReducedFunctionalNumPy
 from scipy.io import loadmat
+
+root_path = Path(__file__).parent
 # Note that fenics_helpers assumes interval of [0, 1] to remove bug from ds
 
 # Mesh Setup
@@ -22,11 +25,11 @@ dt = Constant(T/num_steps)
 t = Constant(0);
 
 # # Retreive velocity from Timeseries
-u_timeseries = TimeSeries("data/velocity_timeseries_midfi_1d")
+u_timeseries = TimeSeries(f"{root_path}/../data/velocity_timeseries_lofi_1d")
 
 # Weak form of PDE
 gamma = Constant(0.025)
-reac_fn = lambda c: Constant(1) * c
+reac_fn = lambda c: Constant(5) * c
 
 # Store Mass Matrix for Future
 M = assemble(TrialFunction(K) * TestFunction(K) * dx).array()
@@ -34,7 +37,7 @@ K_mat = assemble(TrialFunction(K).dx(0) * TestFunction(K).dx(0) * dx).array()
 
 
 # Initial setup for inverse problem
-k_terminal = fenics_convert(loadmat('data/terminal_state.mat', squeeze_me=True)["k_terminal"], "function", fun_space=K)
+k_terminal = fenics_convert(loadmat(f'{root_path}/../data/terminal_state.mat', squeeze_me=True)["k_terminal"], "function", fun_space=K)
 beta = Constant(1e-5)
 
 def state_solve(k0_input, return_type: Literal["vertex", "vector", "petsc", "function"], plot_k=False, annotate=True, verbose=False):

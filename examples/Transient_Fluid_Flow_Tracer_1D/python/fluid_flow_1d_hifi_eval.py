@@ -68,7 +68,7 @@ T = 0.1
 num_steps = 25
 dt = Constant(T/num_steps)
 gamma = Constant(0.025)
-reac_fn = lambda c: Constant(1) * c
+reac_fn = lambda c: Constant(5) * c
 alpha = Constant(1)
 rcv = Constant(1)
 

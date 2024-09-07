@@ -7,7 +7,9 @@ k_n = lofi.state_solve(k0_guess, return_type = "function", plot_k=False, verbose
 
 # Set up inverse problem
 lofi.beta.assign(1e-5)
-J_hat = lofi.setup_inverse_problem(k0_guess, k_n)
+J_inv = lofi.J(k0_guess, k_n)
+control = lofi.Control(k0_guess)
+J_hat = lofi.ReducedFunctional(J_inv, control)
 
 # Solve Inverse Problem
 with lofi.stop_verbose():
@@ -16,4 +18,4 @@ with lofi.stop_verbose():
 k_opt_lofi = lofi.state_solve(k0_opt_lofi, return_type = "vector", plot_k=False, verbose=False, annotate=True);
 
 # Save the array to a .mat file
-savemat('data/lofi_optim_sol.mat', {'k0_opt_lofi': lofi.fenics_convert(k0_opt_lofi, "vector"), 'k_opt_lofi': k_opt_lofi}, oned_as='column')
+savemat('data/lofi_optim_sol_2.mat', {'k0_opt_lofi': lofi.fenics_convert(k0_opt_lofi, "vector"), 'k_opt_lofi': k_opt_lofi}, oned_as='column')
