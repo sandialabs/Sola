@@ -34,7 +34,7 @@ Jhat_hifi_fn = @(z) obj.J(con_hifi.State_Solve(z), z);
 Jhat_lofi_fn = @(z) obj.J(con_lofi.State_Solve(z), z);
 
 % Obtain high-fidelity and low-fidelity optimizersß
-z_lofi = load("data/lofi_optim_sol_2.mat").k0_opt_lofi;
+z_lofi = load("data/lofi_optim_sol.mat").k0_opt_lofi;
 u_lofi = load("data/lofi_optim_sol.mat").k_opt_lofi;
 z_hifi = load("data/hifi_optim_sol.mat").k0_hifi;
 
@@ -61,7 +61,7 @@ oed_z_error_fn = @(z) sqrt((z - z_hifi)' * z_prior_interface.Apply_M_z(z - z_hif
 % Perform Hessian Analysis
 opt_prob_interface = MD_Opt_Prob_Interface_Python(data_interface);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
-num_evals = 4;
+num_evals = 4; % Reducing this improves performance for this problem?
 oversampling = 1;
 disp("Computing Hessian GEVP...");
 
@@ -75,10 +75,10 @@ beta_0 = randn(num_evals, 1);
 oed_interface = MD_OED_Interface_Tracer(data_interface, con_lofi, alpha_zd, beta_zd);
 
 % Plot low-fidelity and high-fidelity states
-pyplot(x, con_hifi.State_Solve(z_lofi), 'r-', x, con_hifi.State_Solve(z_hifi), 'k--', 'Legend', {'Low-Fidelity', 'High-Fidelity'});
+% pyplot(x, con_hifi.State_Solve(z_lofi), 'r-', x, con_hifi.State_Solve(z_hifi), 'k--', 'Legend', {'Low-Fidelity', 'High-Fidelity'});
 
 %% Iterate for each data point
-N = 3;
+N = 5;
 Jhat_oed = zeros(N, 1);
 oed_z_error = zeros(N, 1);
 Z = [];

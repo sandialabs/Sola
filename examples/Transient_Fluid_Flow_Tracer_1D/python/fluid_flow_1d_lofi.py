@@ -29,7 +29,7 @@ u_timeseries = TimeSeries(f"{root_path}/../data/velocity_timeseries_lofi_1d")
 
 # Weak form of PDE
 gamma = Constant(0.025)
-reac_fn = lambda c: Constant(5) * c
+reac_fn = lambda c: Constant(10) * c
 
 # Store Mass Matrix for Future
 M = assemble(TrialFunction(K) * TestFunction(K) * dx).array()
@@ -133,8 +133,10 @@ def apply_rs_hessian(k0_in, k0):
     k0 = fenics_convert(k0, "vector")
     k0_in = fenics_convert(k0_in, "vector")
     if J_hat_np is None: reduced_functional_J_hat(k0); 
+    if k0_in.ndim == 1: k0_in = k0_in[:, np.newaxis]
     return np.column_stack([J_hat_np.hessian(k0, k0_in[:, col]) for col in range(k0_in.shape[1])])
 
+# Extra (just-in-case)
 def apply_solution_operator_z_jacobian(k0_in, k0):
     k0_in = fenics_convert(k0_in, "function", fun_space=K)
     k0 = fenics_convert(k0, "function", fun_space=K)

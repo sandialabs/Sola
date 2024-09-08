@@ -105,7 +105,7 @@ def convert_to_numpy_vector(fenics_input, fun_space=None):
     if isinstance(fenics_input, np.ndarray) or isinstance(fenics_input, memoryview) or isinstance(fenics_input, array):
         return np.array(fenics_input);
     elif isinstance(fenics_input, PETScVector):
-        return fenics_input.vector()[:]
+        return fenics_input[:]
     fenics_function = convert_to_function(fenics_input);
     return fenics_function.vector()[:]
 

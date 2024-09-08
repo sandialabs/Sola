@@ -68,7 +68,7 @@ T = 0.1
 num_steps = 25
 dt = Constant(T/num_steps)
 gamma = Constant(0.025)
-reac_fn = lambda c: Constant(5) * c
+reac_fn = lambda c: Constant(10) * c
 alpha = Constant(1)
 rcv = Constant(1)
 
@@ -115,3 +115,15 @@ def state_solve(c0, return_type: Literal["vertex", "vector", "petsc", "function"
         if plot_c: plot(c_n)
     
     return fenics_convert(c_n, return_type);
+
+# from pathlib import Path
+# from pyadjoint.reduced_functional_numpy import ReducedFunctionalNumPy
+# from scipy.io import loadmat
+
+# k_terminal = fenics_convert(loadmat(f'{Path(__file__).parent}/../data/terminal_state.mat', squeeze_me=True)["k_terminal"], "function", fun_space=C)
+# def J(k0, kt):
+#     # Convert inputs to functions
+#     k0 = fenics_convert(k0, "function", fun_space=K)
+#     kt = fenics_convert(kt, "function", fun_space=K)
+#     val = assemble(0.5*inner(kt - k_terminal, kt - k_terminal)*dx + 0.5 * beta * inner(k0.dx(0), k0.dx(0)) * dx)
+#     return val
