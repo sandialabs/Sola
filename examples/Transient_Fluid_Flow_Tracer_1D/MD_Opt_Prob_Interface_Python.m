@@ -23,7 +23,7 @@ classdef MD_Opt_Prob_Interface_Python < MD_Opt_Prob_Interface
         end
 
         function [z_out] = Apply_Solution_Operator_z_Jacobian(this, z_in, z)
-            % Call the Python function eval_c
+            % Necessary for OED
             z_out = py.fluid_flow_1d_lofi.apply_solution_operator_z_jacobian(z_in, z);
             z_out = double(z_out);
             if isvector(z_out)

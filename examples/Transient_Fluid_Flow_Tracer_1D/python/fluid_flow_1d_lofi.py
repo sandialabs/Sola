@@ -2,6 +2,7 @@ from fenics_helpers import *
 from pathlib import Path
 from pyadjoint.reduced_functional_numpy import ReducedFunctionalNumPy
 from scipy.io import loadmat
+from scipy.linalg import block_diag
 
 root_path = Path(__file__).parent
 # Note that fenics_helpers assumes interval of [0, 1] to remove bug from ds
@@ -32,15 +33,17 @@ gamma = Constant(0.025)
 reac_fn = lambda c: Constant(10) * c
 
 # Store Mass Matrix for Future
-M = assemble(TrialFunction(K) * TestFunction(K) * dx).array()
-K_mat = assemble(TrialFunction(K).dx(0) * TestFunction(K).dx(0) * dx).array()
+M_one = assemble(TrialFunction(K) * TestFunction(K) * dx).array()
+M = block_diag(*[M_one] * num_steps)
+K_mat_one = assemble(TrialFunction(K).dx(0) * TestFunction(K).dx(0) * dx).array()
+K_mat = block_diag(*[K_mat_one] * num_steps)
 
 
 # Initial setup for inverse problem
 k_terminal = fenics_convert(loadmat(f'{root_path}/../data/terminal_state.mat', squeeze_me=True)["k_terminal"], "function", fun_space=K)
 beta = Constant(1e-5)
 
-def state_solve(k0_input, return_type: Literal["vertex", "vector", "petsc", "function"], plot_k=False, annotate=True, verbose=False):
+def state_solve(k0_input, return_type: Literal["vertex", "vector", "petsc", "function"], plot_k=False, annotate=True, verbose=False, return_all = False):
     # Handle annotation and verbosity
     if annotate: get_working_tape().clear_tape()
     else: pause_annotation()
@@ -52,6 +55,7 @@ def state_solve(k0_input, return_type: Literal["vertex", "vector", "petsc", "fun
     v_k = TestFunction(K)
 
     # Set initial conditions
+    k_list = [];
     k0 = fenics_convert(k0_input, "function", K)
     k_n = Function(K)
     k_n.assign(k0)
@@ -64,9 +68,9 @@ def state_solve(k0_input, return_type: Literal["vertex", "vector", "petsc", "fun
         u_n = Function(U)
         u_timeseries.retrieve(u_n.vector(), float(t))
         F_k = (1/dt * (k - k_n) * v_k + gamma*k.dx(0)*v_k.dx(0) + u_n*k.dx(0)*v_k + u_n.dx(0)*k*v_k + reac_fn(k)*v_k) * dx #- gamma*k.dx(0)*v_k*ds
-        J = derivative(F_k, k)
-        solve(F_k == 0, k, J=J)
+        solve(F_k == 0, k, J=derivative(F_k, k))
         k_n.assign(k)
+        if return_all: k_list.append(k_n.vector()[:])
         if plot_k: plot(k_n)
 
     # Revert annotation and verbosity
@@ -74,7 +78,44 @@ def state_solve(k0_input, return_type: Literal["vertex", "vector", "petsc", "fun
     set_log_level(log_level)
 
     # Return final state
+    if return_all: return np.array(k_list).flatten()
     return fenics_convert(k_n, return_type, K)
+
+def state_solve_all_obj(k0, kt_in, annotate=True, verbose=False):
+    # Handle annotation and verbosity
+    if annotate: get_working_tape().clear_tape()
+    else: pause_annotation()
+    log_level = get_log_level()
+    set_log_active(verbose)
+
+    # Set Trial and Test Functions
+    k = Function(K)
+    v_k = TestFunction(K)
+
+    # Set initial conditions
+    J_output = 0.0;
+    kt_in = np.linalg.solve(M_one, fenics_convert(kt_in, "vector").reshape(num_steps, N+1).T)
+    k0 = fenics_convert(k0, "function", K)
+    k_n = Function(K)
+    k_n.assign(k0)
+
+    # Solve the PDE with time-stepping
+    t.assign(0.0)
+    for n in range(num_steps):
+        t.assign(float(t)+float(dt))
+        u_n = Function(U)
+        u_timeseries.retrieve(u_n.vector(), float(t))
+        F_k = (1/dt * (k - k_n) * v_k + gamma*k.dx(0)*v_k.dx(0) + u_n*k.dx(0)*v_k + u_n.dx(0)*k*v_k + reac_fn(k)*v_k) * dx #- gamma*k.dx(0)*v_k*ds
+        solve(F_k == 0, k, J=derivative(F_k, k))
+        k_n.assign(k)
+        J_output += assemble(inner(k_n, fenics_convert(kt_in[:, n], "function", K)) * dx)
+
+    # Revert annotation and verbosity
+    if not annotate: continue_annotation()
+    set_log_level(log_level)
+
+    # Return sum of inner product objectives with test vectors
+    return J_output
 
 def J(k0, kt):
     # Convert inputs to functions
@@ -115,34 +156,85 @@ def callback_call(J_hat, full=True):
     return callback_fn
 
 # Functions to be called by Matlab Interface
+# ------------------------------------------
+
 def apply_solution_operator_z_jacobian_transpose(kt_in, k0):
     # Multiply by inv(M) to compensate for assembly in L2
-    kt_in = np.linalg.solve(M, fenics_convert(kt_in, "vector", fun_space=K))
-    kt_in = fenics_convert(kt_in, "function", fun_space=K)
     k0 = fenics_convert(k0, "function", fun_space=K)
-    kt = state_solve(k0, return_type="function")
-    return compute_gradient(assemble(inner(kt, kt_in) * dx), Control(k0)).vector()[:]
+    return compute_gradient(state_solve_all_obj(k0, kt_in), Control(k0)).vector()[:]
 
 def misfit_gradient(kt, k0):
-    return M @ (fenics_convert(kt, "vector", K)  - fenics_convert(k_terminal, "vector"));
+    # Backwards Compatible for more
+    kt = fenics_convert(kt, "vector", K)
+    if kt.size == N + 1:
+        return M_one @ (kt - fenics_convert(k_terminal, "vector"));
+    else:
+        unpadded_vec = M_one @ (kt[-N-1:] - fenics_convert(k_terminal, "vector"));
+        return np.pad(unpadded_vec, (kt.size-N-1, 0), 'constant');
 
 def apply_misfit_hessian(kt_in, k0, kt):
-    return M @ fenics_convert(kt_in, "vector", K)
+    # Backwards Compatible for more
+    kt_in = fenics_convert(kt_in, "vector", K)
+    if kt_in.size == N + 1:
+        raise Exception("Incorrect kt_in size!")
+        return M_one @ fenics_convert(kt_in, "vector", K)
+    else:
+        unpadded_vec = M_one @ fenics_convert(kt_in[-N-1:], "vector", K);
+        return np.pad(unpadded_vec, (kt_in.size-N-1, 0), 'constant');
+    
 
 def apply_rs_hessian(k0_in, k0):
+    # No change needed for more
     k0 = fenics_convert(k0, "vector")
     k0_in = fenics_convert(k0_in, "vector")
     if J_hat_np is None: reduced_functional_J_hat(k0); 
     if k0_in.ndim == 1: k0_in = k0_in[:, np.newaxis]
     return np.column_stack([J_hat_np.hessian(k0, k0_in[:, col]) for col in range(k0_in.shape[1])])
 
-# Extra (just-in-case)
+# USED IN OED!!!
 def apply_solution_operator_z_jacobian(k0_in, k0):
-    k0_in = fenics_convert(k0_in, "function", fun_space=K)
-    k0 = fenics_convert(k0, "function", fun_space=K)
-    kt = state_solve(k0, return_type="function")
-    return compute_jacobian_action(kt, Control(k0), k0_in).vector()[:]
-        
+    return state_solve_all_jac(k0, k0_in)
+    # k0_in = fenics_convert(k0_in, "function", fun_space=K)
+    # k0 = fenics_convert(k0, "function", fun_space=K)
+    # kt = state_solve(k0, return_type="function")
+    # return compute_jacobian_action(kt, Control(k0), k0_in).vector()[:]
+   
+def state_solve_all_jac(k0, k0_in, annotate=True, verbose=False):
+    # Handle annotation and verbosity
+    if annotate: get_working_tape().clear_tape()
+    else: pause_annotation()
+    log_level = get_log_level()
+    set_log_active(verbose)
+
+    # Set Trial and Test Functions
+    k = Function(K)
+    v_k = TestFunction(K)
+
+    # Set initial conditions
+    J_list = [];
+    k0_in = fenics_convert(k0_in, "function", K)
+    k0 = fenics_convert(k0, "function", K)
+    k_n = Function(K)
+    k_n.assign(k0)
+
+    # Solve the PDE with time-stepping
+    t.assign(0.0)
+    for n in range(num_steps):
+        t.assign(float(t)+float(dt))
+        u_n = Function(U)
+        u_timeseries.retrieve(u_n.vector(), float(t))
+        F_k = (1/dt * (k - k_n) * v_k + gamma*k.dx(0)*v_k.dx(0) + u_n*k.dx(0)*v_k + u_n.dx(0)*k*v_k + reac_fn(k)*v_k) * dx #- gamma*k.dx(0)*v_k*ds
+        solve(F_k == 0, k, J=derivative(F_k, k))
+        k_n.assign(k)
+        J_list.append(compute_jacobian_action(k_n, Control(k0), k0_in).vector()[:])
+
+    # Revert annotation and verbosity
+    if not annotate: continue_annotation()
+    set_log_level(log_level)
+
+    # Return sum of inner product objectives with test vectors
+    return np.array(J_list).flatten()
+     
 
 print(f"Succesfully imported {__name__}")
 

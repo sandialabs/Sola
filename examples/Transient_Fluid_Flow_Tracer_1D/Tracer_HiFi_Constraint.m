@@ -8,6 +8,12 @@ classdef Tracer_HiFi_Constraint < Constraint
 
         function [u] = State_Solve(this, z)
             % Call the Python function state_solve
+            u = py.fluid_flow_1d_hifi_eval.state_solve(z, 'vector', return_all = true);
+            u = double(u)';
+        end
+
+        function [u] = State_Solve_Terminal(this, z)
+            % Call the Python function state_solve
             u = py.fluid_flow_1d_hifi_eval.state_solve(z, 'vector');
             u = double(u)';
         end

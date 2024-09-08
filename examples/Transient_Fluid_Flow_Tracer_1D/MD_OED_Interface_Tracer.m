@@ -26,9 +26,9 @@ classdef MD_OED_Interface_Tracer < MD_OED_Interface
 
         function this = MD_OED_Interface_Tracer(data_interface, con, alpha_zd, beta_zd)
             this@MD_OED_Interface(data_interface);
-            this.M = con.M;
+            this.M = con.M_z;
             this.R = chol(this.M); % M = R^T*R
-            this.E = sqrt(alpha_zd) * (beta_zd * con.S + con.M); % Sigma = E^{-1}*M*E^{-1}
+            this.E = sqrt(alpha_zd) * (beta_zd * con.S_z + con.M_z); % Sigma = E^{-1}*M*E^{-1}
         end
 
     end

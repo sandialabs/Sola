@@ -82,10 +82,11 @@ F = F_1 + F_2 + F_3 + F_4 + F_c
 
 assemble(F); # This is just to get FFC JIT started well before PDE solve.
 
-def state_solve(c0, return_type: Literal["vertex", "vector", "petsc", "function"], plot_c=False):
+def state_solve(c0, return_type: Literal["vertex", "vector", "petsc", "function"], plot_c=False, return_all = False):
     global t
 
     # Reset initial conditions
+    k_list = [];
     c_n.assign(fenics_convert(c0, "function", C))
     u_n = interpolate(u0_exp, U)
     p_n = interpolate(p0_exp, P) # just a newton guess
@@ -113,7 +114,9 @@ def state_solve(c0, return_type: Literal["vertex", "vector", "petsc", "function"
         r_n.assign(cupre.sub(3, True))
         e_n.assign(cupre.sub(4, True))
         if plot_c: plot(c_n)
+        if return_all: k_list.append(c_n.vector()[:])
     
+    if return_all: return np.array(k_list).flatten()
     return fenics_convert(c_n, return_type);
 
 # from pathlib import Path

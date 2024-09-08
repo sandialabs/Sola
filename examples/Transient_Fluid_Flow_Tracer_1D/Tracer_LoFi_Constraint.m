@@ -2,8 +2,10 @@ classdef Tracer_LoFi_Constraint < Constraint
     properties
         m
         x
-        M
-        S
+        M_z
+        S_z
+        M_u
+        S_u
     end
     methods (Access = public)
 
@@ -12,13 +14,21 @@ classdef Tracer_LoFi_Constraint < Constraint
             this@Constraint();
 
             % Set Mass and Stiffness matrices
-            this.M = double(py.fluid_flow_1d_lofi.M);
-            this.S = double(py.fluid_flow_1d_lofi.K_mat);
+            this.M_z = double(py.fluid_flow_1d_lofi.M_one);
+            this.S_z = double(py.fluid_flow_1d_lofi.K_mat_one);
+            this.M_u = double(py.fluid_flow_1d_lofi.M);
+            this.S_u = double(py.fluid_flow_1d_lofi.K_mat);
             this.x = double(py.fluid_flow_1d_lofi.mesh_coordinates);
-            this.m = length(this.x);
+            this.m = double(py.fluid_flow_1d_lofi.num_steps) * length(this.x);
         end
 
         function [u] = State_Solve(this, z)
+            % Call the Python function state_solve
+            u = py.fluid_flow_1d_lofi.state_solve(z, "vector", return_all = true);
+            u = double(u)';
+        end
+
+        function [u] = State_Solve_Terminal(this, z)
             % Call the Python function state_solve
             u = py.fluid_flow_1d_lofi.state_solve(z, "vector");
             u = double(u)';

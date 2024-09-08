@@ -43,8 +43,8 @@ classdef MD_Elliptic_z_Prior_Interface_Tracer < MD_Elliptic_z_Prior_Interface
         function this = MD_Elliptic_z_Prior_Interface_Tracer(alpha_u, sabl_opt)
             this@MD_Elliptic_z_Prior_Interface(alpha_u);
 
-            S = sabl_opt.con.S;
-            this.M = sabl_opt.con.M;
+            S = sabl_opt.con.S_z;
+            this.M = sabl_opt.con.M_z;
             this.E_z = (3.e-2) * S + this.M;
         end
 

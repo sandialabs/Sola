@@ -22,8 +22,8 @@ classdef MD_Elliptic_u_Prior_Interface_Tracer < MD_Elliptic_u_Prior_Interface
         function this = MD_Elliptic_u_Prior_Interface_Tracer(alpha_u, sabl_opt)
             this@MD_Elliptic_u_Prior_Interface(alpha_u);
 
-            S = sabl_opt.con.S;
-            this.M = sabl_opt.con.M;
+            S = sabl_opt.con.S_u;
+            this.M = sabl_opt.con.M_u;
 
             this.E_u = (2.e-2) * S + this.M;
 

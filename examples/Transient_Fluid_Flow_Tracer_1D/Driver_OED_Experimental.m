@@ -30,12 +30,13 @@ opt_hifi = Reduced_Space_Optimization(obj, con_hifi);
 x = con_lofi.x;
 
 % HIFI JHAT
-Jhat_hifi_fn = @(z) obj.J(con_hifi.State_Solve(z), z);
-Jhat_lofi_fn = @(z) obj.J(con_lofi.State_Solve(z), z);
+Jhat_hifi_fn = @(z) obj.J(con_hifi.State_Solve_Terminal(z), z);
+Jhat_lofi_fn = @(z) obj.J(con_lofi.State_Solve_Terminal(z), z);
 
 % Obtain high-fidelity and low-fidelity optimizersß
 z_lofi = load("data/lofi_optim_sol.mat").k0_opt_lofi;
-u_lofi = load("data/lofi_optim_sol.mat").k_opt_lofi;
+u_lofi = con_lofi.State_Solve(z_lofi);
+% u_lofi = load("data/lofi_optim_sol.mat").k_opt_lofi;
 z_hifi = load("data/hifi_optim_sol.mat").k0_hifi;
 
 % Show initial objective
@@ -61,7 +62,7 @@ oed_z_error_fn = @(z) sqrt((z - z_hifi)' * z_prior_interface.Apply_M_z(z - z_hif
 % Perform Hessian Analysis
 opt_prob_interface = MD_Opt_Prob_Interface_Python(data_interface);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
-num_evals = 4; % Reducing this improves performance for this problem?
+num_evals = 1; % Reducing this improves performance for this problem?
 oversampling = 1;
 disp("Computing Hessian GEVP...");
 
@@ -100,6 +101,7 @@ for p = 1:N
         z_p = z_lofi;
         % betas = [betas; 0*beta_0]; % This is for the updated sequential OED
     else
+        % z_p = z_bar;
         [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, reg_coeff, betas);
         betas = [betas; beta_new];
         z_p = z_p(:, end); % Redundancy for standard OED.
