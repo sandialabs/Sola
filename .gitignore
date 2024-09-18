@@ -16,6 +16,7 @@ rw3dm/
 *.json
 *.mp4
 *.pdf
+*.png
 
 ### Boilerplate latex ignore file:
 ## Latex Ignore:
