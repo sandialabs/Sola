@@ -76,7 +76,6 @@ This makes solving complex problems of this type at scale computationally challe
 The minimization problem {eq}`optimization:problem_discrete` can be solved with off-the-shelf minimizers as long as the gradient $\grad{z}\hat{J}(\z)\in\R^{n_z}$ and, for any vector $\v\in\R^{n_z}$, Hessian-vector products $\v\mapsto \grad{z,z}\hat{J}(\z) \v \in \R^{n_z}$ can be computed efficiently.
 {prf:ref}`alg:adjoint_gradient` shows how to efficiently calculate the gradient by utilizing adjoint-based derivative formulas.
 Similarly, {prf:ref}`alg:adjoint_hessvec` shows how to compute Hessian-vector products using incremental state and incremental adjoint equations, which avoids explicitly forming the (very large) Hessian matrix $\grad{z,z}\hat{J}(\z)\in\R^{n_z \times n_z}$.
-These algorithms stem from analysis of the original (possible infinite-dimensional) problem {eq}`optimization:problem`, then applying the discretization.
 
 :::{admonition} Notation
 :class: note
@@ -101,6 +100,74 @@ See [Notation](../appendix/notation) for a comprehensive list of notation and [F
 3. Set $\grad{z}\hat{J}(\z) = \c_z(\u,\z)\trp \bflambda + \grad{z}J(\u,\z)$
 
 **Return**: $\grad{z}\hat{J}(\z) \in \R^{n_z}$
+:::
+
+:::{admonition} Derivation
+:class: tip, dropdown
+
+The chain rule gives the gradient
+
+$$
+\begin{aligned}
+    \grad{z}\hat{J}(\z)
+    = \nabla[J(\S(\z),\z)]
+    = \S_z(\z)\trp\grad{u}J(\S(\z),\z) + \grad{z}J(\S(\z),\z).
+\end{aligned}
+$$
+
+The second term is straightforward, but to calculate the first term we need to express the $\S_z(\z)\in\R^{n_u\times n_z}$, the derivative of the state solution map, in terms of $\c$.
+Using $\c(\S(\z),\z) = \0$, the [implicit function theorem](https://en.wikipedia.org/wiki/Implicit_function_theorem#Statement_of_the_theorem) gives the formula
+
+$$
+\begin{aligned}
+    \S_z(\z)
+    = -\c_u(\S(\z),\z)^{-1}\c_z(\S(\z),\z).
+\end{aligned}
+$$
+
+For a given $\z$, setting $\u = \S(\z)$ then gives
+
+$$
+\begin{aligned}
+    \S_z(\z)\trp\grad{u}J(\S(\z),\z)
+    &= \left(-\c_u(\u,\z)^{-1}\c_z(\u,\z)\right)\trp\grad{u}J(\u,\z)
+    \\
+    &= -\c_z(\u,\z)\trp\c_u(\u,\z)\invtrp\grad{u}J(\u,\z)
+    = \c_z(\u,\z)\trp\bflambda
+\end{aligned}
+$$
+
+where $\bflambda = \c_u(\u,\z)\invtrp\grad{u}J(\u,\z) \in \R^{n_u}$.
+Hence, $\grad{z}\hat{J}(\z) = \c_z(\u,\z)\trp\bflambda + \grad{z}J(\u,\z)$.
+
+Alternatively, the Lagrangian associated with the equality-constrained problem {eq}`optimization:problem` is defined by
+
+$$
+\begin{aligned}
+    \mathcal{L}(\u,\z,\bflambda)
+    = J(\u,\z) + \c(\u,\z)\trp\bflambda
+\end{aligned}
+$$
+
+where $\bflambda\in\R^{n_u}$ is the *adjoint* of the state $\u$.
+Lagrange's first-order necessary conditions for optimality are given by
+
+$$
+\begin{aligned}
+    \0 &= \grad{u}\mathcal{L}(\u, \z, \bflambda)
+    = \grad{u}J(\u,\z) + \c_u(\u,\z)\trp\bflambda,
+    \\
+    \0 &= \grad{z}\mathcal{L}(\u, \z, \bflambda)
+    = \grad{z}J(\u,\z) + \c_z(\u,\z)\trp\bflambda,
+    \\
+    \0 &= \grad{\lambda}\mathcal{L}(\u, \z, \bflambda)
+    = \c(\u,\z).
+\end{aligned}
+$$
+
+The final equation recovers the constraint $\c_u(\u,\z) = \0$.
+Given $\u$ and $\z$, the first equation gives the adjoint formula $\bflambda = \c_u(\u,\z)\invtrp\grad{u}J(\u,\z)$ discovered earlier.
+The second equation gives the desired formula for the desired gradient, $\grad{z}\hat{J}(\z) = \grad{z}\mathcal{L}(\u,\z,\bflambda)$.
 :::
 
 :::{prf:algorithm} Adjoint-based Hessian-vector product calculation
