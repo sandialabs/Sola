@@ -9,7 +9,10 @@ set(0, "DefaultLineMarkerSize", 20);
 
 % Set Python environment and variables
 setenv('PKG_CONFIG_PATH', '/usr/local/anaconda3/envs/FenicsEnvCompat/lib/pkgconfig');
+setenv('PKG_CONFIG', '/usr/local/anaconda3/envs/FenicsEnvCompat/bin/pkg-config');
 pyenv('Version', '/usr/local/anaconda3/envs/FenicsEnvCompat/bin/python', 'ExecutionMode', 'InProcess');
+setenv('PKG_CONFIG_PATH', '/usr/local/anaconda3/envs/FenicsEnvCompat/lib/pkgconfig');
+setenv('PKG_CONFIG', '/usr/local/anaconda3/envs/FenicsEnvCompat/bin/pkg-config');
 pythonFilePath = 'python';
 if count(py.sys.path, pythonFilePath) == 0
     insert(py.sys.path, int32(0), pythonFilePath);
@@ -50,11 +53,22 @@ fprintf('Objective of z_hifi: \t%.3f\n\n', Jhat_hifi);
 data_interface = MD_Data_Interface_Tracer(u_lofi, z_lofi);
 
 % Generate Priors for u and z
-alpha_u = 2^4;
-alpha_z = 1.e-2;
-alpha_d = 1.e-3;
-u_prior_interface = MD_Elliptic_u_Prior_Interface_Tracer(alpha_u, opt_lofi);
+alpha_d = 1e-3; % Must be picked carefully. Causes bouncing issues if small; Decays too slowly if large (controls speed of improvement)
+alpha_z = 1.e-4; % if too small/too large, significant impact (e.g., U curves. if too small)
+alpha_u = (4)^2; % Controls speed of improvement (at least if moderately smalll)
+beta_t = 50;
+beta_i = 1.e5; % HUGE IMPACT!
+num_evals = 4; % significant impact when very small; very little beyond
+oversampling = 1;
+u_prior_interface_old = MD_Elliptic_u_Prior_Interface_Tracer(alpha_u, opt_lofi);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Tracer(alpha_z, opt_lofi);
+
+% Set Transient Prior
+n_t = 25;
+n_y = 31;
+T = 0.1;
+transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(beta_t, beta_i, T, n_t, n_y);
+u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface_Tracer(alpha_u, transient_prior_cov, opt_lofi);
 
 % Error with z_hifi
 oed_z_error_fn = @(z) sqrt((z - z_hifi)' * z_prior_interface.Apply_M_z(z - z_hifi)) / sqrt(z_hifi' * z_prior_interface.Apply_M_z(z_hifi));
@@ -62,8 +76,6 @@ oed_z_error_fn = @(z) sqrt((z - z_hifi)' * z_prior_interface.Apply_M_z(z - z_hif
 % Perform Hessian Analysis
 opt_prob_interface = MD_Opt_Prob_Interface_Python(data_interface);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
-num_evals = 1; % Reducing this improves performance for this problem?
-oversampling = 1;
 disp("Computing Hessian GEVP...");
 
 md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_init, num_evals, oversampling);
@@ -86,6 +98,10 @@ Z = [];
 D = [];
 betas = [];
 z_bar = z_lofi;
+
+disp("Discrep. Eval. for Hifi...");
+D_z_hifi = Evaluate_Discrepancy(con_hifi, con_lofi, z_hifi);
+disp("Discrep. Eval. for Hifi [DONE].");
 
 for p = 1:N
     % Update Data Interface (with prior center)
@@ -119,6 +135,12 @@ for p = 1:N
     % Perform Posterior Sampling (TODO: Avoid recomputing computed data points)
     md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
     md_post_sampling.Compute_Posterior_Data(alpha_d, 1);
+    post_mean_z_hifi(:, p) = cell2mat(md_post_sampling.Posterior_Discrepancy_Samples(z_hifi));
+    post_mean_z_p(:, p) = cell2mat(md_post_sampling.Posterior_Discrepancy_Samples(z_p));
+    disp("Discrepancy Norm at Hifi z");
+    disp(vecnorm(post_mean_z_hifi(:, p)));
+    disp("Discrepancy Norm at Data z");
+    disp(vecnorm(post_mean_z_p(:, p)));
 
     % Obtain Optimal Solution Update
     md_update = MD_Update(md_post_sampling, md_hessian_analysis);

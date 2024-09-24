@@ -23,8 +23,8 @@ v_c, v_u, v_p, v_r, v_e = TestFunctions(CUPRE)
 t = Constant(0);
 
 # Set boundary conditions for u(x = 0) and u(x = 1)
-bc_c_left = DirichletBC(CUPRE.sub(0), Expression("exp(-(t+1))/pow(t+1, 2)", t=t, degree=2), "near(x[0], 0)")
-bc_c_right = DirichletBC(CUPRE.sub(0), Expression("2*exp(-(t+1))/pow(t+1, 2)", t=t, degree=2), "near(x[0], 1)")
+# bc_c_left = DirichletBC(CUPRE.sub(0), Expression("exp(-(t+1))/pow(t+1, 2)", t=t, degree=2), "near(x[0], 0)")
+# bc_c_right = DirichletBC(CUPRE.sub(0), Expression("2*exp(-(t+1))/pow(t+1, 2)", t=t, degree=2), "near(x[0], 1)")
 
 # Set boundary conditions for u(x = 0) and u(x = 1)
 bc_u_left = DirichletBC(CUPRE.sub(1), Expression("1/(t+1)", t=t, degree=2), "near(x[0], 0)")
@@ -43,7 +43,7 @@ bc_e_left = DirichletBC(CUPRE.sub(4), Expression("1/pow(t+1, 2)", t=t, degree=2)
 bc_e_right = DirichletBC(CUPRE.sub(4), Expression("2/pow(t+1, 2)", t=t, degree=2), "near(x[0], 1)")
 
 # Combine Boundary Conditions
-bcs = [bc_c_left, bc_c_right, bc_u_left, bc_u_right, bc_p_left, bc_p_right, bc_r_left, bc_r_right, bc_e_left, bc_e_right];
+bcs = [bc_u_left, bc_u_right, bc_p_left, bc_p_right, bc_r_left, bc_r_right, bc_e_left, bc_e_right];
 
 # Set Initial Condition at t = 0
 c0_exp = Expression("0", degree=2) # NOTE: SET TO ZERO from "(x[0]+1)*exp(-1)"

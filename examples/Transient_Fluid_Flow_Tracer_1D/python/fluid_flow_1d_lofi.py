@@ -4,6 +4,17 @@ from pyadjoint.reduced_functional_numpy import ReducedFunctionalNumPy
 from scipy.io import loadmat
 from scipy.linalg import block_diag
 
+# IF PKG_CONFIG NOT FOUND
+try:
+    import matlab_env_fix
+    import os
+    os.environ = matlab_env_fix.data
+except ModuleNotFoundError:
+    pass
+
+
+
+
 root_path = Path(__file__).parent
 # Note that fenics_helpers assumes interval of [0, 1] to remove bug from ds
 
