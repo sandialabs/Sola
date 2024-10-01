@@ -40,7 +40,7 @@ classdef POD_Basis < Basis
 
         %% Constructor
 
-        function this = POD_Basis(Y, shift, W)
+        function this = POD_Basis(Y, shift, W, sparseW)
             % Parameters
             % ----------
             % Y
@@ -56,10 +56,15 @@ classdef POD_Basis < Basis
             %   :math:`\V\trp\W\V = \I_{r}`.
             %   If provided as a vector :math:`\w\in\R^{m\times 1}`, use
             %   :math:`\W = \text{diag}(\w)`.
+            % sparseW
+            %   (Optional) if ``true``, assume :math:`\W` is a **sparse**
+            %   matrix. If ``false`` (default), do not assume sparsity.
+            %   Ignored if ``W`` is not provided.
             arguments
                 Y (:, :) double
                 shift = false
                 W (:, :) {mustBeNumeric} = []
+                sparseW = false
             end
 
             this.economize = false;
@@ -84,8 +89,17 @@ classdef POD_Basis < Basis
                 Winvsqrt = diag(1 ./ sqrt(W));
             else
                 this.W = W;
-                Wsqrt = sqrtm(W);
-                Winvsqrt = linsolve(Wsqrt, eye(size(W, 1)));
+                if sparseW
+                    [U, D] = eigs(W, size(W, 1));
+                    % Compute sqrt(D) and inv(sqrt(D))
+                    D_sqrt = sqrt(D);
+                    Wsqrt = U * D_sqrt * U';
+                    D_sqrt_inv = diag(1 ./ diag(D_sqrt));
+                    Winvsqrt = U * D_sqrt_inv * U';
+                else
+                    Wsqrt = sqrtm(W);
+                    Winvsqrt = inv(Wsqrt);
+                end
             end
 
             % Do the SVD and store the singular values / vectors.

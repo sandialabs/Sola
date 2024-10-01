@@ -90,6 +90,18 @@ basis.r = r;
 VtrpWV = basis.V' * W * basis.V;
 assert(allclose(VtrpWV, Id));
 
+%% Test without mean shift, with sparse weights.
+Wpre = sprand(n_y, n_y, 0.05);
+W = ((Wpre + Wpre') / 2) + 10 * speye(n_y);
+basis = POD_Basis(Y, false, W, true);
+
+VtrpWV = basis.V' * W * basis.V;
+assert(allclose(VtrpWV, eye(n_t)));
+
+basis.r = r;
+VtrpWV = basis.V' * W * basis.V;
+assert(allclose(VtrpWV, Id));
+
 %% Test economization
 
 basis = POD_Basis(Y);
