@@ -168,7 +168,7 @@ classdef Transient_ADR_2D < handle
             % ----------
             % x
             %   x-coordinates at which to evaluate the initial condition.
-            out = 50 * exp(-50 .* sum(([x; y] - this.init_center).^2, 1)) + 1;
+            out = 50 * exp(-50 .* sum(([x; y] - this.init_center).^2, 1)); % + 1;
         end
 
         function [v] = Velocity(this, x, y)

@@ -2,6 +2,7 @@ clear;
 close all;
 clc;
 run('../../src/Set_Paths');
+rng(2024);
 
 %% Experiment parameters.
 
@@ -99,6 +100,7 @@ end
 
 %% Load training data.
 
+rng(2025);
 load(datafile);
 n_t = length(t);
 T = t(end);
@@ -130,10 +132,16 @@ end
 
 % Learn POD bases from the collection of all state snapshots.
 states_all = horzcat(states{:});
-basis1 = POD_Basis(states_all(1:n_x, :), false);  % , full(mass_matrix));
+basis1 = POD_Basis(states_all(1:n_x, :), false, mass_matrix, true);
 basis1.Set_Reduced_Dimension_From_Residual_Energy(residual_energies(1));
-basis2 = POD_Basis(states_all(n_x + 1:end, :), false);  % , full(mass_matrix));
+basis2 = POD_Basis(states_all(n_x + 1:end, :), false, mass_matrix, true);
 basis2.Set_Reduced_Dimension_From_Residual_Energy(residual_energies(1));
+
+% Save some vectors for visualization later.
+% svdvals = [basis1.singular_values'; basis2.singular_values'];
+% svdvecs1 = basis1.singular_vectors(:, 1:5);
+% svdvecs2 = basis2.singular_vectors(:, 1:5);
+% save("bases.mat", 'svdvals', 'svdvecs1', 'svdvecs2');
 
 if plot_basis_functions
     for i = 1:min(basis1.r, basis2.r)
