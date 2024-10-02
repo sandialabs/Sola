@@ -6,23 +6,20 @@ rng(2024);
 
 %% Experiment parameters.
 
-meshfile = 'urban_canyon.mat';
-datafile = 'OpInf_Training_Data.mat';
-
 regenerate_data = false;
 plot_basis_functions = false;
 plot_training_data = false;
 plot_training_reconstruction = false;
 
 residual_energies = [1e-5];
-ABregularization_candidates = [1e-6, 1e-2, 1e1];
-Hregularization_candidates = logspace(3, 5, 21);
+ABregularization_candidates = [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1];
+Hregularization_candidates = logspace(1, 5, 41);
 ddt_strategy = '6thOrder';
-control_regularization = 1.e-4;
+control_regularization = 1.e-5;
 
 %% Generate training data if needed.
 
-if ~exist(datafile, 'file') || regenerate_data
+if ~exist('OpInf_Training_Data.mat', 'file') || regenerate_data
     disp('Generating training data');
 
     tic();
@@ -53,7 +50,7 @@ if ~exist(datafile, 'file') || regenerate_data
     n_z = (n_t - 1) * n_q;
 
     % Load spatial geometry and mesh.
-    model = Transient_ADR_2D.model_fromfile(meshfile);
+    model = Transient_ADR_2D.model_fromfile('urban_canyon.mat');
     n_x = size(model.Mesh.Nodes, 2);
     n_y = 2 * n_x;
     n_u = n_y * n_t;
@@ -76,8 +73,8 @@ if ~exist(datafile, 'file') || regenerate_data
                                   diffusion, advection, reaction, control_nodes);
 
         % Set up a random control profile.
-        vals = [zeros(n_q, 1), 50 * rand(n_q, num_randcontrol_nodes - 1)];
-        pp = pchip(randcontrol_nodes, vals);
+        vals = [zeros(n_q, 1), 5 * rand(n_q, num_randcontrol_nodes - 1)];
+        pp = pchip(randcontrol_nodes, vals.^2);
         controller = @(tt) ppval(pp, tt);
 
         % Solve the system.
@@ -87,7 +84,7 @@ if ~exist(datafile, 'file') || regenerate_data
             solver.Animate_Solution(Yk);
         end
 
-        Qk = controller(t(2:end));
+        Qk = sqrt(controller(t(2:end)));
 
         % Record results.
         U_train(:, k) = reshape(Yk, [], 1);
@@ -95,7 +92,7 @@ if ~exist(datafile, 'file') || regenerate_data
     end
     time_trainingdata = toc();
 
-    save(datafile, "t", "solver", "U_train", "Z_train", "time_trainingdata");
+    save('OpInf_Training_Data.mat', "t", "solver", "U_train", "Z_train", "time_trainingdata");
 end
 
 %% Load training data.
@@ -123,11 +120,9 @@ fprintf('Using %d training trajectories\n', num_solves);
 % Unpack the states and controls by training trajectory.
 states = cell(num_solves);
 controls = cell(num_solves);
-controls_romtraining = cell(num_solves);
 for k = 1:num_solves
     states{k} = reshape(U_train(:, k), n_y, n_t);
     controls{k} = reshape(Z_train(:, k), n_q, n_t - 1);
-    controls_romtraining{k} = sqrt(abs(controls{k}));
 end
 
 % Learn POD bases from the collection of all state snapshots.
@@ -136,12 +131,6 @@ basis1 = POD_Basis(states_all(1:n_x, :), false, mass_matrix, true);
 basis1.Set_Reduced_Dimension_From_Residual_Energy(residual_energies(1));
 basis2 = POD_Basis(states_all(n_x + 1:end, :), false, mass_matrix, true);
 basis2.Set_Reduced_Dimension_From_Residual_Energy(residual_energies(1));
-
-% Save some vectors for visualization later.
-% svdvals = [basis1.singular_values'; basis2.singular_values'];
-% svdvecs1 = basis1.singular_vectors(:, 1:5);
-% svdvecs2 = basis2.singular_vectors(:, 1:5);
-% save("bases.mat", 'svdvals', 'svdvecs1', 'svdvecs2');
 
 if plot_basis_functions
     for i = 1:min(basis1.r, basis2.r)
@@ -191,7 +180,7 @@ for i = 1:length(residual_energies)
     % Learn an OpInf ROM from the data.
     rom = Transient_ADR_2D_OpInf_Constraint(r_1, r_2, n_q, T, n_t, zeros(n_yr, 1));
     tic();
-    rom.Select_Regularization(states_lofi, controls_romtraining, ...
+    rom.Select_Regularization(states_lofi, controls, ...
                               ABregularization_candidates, ...
                               Hregularization_candidates, ...
                               ddt_strategy);
@@ -202,7 +191,7 @@ for i = 1:length(residual_energies)
     for k = 1:num_solves
         Yk_data = states{k};
         rom.y0 = states_lofi{k}(:, 1);
-        Yk_rom_compressed = rom.State_Solve2(controls_romtraining{k});
+        Yk_rom_compressed = rom.State_Solve2(controls{k});
         Yk_rom_1 = basis1.Decompress(Yk_rom_compressed(1:r_1, :));
         Yk_rom_2 = basis2.Decompress(Yk_rom_compressed(r_1 + 1:end, :));
         Yk_rom = [Yk_rom_1; Yk_rom_2];
@@ -228,7 +217,7 @@ end
 solver.init_center = [.05; .85];
 rom.y0 = states_lofi{1}(:, 1);
 
-obj_hifi = solver.Make_Objective([.6; .6], t(end), length(t), control_regularization);
+obj_hifi = solver.Make_Objective([.9; .35], t(end), length(t), control_regularization);
 obj_lofi = Transient_ADR_2D_Reduced_Objective(obj_hifi, basis1.V, basis2.V);
 solver.Plot_Field(obj_hifi.target_weight, 'Protection zone');
 
@@ -244,19 +233,17 @@ tic();
 time_lofioptimization = toc();
 fprintf('Optimization finished in %.2f seconds\n', time_lofioptimization);
 
-%% Visualize the ROM optimization results.
-
-% Inspect the state solution.
+%% Inspect the state solution.
 u_lofi_reshape = reshape(u_lofi, n_yr, n_t);
 Y_rom_1 = basis1.Decompress(u_lofi_reshape(1:r_1, :));
 Y_rom_2 = basis2.Decompress(u_lofi_reshape(r_1 + 1:end, :));
 Y_rom = [Y_rom_1; Y_rom_2];
 solver.Animate_Solution(Y_rom);             % ROM state with ROM controller
 
-% Inspect the control solution.
-Q_rom = reshape(z_lofi, n_q, n_t - 1).^2;
+%% Inspect the control solution.
+Q_rom = reshape(z_lofi, n_q, n_t - 1);
 figure;
-semilogy(t(2:end), Q_rom);
+plot(t(2:end), abs(Q_rom));
 title('Optimal controls (optimized with an OpInf ROM surrogate)');
 
 %% Visualize the FOM with the ROM optimization results.
@@ -268,12 +255,13 @@ solver.vel_params = vel_params_hifi;
 
 % Solve the high-fidelity model with the inferred controls.
 disp('Final high-fidelity solve');
-pp = pchip(t, [Q_rom(:, 1), Q_rom]);
+pp = pchip(t, [Q_rom(:, 1), Q_rom].^2);
 controller = @(tt) ppval(pp, tt);
 Y_hifi = solver.State_Solve(controller, t).NodalSolution;
 solver.Animate_Solution(Y_hifi);            % FOM state with ROM controller
 
-save('OptimizationSolution.mat', "solver", "Y_hifi", "Y_rom", "t", "Q_rom", "n_q", "opt", "basis1", "basis2", "obj_hifi", "residual_energies", "vel_params_rom", "vel_params_hifi");
+rs = [basis1.r, basis2.r];
+save('OptimizationSolution.mat', "solver", "Y_hifi", "Y_rom", "t", "Q_rom", "n_q", "opt", "basis1", "basis2", "obj_hifi", "residual_energies", "vel_params_rom", "vel_params_hifi", "rs");
 
 %% Load and visualize results later.
 % load('OptimizationSolution.mat', "solver", "Y_hifi", "Y_rom", "t", "Q_rom", "n_q");

@@ -3,11 +3,7 @@ close all;
 clc;
 run('../../src/Set_Paths');
 
-% meshfile = 'urban_canyon.mat';
-datafile = 'OpInf_Training_Data.mat';
-
 %% Plot configuration.
-
 set(0, 'DefaultAxesFontName', 'Times New Roman');
 set(0, 'DefaultAxesFontWeight', 'normal');
 set(0, 'DefaultAxesFontSize', 20);
@@ -18,10 +14,9 @@ cmap = viridis;
 
 %% Load solver and other data.
 % model = Transient_ADR_2D.model_fromfile(meshfile);
-load(datafile, 't', 'solver');
+load('OpInf_Training_Data.mat', 'Z_train');
+load('OptimizationSolution.mat', 't', 'solver', 'basis1', 'basis2', 'obj_hifi', 'Q_rom', 'Y_hifi', 'rs');
 load('fem_matrices.mat', 'mass_matrix');
-objective = Transient_ADR_2D_Objective([.6; .6], solver.x, solver.y, mass_matrix, t(end), length(t), solver.n_q, 1e-4);
-load('bases.mat', 'svdvals', 'svdvecs1', 'svdvecs2');
 
 %% Finite element mesh.
 fig = plotfield(solver, "mesh", 0, true, "Spatial mesh and injection locations");
@@ -29,7 +24,7 @@ print(fig, 'figures/adr_mesh.pdf', '-dpdf', '-r300', '-loose');
 close(fig);
 
 %% Protection zone.
-fig = plotfield(solver, objective.target_weight, viridis, true, "Protection zone weights \psi");
+fig = plotfield(solver, obj_hifi.target_weight, viridis, true, "Protection zone weights \psi");
 print(fig, 'figures/adr_target.png', '-dpng', '-r300', '-loose');
 close(fig);
 
@@ -40,44 +35,67 @@ print(fig, 'figures/adr_initial.png', '-dpng', '-r300', '-loose');
 close(fig);
 
 %% POD singular value decay for each state variable.
-% j = 0:size(svdvals, 2);
-% resenergy = 1 - (cumsum(svdvals.^2, 2) ./ sum(svdvals.^2, 2));
-% resenergy = [1, resenergy(1, :); 1, resenergy(2, :)];
-%
-% fig = figure;
-% ax = subplot(1, 1, 1);
-% for i = [1, 2]
-%     semilogy(ax, j, resenergy(i, :), '.-', MarkerSize=10);
-%     hold on
-% end
-% xline(ax, 24, 'Color', ax4.ColorOrder(1, :));
-% xline(ax, 30, 'Color', ax4.ColorOrder(2, :));
-% yline(ax, 1e-5);
-% xlim(ax, [0, 50]);
-% ylim(ax, [1e-8, 1e0]);
-% xlabel(ax, 'Singular value index');
-% ylabel(ax, 'Residual energy');
-% text(ax, 23.5, 2e-8, '$r_1 = 24$', 'Interpreter', 'latex', ...
-%      'HorizontalAlignment', 'right', 'Color', ax4.ColorOrder(1, :), ...
-%      'FontSize', 16);
-% text(ax, 30.5, 2e-8, '$r_2 = 30$', 'Interpreter', 'latex', ...
-%      'HorizontalAlignment', 'left', 'Color', ax4.ColorOrder(2, :), ...
-%      'FontSize', 16);
-% print(fig, 'figures/adr_svdvals.pdf', '-dpdf', '-r300', '-loose');
+svdvals = [basis1.singular_values'; basis2.singular_values'];
+j = 0:size(svdvals, 2);
+resenergy = 1 - (cumsum(svdvals.^2, 2) ./ sum(svdvals.^2, 2));
+resenergy = [1, resenergy(1, :); 1, resenergy(2, :)];
+
+fig = figure;
+ax = subplot(1, 1, 1);
+for i = [1, 2]
+    semilogy(ax, j, resenergy(i, :), '.-', LineWidth = 1.5, MarkerSize = 15);
+    hold on;
+end
+xline(ax, rs(1), 'Color', ax.ColorOrder(1, :));
+xline(ax, rs(2), 'Color', ax.ColorOrder(2, :));
+yline(ax, 1e-5);
+xlim(ax, [0, 50]);
+ylim(ax, [1e-8, 1e0]);
+xlabel(ax, 'Singular value index');
+ylabel(ax, 'Residual energy');
+text(ax, rs(1) - 0.5, 2e-8, '$r_1 = 24$', 'Interpreter', 'latex', ...
+     'HorizontalAlignment', 'right', 'Color', ax.ColorOrder(1, :), ...
+     'FontSize', 16);
+text(ax, rs(2) + 0.5, 2e-8, '$r_2 = 30$', 'Interpreter', 'latex', ...
+     'HorizontalAlignment', 'left', 'Color', ax.ColorOrder(2, :), ...
+     'FontSize', 16);
+set(fig, 'Position', [175, 300, 560, 330]);
+print(fig, 'figures/adr_svdvals.pdf', '-dpdf', '-r300', '-loose');
+close(fig);
+
+%% Example training controls
+Q1 = reshape(Z_train(:, 1), solver.n_q, []);
+Q1 = [zeros(solver.n_q, 1), Q1];
+nlines = size(Q1, 1);
+fig = figure;
+ax = subplot(1, 1, 1);
+colors = lines(nlines);
+hold on;
+for i = 1:nlines
+    plot(ax, t, Q1(i, :), 'Color', colors(i, :), 'LineWidth', 1.5);
+end
+xlabel(ax, '$t$', 'Interpreter', 'latex');
+ylabel(ax, '$q_i^{(\ell)}(t)$', 'Interpreter', 'latex');
+set(fig, 'Position', [175, 300, 560, 330]);
+print(fig, 'figures/adr_traincontrols.pdf', '-dpdf', '-r300', '-loose');
+close(fig);
 
 %% Dominant basis vectors for each variable.
-% [fig, ax] = plotfield(solver, svdvecs1(:, 1), viridis, true, "First basis function for contaminant");
+% [fig, ax] = plotfield(solver, basis1.singular_vectors(:, 1), viridis, true, "First basis function for contaminant");
 % print(fig, 'figures/adr_basis1.png', '-dpng', '-r300', '-loose');
 % close(fig);
 %
-% [fig, ax] = plotfield(solver, svdvecs2(:, 1), "parula", true, "First basis function for neutralizer");
+% [fig, ax] = plotfield(solver, basis2.singular_vectors(:, 1), "parula", true, "First basis function for neutralizer");
 % print(fig, 'figures/adr_basis2.png', '-dpng', '-r300', '-loose');
 % close(fig);
 
 %% Grid of basis vectors over the spatial domain.
-lim1 = max(abs([min(svdvecs1(:)), max(svdvecs1(:))]));
+nvecs = 4;
+svdvecs1 = basis1.singular_vectors(:, 1:nvecs);
+svdvecs2 = basis2.singular_vectors(:, 1:nvecs);
+lim1 = max(abs([min(svdvecs1(:)), max(svdvecs2(:))]));
 lim2 = max(abs([min(svdvecs2(:)), max(svdvecs2(:))]));
-for j = 1:4
+for j = 1:nvecs
     ytextA = '';
     ytextB = '';
     if j == 1
@@ -94,15 +112,44 @@ for j = 1:4
 end
 
 %% ROMCO control solution as a function of time.
-
-% TODO
+fig = figure;
+ax = subplot(1, 1, 1);
+colors = lines(size(Q_rom, 1));
+hold on;
+for i = 1:nlines
+    plot(ax, t(2:end), abs(Q_rom(i, :)), 'Color', colors(i, :), 'LineWidth', 1.5);
+end
+xlabel(ax, '$t$', 'Interpreter', 'latex');
+ylabel(ax, '$q_i^{(\ell)}(t)$', 'Interpreter', 'latex');
+set(fig, 'Position', [175, 300, 560, 330]);
+print(fig, 'figures/adr_optcontrols.pdf', '-dpdf', '-r300', '-loose');
+close(fig);
 
 %% FOM solution with ROMCO controls as a function of time (including init).
+nsnaps = 5;
+Y1 = Y_hifi(:, 1, :);
+Y2 = Y_hifi(:, 2, :);
+lim1 = 20; % max(Y1(:)) / 2;
+lim2 = 20; % max(Y2(:)) / 1.5;
+limmin = 1e-1;
+indices = round(linspace(1, length(t), nsnaps));
+for j = 1:nsnaps
+    ytextA = '';
+    ytextB = '';
+    if j == 1
+        ytextA = 'Contaminant';
+        ytextB = 'Neutralizer';
+    end
+    [figA, axA] = plotfield(solver, Y1(:, indices(j)), "viridis", j == nsnaps, ['$t=' num2str(t(indices(j))) '$'], ytextA, [limmin, lim1], false);
+    print(figA, ['figures/adr_romcofom1-', num2str(j), '.png'], '-dpng', '-r300', '-loose');
+    close(figA);
 
-% TODO
+    [figB, axB] = plotfield(solver, Y2(:, indices(j)), "parula", j == nsnaps, '', ytextB, [limmin, lim2], false);
+    print(figB, ['figures/adr_romcofom2-', num2str(j), '.png'], '-dpng', '-r300', '-loose');
+    close(figB);
+end
 
 %% Postprocess saved figures.
-
 [os, ~] = computer;
 if strcmp(os, 'MACA64') || strcmp(os, 'MACI64')
     % Postprocessing (on MacOS):
@@ -112,10 +159,8 @@ if strcmp(os, 'MACA64') || strcmp(os, 'MACI64')
     setenv('PATH', [getenv('PATH') ':/Library/TeX/texbin' ':/opt/homebrew/bin']);
     !for fname in figures/*.pdf; do pdfcrop --margin "1" "${fname}" "${fname}"; done
     !for fname in figures/*.png; do magick "${fname}" -trim +repage -bordercolor White -border 10x20 "${fname}"; done
-    !magick figures/adr_basis1-*.png +append +repage -bordercolor White -border 3x3 figures/adr_basis1.png
-    !magick figures/adr_basis2-*.png +append +repage -bordercolor White -border 3x3 figures/adr_basis2.png
-    !magick figures/adr_basis1.png figures/adr_basis2.png -append figures/adr_basis.png
-    !rm figures/adr_basis[12]*.png
+    combinepngs('basis');
+    combinepngs('romcofom');
     disp('ALL FIGURES PROCESSED AND SAVED');
 else
     disp('Postprocessing only defined for MacOS');
@@ -123,7 +168,7 @@ end
 
 %% Helper functions
 
-function [fig, ax] = plotfield(solver, data, cmp, cb, titletext, ylabeltext, limits)
+function [fig, ax] = plotfield(solver, data, cmp, cb, titletext, ylabeltext, limits, logscale)
     % data - XY data to plot
     % cmp - colormap (viridis or 'parula')
     % cb - whether to include a colorbar (true or false)
@@ -135,6 +180,7 @@ function [fig, ax] = plotfield(solver, data, cmp, cb, titletext, ylabeltext, lim
         titletext = ''      % text for the title
         ylabeltext = ''     % text for the ylabel
         limits = []         % limits for the data
+        logscale = false    % if True, logarithmically scale the colors.
     end
 
     fig = figure;
@@ -156,6 +202,9 @@ function [fig, ax] = plotfield(solver, data, cmp, cb, titletext, ylabeltext, lim
         end
         if ~isempty(limits)
             clim(ax, limits);
+        end
+        if logscale
+            set(ax, 'ColorScale', 'log');
         end
     end
 
@@ -191,4 +240,15 @@ function format_ax(solver, ax)
     set(ax, 'Color', 'none', 'XColor', 'none', 'YColor', 'none');
     set(ax, 'Position', [0.1300 0.1100 0.7750 0.8150]);
 
+end
+
+function combinepngs(label)
+    c1 = ['magick figures/adr_', label, '1-*.png +append +repage -bordercolor White -border 3x3 figures/adr_', label, '1.png'];
+    c2 = ['magick figures/adr_', label, '2-*.png +append +repage -bordercolor White -border 3x3 figures/adr_', label, '2.png'];
+    c3 = ['magick figures/adr_', label, '1.png figures/adr_', label, '2.png -append figures/adr_', label, '.png'];
+    c4 = ['rm figures/adr_', label, '[12]*.png'];
+    system(c1);
+    system(c2);
+    system(c3);
+    system(c4);
 end

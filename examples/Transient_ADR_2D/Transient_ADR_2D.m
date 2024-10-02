@@ -187,8 +187,8 @@ classdef Transient_ADR_2D < handle
             % v : (n x 2)
             %   Velocity in x and y directions at the given coordinates.
             xx = reshape(x, [], 1);
-            xmin = min(xx);
-            xmax = max(xx);
+            xmin = min(this.x(:));
+            xmax = max(this.x(:));
             xspan = xmax - xmin;
             n = size(xx, 1);
             flow = [this.vel_params(1) * ones(n, 1), this.vel_params(2) * sin(this.vel_params(3) * pi .* xx) / 2];
