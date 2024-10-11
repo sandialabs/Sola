@@ -28,7 +28,7 @@ beta_i = 1.e0;
 transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(beta_t, beta_i, T, n_t, n_y);
 time_series_samples_u = transient_prior_cov.Sample_Time_Series(10);
 
-alpha_u = (1 / 2)^2;
+alpha_u = 1^2; % (1 / 2)^2;
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface_Transient_ADR_2D(alpha_u, transient_prior_cov, M, S);
 
 beta_t = 1.e0;
@@ -108,7 +108,7 @@ if ~suppress_figures
 end
 
 %%
-z_lofi = sqrt(Q_rom(:));
+z_lofi = Q_rom(:);
 z = zeros(length(z_lofi), 1);
 z(:, 1) = z_lofi .* 1.2;
 if ~suppress_figures
@@ -123,11 +123,17 @@ end
 prior_delta_samples = md_prior_sampling.Prior_Discrepancy_Samples(z, num_prior_samples);
 if ~suppress_figures
 
-    k = 5;
+    k = 2;
     u = reshape(prior_delta_samples{k}, n_y, n_t);
+    time_step = 5;
     figure;
     pdeplot(solver.model.Mesh, XYData = u((n_y / 2 + 1):end, time_step), colormap = 'parula');
+
     u = reshape(prior_delta_samples_z_opt(:, k), n_y, n_t);
+    figure;
+    pdeplot(solver.model.Mesh, XYData = u((n_y / 2 + 1):end, time_step), colormap = 'parula');
+
+    u = reshape(data_interface.u_opt, n_y, n_t);
     figure;
     pdeplot(solver.model.Mesh, XYData = u((n_y / 2 + 1):end, time_step), colormap = 'parula');
 
@@ -165,20 +171,20 @@ md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
 
 if ~suppress_figures
-    Q_lofi = reshape(z_lofi, n_q, n_t - 1).^2;
+    Q_lofi = reshape(z_lofi, n_q, n_t - 1);
     figure;
     semilogy(t(2:end), Q_lofi);
     title('LoFi Optimal controls');
 
-    Q_update_mean = reshape(z_update_mean, n_q, n_t - 1).^2;
+    Q_update_mean = reshape(z_update_mean, n_q, n_t - 1);
     figure;
     semilogy(t(2:end), Q_update_mean);
     title('Mean Update Optimal controls');
 end
 
 %%
-Q_lofi = reshape(z_lofi, n_q, n_t - 1).^2;
-pp = pchip(t, [Q_lofi(:, 1), Q_lofi]);
+Q_lofi = reshape(z_lofi, n_q, n_t - 1);
+pp = pchip(t, [Q_lofi(:, 1), Q_lofi].^2);
 controller = @(tt) ppval(pp, tt);
 Y_lofi = solver.State_Solve(controller, t).NodalSolution;
 u_tmp1 = reshape(Y_lofi(:, 1, :), [], n_t);
@@ -187,8 +193,8 @@ utmp = [u_tmp1; u_tmp2];
 u_lofi = utmp(:);
 obj_lofi = obj_hifi.J(u_lofi, z_lofi);
 
-Q_update_mean = reshape(z_update_mean, n_q, n_t - 1).^2;
-pp = pchip(t, [Q_update_mean(:, 1), Q_update_mean]);
+Q_update_mean = reshape(z_update_mean, n_q, n_t - 1);
+pp = pchip(t, [Q_update_mean(:, 1), Q_update_mean].^2);
 controller = @(tt) ppval(pp, tt);
 Y_update_mean = solver.State_Solve(controller, t).NodalSolution;
 u_tmp1 = reshape(Y_update_mean(:, 1, :), [], n_t);

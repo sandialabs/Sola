@@ -13,7 +13,7 @@ classdef MD_Data_Interface_Transient_ADR_2D < MD_Data_Interface
 
         function [z_opt] = Load_Optimal_z(this)
             Q_rom = load('OptimizationSolution.mat', 'Q_rom').Q_rom;
-            z_opt = sqrt(Q_rom(:));
+            z_opt = Q_rom(:);
         end
 
         function [Z] = Load_Z_Data(this)

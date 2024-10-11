@@ -10,6 +10,7 @@ regenerate_data = false;
 plot_basis_functions = false;
 plot_training_data = false;
 plot_training_reconstruction = false;
+datafile = 'OpInf_Training_Data.mat';
 
 residual_energies = [1e-5];
 ABregularization_candidates = [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1];
@@ -127,9 +128,9 @@ end
 
 % Learn POD bases from the collection of all state snapshots.
 states_all = horzcat(states{:});
-basis1 = POD_Basis(states_all(1:n_x, :), false, mass_matrix, true);
+basis1 = POD_Basis(states_all(1:n_x, :), false, mass_matrix, true, true);
 basis1.Set_Reduced_Dimension_From_Residual_Energy(residual_energies(1));
-basis2 = POD_Basis(states_all(n_x + 1:end, :), false, mass_matrix, true);
+basis2 = POD_Basis(states_all(n_x + 1:end, :), false, mass_matrix, true, true);
 basis2.Set_Reduced_Dimension_From_Residual_Energy(residual_energies(1));
 
 if plot_basis_functions
@@ -241,7 +242,7 @@ Y_rom = [Y_rom_1; Y_rom_2];
 solver.Animate_Solution(Y_rom);             % ROM state with ROM controller
 
 %% Inspect the control solution.
-Q_rom = reshape(z_lofi, n_q, n_t - 1);
+Q_rom = reshape(abs(z_lofi), n_q, n_t - 1);
 figure;
 plot(t(2:end), abs(Q_rom));
 title('Optimal controls (optimized with an OpInf ROM surrogate)');
@@ -249,8 +250,8 @@ title('Optimal controls (optimized with an OpInf ROM surrogate)');
 %% Visualize the FOM with the ROM optimization results.
 
 vel_params_rom = solver.vel_params;
-% vel_params_hifi = [1.2; 0.9; 11.5; 72];
-vel_params_hifi = [1.4; 0.6; 13.0; 70];
+vel_params_hifi = [1.5; 1.5; 8; 50];
+% vel_params_hifi = [1.4; 0.6; 13.0; 70];
 solver.vel_params = vel_params_hifi;
 
 % Solve the high-fidelity model with the inferred controls.

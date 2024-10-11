@@ -40,7 +40,7 @@ classdef POD_Basis < Basis
 
         %% Constructor
 
-        function this = POD_Basis(Y, shift, W, sparseW)
+        function this = POD_Basis(Y, shift, W, sparseW, avoidW_factor)
             % Parameters
             % ----------
             % Y
@@ -60,11 +60,16 @@ classdef POD_Basis < Basis
             %   (Optional) if ``true``, assume :math:`\W` is a **sparse**
             %   matrix. If ``false`` (default), do not assume sparsity.
             %   Ignored if ``W`` is not provided.
+            % avoidW_factor
+            %   (Optional) if ``true``, avoid factorization of W
+            %   If ``false`` (default), use direct solvers.
+            %   Ignored if ``W`` is not provided.
             arguments
                 Y (:, :) double
                 shift = false
                 W (:, :) {mustBeNumeric} = []
                 sparseW = false
+                avoidW_factor = false
             end
 
             this.economize = false;
@@ -83,29 +88,53 @@ classdef POD_Basis < Basis
             if size(W, 1) == 0
                 W = ones(size(Y, 1), 1);
             end
-            if size(W, 1) == 1 || size(W, 2) == 1
-                this.W = diag(W);
-                Wsqrt = diag(sqrt(W));
-                Winvsqrt = diag(1 ./ sqrt(W));
-            else
-                this.W = W;
-                if sparseW
-                    [U, D] = eigs(W, size(W, 1));
-                    % Compute sqrt(D) and inv(sqrt(D))
-                    D_sqrt = sqrt(D);
-                    Wsqrt = U * D_sqrt * U';
-                    D_sqrt_inv = diag(1 ./ diag(D_sqrt));
-                    Winvsqrt = U * D_sqrt_inv * U';
-                else
-                    Wsqrt = sqrtm(W);
-                    Winvsqrt = inv(Wsqrt);
-                end
-            end
 
-            % Do the SVD and store the singular values / vectors.
-            [Phi, svdvals, ~] = svd(Wsqrt * Y, "econ");
-            this.singular_vectors = Winvsqrt * Phi;
-            this.singular_values = diag(svdvals);
+            if avoidW_factor
+
+                C = Y' * (W * Y);
+                C = 0.5 * (C + C');
+                [V, D] = eig(C, 'vector');
+                I = find(D / max(D) > 1.e-14);
+                D = D(I);
+                V = V(:, I);
+                I = linspace(length(D), 1, length(D));
+                D = D(I);
+                V = V(:, I);
+                D = sqrt(D);
+                U = Y * V * diag(1 ./ D);
+
+                this.singular_vectors = U;
+                this.singular_values = D;
+                this.r = length(D);
+                this.W = W;
+
+            else
+
+                if size(W, 1) == 1 || size(W, 2) == 1
+                    this.W = diag(W);
+                    Wsqrt = diag(sqrt(W));
+                    Winvsqrt = diag(1 ./ sqrt(W));
+                else
+                    this.W = W;
+                    if sparseW
+                        [U, D] = eigs(W, size(W, 1));
+                        % Compute sqrt(D) and inv(sqrt(D))
+                        D_sqrt = sqrt(D);
+                        Wsqrt = U * D_sqrt * U';
+                        D_sqrt_inv = diag(1 ./ diag(D_sqrt));
+                        Winvsqrt = U * D_sqrt_inv * U';
+                    else
+                        Wsqrt = sqrtm(W);
+                        Winvsqrt = inv(Wsqrt);
+                    end
+                end
+
+                % Do the SVD and store the singular values / vectors.
+                [Phi, svdvals, ~] = svd(Wsqrt * Y, "econ");
+                this.singular_vectors = Winvsqrt * Phi;
+                this.singular_values = diag(svdvals);
+
+            end
         end
 
         %% Getters and setters.
