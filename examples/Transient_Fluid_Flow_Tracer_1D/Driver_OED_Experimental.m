@@ -53,14 +53,13 @@ fprintf('Objective of z_hifi: \t%.3f\n\n', Jhat_hifi);
 data_interface = MD_Data_Interface_Tracer(u_lofi, z_lofi);
 
 % Generate Priors for u and z
-alpha_d = 1e-3; % Must be picked carefully. Causes bouncing issues if small; Decays too slowly if large (controls speed of improvement)
-alpha_z = 1.e-4; % if too small/too large, significant impact (e.g., U curves. if too small)
-alpha_u = (4)^2; % Controls speed of improvement (at least if moderately smalll)
+alpha_d = 2e-3; % Must be picked carefully. Causes bouncing issues if small; Decays too slowly if large (controls speed of improvement)
+alpha_z = 1.e-4; % No major impact
+alpha_u = (4)^2; % Larger prior if large.
 beta_t = 50;
 beta_i = 1.e5; % HUGE IMPACT!
 num_evals = 4; % significant impact when very small; very little beyond
 oversampling = 1;
-u_prior_interface_old = MD_Elliptic_u_Prior_Interface_Tracer(alpha_u, opt_lofi);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Tracer(alpha_z, opt_lofi);
 
 % Set Transient Prior
@@ -69,6 +68,13 @@ n_y = 31;
 T = 0.1;
 transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(beta_t, beta_i, T, n_t, n_y);
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface_Tracer(alpha_u, transient_prior_cov, opt_lofi);
+
+% num_prior_samples = 100;
+% md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
+% delta_samples = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
+% pyplot(x, delta_samples(end-30:end, :), '-')
+% dsm = cell2mat(delta_samples');
+% pyplot(x, dsm(end-30:end, :), '-')
 
 % Error with z_hifi
 oed_z_error_fn = @(z) sqrt((z - z_hifi)' * z_prior_interface.Apply_M_z(z - z_hifi)) / sqrt(z_hifi' * z_prior_interface.Apply_M_z(z_hifi));

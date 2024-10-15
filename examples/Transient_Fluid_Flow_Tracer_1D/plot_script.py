@@ -12,7 +12,7 @@ def main(data_file):
     # Create the plot
     plt.figure()
     for i in range(len(x)):
-        plt.plot(x[i].flatten(), y[i].flatten(), styles[i][0])
+        plt.plot(x[i].flatten(), y[i], styles[i][0])
     
     # Check and set the title if it exists
     if 'titleStr' in mat_data and mat_data['titleStr'].size != 0:

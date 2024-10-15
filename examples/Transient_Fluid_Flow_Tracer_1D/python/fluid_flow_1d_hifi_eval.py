@@ -1,3 +1,12 @@
+# IF PKG_CONFIG NOT FOUND
+try:
+    import matlab_env_fix
+    import os
+    os.environ = matlab_env_fix.data
+    import sys
+    sys.setdlopenflags(10)
+except ModuleNotFoundError:
+    pass
 from fenics_helpers_noadj import *
 
 N = 30;

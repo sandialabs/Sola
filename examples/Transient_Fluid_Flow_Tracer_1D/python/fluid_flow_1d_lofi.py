@@ -1,18 +1,18 @@
-from fenics_helpers import * 
-from pathlib import Path
-from pyadjoint.reduced_functional_numpy import ReducedFunctionalNumPy
-from scipy.io import loadmat
-from scipy.linalg import block_diag
-
 # IF PKG_CONFIG NOT FOUND
 try:
     import matlab_env_fix
     import os
     os.environ = matlab_env_fix.data
+    import sys
+    sys.setdlopenflags(10)
 except ModuleNotFoundError:
     pass
 
-
+from fenics_helpers import * 
+from pathlib import Path
+from pyadjoint.reduced_functional_numpy import ReducedFunctionalNumPy
+from scipy.io import loadmat
+from scipy.linalg import block_diag
 
 
 root_path = Path(__file__).parent
