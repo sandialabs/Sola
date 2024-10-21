@@ -143,7 +143,7 @@ end
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 
 alpha_d = 1.e-8;
-num_post_samples = 10;
+num_post_samples = 1;
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 Z_test = zeros(length(z_lofi), 2);
 Z_test(:, 1) = z_lofi;

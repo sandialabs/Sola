@@ -43,8 +43,8 @@ classdef MD_Opt_Prob_Interface_Transient_ADR_2D < MD_Opt_Prob_Interface
                 u_in_1 = zeros(r1, n_t);
                 u_in_2 = zeros(r2, n_t);
                 for k = 1:n_t
-                    u_in_1(:, k) = this.basis1.Compress(u_tmp(1:full_dim, k));
-                    u_in_2(:, k) = this.basis2.Compress(u_tmp((full_dim + 1):end, k));
+                    u_in_1(:, k) = this.basis1.V' * u_tmp(1:full_dim, k);
+                    u_in_2(:, k) = this.basis2.V' * u_tmp((full_dim + 1):end, k);
                 end
                 tmp = [u_in_1; u_in_2];
                 u_in_red(:, j) = tmp(:);
