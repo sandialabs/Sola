@@ -4,7 +4,7 @@ close all;
 clc;
 run('../../src/Set_Paths');
 
-suppress_figures = true;
+suppress_figures = false;
 
 M1 = load('fem_matrices.mat', 'mass_matrix').mass_matrix;
 M = kron(eye(2), M1);
@@ -163,7 +163,7 @@ end
 opt_prob_interface = MD_Opt_Prob_Interface_Transient_ADR_2D(opt, obj_hifi, basis1, basis2, z_lofi);
 
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
-num_evals = 8;
+num_evals = 15;
 oversampling = 20;
 md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
 md_update = MD_Update(md_post_sampling, md_hessian_analysis);
@@ -173,12 +173,12 @@ md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 if ~suppress_figures
     Q_lofi = reshape(z_lofi, n_q, n_t - 1);
     figure;
-    semilogy(t(2:end), Q_lofi);
+    semilogy(t(2:end), abs(Q_lofi));
     title('LoFi Optimal controls');
 
     Q_update_mean = reshape(z_update_mean, n_q, n_t - 1);
     figure;
-    semilogy(t(2:end), Q_update_mean);
+    semilogy(t(2:end), abs(Q_update_mean));
     title('Mean Update Optimal controls');
 end
 

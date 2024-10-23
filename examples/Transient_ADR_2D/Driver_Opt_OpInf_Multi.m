@@ -251,7 +251,6 @@ title('Optimal controls (optimized with an OpInf ROM surrogate)');
 
 vel_params_rom = solver.vel_params;
 vel_params_hifi = [1.5; 1.5; 8; 50];
-% vel_params_hifi = [1.4; 0.6; 13.0; 70];
 solver.vel_params = vel_params_hifi;
 
 % Solve the high-fidelity model with the inferred controls.

@@ -15,8 +15,9 @@ cmap = viridis;
 %% Load solver and other data.
 % model = Transient_ADR_2D.model_fromfile(meshfile);
 load('OpInf_Training_Data.mat', 'Z_train');
-load('OptimizationSolution.mat', 't', 'solver', 'basis1', 'basis2', 'obj_hifi', 'Q_rom', 'Y_hifi', 'rs');
+load('OptimizationSolution.mat', 't', 'solver', 'basis1', 'basis2', 'obj_hifi', 'Q_rom', 'Y_hifi', 'rs', 'opt');
 load('fem_matrices.mat', 'mass_matrix');
+load('MD_Results.mat');
 
 %% Finite element mesh.
 fig = plotfield(solver, "mesh", 0, true, "Spatial mesh and injection locations");
@@ -35,7 +36,7 @@ print(fig, 'figures/adr_initial.png', '-dpng', '-r300', '-loose');
 close(fig);
 
 %% POD singular value decay for each state variable.
-svdvals = [basis1.singular_values'; basis2.singular_values'];
+svdvals = [basis1.singular_values; basis2.singular_values];
 j = 0:size(svdvals, 2);
 resenergy = 1 - (cumsum(svdvals.^2, 2) ./ sum(svdvals.^2, 2));
 resenergy = [1, resenergy(1, :); 1, resenergy(2, :)];
@@ -69,7 +70,8 @@ Q1 = [zeros(solver.n_q, 1), Q1];
 nlines = size(Q1, 1);
 fig = figure;
 ax = subplot(1, 1, 1);
-colors = lines(nlines);
+% colors = lines(nlines);
+colors = distinguishable_colors(nlines);
 hold on;
 for i = 1:nlines
     plot(ax, t, Q1(i, :), 'Color', colors(i, :), 'LineWidth', 1.5);
@@ -114,7 +116,6 @@ end
 %% ROMCO control solution as a function of time.
 fig = figure;
 ax = subplot(1, 1, 1);
-colors = lines(size(Q_rom, 1));
 hold on;
 for i = 1:nlines
     plot(ax, t(2:end), abs(Q_rom(i, :)), 'Color', colors(i, :), 'LineWidth', 1.5);
@@ -149,6 +150,86 @@ for j = 1:nsnaps
     close(figB);
 end
 
+%%
+solver.vel_params = load('OptimizationSolution.mat', 'vel_params_rom').vel_params_rom;
+solver.Plot_Velocity_Field(20);
+xticks([]);
+yticks([]);
+set(title('Training Wind Field'), 'FontWeight', 'normal');
+print(figure(1), 'figures/training_wind.pdf', '-dpdf', '-r300', '-loose');
+close;
+
+solver.vel_params = load('OptimizationSolution.mat', 'vel_params_hifi').vel_params_hifi;
+solver.Plot_Velocity_Field(20);
+xticks([]);
+yticks([]);
+set(title('Testing Wind Field'), 'FontWeight', 'normal');
+print(figure(1), 'figures/testing_wind.pdf', '-dpdf', '-r300', '-loose');
+close;
+
+%% MD updated control solution as a function of time.
+n_t = length(t);
+n_q = length(z_update_mean) / (n_t - 1);
+Q_update_mean = reshape(z_update_mean, n_q, n_t - 1);
+fig = figure;
+ax = subplot(1, 1, 1);
+hold on;
+for i = 1:nlines
+    plot(ax, t(2:end), abs(Q_update_mean(i, :)), '--', 'Color', colors(i, :), 'LineWidth', 1.5);
+    plot(ax, t(2:end), abs(Q_rom(i, :)), 'Color', colors(i, :), 'LineWidth', 1.5);
+end
+xlabel(ax, '$t$', 'Interpreter', 'latex');
+ylabel(ax, '$q_i^{(\ell)}(t)$', 'Interpreter', 'latex');
+set(fig, 'Position', [175, 300, 560, 330]);
+print(fig, 'figures/adr_updatedoptcontrols.pdf', '-dpdf', '-r300', '-loose');
+close(fig);
+
+%% FOM solution with MD updated controls as a function of time (including init).
+nsnaps = 5;
+Y1 = Y_update_mean(:, 1, :);
+Y2 = Y_update_mean(:, 2, :);
+lim1 = 20; % max(Y1(:)) / 2;
+lim2 = 20; % max(Y2(:)) / 1.5;
+limmin = 1e-1;
+indices = round(linspace(1, length(t), nsnaps));
+for j = 1:nsnaps
+    ytextA = '';
+    ytextB = '';
+    if j == 1
+        ytextA = 'Contaminant';
+        ytextB = 'Neutralizer';
+    end
+    [figA, axA] = plotfield(solver, Y1(:, indices(j)), "viridis", j == nsnaps, ['$t=' num2str(t(indices(j))) '$'], ytextA, [limmin, lim1], false);
+    print(figA, ['figures/adr_updatedfom1-', num2str(j), '.png'], '-dpng', '-r300', '-loose');
+    close(figA);
+
+    [figB, axB] = plotfield(solver, Y2(:, indices(j)), "parula", j == nsnaps, '', ytextB, [limmin, lim2], false);
+    print(figB, ['figures/adr_updatedfom2-', num2str(j), '.png'], '-dpng', '-r300', '-loose');
+    close(figB);
+end
+
+%%
+val_hifi = zeros(n_t, 1);
+val_update = zeros(n_t, 1);
+u_hifi = Y_hifi(:, 1, :);
+u_update = Y_update_mean(:, 1, :);
+for k = 1:n_t
+    val_hifi(k) = opt.obj.g(u_hifi(:, k), t(k));
+    val_update(k) = opt.obj.g(u_update(:, k), t(k));
+end
+
+fig = figure;
+ax = subplot(1, 1, 1);
+hold on;
+plot(ax, t, val_hifi, 'Color', colors(1, :), 'LineWidth', 1.5);
+plot(ax, t, val_update, '--', 'Color', colors(2, :), 'LineWidth', 1.5);
+xlabel(ax, '$t$', 'Interpreter', 'latex');
+ylabel(ax, '$\| \mathbf{u}_1(t)*\mathbf{p} \|_{\mathbf{M}}^2$', 'Interpreter', 'latex');
+legend({'ROMCO Controls', 'Posterior Mean Controls'});
+set(fig, 'Position', [175, 300, 560, 330]);
+print(fig, 'figures/contaminant_mass.pdf', '-dpdf', '-r300', '-loose');
+close(fig);
+
 %% Postprocess saved figures.
 [os, ~] = computer;
 if strcmp(os, 'MACA64') || strcmp(os, 'MACI64')
@@ -156,7 +237,7 @@ if strcmp(os, 'MACA64') || strcmp(os, 'MACI64')
     %  - Download TeX from https://www.tug.org/mactex/mactex-download.html
     %  - Install brew from https://brew.sh/
     %  - Check `which pdfcrop` and `which magick` give the paths below.
-    setenv('PATH', [getenv('PATH') ':/Library/TeX/texbin' ':/opt/homebrew/bin']);
+    setenv('PATH', [getenv('PATH') ':/Library/TeX/texbin' ':/opt/homebrew/bin' ':/usr/local/opt/ghostscript/bin']);
     !for fname in figures/*.pdf; do pdfcrop --margin "1" "${fname}" "${fname}"; done
     !for fname in figures/*.png; do magick "${fname}" -trim +repage -bordercolor White -border 10x20 "${fname}"; done
     combinepngs('basis');
@@ -201,7 +282,9 @@ function [fig, ax] = plotfield(solver, data, cmp, cb, titletext, ylabeltext, lim
             cbar.Position = colorbarPos;
         end
         if ~isempty(limits)
-            clim(ax, limits);
+            % Function call depends on Matlab version
+            % clim(ax, limits);
+            caxis(ax, limits);
         end
         if logscale
             set(ax, 'ColorScale', 'log');
