@@ -141,12 +141,12 @@ for p = 1:N
     % Perform Posterior Sampling (TODO: Avoid recomputing computed data points)
     md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
     md_post_sampling.Compute_Posterior_Data(alpha_d, 1);
-    post_mean_z_hifi(:, p) = cell2mat(md_post_sampling.Posterior_Discrepancy_Samples(z_hifi));
-    post_mean_z_p(:, p) = cell2mat(md_post_sampling.Posterior_Discrepancy_Samples(z_p));
-    disp("Discrepancy Norm at Hifi z");
-    disp(vecnorm(post_mean_z_hifi(:, p)));
-    disp("Discrepancy Norm at Data z");
-    disp(vecnorm(post_mean_z_p(:, p)));
+    % post_mean_z_hifi(:, p) = cell2mat(md_post_sampling.Posterior_Discrepancy_Samples(z_hifi));
+    % post_mean_z_p(:, p) = cell2mat(md_post_sampling.Posterior_Discrepancy_Samples(z_p));
+    % disp("Discrepancy Norm at Hifi z");
+    % disp(vecnorm(post_mean_z_hifi(:, p)));
+    % disp("Discrepancy Norm at Data z");
+    % disp(vecnorm(post_mean_z_p(:, p)));
 
     % Obtain Optimal Solution Update
     md_update = MD_Update(md_post_sampling, md_hessian_analysis);
@@ -162,4 +162,18 @@ for p = 1:N
     end
 end
 
-pyplot(0:N, [Jhat_lofi; Jhat_oed], '.-', 'Title', 'Optimization Objective over Evals');
+% pyplot(0:N, [Jhat_lofi; Jhat_oed], '.-', 'Title', 'Optimization Objective over Evals');
+show_figures = true;
+if show_figures
+    figure;
+    hold on;
+    xlim([0 N]);
+    yline(Jhat_hifi, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
+    yline(Jhat_lofi, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
+    % plot(0:N, [Jhat_lofi; old_oed(1:N)], ".-", "Color", "#1F618D", "DisplayName", "Standard OED")
+    plot(0:N, [Jhat_lofi; Jhat_oed], ".-", "Color", "#00C83A", "DisplayName", "Sequential OED");
+    xlabel("Evaluations ($N$)", "Interpreter", "latex");
+    ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
+    legend("location", "east", "Interpreter", "latex");
+    title("Optimization Objective over Evals");
+end
