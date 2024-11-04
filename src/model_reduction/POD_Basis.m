@@ -74,7 +74,6 @@ classdef POD_Basis < Basis
 
             this.economize = false;
             this.maxdim = size(Y, 2);       % Maximum number of basis vectors.
-            this.r = this.maxdim;
 
             % Shift snapshots by the mean if desired.
             if shift
@@ -89,24 +88,28 @@ classdef POD_Basis < Basis
                 W = ones(size(Y, 1), 1);
             end
 
+            % Eigendecomposition of Y' W Y (method of snapshots).
             if avoidW_factor
 
                 C = Y' * (W * Y);
                 C = 0.5 * (C + C');
                 [V, D] = eig(C, 'vector');
+                % Truncate small singular values.
                 I = find(D / max(D) > 1.e-14);
                 D = D(I);
                 V = V(:, I);
+                % Reverse eigenvalue/vector order to largest-to-smallest.
                 I = linspace(length(D), 1, length(D));
                 D = D(I);
                 V = V(:, I);
+                % Piece together the basis.
                 D = sqrt(D);
                 U = Y * V * diag(1 ./ D);
-
+                % Store results.
                 this.singular_vectors = U;
                 this.singular_values = D;
-                this.r = length(D);
                 this.W = W;
+                this.maxdim = length(D);
 
             else
 
@@ -135,6 +138,8 @@ classdef POD_Basis < Basis
                 this.singular_values = diag(svdvals);
 
             end
+
+            this.r = this.maxdim;
         end
 
         %% Getters and setters.
