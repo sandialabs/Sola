@@ -78,7 +78,9 @@ for i = 1:nlines
 end
 xlabel(ax, '$t$', 'Interpreter', 'latex');
 ylabel(ax, '$q_i^{(\ell)}(t)$', 'Interpreter', 'latex');
+ylim(ax, [0, 15]);
 set(fig, 'Position', [175, 300, 560, 330]);
+set(title('Training Controls'), 'FontWeight', 'normal');
 print(fig, 'figures/adr_traincontrols.pdf', '-dpdf', '-r300', '-loose');
 close(fig);
 
@@ -122,18 +124,21 @@ for i = 1:nlines
 end
 xlabel(ax, '$t$', 'Interpreter', 'latex');
 ylabel(ax, '$q_i^{(\ell)}(t)$', 'Interpreter', 'latex');
+ylim(ax, [0, 15]);
 set(fig, 'Position', [175, 300, 560, 330]);
+set(title('Optimized Controls'), 'FontWeight', 'normal');
 print(fig, 'figures/adr_optcontrols.pdf', '-dpdf', '-r300', '-loose');
 close(fig);
 
 %% FOM solution with ROMCO controls as a function of time (including init).
-nsnaps = 5;
+nsnaps = 4;
 Y1 = Y_hifi(:, 1, :);
 Y2 = Y_hifi(:, 2, :);
 lim1 = 20; % max(Y1(:)) / 2;
 lim2 = 20; % max(Y2(:)) / 1.5;
 limmin = 1e-1;
-indices = round(linspace(1, length(t), nsnaps));
+indices = round(linspace(1, length(t), nsnaps + 1));
+indices = indices(2:end);
 for j = 1:nsnaps
     ytextA = '';
     ytextB = '';
@@ -141,11 +146,11 @@ for j = 1:nsnaps
         ytextA = 'Contaminant';
         ytextB = 'Neutralizer';
     end
-    [figA, axA] = plotfield(solver, Y1(:, indices(j)), "viridis", j == nsnaps, ['$t=' num2str(t(indices(j))) '$'], ytextA, [limmin, lim1], false);
+    [figA, axA] = plotfield(solver, Y1(:, indices(j)), "viridis", j == nsnaps, ['$t=' num2str(t(indices(j))) '$'], ytextA, [limmin, lim1], false, true);
     print(figA, ['figures/adr_romcofom1-', num2str(j), '.png'], '-dpng', '-r300', '-loose');
     close(figA);
 
-    [figB, axB] = plotfield(solver, Y2(:, indices(j)), "parula", j == nsnaps, '', ytextB, [limmin, lim2], false);
+    [figB, axB] = plotfield(solver, Y2(:, indices(j)), "parula", j == nsnaps, '', ytextB, [limmin, lim2], false, true);
     print(figB, ['figures/adr_romcofom2-', num2str(j), '.png'], '-dpng', '-r300', '-loose');
     close(figB);
 end
@@ -249,7 +254,7 @@ end
 
 %% Helper functions
 
-function [fig, ax] = plotfield(solver, data, cmp, cb, titletext, ylabeltext, limits, logscale)
+function [fig, ax] = plotfield(solver, data, cmp, cb, titletext, ylabeltext, limits, logscale, setticks)
     % data - XY data to plot
     % cmp - colormap (viridis or 'parula')
     % cb - whether to include a colorbar (true or false)
@@ -262,6 +267,7 @@ function [fig, ax] = plotfield(solver, data, cmp, cb, titletext, ylabeltext, lim
         ylabeltext = ''     % text for the ylabel
         limits = []         % limits for the data
         logscale = false    % if True, logarithmically scale the colors.
+        setticks = false    % if True, set the ticks of the colorbar manually.
     end
 
     fig = figure;
@@ -273,6 +279,9 @@ function [fig, ax] = plotfield(solver, data, cmp, cb, titletext, ylabeltext, lim
         hold on;
         scatter(ax, solver.control_nodes(1, :), solver.control_nodes(2, :), 36, "black", "filled", "o");
     else
+        fill(ax, [0 1.2 1.2 0], [0 0 1.2 1.2], [0.6 0.6 0.6], 'EdgeColor', 'none');
+        ax.Layer = 'top';
+        hold on;
         pdeplot(solver.model.Mesh, XYData = data, ColorMap = cmp, ColorBar = "off");
         if cb
             % Colorbar.
@@ -280,6 +289,9 @@ function [fig, ax] = plotfield(solver, data, cmp, cb, titletext, ylabeltext, lim
             colorbarPos = cbar.Position;
             colorbarPos(1) = colorbarPos(1) - 0.01;
             cbar.Position = colorbarPos;
+            if setticks
+                cbar.Ticks = 2:2:18;
+            end
         end
         if ~isempty(limits)
             % Function call depends on Matlab version

@@ -1,8 +1,8 @@
 classdef Transient_ADR_2D < handle
     % Solve the following two-species transient advection-diffusion-reaction equations
     %
-    %     du1/dt - \kappa_1\Delta u_1 = -\alpha_1 v \cdot u - \rho u_1 u_2
-    %     du2/dt - \kappa_2\Delta u_2 = -\alpha_2 v \cdot u + f
+    %     du1/dt - \kappa_1\Delta u_1 = -\alpha v \cdot u - \rho u_1 u_2
+    %     du2/dt - \kappa_2\Delta u_2 = -\alpha v \cdot u - \rho u_1 u_2 + f
     %
     % over a two-dimensional domain with
     % homogeneous Dirichlet boundary conditions.
@@ -20,12 +20,10 @@ classdef Transient_ADR_2D < handle
     properties
         model           % PDE toolbox model, made with createpde.
         control_nodes   % Coordinates of the control nodes (2 x n_q).
-        diffusion       % Diffusion coefficients (default = 0.05).
-        advection       % Advection coefficients (default = 4.00).
-        reactant        % Reaction coefficient (default = 0.01).
         init_center     % Center of the initial condition blob (2 x 1).
-        v_weights       % Weights forcing the velocity to obey no-slip conditions.
-        vel_params      % Vector of parameters defining velocity field
+        diffusion       % Diffusion coefficients (default = 0.10).
+        advection       % Advection coefficient (default = 6.00).
+        reactant        % Reaction coefficient (default = 10.0).
     end
 
     properties (Dependent)
@@ -63,13 +61,16 @@ classdef Transient_ADR_2D < handle
     methods (Access = public)
 
         %% Constructor
-        function this = Transient_ADR_2D(model, init_center, diffusion_coeffs, advection_coeffs, reaction_coeff, nodes)
+        function this = Transient_ADR_2D(model, nodes, init_center, ...
+                                         diffusion_coeffs, advection_coeff, reaction_coeff)
             % Initialize (but do not solve) the problem.
             %
             % Parameters
             % ----------
             % model
             %   Initialized pdetoolbox model object (made with ``model = createpde(2);``).
+            % nodes : (2 x n_q)
+            %   Coordinates of control nodes (neutralizer dispersal locations).
             % init_center : [float, float]
             %   Center of the initial condition blob.
             % diffusion_coeffs : [float, float]
@@ -78,48 +79,31 @@ classdef Transient_ADR_2D < handle
             %   Advection coefficients. Larger means more advection.
             % reaction_coeff : float
             %   Reaction coefficient. Larger means more reaction.
-            % nodes : int or str
-            %   Number of sources OR a 2xn_q matrix of center coordinates.
 
             arguments
                 model
-                init_center
-                diffusion_coeffs {mustBePositive} = [0.05, 0.05]
-                advection_coeffs {mustBePositive} = [4.00, 4.00]
+                nodes
+                init_center = []
+                diffusion_coeffs {mustBePositive} = [0.075, 0.075]
+                advection_coeff {mustBePositive} = 2.50
                 reaction_coeff {mustBePositive} = 10
-                nodes = 16
             end
 
-            % Initialize the control node centers.
-            if isscalar(nodes)
-                qx = linspace(-1, 1, floor(sqrt(nodes)) + 2);
-                qx = qx(2:end - 1);
-                control_nodes = combinations(qx, qx);
-                this.control_nodes = control_nodes{:, :}';
-            else
-                this.control_nodes = nodes;
-            end
-
-            % Calculate velocity weights.
-            boundaryNodes = findNodes(model.Mesh, 'region', 'edge', 1:model.Geometry.NumEdges);
-            coordinates = model.Mesh.Nodes(:, boundaryNodes);
-            num_elements = size(model.Mesh.Nodes, 2);
-            distances = zeros(num_elements, 1);
-            for i = 1:num_elements
-                node = model.Mesh.Nodes(:, i);
-                nearest_index = dsearchn(coordinates', node');
-                nearest_Bnode = coordinates(:, nearest_index);
-                distances(i) = sum((nearest_Bnode - node).^2);
-            end
-            this.v_weights = 1 - exp(-1000 .* distances);
-
-            % Save the model.
-            this.diffusion = reshape(diffusion_coeffs, 2, 1);
-            this.advection = reshape(advection_coeffs, 2, 1);
-            this.reactant = reaction_coeff;
-            this.init_center = reshape(init_center, 2, 1);
-            this.vel_params = [1; 1; 10; 75];
             this.model = model;
+            this.control_nodes = nodes;
+
+            if size(init_center) == 0
+                x = this.x(:);
+                xmin = min(x);
+                xloc = xmin + (max(x) - xmin) * 0.05;
+                yloc = mean(this.y(:));
+                init_center = [xloc; yloc];
+            end
+
+            this.init_center = reshape(init_center, 2, 1);
+            this.diffusion = reshape(diffusion_coeffs, 2, 1);
+            this.advection = advection_coeff;
+            this.reactant = reaction_coeff;
         end
 
         function [objective] = Make_Objective(this, center, T, n_t, beta_reg)
@@ -171,7 +155,7 @@ classdef Transient_ADR_2D < handle
             out = 50 * exp(-50 .* sum(([x; y] - this.init_center).^2, 1)); % + 1;
         end
 
-        function [v] = Velocity(this, x, ~)
+        function [v] = Velocity(~, x, ~)
             % Constant velocity field: constant -> in x, sin(x) in y,
             % with x-dependent rotation.
             %
@@ -187,23 +171,9 @@ classdef Transient_ADR_2D < handle
             % v : (n x 2)
             %   Velocity in x and y directions at the given coordinates.
             xx = reshape(x, [], 1);
-            xmin = min(this.x(:));
-            xmax = max(this.x(:));
-            xspan = xmax - xmin;
             n = size(xx, 1);
-            flow = [this.vel_params(1) * ones(n, 1), this.vel_params(2) * sin(this.vel_params(3) * pi .* xx) / 2];
-            for i = 1:n
-                dx = (xx(i) - xmin) / xspan;
-                angl = pi * (-this.vel_params(4) * dx) / 180;
-                cosangl = cos(angl);
-                sinangl = sin(angl);
-                rotation = [cosangl -sinangl; sinangl cosangl];
-                flow(i, :) = flow(i, :) * rotation';
-                % % Weight velocity field for no-slip condition. EXPENSIVE!
-                % idx = dsearchn(this.model.Mesh.Nodes', [x(i), y(i)]);
-                % flow(i, :) = flow(i, :) * this.v_weights(idx);
-            end
-            v = flow;
+            v = zeros(n, 2);
+            v(:, 1) = ones(n, 1);
         end
 
         function [r] = Reaction(~, y1, y2)
@@ -319,14 +289,13 @@ classdef Transient_ADR_2D < handle
             end
 
             for i = 1:2
-                ax = subplot(1, 2, i);
+                subplot(1, 2, i);
                 pdeplot(this.model.Mesh, XYData = y(:, i), ColorMap = "parula");
                 if logscale && min(y(:, i), [], "all") > 0
-                    set(ax, 'ColorScale', 'log');
+                    set(gca, 'ColorScale', 'log');
                 end
                 colorbar;
                 title(name);
-                ax.Color = [0.6, 0.6, 0.6];
             end
         end
 
@@ -413,9 +382,9 @@ classdef Transient_ADR_2D < handle
                 ys = [u(:, 1, j), u(:, 2, j)];
                 this.Plot_Field(abs(ys), ['t = t_{', num2str(j), '}'], logscale, true);
                 subplot(1, 2, 1);
-                caxis(limits);
+                clim(limits);
                 subplot(1, 2, 2);
-                caxis(limits);
+                clim(limits);
                 % drawnow;
                 % writeVideo(outputVideo, getframe(gcf));
                 % pause(waittime);
@@ -437,6 +406,74 @@ classdef Transient_ADR_2D < handle
             end
 
             this.Animate_Solution([ones(this.n_x, n_t); Bz], false);
+        end
+
+        function Plot_Contours(this, y, nlevels, limits)
+            arguments
+                this
+                y
+                nlevels {mustBePositive} = 10
+                limits = []
+            end
+
+            if size(y, 2) == 1
+                y_new = zeros(this.n_x, 2);
+                y_new(:, 1) = y(1:this.n_x, 1);
+                if size(y, 1) == 2 * this.n_x
+                    y_new(:, 2) = y(this.n_x + 1:end, 1);
+                end
+                y = y_new;
+            end
+
+            nodes = this.model.Mesh.Nodes;
+            xx = linspace(min(nodes(1, :)), max(nodes(1, :)), 100);
+            yy = linspace(min(nodes(2, :)), max(nodes(2, :)), 100);
+            [XX, YY] = meshgrid(xx, yy);
+
+            ax = subplot(1, 1, 1);
+            UU = griddata(nodes(1, :), nodes(2, :), y(:, 1), XX, YY);
+            contourf(ax, XX, YY, UU, nlevels);
+            colorbar;
+            if size(limits) > 0
+                clim(ax, limits);
+            end
+            % title(name);
+        end
+
+        function Animate_Contours(this, u, nlevels, exportto)
+            arguments
+                this
+                u
+                nlevels {mustBePositive} = 10
+                exportto {mustBeText} = 'contours.mp4'
+            end
+
+            figure(50);
+            if ndims(u) == 2
+                unew = zeros(this.n_x, 2, size(u, 2));
+                unew(:, 1, :) = u(1:this.n_x, :);
+                unew(:, 2, :) = u(this.n_x + 1:end, :);
+                u = unew;
+            end
+
+            n_t = size(u, 3);
+            umax = max(abs(u), [], "all");
+            umin = min(abs(u), [], "all");
+            limits = [umin, umax];
+
+            outputVideo = VideoWriter(exportto, 'MPEG-4');
+            outputVideo.FrameRate = 10;
+            open(outputVideo);
+
+            for j = 1:n_t
+                this.Plot_Contours([u(:, 1, j), u(:, 2, j)], nlevels, limits);
+                title(gca, ['t = t_{', num2str(j), '}']);
+                drawnow;
+                writeVideo(outputVideo, getframe(gcf));
+                pause(.1);
+            end
+
+            close(outputVideo);
         end
 
     end
@@ -469,8 +506,8 @@ classdef Transient_ADR_2D < handle
             % out (2 x n)
             %   Advection term evaluated at the spatial locations.
             velocity = this.Velocity(loc.x, loc.y)';
-            agrad1 = this.advection(1) .* [state.ux(1, :); state.uy(1, :)];
-            agrad2 = this.advection(2) .* [state.ux(2, :); state.uy(2, :)];
+            agrad1 = this.advection .* [state.ux(1, :); state.uy(1, :)];
+            agrad2 = this.advection .* [state.ux(2, :); state.uy(2, :)];
             out = [-sum(velocity .* agrad1, 1); -sum(velocity .* agrad2, 1)];
         end
 
@@ -536,8 +573,9 @@ classdef Transient_ADR_2D < handle
             % ----------
             % loadfile : str
             %   File to load mesh data from. Must have the following fields.
-            %   - 'points'
-            %   - 'triangles'
+            %
+            %   * ``'points'``
+            %   * ``'triangles'``
 
             arguments
                 loadfile {mustBeText}
@@ -553,31 +591,6 @@ classdef Transient_ADR_2D < handle
             % Enforce homogeneous Neumann boundary conditions everywhere.
             nE = model.Geometry.NumEdges;
             applyBoundaryCondition(model, "neumann", "Edge", 1:nE, g = [0; 0], q = [0, 0; 0, 0]);
-        end
-
-        function [model] = model_default(Hmax)
-            % Initialize (but do not solve) the pde model. This option
-            % creates a default box geometry with a given mesh parameter.
-            %
-            % Parameters
-            % ----------
-            % Hmax : float
-            %   Maximum spacing in the spatial mesh. Smaller Hmax means a
-            %   finer mesh (more degrees of freedom).
-
-            arguments
-                Hmax {mustBePositive} = 0.05
-            end
-
-            % Initialize PDE object.
-            model = createpde(2);
-
-            % Set up the (square) geometry.
-            geometryFromEdges(model, @squareg);
-            generateMesh(model, "Hmax", Hmax);
-
-            % Enforce homogeneous Dirichlet boundary conditions.
-            applyBoundaryCondition(model, "neumann", "Edge", 1:4, g = [0; 0], q = [0, 0; 0, 0]);
         end
 
     end
