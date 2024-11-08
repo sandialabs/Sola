@@ -1,4 +1,4 @@
-clear;
+clear;hto 
 close all;
 clc;
 addpath('../../src/');
@@ -32,7 +32,7 @@ num_adjoint_solves_linear_approx = con.num_adjoint_solves;
 linear_approx_cost = num_state_solves_linear_approx + num_adjoint_solves_linear_approx;
 
 %%
-N_range = (6:2:30)';
+N_range = (6:2:16)';
 fe_error = 0 * N_range;
 fe_cost = 0 * N_range;
 fe_param_qn_error = 0 * N_range;
