@@ -9,12 +9,17 @@
 #     pass
 from fenics_helpers_noadj import *
 
+from pathlib import Path
+root_path = Path(__file__).parent
+u_timeseries = TimeSeries(f"{root_path}/../../data/velocity_timeseries_midfi_1d")
+
 N = 30;
 unit_mesh = UnitIntervalMesh(N);
+ds = generate_ds(unit_mesh)
 
 # Define Function Spaces
-P2 = FiniteElement('CG', unit_mesh.ufl_cell(), 2)
 P1 = FiniteElement('CG', unit_mesh.ufl_cell(), 1)
+P2 = FiniteElement('CG', unit_mesh.ufl_cell(), 2)
 
 C = FunctionSpace(unit_mesh, P1) # Tracer
 U = FunctionSpace(unit_mesh, P2) # Velocity
@@ -77,21 +82,24 @@ T = 0.1
 num_steps = 25
 dt = Constant(T/num_steps)
 gamma = Constant(0.025)
-reac_fn = lambda c: Constant(10) * c
+reac_fn = lambda c: Constant(10) * c# - Constant(5)
+reac_fn_multiplier = Constant(10) # NOTE: MODIFIED!!!
 alpha = Constant(1)
 rcv = Constant(1)
 
 # Weak Form of PDE 
 F_1 = (1/dt*(r-r_n)*v_r + u*r.dx(0)*v_r + r*u.dx(0)*v_r) * dx;
 F_2 = (1/dt*(u-u_n)*r*v_u + u*u.dx(0)*r*v_u - p*v_u.dx(0)) * dx;
-F_3 = (1/dt*(e-e_n)*r*v_e + u*e.dx(0)*r*v_e + p*u.dx(0)*v_e + alpha*e.dx(0)*(r*v_e.dx(0) + r.dx(0)*v_e) - r*reac_fn(c)*v_c) * dx
+F_3 = (1/dt*(e-e_n)*r*v_e + u*e.dx(0)*r*v_e + p*u.dx(0)*v_e + alpha*e.dx(0)*(r*v_e.dx(0) + r.dx(0)*v_e) - reac_fn_multiplier*r*reac_fn(c.dx(0))*v_e) * dx
+# F_3 = (1/dt*(e-e_n)*r*v_e + u*e.dx(0)*r*v_e + p*u.dx(0)*v_e + alpha*e.dx(0)*(r*v_e.dx(0) + r.dx(0)*v_e) ) * dx
 F_4 = ((p - rcv*r*e)*v_p) * dx;
-F_c = (1/dt * (c - c_n) * v_c + gamma*c.dx(0)*v_c.dx(0) + u*c.dx(0)*v_c + u.dx(0)*c*v_c + reac_fn(c)*v_c) * dx 
+# F_c = (1/dt * (c - c_n) * v_c + gamma*c.dx(0)*v_c.dx(0) + u*c.dx(0)*v_c + u.dx(0)*c*v_c + reac_fn(c)*v_c) * dx 
+F_c = (1/dt * (c - c_n) * v_c + gamma*c.dx(0)*v_c.dx(0) + u*c.dx(0)*v_c + u.dx(0)*c*v_c + reac_fn(c)*v_c) * dx - c.dx(0)*v_c*ds
 F = F_1 + F_2 + F_3 + F_4 + F_c
 
 assemble(F); # This is just to get FFC JIT started well before PDE solve.
 
-def state_solve(c0, return_type: Literal["vertex", "vector", "petsc", "function"], plot_c=False, return_all = False):
+def state_solve(c0, return_type: Literal["vertex", "vector", "petsc", "function"], plot_c=False, return_all=False, store_midfi=False):
     global t
 
     # Reset initial conditions
@@ -122,6 +130,7 @@ def state_solve(c0, return_type: Literal["vertex", "vector", "petsc", "function"
         p_n.assign(cupre.sub(2, True))
         r_n.assign(cupre.sub(3, True))
         e_n.assign(cupre.sub(4, True))
+        if store_midfi: u_timeseries.store(u_n.vector(), float(t))
         if plot_c: plot(c_n)
         if return_all: k_list.append(c_n.vector()[:])
     

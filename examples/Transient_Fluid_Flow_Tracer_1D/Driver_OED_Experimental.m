@@ -8,11 +8,7 @@ set(0, "DefaultLineLineWidth", 3);
 set(0, "DefaultLineMarkerSize", 20);
 
 % Set Python environment and variables
-setenv('PKG_CONFIG_PATH', '/usr/local/anaconda3/envs/FenicsEnvCompat/lib/pkgconfig');
-setenv('PKG_CONFIG', '/usr/local/anaconda3/envs/FenicsEnvCompat/bin/pkg-config');
 pyenv('Version', '/usr/local/anaconda3/envs/FenicsEnvCompat/bin/python', 'ExecutionMode', 'InProcess');
-setenv('PKG_CONFIG_PATH', '/usr/local/anaconda3/envs/FenicsEnvCompat/lib/pkgconfig');
-setenv('PKG_CONFIG', '/usr/local/anaconda3/envs/FenicsEnvCompat/bin/pkg-config');
 pythonFilePath = 'python';
 if count(py.sys.path, pythonFilePath) == 0
     insert(py.sys.path, int32(0), pythonFilePath);
@@ -53,12 +49,12 @@ fprintf('Objective of z_hifi: \t%.3f\n\n', Jhat_hifi);
 data_interface = MD_Data_Interface_Tracer(u_lofi, z_lofi);
 
 % Generate Priors for u and z
-alpha_d = 2e-3; % Must be picked carefully. Causes bouncing issues if small; Decays too slowly if large (controls speed of improvement)
-alpha_z = 1.e-4; % No major impact
-alpha_u = (4)^2; % Larger prior if large.
+alpha_d = 1.e-7; % Controls speed of improvement (large)
+alpha_z = 0.1; % If too large, may cause bouncing.
+alpha_u = (0.2)^2; % Larger prior if large.
 beta_t = 50;
-beta_i = 1.e5; % HUGE IMPACT!
-num_evals = 4; % significant impact when very small; very little beyond
+beta_i = 1.e5; % Minimal Impact
+num_evals = 6; % significant impact when very small; very little beyond
 oversampling = 1;
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Tracer(alpha_z, opt_lofi);
 
@@ -72,9 +68,7 @@ u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface_Tracer(alpha_u, tran
 % num_prior_samples = 100;
 % md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 % delta_samples = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
-% pyplot(x, delta_samples(end-30:end, :), '-')
-% dsm = cell2mat(delta_samples');
-% pyplot(x, dsm(end-30:end, :), '-')
+% plot(x, delta_samples(end-30:end, :))
 
 % Error with z_hifi
 oed_z_error_fn = @(z) sqrt((z - z_hifi)' * z_prior_interface.Apply_M_z(z - z_hifi)) / sqrt(z_hifi' * z_prior_interface.Apply_M_z(z_hifi));
@@ -87,9 +81,9 @@ disp("Computing Hessian GEVP...");
 md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_init, num_evals, oversampling);
 
 % Perform Offline OED Computations
-alpha_zd = 1.e-2;
-beta_zd = 1.e-2;
-reg_coeff = 1.e-6;
+alpha_zd = 1.e-1;
+beta_zd = 1.e-1;
+reg_coeff = 1.e-12;
 beta_0 = randn(num_evals, 1);
 oed_interface = MD_OED_Interface_Tracer(data_interface, con_lofi, alpha_zd, beta_zd);
 

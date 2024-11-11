@@ -36,7 +36,7 @@ num_steps = 25
 dt = Constant(T/num_steps)
 t = Constant(0);
 gamma = Constant(0.025)
-reac_fn = lambda c: Constant(10) * c# - Constant(5)
+reac_fn = lambda c: Constant(10) * c
 
 # Retreive velocity from Timeseries
 u_timeseries = TimeSeries(f"{root_path}/../../data/velocity_timeseries_midfi_1d")
@@ -76,8 +76,8 @@ def state_solve(k0_input, return_type: Literal["vertex", "vector", "petsc", "fun
         t.assign(float(t)+float(dt))
         u_n = Function(U)
         u_timeseries.retrieve(u_n.vector(), float(t))
-        u_n.vector()[:] = 0.5 * u_n.vector()[:]
-        F_k = (1/dt * (k - k_n) * v_k + gamma*k.dx(0)*v_k.dx(0) + u_n*k.dx(0)*v_k + u_n.dx(0)*k*v_k + reac_fn(k)*v_k) * dx - k.dx(0)*v_k*ds
+        u_n.vector()[:] = u_n.vector()[:]*2
+        F_k = (1/dt * (k - k_n) * v_k + gamma*k.dx(0)*v_k.dx(0) + u_n*k.dx(0)*v_k + u_n.dx(0)*k*v_k + reac_fn(k)*v_k) * dx - gamma*k.dx(0)*v_k*ds
         solve(F_k == 0, k, J=derivative(F_k, k))
         k_n.assign(k)
         if return_all: k_list.append(k_n.vector()[:])
@@ -125,13 +125,13 @@ def state_solve_all_obj(k0, kt_in, annotate=True, verbose=False):
     set_log_level(log_level)
 
     # Return sum of inner product objectives with test vectors
-    return 1.e4*J_output
+    return J_output
 
 def J(k0, kt):
     # Convert inputs to functions
     k0 = fenics_convert(k0, "function", fun_space=K)
     kt = fenics_convert(kt, "function", fun_space=K)
-    val = 1.e4*assemble(0.5*inner(kt - k_terminal, kt - k_terminal)*dx + 0.5 * beta * inner(k0.dx(0), k0.dx(0)) * dx)
+    val = assemble(0.5*inner(kt - k_terminal, kt - k_terminal)*dx + 0.5 * beta * inner(k0.dx(0), k0.dx(0)) * dx)
     return val
 
 J_hat_np = None;

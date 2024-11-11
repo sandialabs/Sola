@@ -18,4 +18,4 @@ with lofi.stop_verbose():
 k_opt_lofi = lofi.state_solve(k0_opt_lofi, return_type = "vector", plot_k=False, verbose=False, annotate=True);
 
 # Save the array to a .mat file
-savemat('data/lofi_optim_sol.mat', {'k0_opt_lofi': lofi.fenics_convert(k0_opt_lofi, "vector"), 'k_opt_lofi': k_opt_lofi}, oned_as='column')
+savemat('../../data/lofi_optim_sol.mat', {'k0_opt_lofi': lofi.fenics_convert(k0_opt_lofi, "vector"), 'k_opt_lofi': k_opt_lofi}, oned_as='column')
