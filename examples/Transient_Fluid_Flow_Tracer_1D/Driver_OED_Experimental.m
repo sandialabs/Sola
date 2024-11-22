@@ -35,8 +35,10 @@ Jhat_lofi_fn = @(z) obj.J(con_lofi.State_Solve_Terminal(z), z);
 % Obtain high-fidelity and low-fidelity optimizersß
 z_lofi = load("data/lofi_optim_sol.mat").k0_opt_lofi;
 u_lofi = con_lofi.State_Solve(z_lofi);
+disp("Evaluating Hi-Fi PDE at Hi-Fi Sol...");
 % u_lofi = load("data/lofi_optim_sol.mat").k_opt_lofi;
 z_hifi = load("data/hifi_optim_sol.mat").k0_hifi;
+u_hifi = con_hifi.State_Solve(z_hifi);
 
 % Show initial objective
 fprintf("\nStep 0:\n-------------");
@@ -49,8 +51,8 @@ fprintf('Objective of z_hifi: \t%.3f\n\n', Jhat_hifi);
 data_interface = MD_Data_Interface_Tracer(u_lofi, z_lofi);
 
 % Generate Priors for u and z
-alpha_d = 1.e-7; % Controls speed of improvement (large)
-alpha_z = 0.1; % If too large, may cause bouncing.
+alpha_d = 1.e-13; % Controls speed of improvement (large)
+alpha_z = 1.e-2; % If too large, may cause bouncing.
 alpha_u = (0.2)^2; % Larger prior if large.
 beta_t = 50;
 beta_i = 1.e5; % Minimal Impact
@@ -91,7 +93,7 @@ oed_interface = MD_OED_Interface_Tracer(data_interface, con_lofi, alpha_zd, beta
 % pyplot(x, con_hifi.State_Solve(z_lofi), 'r-', x, con_hifi.State_Solve(z_hifi), 'k--', 'Legend', {'Low-Fidelity', 'High-Fidelity'});
 
 %% Iterate for each data point
-N = 5;
+N = 3;
 Jhat_oed = zeros(N, 1);
 oed_z_error = zeros(N, 1);
 Z = [];
@@ -117,10 +119,10 @@ for p = 1:N
         z_p = z_lofi;
         % betas = [betas; 0*beta_0]; % This is for the updated sequential OED
     else
-        % z_p = z_bar;
-        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, reg_coeff, betas);
-        betas = [betas; beta_new];
-        z_p = z_p(:, end); % Redundancy for standard OED.
+        z_p = z_bar;
+        % [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, reg_coeff, betas);
+        % betas = [betas; beta_new];
+        % z_p = z_p(:, end); % Redundancy for standard OED.
     end
 
     % Obtain Discrepancies
@@ -135,12 +137,16 @@ for p = 1:N
     % Perform Posterior Sampling (TODO: Avoid recomputing computed data points)
     md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
     md_post_sampling.Compute_Posterior_Data(alpha_d, 1);
-    % post_mean_z_hifi(:, p) = cell2mat(md_post_sampling.Posterior_Discrepancy_Samples(z_hifi));
-    % post_mean_z_p(:, p) = cell2mat(md_post_sampling.Posterior_Discrepancy_Samples(z_p));
+    post_mean_z_hifi(:, p) = cell2mat(md_post_sampling.Posterior_Discrepancy_Samples(z_hifi));
+    post_mean_z_p(:, p) = cell2mat(md_post_sampling.Posterior_Discrepancy_Samples(z_p));
     % disp("Discrepancy Norm at Hifi z");
     % disp(vecnorm(post_mean_z_hifi(:, p)));
-    % disp("Discrepancy Norm at Data z");
-    % disp(vecnorm(post_mean_z_p(:, p)));
+    disp("Discrepancy Rel Err at Hifi z");
+    disp(vecnorm(post_mean_z_hifi(:, p) - u_hifi) / vecnorm(u_hifi));
+    disp("Discrepancy Norm at Data z");
+    disp(vecnorm(post_mean_z_p(:, p) - D_p) / vecnorm(D_p));
+    % disp("Actual Discrepancy Norm at Data z");
+    % disp(vecnorm(D_p));
 
     % Obtain Optimal Solution Update
     md_update = MD_Update(md_post_sampling, md_hessian_analysis);
