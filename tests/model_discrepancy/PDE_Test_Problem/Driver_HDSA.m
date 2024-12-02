@@ -4,7 +4,7 @@ close all;
 addpath(genpath('../../../src'));
 rng(1234423);
 
-suppress_figures = true;
+suppress_figures = false; %true;
 
 m = 200;
 diff_coeff = 1;
@@ -103,6 +103,11 @@ end
 %%
 opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
+
+num_evals = 10;
+oversampling = 10;
+md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
+
 md_update = MD_Update(md_post_samples, md_hessian_analysis);
 
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
