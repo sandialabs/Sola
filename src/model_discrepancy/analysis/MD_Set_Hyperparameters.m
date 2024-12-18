@@ -29,7 +29,10 @@ classdef MD_Set_Hyperparameters < handle
             % Want to solve:
             % sqrt(2) * Gamma(0.5 * (alpha_u * dof + 1) ) = target * Gamma(0.5 * alpha_u * dof)
             fun = @(alpha_u) this.alpha_u_fun(alpha_u, dof, target);
-            alpha_u = fsolve(fun, this.u_prior_interface.alpha_u);
+            [alpha_u, ~, flag] = fsolve(fun, this.u_prior_interface.alpha_u, optimoptions('fsolve', 'Display', 'off'));
+            if flag <= 0
+                disp('Error in nonlinear solve to determine alpha_u');
+            end
         end
 
         function [val] = alpha_u_fun(this, alpha_u, dof, target)
