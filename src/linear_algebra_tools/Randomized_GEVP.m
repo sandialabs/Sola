@@ -36,6 +36,8 @@ classdef Randomized_GEVP < handle
             AQ = this.Apply_Operator(Q);
             T = Q' * AQ;
 
+            T = 0.5 * (T + T');
+
             try
                 R_T = chol(T);
                 M = AQ * linsolve(R_T, eye(size(R_T, 1)));
