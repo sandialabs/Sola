@@ -40,15 +40,3 @@ ylabel('Source', 'Interpreter', 'latex');
 legend({'$z$', '$\tilde{z}$'}, 'location', 'north', 'Interpreter', 'latex');
 set(gca, 'FontSize', 24);
 set(gcf, 'Color', 'White');
-
-Z = zeros(m,2);
-Z(:,1) = z_lofi;
-Z(:,2) = z_lofi + 1;
-D = con_hifi.State_Solve(Z) - con_lofi.State_Solve(Z);
-
-u_opt = u_lofi;
-z_opt = z_lofi;
-save('u_opt.mat','u_opt')
-save('z_opt.mat','z_opt')
-save('Z.mat','Z');
-save('D.mat','D');

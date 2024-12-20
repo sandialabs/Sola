@@ -1,4 +1,4 @@
-classdef MD_Set_Hyperparameters < handle
+classdef MD_Determine_Hyperparameters < handle
 
     properties
         u_prior_interface
@@ -8,20 +8,32 @@ classdef MD_Set_Hyperparameters < handle
 
     methods
 
-        function [alpha_d] = Determine_alpha_d(this)
-            alpha_d = (0.001 * mean(abs(this.data_interface.D(:))))^2;
+        function [alpha_d] = Determine_alpha_d(this, scaling)
+            arguments
+                this
+                scaling(1,1) double {mustBeFinite} = 0.001;
+            end
+            alpha_d = (scaling * mean(abs(this.data_interface.D(:))))^2;
         end
 
-        function [alpha_z] = Determine_alpha_z(this, z)
-            E_z = this.z_prior_interface.Apply_E_z_Inverse(z - this.data_interface.z_opt);
+        function [alpha_z] = Determine_alpha_z(this, scaling)
+            arguments
+                this
+                scaling(1,1) double {mustBeFinite} = 0.25;
+            end
+            E_z = this.z_prior_interface.Apply_E_z_Inverse(this.data_interface.z_opt);
             M_E_z = this.z_prior_interface.Apply_M_z(E_z);
-            alpha_z = (0.25^2) / (E_z' * M_E_z);
+            alpha_z = (scaling^2) / (E_z' * M_E_z);
         end
 
-        function [alpha_u] = Determine_alpha_u(this)
+        function [alpha_u] = Determine_alpha_u(this, scaling)
+            arguments
+                this
+                scaling(1,1) double {mustBeFinite} = 1.0;
+            end
             delta = this.data_interface.Load_d_Data();
             delta_norm = sqrt(delta' * this.u_prior_interface.Apply_M_u(delta));
-            delta_norm = mean(diag(delta_norm));
+            delta_norm = scaling * mean(diag(delta_norm));
 
             target = delta_norm;
             dof = sum(this.u_prior_interface.sing_vals.^2);
@@ -39,7 +51,7 @@ classdef MD_Set_Hyperparameters < handle
             val = sqrt(2) * gamma(0.5 * (alpha_u * dof + 1)) - target * gamma(0.5 * alpha_u * dof);
         end
 
-        function this = MD_Set_Hyperparameters(u_prior_interface, z_prior_interface, data_interface)
+        function this = MD_Determine_Hyperparameters(u_prior_interface, z_prior_interface, data_interface)
             this.u_prior_interface = u_prior_interface;
             this.z_prior_interface = z_prior_interface;
             this.data_interface = data_interface;
