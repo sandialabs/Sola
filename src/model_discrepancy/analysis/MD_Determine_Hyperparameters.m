@@ -19,11 +19,22 @@ classdef MD_Determine_Hyperparameters < handle
         function [alpha_z] = Determine_alpha_z(this, scaling)
             arguments
                 this
-                scaling(1,1) double {mustBeFinite} = 0.25;
+                scaling(1,1) double {mustBeFinite} = 0.2;
             end
-            E_z = this.z_prior_interface.Apply_E_z_Inverse(this.data_interface.z_opt);
-            M_E_z = this.z_prior_interface.Apply_M_z(E_z);
-            alpha_z = (scaling^2) / (E_z' * M_E_z);
+
+            num_samples = 50;
+            samples = this.z_prior_interface.Sample_with_Covariance_W_z_Inverse(num_samples);
+            tmp = this.z_prior_interface.Apply_M_z(this.data_interface.z_opt);
+            tmp = sqrt(tmp'*this.data_interface.z_opt);
+            for k = 1:num_samples
+                samples(:,k) = tmp*samples(:,k)/sqrt(samples(:,k)'*this.z_prior_interface.Apply_M_z(samples(:,k)));
+            end
+            sample_norms = zeros(num_samples,1);
+            for k = 1:num_samples
+                E_z = this.z_prior_interface.Apply_E_z_Inverse(samples(:,k));
+                sample_norms(k) = E_z'*this.z_prior_interface.Apply_M_z(E_z);
+            end
+            alpha_z = (scaling^2) / mean(sample_norms);
         end
 
         function [alpha_u] = Determine_alpha_u(this, scaling)

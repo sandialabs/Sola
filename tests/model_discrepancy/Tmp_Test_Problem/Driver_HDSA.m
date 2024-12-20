@@ -4,7 +4,7 @@ close all;
 addpath(genpath('../../../src'));
 rng(1234423);
 
-suppress_figures = false; %true;
+suppress_figures = true;
 
 m = 200;
 diff_coeff = 1;
@@ -40,6 +40,14 @@ z_prior_interface.alpha_z = alpha_z;
 num_prior_samples = 100;
 md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 
+[prior_sample_norms,discrepancy_data_norms] = md_prior_sampling.Compute_Prior_Discrepancy_Norms(num_prior_samples);
+if ~suppress_figures
+    figure,
+    hold on
+    plot(linspace(.1,1.1,length(prior_sample_norms(:)))*length(prior_sample_norms(:)),prior_sample_norms(:),'o')
+    plot(zeros(length(discrepancy_data_norms),1),discrepancy_data_norms,'x','MarkerSize',30)
+end
+
 delta_samples = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
 if ~suppress_figures
     figure;
@@ -69,34 +77,35 @@ if ~suppress_figures
 end
 
 %%
-md_post_samples = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
+md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 %alpha_d = 1.e-5;
 num_post_samples = 100;
-md_post_samples.Compute_Posterior_Data(alpha_d, num_post_samples);
+md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
+
 Z_test = randn(m, 3);
-Z_test(:, 1:2) = md_post_samples.post_data.Z;
+Z_test(:, 1:2) = md_post_sampling.post_data.Z;
 Z_test(:, 3) = 1.5 * ones(m, 1);
-[delta_mean, delta_samples] = md_post_samples.Posterior_Discrepancy_Samples(Z_test);
+[delta_mean, delta_samples] = md_post_sampling.Posterior_Discrepancy_Samples(Z_test);
 
 if ~suppress_figures
     figure;
     hold on;
-    plot(x, md_post_samples.post_data.D(:, 1), 'color', 'black', 'LineWidth', 3);
+    plot(x, md_post_sampling.post_data.D(:, 1), 'color', 'black', 'LineWidth', 3);
     plot(x, delta_mean{1}, '--', 'color', 'red', 'LineWidth', 3);
     for k = 1:num_post_samples
         plot(x, delta_samples{1}(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
-    plot(x, md_post_samples.post_data.D(:, 1), 'color', 'black', 'LineWidth', 3);
+    plot(x, md_post_sampling.post_data.D(:, 1), 'color', 'black', 'LineWidth', 3);
     plot(x, delta_mean{1}, '--', 'color', 'red', 'LineWidth', 3);
 
     figure;
     hold on;
-    plot(x, md_post_samples.post_data.D(:, 2), 'color', 'black', 'LineWidth', 3);
+    plot(x, md_post_sampling.post_data.D(:, 2), 'color', 'black', 'LineWidth', 3);
     plot(x, delta_mean{2}, '--', 'color', 'red', 'LineWidth', 3);
     for k = 1:num_post_samples
         plot(x, delta_samples{2}(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
-    plot(x, md_post_samples.post_data.D(:, 2), 'color', 'black', 'LineWidth', 3);
+    plot(x, md_post_sampling.post_data.D(:, 2), 'color', 'black', 'LineWidth', 3);
     plot(x, delta_mean{2}, '--', 'color', 'red', 'LineWidth', 3);
 
     figure;
@@ -117,7 +126,7 @@ num_evals = 10;
 oversampling = 10;
 md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
 
-md_update = MD_Update(md_post_samples, md_hessian_analysis);
+md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
 
