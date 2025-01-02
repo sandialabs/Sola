@@ -3,6 +3,7 @@ classdef Chem_React_Network_Objective < Dynamic_Objective
     properties
         con
         target
+        target_species
         reg_coeff
     end
 
@@ -14,7 +15,8 @@ classdef Chem_React_Network_Objective < Dynamic_Objective
             this = this@Dynamic_Objective(n_y, n_z, T, n_t);
 
             this.con = con;
-            this.target = 125*con.state_scale/(con.nA*con.vol);
+            this.target = [200*con.state_scale/(con.nA*con.vol)];
+            this.target_species = [5];
             this.reg_coeff = 0;
         end
 
@@ -22,8 +24,8 @@ classdef Chem_React_Network_Objective < Dynamic_Objective
             val = 0;
             grad_y = 0 * y;
             if abs(t-this.T) < 1.e-12
-                val = (this.con.nA*this.con.vol/this.con.state_scale) * this.n_t * 0.5 * (y(6)-this.target)^2;
-                grad_y(6) = (this.con.nA*this.con.vol/this.con.state_scale) * this.n_t * (y(6)-this.target);
+                val = (this.con.nA*this.con.vol/this.con.state_scale) * this.n_t * 0.5 * sum((y(this.target_species)-this.target).^2);
+                grad_y(this.target_species) = (this.con.nA*this.con.vol/this.con.state_scale) * this.n_t * (y(this.target_species)-this.target);
             end
         end
 
@@ -35,7 +37,7 @@ classdef Chem_React_Network_Objective < Dynamic_Objective
         function [Mv] = g_yy_Apply(this, v, y, t)
             Mv = zeros(size(v));
             if abs(t-this.T) < 1.e-12
-                Mv(6,:) = (this.con.nA*this.con.vol/this.con.state_scale) * this.n_t * v(6,:);
+                Mv(this.target_species,:) = (this.con.nA*this.con.vol/this.con.state_scale) * this.n_t * v(this.target_species,:);
             end
         end
 

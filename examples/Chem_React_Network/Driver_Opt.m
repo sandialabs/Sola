@@ -21,6 +21,7 @@ if fd_check
     opt.Finite_Difference_Hessian_Check(z0);
 end
 
+opt.z_lb = 0;
 [u_opt, z_opt] = opt.Optimize(z0);
 
 num_samples = 500;
@@ -56,3 +57,13 @@ legend({'RRE','SSA'})
 title('Objective Function')
 set(gca,'FontWeight','Bold','FontSize',18)
 
+[~,i_lofi] = min(J_hifi);
+[~,i_hifi] = min(J_lofi);
+rel_error = abs(z_range(i_hifi)-z_range(i_lofi))/z_range(i_hifi);
+disp('Error in optimal z:')
+disp(rel_error)
+
+disp('Error in terminal species:')
+disp(abs(y_hifi(end,5)-y_opt(end,5))/(obj.target*con.nA*con.vol/con.state_scale))
+
+save('Optimization_Results.mat','u_opt','z_opt','u_hifi')

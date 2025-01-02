@@ -21,7 +21,7 @@ classdef React_Rate_Eqn < Dynamic_Constraint
             this = this@Dynamic_Constraint(n_y, n_z, T, n_t);
 
             this.k1 = 1.e9;
-            this.k2 = 1.e9;
+            this.k2 = 1.e8;
             this.k3 = 1.e8;
             this.k4 = 2.e8;
             this.k5 = 1.e9;
@@ -100,14 +100,15 @@ classdef React_Rate_Eqn < Dynamic_Constraint
         function [h, h_z] = h(this, z)
             h = zeros(9,1);
             h(1) = (z/this.opt_scale)/(this.nA*this.vol);
-            h(2) = 1200/(this.nA*this.vol);
-            h(3) = 1200/(this.nA*this.vol);
-            h(4) = 1200/(this.nA*this.vol);
+            h(2) = 5000/(this.nA*this.vol);
+            h(3) = 5000/(this.nA*this.vol);
+            h(4) = (5000 - z/this.opt_scale)/(this.nA*this.vol);
 
             h = h*this.state_scale;
 
             h_z = zeros(9,1);
             h_z(1) = 1/(this.nA*this.vol);
+            h_z(4) = -1/(this.nA*this.vol);
 
             h_z = h_z*this.state_scale/this.opt_scale;
         end
