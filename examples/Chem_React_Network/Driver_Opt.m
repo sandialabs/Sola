@@ -43,22 +43,29 @@ end
 
 num_evals = 31;
 z_range = z_opt*linspace(.95,1.05,num_evals)';
+J_stoch = zeros(num_evals,1);
 J_hifi = zeros(num_evals,1);
 J_lofi = zeros(num_evals,1);
 for k = 1:num_evals
-    u_k = SSA.SSA_Mean(z_range(k),num_samples);
+    [u_k,u_k_samps] = SSA.SSA_Mean(z_range(k),num_samples);
+    tmp = zeros(num_samples,1);
+    for j = 1:num_samples
+        tmp(j) = obj.J(u_k_samps(:,j),z_range(k));
+    end
+    J_stoch(k) = mean(tmp);
     J_hifi(k) = obj.J(u_k,z_range(k));
     J_lofi(k) = opt.Jhat(z_range(k));
 end
 
 figure,
-plot(z_range,J_lofi,z_range,J_hifi,'LineWidth',3)
-legend({'RRE','SSA'})
+plot(z_range,J_lofi,z_range,J_hifi,z_range,J_stoch,'LineWidth',3)
+legend({'RRE','SSA','Stoch'})
 title('Objective Function')
 set(gca,'FontWeight','Bold','FontSize',18)
 
-[~,i_lofi] = min(J_hifi);
-[~,i_hifi] = min(J_lofi);
+[~,i_stoch] = min(J_stoch);
+[~,i_hifi] = min(J_hifi);
+[~,i_lofi] = min(J_lofi);
 rel_error = abs(z_range(i_hifi)-z_range(i_lofi))/z_range(i_hifi);
 disp('Error in optimal z:')
 disp(rel_error)

@@ -29,7 +29,7 @@ classdef SSA_System < handle
             this.con = con;
         end
 
-        function [Y] = SSA_Mean(this,z,num_samples)
+        function [Y,Y_samps] = SSA_Mean(this,z,num_samples)
             Y_tmp = this.SSA_Solve(z);
             Y_samps = zeros(length(Y_tmp),num_samples);
             Y_samps(:,1) = Y_tmp;
