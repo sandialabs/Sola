@@ -1,10 +1,9 @@
-classdef MD_Elliptic_u_Prior_Interface < MD_u_Prior_Interface
+classdef MD_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
 
     properties
         sing_vecs_input
         sing_vecs_output
         sing_vals
-        alpha_u
     end
 
     methods (Abstract, Access = public)
@@ -27,16 +26,16 @@ classdef MD_Elliptic_u_Prior_Interface < MD_u_Prior_Interface
         end
 
         function this = MD_Elliptic_u_Prior_Interface(alpha_u)
-            this.alpha_u = alpha_u;
+            this@MD_Scaled_u_Prior_Interface(alpha_u);
         end
 
-        function [u_out] = Apply_W_u_Plus_scalar_M_u_Inverse(this, u_in, scalar)
-            K = (this.sing_vals.^2) ./ (1 + this.alpha_u * scalar * this.sing_vals.^2);
-            u_out = this.alpha_u * this.sing_vecs_output * diag(K) * this.sing_vecs_output' * u_in;
+        function [u_out] = Apply_W_u_Acute_Plus_scalar_M_u_Inverse(this, u_in, scalar)
+            K = (this.sing_vals.^2) ./ (1 + scalar * this.sing_vals.^2);
+            u_out = this.sing_vecs_output * diag(K) * this.sing_vecs_output' * u_in;
         end
 
-        function [u_out] = Apply_W_u_Inverse(this, u_in)
-            u_out = this.alpha_u * this.sing_vecs_output * diag(this.sing_vals.^2) * this.sing_vecs_output' * u_in;
+        function [u_out] = Apply_W_u_Acute_Inverse(this, u_in)
+            u_out = this.sing_vecs_output * diag(this.sing_vals.^2) * this.sing_vecs_output' * u_in;
         end
 
         % Compute samples from a mean zero Gaussian with covariance W_u^{-1}

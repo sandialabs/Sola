@@ -16,15 +16,10 @@ opt = Reduced_Space_Optimization(obj, con);
 data_interface = MD_Data_Interface_Chem_React_Network();
 data_interface.Load_Data();
 
-alpha_u = 1.e-1;
-alpha_z = 1.e-10;
+alpha_u = 0.0042;
+alpha_z = 0.0027;
 u_prior_interface = MD_Elliptic_u_Prior_Interface_Chem_React_Network(alpha_u, opt);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Chem_React_Network(alpha_z);
-
-determine_hyperparameters = MD_Determine_Hyperparameters(u_prior_interface,z_prior_interface,data_interface);
-alpha_u = determine_hyperparameters.Determine_alpha_u();
-alpha_z = determine_hyperparameters.Determine_alpha_z();
-alpha_d = determine_hyperparameters.Determine_alpha_d();
 
 %%
 num_prior_samples = 500;
@@ -45,6 +40,7 @@ end
 %%
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 num_post_samples = 500;
+alpha_d = 5.2405e-10;
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 Z_test = zeros(1, 2);
 Z_test(:, 1) = data_interface.z_opt;
