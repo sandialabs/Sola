@@ -1,0 +1,71 @@
+\documentclass[11pt]{article}
+\usepackage[scale=.78]{geometry}
+\usepackage{amssymb,amsmath,amsthm,amsbsy}
+\usepackage[affil-it]{authblk}
+\usepackage[title]{appendix}
+\usepackage[font=footnotesize,labelfont=bf]{caption}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{titlesec}
+
+\input{config}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue,
+    pdftitle={An Accessible Framework for Outer-loop Analyses in a High-performance Computing Context},
+    pdfauthor={Shane A. McQuarrie, Joseph Hart, Tim Wildey, Bart van Bloemen Waanders}
+}
+
+\linespread{1.1} % Line spacing
+\newcommand{\apdxref}[1]{\hyperref[#1]{Appendix~\ref{#1}}}
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{1em}{}
+
+\pdfinfo{
+   /Author (Shane A. McQuarrie, Joseph Hart, Tim Wildey, Bart van Bloemen Waanders)
+   /Title (An Accessible Framework for Outer-loop Analyses in a High-performance Computing Context)
+   /Keywords (KEYWORDS)
+}
+
+\title{\Large\textbf{An Accessible Framework for Outer-loop Analyses in a High-performance Computing Context}}
+
+% -----------------------------------------------------------------------------
+
+\author{Joseph~Hart}
+\author{Shane~A.~McQuarrie}
+\author{Bart~van~Bloemen~Waanders}
+\author{Tim~Wildey}
+\affil{\normalsize Scientific Machine Learning, Sandia National Laboratories}
+
+\date{}
+
+% -----------------------------------------------------------------------------
+
+\begin{document}
+
+\thispagestyle{empty}
+
+\maketitle
+
+\begin{abstract}
+\noindent
+\input{abstract}
+\end{abstract}
+
+% \vspace{2mm}
+% \noindent \emph{Keywords:} Prototyping, high-performance computing, PDE-constrained optimization, hyper differential sensitivity analysis, math or something
+
+\input{body}
+
+\begin{appendices}
+\titleformat{\section}{\normalfont\large\bfseries}{Appendix~\thesection}{1em}{}
+\input{appendix}
+\end{appendices}
+
+% \newpage
+\bibliographystyle{abbrv}
+\bibliography{references}
+\end{document}

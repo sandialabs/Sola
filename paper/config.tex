@@ -1,0 +1,49 @@
+% config.tex: configuration common to arXiv and TOMS formats.
+% Imports ---------------------------------------------------------------------
+\usepackage[nameinlink]{cleveref}
+\usepackage{comment}
+\usepackage[normalem]{ulem}  % Strikeout with \sout{}
+\usepackage{url}
+\usepackage{xcolor}
+\usepackage{xspace}
+
+% Page setup ------------------------------------------------------------------
+\numberwithin{equation}{section}
+
+% Macros ----------------------------------------------------------------------
+\newcommand{\trp}{^{\mathsf{T}}}
+
+\newcommand{\MATLAB}{\texttt{MATLAB}\xspace}
+\newcommand{\SABL}{\texttt{SABL}\xspace}
+\newcommand{\cpp}{\texttt{c++}\xspace}
+\newcommand{\MrHyDE}{\texttt{MrHyDE}\xspace}
+
+% Environments ----------------------------------------------------------------
+% % Algorithm comments: texttt and gray
+% \usepackage[section]{algorithm}
+% \usepackage[noend]{algpseudocode}
+% \algnewcommand{\LineComment}[1]{\State \textcolor{gray}{\texttt{\# #1}}}
+% \algrenewcomment[1]{\hfill\textcolor{gray}{\texttt{\# #1}}}
+
+% \theoremstyle{definition}
+% \newtheorem{remark}{Remark}[section]
+
+% Author comments -------------------------------------------------------------
+\definecolor{blue}{RGB}{0, 61, 165}
+\definecolor{sandiablue}{RGB}{0, 50, 90}
+\definecolor{sandiared}{RGB}{130, 36, 51}
+\definecolor{sandiapurple}{RGB}{148, 0, 211}
+\definecolor{burntorange}{cmyk}{0, 0.65, 1, .09}
+
+\newenvironment{purpose}{\color{red}\fontfamily{lmss}\selectfont\noindent}{}
+% \excludecomment{purpose}  % Remove purpose statements.
+
+\newcommand{\SM}[1]{{\textcolor{burntorange}{SM: #1}}}
+\newcommand{\JH}[1]{{\textcolor{sandiared}{JH: #1}}}
+\newcommand{\TW}[1]{{\textcolor{olive}{TW: #1}}}
+\newcommand{\BV}[1]{{\textcolor{sandiablue}{BV: #1}}}
+\newcommand{\shanenote}[1]{{\color{burntorange}Shane: {#1}}}
+\newcommand{\joeynote}[1]{{\color{sandiared}Joey: {#1}}}
+\newcommand{\timnote}[1]{{\color{olive}Tim: {#1}}}
+\newcommand{\bartnote}[1]{{\color{sandiablue}Bart: {#1}}}
+\newcommand{\rev}[2]{\textcolor{red}{\sout{#1}}\,\textcolor{cyan}{#2}}
