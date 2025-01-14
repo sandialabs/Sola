@@ -2,45 +2,115 @@
 
 TODO.
 
+\bartnote{Decided to focus the paper on HDSA. We can mention in the intro and/or conclusion that there are other outer-loop problems that we can use the \SABL $\to$ \MrHyDE approach for, but let the main focus be HDSA throughout.}
+
+\shanenote{Question: are we also presenting \texttt{HDSALib}? Or do we include that under the umbrella of \MrHyDE?}
+
 \begin{purpose}
 \begin{itemize}
 \item \textbf{Motivation}: Modern computational problems go beyond forward simulation and require outer-loop analyses (inverse problems, optimal experimental design, sensitivity analysis, optimization, uncertainty quantification, etc.)
-\item \textbf{Challenge}: Outer-loop problems are mathematically complicated (many moving pieces) and computationally demanding.
-\item \textbf{Challenge}: There do exist algorithms and approaches for solving outer-loop problems computationally, but such algorithms are difficult to implement at scale within HPC frameworks. HPC has high software complexity, lots of minutia.
-\item \textbf{Solution}: This paper presents two complementary software libraries that aim to lower the barrier to entry for practitioners who need to solve outer-loop problems. The first is a MATLAB library that implements the algorithms in a mathematically intuitive way and provides templates for interfacing with the algorithmic tools. The second is a \cpp library with a similar structure as the \MATLAB library but with state-of-the-art HPC features (parallelism, etc.).
-\item Two representative demonstrations: PDE-constrained optimization and HDSA.
-\item Final example cranks up the computational difficulty to 11.
+\item Introduce and motivate HDSA (really well), an outer-loop sensitivity analysis tool that sits on top of / wraps around large-scale constrained optimization problems. Model-form error, etc.
+\item \textbf{Challenge}: HDSA is mathematically complicated (many moving pieces) and computationally demanding.
+\item \textbf{Challenge}: Moreover, HDSA is difficult to implement at scale within HPC frameworks. HPC has high software complexity, lots of minutia (data types, parallelism and communication, etc.).
+\item \textbf{Solution}: This paper presents two complementary software libraries that aim to lower the barrier to entry for HDSA practitioners. The first is a MATLAB library that implements HDSA in a mathematically intuitive way and provides templates for interfacing with the algorithm. The second is a \cpp library with a similar structure as the \MATLAB library but with state-of-the-art HPC features (parallelism, optimization, etc.).
+\item \textbf{Goals of this paper}: A minimal-but-sufficient, accessible mathematical presentation of HDSA; present an HPC implementation that abstracts away much of the complexity inherent in HDSA and HPC.
+\item Two representative demonstrations: a simple problem (probably advection-diffusion) implemented in \SABL, then \MrHyDE; and a large-scale problem requiring the HPC tools available within \MrHyDE.
 \item Outline the paper.
 \end{itemize}
 \end{purpose}
 
-\section{PDE-constrained Optimization}
-
-Sample citation: \cite{biegler2007pdeconstrainedopt}
-
-\begin{purpose}
-\begin{itemize}
-\item Most outer-loop problems that we consider build on PDE-constrained optimization, so we start there.
-\item Define general optimization problem with constraints, introduce reduced-space formulation.
-\item Summarize the adjoint method, note which derivatives are needed.
-\item The inner loop is one forward solve to compute objective/constraint values/residuals and derivatives. The outer loop is the adjoint-based minimization.
-\item Outline this section.
-\end{itemize}
-\end{purpose}
-
-\subsection{Example Problem}
+\section{Hyper-differential Sensitivity Analysis for Model Discrepancy}
 
 TODO.
 
 \begin{purpose}
-Define exemplar, something not too complicated but still interesting.
+Accessible mathematical formulation of HDSA, minimal but sufficient to understand the implementation challenges and requirements.
 \end{purpose}
 
-\subsection{Prototypical PDE-Constrained Optimization in \MATLAB with \SABL}
+\subsection{PDE-Constrained Optimization}
+
+TODO.
 
 \begin{purpose}
-Introduce \SABL: scope, style, repository, etc.; this section shows how to solve the exemplar in \SABL.
+\begin{itemize}
+\item HDSA builds on PDE-constrained optimization, so we start there.
+\item Define general optimization problem with constraints, introduce reduced-space formulation.
+\item Summarize the adjoint method, note which derivatives are needed.
+\item The inner loop is one forward solve to compute objective/constraint values/residuals and derivatives. The outer loop is the adjoint-based minimization.
+\end{itemize}
 \end{purpose}
+
+\subsection{Model Discrepancy}
+
+TODO.
+
+\begin{purpose}
+\begin{itemize}
+\item Define the model discrepancy problem: our model for the PDE constraint may not account for all complexities of the true physics, so the solution to the PDE-constrained optimization problem must be adjusted.
+\item Define the rest of HDSA
+\end{itemize}
+\end{purpose}
+
+\subsection{Algorithmic Summary}
+
+TODO.
+
+\begin{purpose}
+Concise summary, consider a diagram like Figure 1 from \cite{hart2023hdsaoptimal}.
+\end{purpose}
+
+\section{An Implementation Framework for HDSA}
+
+\begin{purpose}
+Motivate having two libraries for HDSA (answer the question ``why would you implement this twice?'')
+\end{purpose}
+
+\subsection{Prototypical HDSA in \MATLAB with \SABL}
+
+TODO.
+
+\begin{purpose}
+\begin{itemize}
+\item Introduce \SABL: scope, style, repository, etc.
+\item Articulate reasons for selecting \MATLAB: intuitive/mathematical high-level syntax, backward compatibility, low barrier to entry, takes care of low-level computing tasks in the background, common/popular language in current engineering curriculum.
+\item Designed in such a way to emulate a \cpp HPC framework: object-oriented design, use \texttt{this} instead of \texttt{obj}, etc.
+\item Don't get too much into details yet.
+\end{itemize}
+\end{purpose}
+
+\subsection{High-performance HDSA in \cpp with \MrHyDE}
+
+TODO.
+
+\begin{purpose}
+\begin{itemize}
+\item Introduce \MrHyDE: scope, style, repository, etc.
+\item Comparison with \SABL: more dependencies, lower level, but higher power; \MrHyDE~also has robust forward solver (inner-loop) capabilities.
+\item Note again that \SABL is designed to prepare users for \MrHyDE
+\item Discuss how \MrHyDE addresses many of the challenges of working in an HPC environment.
+\item Don't get too much into details yet.
+\end{itemize}
+\end{purpose}
+
+\section{Example 1: Small Prototypical Problem}
+
+\begin{purpose}
+Something really simple that allows us to go through the details of each library and demonstrate that we get the same results, which is a way of validating the HDSA implementation for HPC.
+\end{purpose}
+
+\subsection{Problem Statement}
+
+TODO.
+
+\begin{purpose}
+Define exemplar, something quite simple (probably advection-diffusion)
+\end{purpose}
+
+\SM{It would be convenient to do something stationary so that, e.g., we only need to introduce the \texttt{Objective} and \texttt{Constraint} classes instead of also introducing \texttt{Dynamic\_Objective} and \texttt{Dynamic\_Constraint}.}
+
+\subsection{Solution via \SABL}
+
+TODO.
 
 \subsubsection{Objective Function}
 \label{sec:sabl-objective}
@@ -54,7 +124,7 @@ TODO.
 \item List abstract methods to implement.
 \item Finite difference checks.
 \item Remark: Alternative templates exist that use automatic differentiation, for both stationary and transient problems.
-\item Show an implementation for the exemplar, or refer to one in the appendix.
+\item Refer to a brief implementation of the exemplar in the appendix.
 \end{itemize}
 \end{purpose}
 
@@ -69,7 +139,7 @@ TODO.
 \item Remark: Additional templates are available for transient problems.
 \item List abstract methods to implement.
 \item Finite difference checks.
-\item Remark: Alternative templates exist that use automatic differentiation.
+\item Remark: Alternative templates exist that use automatic differentiation via AdiGator \cite{weinstein2017adigator}.
 \item Show an implementation for the exemplar, or refer to one in the appendix.
 \end{itemize}
 \end{purpose}
@@ -87,16 +157,9 @@ TODO.
 \end{itemize}
 \end{purpose}
 
-\subsection{High-performance PDE-constrained Optimization in \cpp with \MrHyDE}
+\subsection{Solution via \MrHyDE}
 
 TODO.
-
-\begin{purpose}
-\begin{itemize}
-\item Introduce \MrHyDE: scope, style, repository, etc.
-\item Comparison with \SABL: more dependencies, lower level, but higher power; \MrHyDE~also has robust forward solver (inner-loop) capabilities.
-\end{itemize}
-\end{purpose}
 
 \subsubsection{Objective Function}
 
@@ -123,66 +186,47 @@ TODO.
 \begin{purpose}
 Analog to \Cref{sec:sabl-optimization}.
 Show the results are consistent in \SABL and \MrHyDE.
-Show how easy it is to crank the difficulty up on the \MrHyDE problem (e.g., go from 1D to 3D) and that it is handled well.
+% Show how easy it is to crank the difficulty up on the \MrHyDE problem (e.g., go from 1D to 3D) and that it is handled well.
+This gives us confidence that we've implemented HDSA correctly in \cpp despite the complexity of HPC.
 \end{purpose}
 
-\section{Hyper-differential Sensitivity Analysis}
-
-TODO.
+\section{Example 2: Big Fat HPC-worthy Problem}
 
 \begin{purpose}
-\begin{itemize}
-\item With a foundation of PDE-constrained optimization, we can now move on to more complicated outer-loop analyses.
-\item \SABL and \MrHyDE provide solution frameworks for several outer-loop problems, including Bayesian inversion, optimal experimental design, and HDSA (others?). We focus in this section on HDSA, but our goal is to show how these complex processes can be prototyped in \MATLAB, which can then be used to guide and verify the more complex (but more powerful) implementation in \cpp.
-\item Outline this section.
-\end{itemize}
+Solve a really huge HDSA problem that requires parallelism using \MrHyDE.
+May or may not solve a simple version of the problem in \SABL.
 \end{purpose}
 
 \subsection{Problem Statement}
 
 TODO.
 
-\begin{purpose}
-\begin{itemize}
-\item Give a minimal-but-sufficient mathematical overview of HDSA.
-\item Define an HDSA exemplar problem \textbf{that builds on the previous example if possible}.
-\end{itemize}
-\end{purpose}
+\subsection{Implementation Considerations}
 
-\subsection{Prototypical HDSA in \MATLAB with \SABL}
+Maybe?
 
-TODO.
-
-\begin{purpose}
-\begin{itemize}
-\item Introduce \SABL template classes needed for HDSA.
-\item Show how to put the pieces together and solve the problem.
-\item Demonstrate by solving the exemplar.
-\end{itemize}
-\end{purpose}
-
-\subsection{High-performance HDSA in \cpp with \MrHyDE}
-
-TODO.
-
-\begin{purpose}
-\begin{itemize}
-\item Introduce \MrHyDE template classes needed for HDSA.
-\item Show how to put the pieces together and solve the problem.
-\item Demonstrate by solving the exemplar.
-\end{itemize}
-\end{purpose}
+\subsection{Numerical Results}
 
 \section{Conclusion}
 
 TODO.
 
 \begin{purpose}
+Summary:
 \begin{itemize}
-\item Summary: presented two complementary libraries for tackling outer-loop problems in the computational sciences, one more intuitive (closer to the mathematical formulae) and the other more powerful.
-\item Goal is to be able to implement and solve outer-loop problems in an approach that starts in a mathematically intuitive and high-level context and moves to a low-level but high-performance context.
-\item We demonstrated the approach with HDSA.
+\item We presented two complementary libraries for implementing HDSA, one more intuitive (closer to the mathematical formulae) and the other more powerful. The first is designed to prepare the user for the second.
+\item The goal was to be able to implement this complicated algorithm in a mathematically intuitive and high-level context before moving to a low-level but high-performance context.
+\item We demonstrated HDSA on a true HPC problem.
+\end{itemize}
+Lessons learned:
+\begin{itemize}
+\item This is a really useful paradigm for complicated algorithms.
+\MATLAB in particular pairs well with the \cpp libraries we work with.
+\end{itemize}
+Outlook:
+\begin{itemize}
 \item Further examples and details in the documentation?
+\item By the way, \SABL and \MrHyDE provide solution frameworks for other outer-loop problems, including Bayesian inversion and optimal experimental design (and others?).
 \item Ideas for future work?
 \end{itemize}
 \end{purpose}
