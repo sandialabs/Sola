@@ -24,7 +24,7 @@ TODO.
 TODO.
 
 \begin{purpose}
-Accessible mathematical formulation of HDSA, minimal but sufficient to understand the implementation challenges and requirements.
+This section provides an accessible mathematical formulation of HDSA, minimal but sufficient to understand the implementation challenges and requirements.
 \end{purpose}
 
 \subsection{PDE-Constrained Optimization}
@@ -39,6 +39,31 @@ TODO.
 \item The inner loop is one forward solve to compute objective/constraint values/residuals and derivatives. The outer loop is the adjoint-based minimization.
 \end{itemize}
 \end{purpose}
+
+\begin{align}
+    \label{eq:optimization-constrained}
+    \begin{aligned}
+    \min_{\u,\z} ~& \J(\u,\z)
+    \\
+    \text{s.t.}~~& \c(\u,\z) = \0,
+    \end{aligned}
+\end{align}
+where $\u\in\R^{n_u}$ is the state variable, $\z\in\R^{n_z}$ is the control variable, $\J:\R^{n_u}\times\R^{n_z}\to\R$ is the objective function, and $\c:\R^{n_u}\times\R^{n_z}\to\R^{n_u}$ specifies the constraints.
+% Here, $n_u\in\mathbb{N}$ is the state dimension and $n_z\in\mathbb{N}$ is the control dimension.
+If $\c(\u,\z)=\0$ admits a unique solution for any given $\z$, then there exists a solution operator $\S:\R^{n_z}\to\R^{n_u}$ such that $\c(\S(\z),\z)=\0$ for all possible controls $\z$.
+In this case, \cref{eq:optimization-constrained} can be formulated as the equivalent \emph{unconstrained} optimization problem
+
+\begin{align}
+    \label{eq:optimization-reducedspace}
+    \min_{\z} \hat{\J}(\z) := \J(\S(\z),\z)
+\end{align}
+
+The minimization problem \cref{eq:optimization-reducedspace} can be solved with off-the-shelf minimizers (e.g., Newton CG) as long as the gradient $\grad{\z}\hat{\J}(\z)\in\R^{n_z}$ and, for any vector $\v\in\R^{n_z}$, Hessian-vector products $\v\mapsto \grad{z,z}\hat{J}(\z) \v \in \R^{n_z}$ can be computed efficiently.
+% {prf:ref}`alg:adjoint_gradient` shows how to efficiently calculate the gradient by utilizing adjoint-based derivative formulas.
+% Similarly, {prf:ref}`alg:adjoint_hessvec` shows how to compute Hessian-vector products using incremental state and incremental adjoint equations, which avoids explicitly forming the (very large) Hessian matrix $\grad{z,z}\hat{J}(\z)\in\R^{n_z \times n_z}$.
+
+The adjoint method [REF] calculates these derivatives in terms of the (partial) derivatives of $\J$ and $\c$.
+
 
 \subsection{Model Discrepancy}
 

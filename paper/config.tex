@@ -9,14 +9,7 @@
 
 % Page setup ------------------------------------------------------------------
 \numberwithin{equation}{section}
-
-% Macros ----------------------------------------------------------------------
-\newcommand{\trp}{^{\mathsf{T}}}
-
-\newcommand{\MATLAB}{\texttt{MATLAB}\xspace}
-\newcommand{\SABL}{\texttt{SABL}\xspace}
-\newcommand{\cpp}{\texttt{c++}\xspace}
-\newcommand{\MrHyDE}{\texttt{MrHyDE}\xspace}
+\crefformat{equation}{#2(#1)#3}
 
 % Environments ----------------------------------------------------------------
 % % Algorithm comments: texttt and gray
@@ -47,3 +40,55 @@
 \newcommand{\timnote}[1]{{\color{olive}Tim: {#1}}}
 \newcommand{\bartnote}[1]{{\color{sandiablue}Bart: {#1}}}
 \newcommand{\rev}[2]{\textcolor{red}{\sout{#1}}\,\textcolor{cyan}{#2}}
+
+
+% Macros ----------------------------------------------------------------------
+\newcommand{\MATLAB}{\texttt{MATLAB}\xspace}
+\newcommand{\SABL}{\texttt{SABL}\xspace}
+\newcommand{\cpp}{\texttt{c++}\xspace}
+\newcommand{\MrHyDE}{\texttt{MrHyDE}\xspace}
+
+\newcommand{\trp}{^{\mathsf{T}}}
+\newcommand{\invtrp}{^{-\mathsf{T}}}
+\newcommand{\grad}[1]{\nabla_{\!#1}\,}
+\newcommand{\ddt}{\frac{\textrm{d}}{\textup{d}t}}
+\newcommand{\J}{\mathcal{J}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\R}{\mathbb{R}}
+\renewcommand{\b}{\mathbf{b}}
+\renewcommand{\c}{\mathbf{c}}
+\newcommand{\f}{\mathbf{f}}
+\newcommand{\g}{\mathbf{g}}
+\newcommand{\h}{\mathbf{h}}
+\newcommand{\p}{\mathbf{p}}
+\newcommand{\q}{\mathbf{q}}
+\renewcommand{\u}{\mathbf{u}}
+\renewcommand{\v}{\mathbf{v}}
+\newcommand{\w}{\mathbf{w}}
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\y}{\mathbf{y}}
+\newcommand{\z}{\mathbf{z}}
+\newcommand{\A}{\mathbf{A}}
+\newcommand{\B}{\mathbf{B}}
+\newcommand{\C}{\mathbf{C}}
+\newcommand{\D}{\mathbf{D}}
+\renewcommand{\H}{\mathbf{H}}
+\newcommand{\I}{\mathbf{I}}
+\newcommand{\M}{\mathbf{M}}
+\newcommand{\Q}{\mathbf{Q}}
+\renewcommand{\S}{\mathbf{S}}
+\newcommand{\U}{\mathbf{U}}
+\newcommand{\V}{\mathbf{V}}
+\newcommand{\W}{\mathbf{W}}
+\newcommand{\X}{\mathbf{X}}
+\newcommand{\Y}{\mathbf{Y}}
+\newcommand{\Z}{\mathbf{Z}}
+\newcommand{\0}{\mathbf{0}}
+\newcommand{\1}{\mathbf{1}}
+\newcommand{\bflambda}{\boldsymbol{\lambda}}
+\newcommand{\bfmu}{\boldsymbol{\mu}}
+\newcommand{\bfgamma}{\boldsymbol{\gamma}}
+\newcommand{\bfGamma}{\boldsymbol{\Gamma}}
+\newcommand{\bfPhi}{\boldsymbol{\Phi}}
+\newcommand{\bfSigma}{\boldsymbol{\Sigma}}
+\newcommand{\bfPsi}{\boldsymbol{\Psi}}
