@@ -54,30 +54,11 @@ classdef MD_Hyperparameters < handle
         function [] = Determine_alpha_u(this, u_prior_interface)
 
             delta = this.data_interface.Load_d_Data();
-            delta_norm = sqrt(delta' * u_prior_interface.Apply_M_u(delta));
+            delta_norm = sqrt(delta(:,1)' * u_prior_interface.Apply_M_u(delta(:,1)));
             delta_norm = this.discrepancy_uncertainty_percent * mean(diag(delta_norm));
 
-            target = delta_norm;
-            dof = sum(u_prior_interface.sing_vals.^2);
-
-            % Want to solve:
-            % sqrt(2) * Gamma(0.5 * (alpha_u * dof + 1) ) = target * Gamma(0.5 * alpha_u * dof)
-            fun = @(alpha_u) this.alpha_u_fun(alpha_u, dof, target);
-            tmp = fun(this.alpha_u_init);
-            while isnan(tmp) || isinf(tmp)
-                this.alpha_u_init = 0.5 * this.alpha_u_init;
-                tmp = fun(this.alpha_u_init);
-                disp('Halving alpha_u_init')
-            end
-            [alpha_u_new, ~, flag] = fsolve(fun, this.alpha_u_init, optimoptions('fsolve', 'Display', 'off'));
-            if flag <= 0
-                disp('Error in nonlinear solve to determine alpha_u');
-            end
+            alpha_u_new = delta_norm/sum(u_prior_interface.sing_vals.^2);
             this.Set_alpha_u(alpha_u_new);
-        end
-
-        function [val] = alpha_u_fun(this, alpha_u, dof, target)
-            val = sqrt(2) * gamma(0.5 * (alpha_u * dof + 1)) - target * gamma(0.5 * alpha_u * dof);
         end
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -159,8 +140,6 @@ classdef MD_Hyperparameters < handle
             this.data_interface = data_interface;
 
             this.data_noise_percent = 0.001;
-            this.discrepancy_uncertainty_percent = 1.0;
-            this.alpha_u_init = 1.0;
             this.num_z_samples = 50;
             this.discrepancy_percent_z_variation = 0.2;
             this.W_u_inv_spectral_gap = 1.e-6;
