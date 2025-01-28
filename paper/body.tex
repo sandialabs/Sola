@@ -4,7 +4,7 @@ TODO.
 
 \bartnote{Decided to focus the paper on HDSA. We can mention in the intro and/or conclusion that there are other outer-loop problems that we can use the \SABL $\to$ \MrHyDE approach for, but let the main focus be HDSA throughout.}
 
-\shanenote{Question: are we also presenting \texttt{HDSALib}? Or do we include that under the umbrella of \MrHyDE?}
+\shanenote{Strategy: focus first on HDSALib (actual implementation of HDSA, agnostic to underlying solvers). Describe \SABL as a MATLAB implementation that preps you for HDSALib. Then show the power of MrHyDE + HDSALib.}
 
 \begin{purpose}
 \begin{itemize}
@@ -19,17 +19,17 @@ TODO.
 \end{itemize}
 \end{purpose}
 
-Many of the most challenging and compelling problems in computational science and engineering can be framed as outer-loop analyses---procedures which use many expensive ``forward'' simulations of a physical process to enable strategic decision making.
+Many of the most compelling and challenging problems in contemporary computational science and engineering can be posed as outer-loop analyses---procedures which leverage many expensive ``forward'' simulations of a physical process to enable discovery, control, or decision making.
 Examples include inverse problems~[ref], optimal experimental design~[ref], sensitivity analysis~[ref], large-scale optimization~[ref], and uncertainty quantification~[ref].
-Each of these problems typically faces main three challenges:
+
+Like other outer-loop problems, HDSA is characterized by three major challenges:
 \begin{itemize}
-\item \textbf{Mathematically complex.}
-\item \textbf{Computationally demanding.}
-\item \textbf{Difficulty of implementation.}
-\begin{purpose}
-How to even verify or validate these things?
-\end{purpose}
+\item \textbf{Mathematical complexity.} TODO
+\item \textbf{Computational demands.} TODO
+\item \textbf{Implementation cost.} TODO
 \end{itemize}
+
+This paper presents a strategy and framework for implementing HDSA in a way that can be applied to many outer-loop analyses.
 
 \section{Hyper-differential Sensitivity Analysis for Model Discrepancy}
 
@@ -70,11 +70,11 @@ In this case, \cref{eq:optimization-constrained} can be formulated as the equiva
     \min_{\z} \hat{\J}(\z) := \J(\S(\z),\z)
 \end{align}
 
-The minimization problem \cref{eq:optimization-reducedspace} can be solved with off-the-shelf minimizers (e.g., Newton CG) as long as the gradient $\grad{\z}\hat{\J}(\z)\in\R^{n_z}$ and, for any vector $\v\in\R^{n_z}$, Hessian-vector products $\v\mapsto \grad{z,z}\hat{J}(\z) \v \in \R^{n_z}$ can be computed efficiently.
+The minimization problem \cref{eq:optimization-reducedspace} can be solved with standard approaches (e.g., Newton Conjugate Gradient) as long as the derivatives iof $\hat{\J}$ can be computed efficiently.
+% gradient $\grad{\z}\hat{\J}(\z)\in\R^{n_z}$ and, for any vector $\v\in\R^{n_z}$, Hessian-vector products $\v\mapsto \grad{z,z}\hat{J}(\z) \v \in \R^{n_z}$ can be computed efficiently.
 % {prf:ref}`alg:adjoint_gradient` shows how to efficiently calculate the gradient by utilizing adjoint-based derivative formulas.
 % Similarly, {prf:ref}`alg:adjoint_hessvec` shows how to compute Hessian-vector products using incremental state and incremental adjoint equations, which avoids explicitly forming the (very large) Hessian matrix $\grad{z,z}\hat{J}(\z)\in\R^{n_z \times n_z}$.
-
-The adjoint method [REF] calculates these derivatives in terms of the (partial) derivatives of $\J$ and $\c$.
+The adjoint method~[REF] provides expressions for these derivatives in terms of the (partial) derivatives of $\J$ and $\c$.
 
 
 \subsection{Model Discrepancy}
@@ -153,6 +153,21 @@ TODO.
 \label{sec:sabl-objective}
 
 TODO.
+
+% [frame=none]
+\begin{minted}{matlab}
+classdef Objective < handle
+    methods (Abstract, Access = public)
+        [val, grad_u, grad_z] = J(this, u, z)
+        [u_out] = J_uu_Apply(this, u_in, u, z)
+        [u_out] = J_uz_Apply(this, z_in, u, z)
+        [z_out] = J_zu_Apply(this, u_in, u, z)
+        [z_out] = J_zz_Apply(this, z_in, u, z)
+    end
+    methods (Access = public)
+        [diffs_u, diffs_z] = Finite_Difference_Gradient_Check(this, u, z)
+    end
+\end{minted}
 
 \begin{purpose}
 \begin{itemize}
