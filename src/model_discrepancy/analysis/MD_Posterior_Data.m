@@ -37,12 +37,27 @@ classdef MD_Posterior_Data < handle
             this.D = data_interface.D;
             this.N = size(this.D, 2);
 
+            % this.M_z_Z = z_prior_interface.Apply_M_z(this.Z);
+            % this.M_z_z_opt = z_prior_interface.Apply_M_z(this.z_opt);
+            % this.W_z_inv_M_z_Z = z_prior_interface.Apply_W_z_Inverse(this.M_z_Z)
+            % this.W_z_inv_M_z_z_opt = z_prior_interface.Apply_W_z_Inverse(this.M_z_z_opt)
+
+            % this.M_z_W_z_inv_M_z_Z = z_prior_interface.Apply_M_z(this.W_z_Inv_M_z_Z)
+            % this.M_z_W_z_inv_M_z_z_opt = z_prior_interface.Apply_M_z(this.W_z_Inv_M_z_z_opt)
+
             this.W_z_inv_Z = z_prior_interface.Apply_W_z_Inverse(this.Z);
             this.W_z_inv_z_opt = z_prior_interface.Apply_W_z_Inverse(z_opt);
+
+            % this.M_z_Zc = this.M_z_Z(:,2:end) - this.M_z_z_opt
+            % this.W_z_inv_M_z_Zc = this.W_z_inv_M_z_Z - this.W_z_inv_M_z_z_opt
+            % this.M_z_W_z_inv_M_z_Zc = this.M_z_W_z_inv_M_z_Z - this.M_z_W_z_inv_M_z_z_opt
+            % this.Zc_M_z_W_z_Inv_M_z_Zc = this.M_z_Zc'*this.W_z_inv_M_z_Zc
 
             this.Zc = this.Z(:, 2:end) - z_opt;
             this.W_z_inv_Zc = this.W_z_inv_Z(:, 2:end) - this.W_z_inv_z_opt;
             this.Zc_W_z_inv_Zc = this.Zc' * this.W_z_inv_Zc;
+
+            % this.G = (1 + this.W_z_inv_M_z_z_opt' * this.M_z_z_opt) - this.M_z_Z' * this.W_z_inv_M_z_z_opt - this.W_z_inv_M_z_z_opt' * this.M_z_Z + this.M_z_Z' * this.W_z_inv_M_z_Z;
 
             this.G = (1 + this.W_z_inv_z_opt' * z_opt) - this.Z' * this.W_z_inv_z_opt - this.W_z_inv_z_opt' * this.Z + this.Z' * this.W_z_inv_Z;
             [this.g_vecs, this.Mu] = eigs(this.G, this.N);
@@ -59,8 +74,10 @@ classdef MD_Posterior_Data < handle
             this.a_ell = zeros(this.N, 1);
             this.b_i_ell = zeros(this.N, this.N);
             for ell = 1:this.N
+                % this.a_ell(ell) = 1 - this.W_z_inv_M_z_z_opt' * (this.M_z_Z(:, ell) - this.M_z_z_opt);
                 this.a_ell(ell) = 1 - this.W_z_inv_z_opt' * (this.Z(:, ell) - z_opt);
                 for i = 1:this.N
+                    %this.b_i_ell(i, ell) = (this.M_z_Z * this.g_vecs(:, i))' * (this.W_z_inv_M_z_Z(:, ell) - this.W_z_inv_M_z_z_opt) + sum(this.g_vecs(:, i)) * this.a_ell(ell);
                     this.b_i_ell(i, ell) = (this.Z * this.g_vecs(:, i))' * (this.W_z_inv_Z(:, ell) - this.W_z_inv_z_opt) + sum(this.g_vecs(:, i)) * this.a_ell(ell);
                 end
             end
@@ -75,6 +92,7 @@ classdef MD_Posterior_Data < handle
                 this.u_breve = u_prior_interface.Sample_with_Covariance_W_u_Inverse(this.num_samples);
 
                 this.z_breve = z_prior_interface.Sample_with_Covariance_W_z_Inverse(this.num_samples);
+                % this.M_z_z_breve = z_prior_interface.Apply_M_z(this.z_breve);
 
             end
 
