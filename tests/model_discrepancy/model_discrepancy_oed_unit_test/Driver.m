@@ -4,7 +4,7 @@ close all;
 addpath(genpath('../../../src'));
 rng(121234);
 
-print_output = true; %false;
+print_output = false;
 
 m = 200;
 diff_coeff = 1;
