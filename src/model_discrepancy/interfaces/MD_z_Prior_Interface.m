@@ -8,6 +8,8 @@ classdef MD_z_Prior_Interface < handle
 
         %% Pure virtual functions
 
+        [z_out] = Apply_M_z(this, z_in)
+
         [z_out] = Apply_W_z_Inverse(this, z_in)
 
     end

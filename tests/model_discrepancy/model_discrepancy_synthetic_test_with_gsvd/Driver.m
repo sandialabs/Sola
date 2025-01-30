@@ -4,7 +4,7 @@ close all;
 addpath(genpath('../../src'));
 rng(121234);
 
-suppress_figures = true;
+suppress_figures = false; %true;
 
 m = 51;
 x = linspace(0, 1, m)';
@@ -13,7 +13,7 @@ data_interface = MD_Data_Interface_synthetic_test_with_gsvd(m);
 data_interface.Load_Data();
 
 alpha_u = 1 / (2^2);
-alpha_z = 1 / (100^2);
+alpha_z = 1 / (2^2);
 u_prior_interface = MD_Elliptic_u_Prior_Interface_synthetic_test_with_gsvd(alpha_u, m);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_synthetic_test_with_gsvd(alpha_z, m);
 

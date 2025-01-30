@@ -18,7 +18,7 @@ data_interface = MD_Data_Interface_Adv_Diff();
 data_interface.Load_Data();
 
 alpha_u = 2^2;
-alpha_z = 1.e-8;
+alpha_z = 1.e-4;
 u_prior_interface = MD_Elliptic_u_Prior_Interface_Adv_Diff(alpha_u, opt);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Adv_Diff(alpha_z, opt);
 

@@ -4,7 +4,7 @@ close all;
 addpath(genpath('../../../src'));
 rng(121234);
 
-print_output = false;
+print_output = true; %false;
 
 m = 200;
 diff_coeff = 1;
@@ -19,7 +19,7 @@ data_interface = MD_Data_Interface_PDE_Test_Problem();
 data_interface.Load_Data();
 
 alpha_u = 1 / (2^2);
-alpha_z = 1 / (600^2);
+alpha_z = (199^2) / (600^2);
 u_prior_interface = MD_Elliptic_u_Prior_Interface_PDE_Test_Problem(alpha_u, opt_lofi);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_PDE_Test_Problem(alpha_z, opt_lofi);
 
@@ -50,7 +50,8 @@ for i = 2:N
 end
 
 Ztilde = Z - data_interface.z_opt * ones(1, N);
-G = ones(N, N) + Ztilde' * z_prior_interface.Apply_W_z_Inverse(Ztilde);
+M_Ztilde = z_prior_interface.Apply_M_z(Ztilde);
+G = ones(N, N) + M_Ztilde' * z_prior_interface.Apply_W_z_Inverse(M_Ztilde);
 [g, mu] = eig(G, 'vector');
 
 Wu_inv = u_prior_interface.Apply_W_u_Inverse(eye(m));
@@ -72,7 +73,8 @@ tmp2 = opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(tmp1, dat
 Ju = opt_prob_interface.Misfit_Gradient(data_interface.u_opt, data_interface.z_opt);
 for i = 1:N
     w_ij{i} = sum(g(:, i)) * tmp2;
-    tmp3 = z_prior_interface.Apply_W_z_Inverse(y(:, i));
+    Mz_yi = z_prior_interface.Apply_M_z(y(:, i));
+    tmp3 = z_prior_interface.Apply_M_z(z_prior_interface.Apply_W_z_Inverse(Mz_yi));
     for j = 1:m
         w_ij{i}(:, j) =  w_ij{i}(:, j) + (Ju' * X(:, j)) * tmp3;
     end
@@ -109,6 +111,9 @@ mu_fd_error = zeros(p, 1);
 Mg_fd_error = zeros(p, 1);
 for s = 1:p
     [g_s, mu_s, Mg_s] = md_oed.G_eigs(beta + h(s) * dbeta);
+    sign_normalization = sign(g(1,i))*sign(g_s(1,i));
+    g_s = sign_normalization * g_s;
+    Mg_s = sign_normalization * Mg_s;
 
     fd_approx = (g_s(:, i) - g(:, i)) / h(s);
     g_fd_error(s) = norm(fd_approx - g_jac{i} * dbeta);

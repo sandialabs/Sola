@@ -10,6 +10,10 @@ classdef MD_z_Prior_Interface_synthetic_test < MD_z_Prior_Interface
 
     methods (Access = public)
 
+        function [z_out] = Apply_M_z(this, z_in)
+            z_out = this.M * z_in;
+        end
+
         function [z_out] = Apply_W_z_Inverse(this, z_in)
             z_out = linsolve(this.W_z, z_in);
         end
@@ -41,7 +45,7 @@ classdef MD_z_Prior_Interface_synthetic_test < MD_z_Prior_Interface
             S = (1 / h) * S;
             this.S = S;
 
-            E_z = (1.e2) * ((1.e-2) * S + M);
+            E_z = 2.0 * ((1.e-2) * S + M);
             this.W_z = E_z' * linsolve(M, E_z);
         end
 

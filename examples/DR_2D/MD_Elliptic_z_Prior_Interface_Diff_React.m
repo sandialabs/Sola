@@ -34,6 +34,14 @@ classdef MD_Elliptic_z_Prior_Interface_Diff_React < MD_Elliptic_z_Prior_Interfac
             z_out = this.M \ z_in;
         end
 
+        % Compute samples from a mean zero Gaussian with covariance W_z^{-1}
+        function [z_out] = Sample_with_Covariance_W_z_Inverse(this, num_samples)
+            mass_mat_sqrt = M_z_Sqrt(this);
+            z_in = randn(size(this.E_z, 1), num_samples);
+            tmp = mass_mat_sqrt.Matrix_Sqrt_Apply(z_in);
+            z_out = sqrt(this.alpha_z) * this.Apply_E_z_Inverse(tmp);
+        end
+
         function this = MD_Elliptic_z_Prior_Interface_Diff_React(alpha_z, sabl_opt)
             this@MD_Elliptic_z_Prior_Interface(alpha_z);
 

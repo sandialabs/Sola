@@ -20,7 +20,7 @@ data_interface = MD_Data_Interface_Mass_Spring();
 data_interface.Load_Data();
 
 alpha_u = 1.e4;
-alpha_z = 1.e-10;
+alpha_z = 1.e-8;
 u_prior_interface = MD_Elliptic_u_Prior_Interface_Mass_Spring(alpha_u, opt_lofi);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Mass_Spring(alpha_z, opt_lofi);
 

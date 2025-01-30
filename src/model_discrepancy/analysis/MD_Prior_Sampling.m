@@ -24,9 +24,8 @@ classdef MD_Prior_Sampling < handle
 
         function [delta_samples] = Prior_Discrepancy_Samples(this, z, num_samps)
             Z = z - this.z_opt;            
-            % M_z_Z = this.z_prior_interface.Apply_M_z(Z)
-            % Sigma = M_z_Z' * this.z_prior_interface.Apply_W_z_Inverse(M_z_Z);
-            Sigma = Z' * this.z_prior_interface.Apply_W_z_Inverse(Z);
+            M_z_Z = this.z_prior_interface.Apply_M_z(Z);
+            Sigma = M_z_Z' * this.z_prior_interface.Apply_W_z_Inverse(M_z_Z);
             p = size(Z, 2);
             R = chol(Sigma);
 

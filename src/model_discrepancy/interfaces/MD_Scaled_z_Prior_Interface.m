@@ -8,6 +8,8 @@ classdef MD_Scaled_z_Prior_Interface < MD_z_Prior_Interface
 
         %% Pure virtual functions
         
+        [z_out] = Apply_M_z(this, z_in)
+
         [z_out] = Apply_W_z_Acute_Inverse(this, z_in)
 
 
