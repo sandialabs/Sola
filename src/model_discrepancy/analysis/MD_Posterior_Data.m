@@ -5,17 +5,17 @@ classdef MD_Posterior_Data < handle
         N
         Z
         D
-        M_z_Z
-        M_z_z_opt
-        W_z_inv_M_z_Z
-        W_z_inv_M_z_z_opt
-        M_z_W_z_inv_M_z_Z
-        M_z_W_z_inv_M_z_z_opt
-        M_z_Zc
+        Mz_Z
+        Mz_z_opt
+        Wz_inv_Mz_Z
+        Wz_inv_Mz_z_opt
+        Mz_Wz_inv_Mz_Z
+        Mz_Wz_inv_Mz_z_opt
+        Mz_Zc
         Zc
-        W_z_inv_M_z_Zc
-        M_z_W_z_inv_M_z_Zc
-        Zc_M_z_W_z_inv_M_z_Zc
+        Wz_inv_Mz_Zc
+        Mz_Wz_inv_Mz_Zc
+        Zc_Mz_Wz_inv_Mz_Zc
         G
         g_vecs
         Mu
@@ -28,7 +28,7 @@ classdef MD_Posterior_Data < handle
         ui_hat
         u_breve
         z_breve
-        M_z_z_breve
+        Mz_z_breve
     end
 
     methods
@@ -44,21 +44,21 @@ classdef MD_Posterior_Data < handle
             this.D = data_interface.D;
             this.N = size(this.D, 2);
 
-            this.M_z_Z = z_prior_interface.Apply_M_z(this.Z);
-            this.M_z_z_opt = z_prior_interface.Apply_M_z(data_interface.z_opt);
-            this.W_z_inv_M_z_Z = z_prior_interface.Apply_W_z_Inverse(this.M_z_Z);
-            this.W_z_inv_M_z_z_opt = z_prior_interface.Apply_W_z_Inverse(this.M_z_z_opt);
+            this.Mz_Z = z_prior_interface.Apply_M_z(this.Z);
+            this.Mz_z_opt = z_prior_interface.Apply_M_z(data_interface.z_opt);
+            this.Wz_inv_Mz_Z = z_prior_interface.Apply_W_z_Inverse(this.Mz_Z);
+            this.Wz_inv_Mz_z_opt = z_prior_interface.Apply_W_z_Inverse(this.Mz_z_opt);
 
-            this.M_z_W_z_inv_M_z_Z = z_prior_interface.Apply_M_z(this.W_z_inv_M_z_Z);
-            this.M_z_W_z_inv_M_z_z_opt = z_prior_interface.Apply_M_z(this.W_z_inv_M_z_z_opt);
+            this.Mz_Wz_inv_Mz_Z = z_prior_interface.Apply_M_z(this.Wz_inv_Mz_Z);
+            this.Mz_Wz_inv_Mz_z_opt = z_prior_interface.Apply_M_z(this.Wz_inv_Mz_z_opt);
 
-            this.M_z_Zc = this.M_z_Z(:,2:end) - this.M_z_z_opt;
-            this.W_z_inv_M_z_Zc = this.W_z_inv_M_z_Z(:,2:end) - this.W_z_inv_M_z_z_opt;
-            this.M_z_W_z_inv_M_z_Zc = this.M_z_W_z_inv_M_z_Z(:,2:end) - this.M_z_W_z_inv_M_z_z_opt;
-            this.Zc_M_z_W_z_inv_M_z_Zc = this.M_z_Zc'*this.W_z_inv_M_z_Zc;
+            this.Mz_Zc = this.Mz_Z(:,2:end) - this.Mz_z_opt;
+            this.Wz_inv_Mz_Zc = this.Wz_inv_Mz_Z(:,2:end) - this.Wz_inv_Mz_z_opt;
+            this.Mz_Wz_inv_Mz_Zc = this.Mz_Wz_inv_Mz_Z(:,2:end) - this.Mz_Wz_inv_Mz_z_opt;
+            this.Zc_Mz_Wz_inv_Mz_Zc = this.Mz_Zc'*this.Wz_inv_Mz_Zc;
             this.Zc = this.Z(:, 2:end) - z_opt;
 
-            this.G = (1 + this.W_z_inv_M_z_z_opt' * this.M_z_z_opt) - this.M_z_Z' * this.W_z_inv_M_z_z_opt - this.W_z_inv_M_z_z_opt' * this.M_z_Z + this.M_z_Z' * this.W_z_inv_M_z_Z;
+            this.G = (1 + this.Wz_inv_Mz_z_opt' * this.Mz_z_opt) - this.Mz_Z' * this.Wz_inv_Mz_z_opt - this.Wz_inv_Mz_z_opt' * this.Mz_Z + this.Mz_Z' * this.Wz_inv_Mz_Z;
             [this.g_vecs, this.Mu] = eigs(this.G, this.N);
             this.g_vecs = this.g_vecs .* (ones(this.N, 1) * sign(this.g_vecs(1, :)));
 
@@ -73,9 +73,9 @@ classdef MD_Posterior_Data < handle
             this.a_ell = zeros(this.N, 1);
             this.b_i_ell = zeros(this.N, this.N);
             for ell = 1:this.N
-                this.a_ell(ell) = 1 - this.W_z_inv_M_z_z_opt' * (this.M_z_Z(:, ell) - this.M_z_z_opt);
+                this.a_ell(ell) = 1 - this.Wz_inv_Mz_z_opt' * (this.Mz_Z(:, ell) - this.Mz_z_opt);
                 for i = 1:this.N
-                    this.b_i_ell(i, ell) = (this.M_z_Z * this.g_vecs(:, i))' * (this.W_z_inv_M_z_Z(:, ell) - this.W_z_inv_M_z_z_opt) + sum(this.g_vecs(:, i)) * this.a_ell(ell);
+                    this.b_i_ell(i, ell) = (this.Mz_Z * this.g_vecs(:, i))' * (this.Wz_inv_Mz_Z(:, ell) - this.Wz_inv_Mz_z_opt) + sum(this.g_vecs(:, i)) * this.a_ell(ell);
                 end
             end
 
@@ -89,7 +89,7 @@ classdef MD_Posterior_Data < handle
                 this.u_breve = u_prior_interface.Sample_with_Covariance_W_u_Inverse(this.num_samples);
 
                 this.z_breve = z_prior_interface.Sample_with_Covariance_W_z_Inverse(this.num_samples);
-                this.M_z_z_breve = z_prior_interface.Apply_M_z(this.z_breve);
+                this.Mz_z_breve = z_prior_interface.Apply_M_z(this.z_breve);
 
             end
 
