@@ -23,11 +23,11 @@ num_prior_samples = 100;
 md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 
 %%
-delta_samples = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
+delta_prior_samples_zopt = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
 
 if ~suppress_figures
     figure;
-    plot(x, delta_samples, 'LineWidth', 3, 'color', [.9, .9, .9]);
+    plot(x, delta_prior_samples_zopt, 'LineWidth', 3, 'color', [.9, .9, .9]);
 end
 
 z = zeros(m, 3);

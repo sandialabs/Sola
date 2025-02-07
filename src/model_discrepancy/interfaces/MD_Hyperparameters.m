@@ -4,9 +4,6 @@ classdef MD_Hyperparameters < handle
         data_interface
 
         data_noise_percent
-        discrepancy_uncertainty_percent
-        alpha_u_init
-        num_z_samples
         discrepancy_percent_z_variation
         W_u_inv_spectral_gap
 
@@ -54,8 +51,7 @@ classdef MD_Hyperparameters < handle
         function [] = Determine_alpha_u(this, u_prior_interface)
 
             delta = this.data_interface.Load_d_Data();
-            delta_norm = sqrt(delta(:,1)' * u_prior_interface.Apply_M_u(delta(:,1)));
-            delta_norm = this.discrepancy_uncertainty_percent * mean(diag(delta_norm));
+            delta_norm = delta(:,1)' * u_prior_interface.Apply_M_u(delta(:,1));
 
             alpha_u_new = delta_norm/sum(u_prior_interface.sing_vals.^2);
             this.Set_alpha_u(alpha_u_new);
@@ -70,11 +66,19 @@ classdef MD_Hyperparameters < handle
         function [] = Determine_beta_u(this)
             nodes = this.Load_Node_Data();
             if size(nodes,2) == 1
-                correlation_length = computeCorrelationLength_1D(nodes(:,1),this.data_interface.D(:,1));
-                beta_u_new = correlation_length^2/18;
+                correlation_lengths = zeros(size(this.data_interface.D,2),1);
+                for k = 1:length(correlation_lengths)
+                    correlation_lengths(k) = computeCorrelationLength_1D(nodes(:,1),this.data_interface.D(:,k));
+                end
+                beta_u_new = mean(correlation_lengths)^2/12;
             elseif size(nodes,2) == 2
-                correlation_length = computeCorrelationLength_2D(nodes(:,1),nodes(:,2),this.data_interface.D(:,1));
-                beta_u_new = correlation_length^2/8;
+                correlation_lengths = zeros(size(this.data_interface.D,2),1);
+                for k = 1:length(correlation_lengths)
+                    correlation_lengths(k) = computeCorrelationLength_2D(nodes(:,1),nodes(:,2),this.data_interface.D(:,k));
+                end
+                beta_u_new = mean(correlation_lengths)^2/8;
+            else
+                disp('Determine_beta_u error: Dimensions greater than 2 are not supported.')
             end
             this.Set_beta_u(beta_u_new);
         end
@@ -86,19 +90,36 @@ classdef MD_Hyperparameters < handle
         end
 
         function [] = Determine_alpha_z(this, z_prior_interface)
-            z_prior_interface.Set_alpha_z(1.0);
-            samples = z_prior_interface.Sample_with_Covariance_W_z_Inverse(this.num_z_samples);
             tmp = z_prior_interface.Apply_M_z(this.data_interface.z_opt);
-            tmp = sqrt(tmp'*this.data_interface.z_opt);
-            for k = 1:this.num_z_samples
-                samples(:,k) = tmp*samples(:,k)/sqrt(samples(:,k)'*z_prior_interface.Apply_M_z(samples(:,k)));
+            zopt_norm = tmp'*this.data_interface.z_opt;
+
+            nodes = this.Load_Node_Data();
+            if size(nodes,2) == 1
+                Lx = max(nodes(:,1))-min(nodes(:,1));
+                n = length(nodes(:,1))-1;
+                e = 1 + z_prior_interface.beta_z * (pi/Lx)^2 * (0:n).^2;
+                e = e';
+            elseif size(nodes,2) == 2
+                Lx = max(nodes(:,1))-min(nodes(:,1));
+                Ly = max(nodes(:,2))-min(nodes(:,2));
+                n = sqrt(length(nodes(:,1)))-1;
+                e = 1 + z_prior_interface.beta_z * pi^2 * ( kron(((0:n).^2)',ones(n+1,1))/Lx^2 + kron(ones(n+1,1),((0:n).^2)')/Ly^2 );
+            else
+                disp('Determine_alpha_z error: Dimensions greater than 2 are not supported.')
             end
-            sample_norms = zeros(this.num_z_samples,1);
-            for k = 1:this.num_z_samples
-                E_z = z_prior_interface.Apply_E_z_Inverse(samples(:,k));
-                sample_norms(k) = E_z'*z_prior_interface.Apply_M_z(E_z);
+
+            evals = sort(1./e,'descend');
+            I = find(evals < 1.e-2);
+            rank = n;
+            if ~isempty(I)
+                rank = I(1);
             end
-            alpha_z_new = (this.discrepancy_percent_z_variation.^2) / mean(sample_norms);
+            evals = evals(1:rank);
+            samples = 1000;
+            nu = randn(samples,rank).^2;
+            tmp = mean(( nu * evals.^4 ) ./ ( nu * evals.^2 ));
+            
+            alpha_z_new = (this.discrepancy_percent_z_variation.^2) / (tmp * zopt_norm);
             this.Set_alpha_z(alpha_z_new);
         end
 
@@ -111,11 +132,19 @@ classdef MD_Hyperparameters < handle
         function [] = Determine_beta_z(this)
             nodes = this.Load_Node_Data();
             if size(nodes,2) == 1
-                correlation_length = computeCorrelationLength_1D(nodes(:,1),this.data_interface.Z(:,1));
-                beta_z_new = correlation_length^2/18;
+                correlation_lengths = zeros(size(this.data_interface.Z,2),1);
+                for k = 1:length(correlation_lengths)
+                    correlation_lengths(k) = computeCorrelationLength_1D(nodes(:,1),this.data_interface.Z(:,k));
+                end
+                beta_z_new = mean(correlation_lengths)^2/12;
             elseif size(nodes,2) == 2
-                correlation_length = computeCorrelationLength_2D(nodes(:,1),nodes(:,2),this.data_interface.Z(:,1));
-                beta_z_new = correlation_length^2/8;
+                correlation_lengths = zeros(size(this.data_interface.Z,2),1);
+                for k = 1:length(correlation_lengths)
+                    correlation_lengths(k) = computeCorrelationLength_2D(nodes(:,1),nodes(:,2),this.data_interface.Z(:,k));
+                end
+                beta_z_new = mean(correlation_lengths)^2/8;
+            else
+                disp('Determine_beta_z error: Dimensions greater than 2 are not supported.')
             end
             this.Set_beta_z(beta_z_new);
         end
@@ -140,8 +169,7 @@ classdef MD_Hyperparameters < handle
             this.data_interface = data_interface;
 
             this.data_noise_percent = 0.001;
-            this.num_z_samples = 50;
-            this.discrepancy_percent_z_variation = 0.2;
+            this.discrepancy_percent_z_variation = 1.0;
             this.W_u_inv_spectral_gap = 1.e-6;
 
             this.alpha_d = 0.0;
