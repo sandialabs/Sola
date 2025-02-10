@@ -12,19 +12,16 @@ classdef MD_Hyperparameters < handle
         beta_u
         alpha_z
         beta_z
+
         gsvd_num_sing_vals
         gsvd_oversampling
         gsvd_num_subspace_iter
     end
 
-    methods (Access = public)
+    methods (Access = public, Abstract)
 
-        % Defaults to return empty array
-        % Overload function to load node data
-        function [nodes] = Load_Node_Data(this)
-            nodes = [];
-            disp('Load_Node_Data must be implemented to use Determine_alpha_u and/or Determine_beta_u');
-        end
+        % Load node data
+        [nodes] = Load_Node_Data(this);
 
     end
 
@@ -157,8 +154,17 @@ classdef MD_Hyperparameters < handle
             this.gsvd_num_subspace_iter = gsvd_num_subspace_iter_new;
         end
 
-        function [] = Determine_GSVD_Hyperparameters(this,m)
-            num_sing_vals = round(sqrt((1/(4*pi^2*this.beta_u)) * (-1 + (1/sqrt(this.W_u_inv_spectral_gap))*(4*pi^2+this.beta_u+1))));
+        function [] = Determine_GSVD_Hyperparameters(this)
+            nodes = this.Load_Node_Data();
+            m = size(nodes,1);
+            d = size(nodes,2);
+            modes_per_dim = zeros(d,1);
+            for k = 1:d
+                L = max(nodes(:,k)) - min(nodes(:,k));
+                tmp = (L/pi)^2 * (1/this.beta_u) * (1/this.W_u_inv_spectral_gap - 1);
+                modes_per_dim(k) = round(sqrt(tmp));
+            end
+            num_sing_vals = prod(modes_per_dim);
             this.gsvd_num_sing_vals = min(num_sing_vals,m);
             this.gsvd_oversampling = min(10,m-this.gsvd_num_sing_vals);
         end
@@ -170,13 +176,14 @@ classdef MD_Hyperparameters < handle
 
             this.data_noise_percent = 0.001;
             this.discrepancy_percent_z_variation = 1.0;
-            this.W_u_inv_spectral_gap = 1.e-6;
+            this.W_u_inv_spectral_gap = 1.e-4;
 
             this.alpha_d = 0.0;
             this.alpha_u = 0.0;
             this.beta_u = 0.0;
             this.alpha_z = 0.0;
             this.beta_z = 0.0;
+            
             this.gsvd_num_sing_vals = 0;
             this.gsvd_oversampling = 0;
             this.gsvd_num_subspace_iter = 1;

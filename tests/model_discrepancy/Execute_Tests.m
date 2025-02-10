@@ -22,3 +22,12 @@ cd ..;
 cd model_discrepancy_oed_unit_test/;
 Driver;
 cd ..;
+
+cd model_discrepancy_synthetic_test_with_analytic_laplacian/;
+Driver;
+cd ..;
+
+cd analytic_laplacian_2D/;
+Driver_HDSA;
+cd ..;
+

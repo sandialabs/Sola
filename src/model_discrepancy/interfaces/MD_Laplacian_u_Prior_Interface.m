@@ -41,7 +41,7 @@ classdef MD_Laplacian_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
             m = size(this.S,1);
             u_vec = zeros(m,1);
             if this.hyperparams.gsvd_num_sing_vals == 0
-                this.hyperparams.Determine_GSVD_Hyperparameters(m);
+                this.hyperparams.Determine_GSVD_Hyperparameters();
             end
             this.Compute_E_u_Inverse_GSVD(this.hyperparams.gsvd_num_sing_vals, this.hyperparams.gsvd_oversampling, this.hyperparams.gsvd_num_subspace_iter, u_vec);
 

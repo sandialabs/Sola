@@ -1,7 +1,6 @@
 classdef MD_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
 
     properties
-        sing_vecs_input
         sing_vecs_output
         sing_vals
     end
@@ -22,7 +21,7 @@ classdef MD_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
 
         function [] = Compute_E_u_Inverse_GSVD(this, num_sing_vals, oversampling, num_subspace_iters, u_vec)
             gsvd = Elliptic_GSVD(this, u_vec, u_vec);
-            [this.sing_vecs_input, this.sing_vecs_output, this.sing_vals] = gsvd.Compute_GSVD(num_sing_vals, oversampling, num_subspace_iters);
+            [~, this.sing_vecs_output, this.sing_vals] = gsvd.Compute_GSVD(num_sing_vals, oversampling, num_subspace_iters);
         end
 
         function this = MD_Elliptic_u_Prior_Interface(alpha_u)

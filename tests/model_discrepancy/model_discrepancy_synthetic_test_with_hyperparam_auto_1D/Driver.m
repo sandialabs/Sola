@@ -19,6 +19,7 @@ hyperparams = MD_Hyperparameters_synthetic_test_with_hyperparam_auto(data_interf
 u_prior_interface = MD_Laplacian_u_Prior_Interface(S,M,hyperparams);
 z_prior_interface = MD_Laplacian_z_Prior_Interface(S,M,hyperparams);
 
+%%
 num_prior_samples = 100;
 md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 
