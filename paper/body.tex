@@ -156,7 +156,8 @@ TODO.
 TODO.
 
 % [frame=none]
-\begin{minted}{matlab}
+% \begin{minted}{matlab}
+\begin{verbatim}
 classdef Objective < handle
     methods (Abstract, Access = public)
         [val, grad_u, grad_z] = J(this, u, z)
@@ -168,7 +169,8 @@ classdef Objective < handle
     methods (Access = public)
         [diffs_u, diffs_z] = Finite_Difference_Gradient_Check(this, u, z)
     end
-\end{minted}
+\end{verbatim}
+% \end{minted}
 
 \begin{purpose}
 \begin{itemize}

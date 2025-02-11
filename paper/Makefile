@@ -7,9 +7,8 @@ help:
 
 
 arxiv:
-	latexmk -pdf -shell-escape main-arxiv.tex
+	latexmk -pdf -quiet -g main-arxiv.tex
 
 
 toms:
-	pip install --upgrade Pygments
-	latexmk -pdf -quiet -Werror -g -shell-escape main-toms.tex
+	latexmk -pdf -quiet -g main-toms.tex
