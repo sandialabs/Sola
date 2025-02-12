@@ -4,7 +4,8 @@ TODO.
 
 \bartnote{Decided to focus the paper on HDSA. We can mention in the intro and/or conclusion that there are other outer-loop problems that we can use the \SABL $\to$ \MrHyDE approach for, but let the main focus be HDSA throughout.}
 
-\shanenote{Strategy: focus first on HDSALib (actual implementation of HDSA, agnostic to underlying solvers). Describe \SABL as a MATLAB implementation that preps you for HDSALib. Then show the power of MrHyDE + HDSALib.}
+\shanenote{Strategy: focus first on HDSALib (actual implementation of HDSA, agnostic to underlying solvers). Describe \SABL as a MATLAB implementation that preps you for HDSALib. Then show the power of MrHyDE + HDSALib.
+The particular HDSA style that we care about is post optimality sensitivity and model form discrepancy.}
 
 \begin{purpose}
 \begin{itemize}
@@ -155,7 +156,8 @@ TODO.
 TODO.
 
 % [frame=none]
-\begin{minted}{matlab}
+% \begin{minted}{matlab}
+\begin{verbatim}
 classdef Objective < handle
     methods (Abstract, Access = public)
         [val, grad_u, grad_z] = J(this, u, z)
@@ -167,7 +169,8 @@ classdef Objective < handle
     methods (Access = public)
         [diffs_u, diffs_z] = Finite_Difference_Gradient_Check(this, u, z)
     end
-\end{minted}
+\end{verbatim}
+% \end{minted}
 
 \begin{purpose}
 \begin{itemize}
