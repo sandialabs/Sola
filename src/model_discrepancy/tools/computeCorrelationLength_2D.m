@@ -20,7 +20,7 @@ num_samples = 100;
 circle_samples = sampleUnitCircle(num_samples);
 
 C = zeros(r_samples,1);
-index = r_samples;
+index = nan;
 for r = 1:r_samples
     cov_r = zeros(num_samples,1);
     for k = 1:num_samples
@@ -41,5 +41,9 @@ for r = 1:r_samples
     end
 end
 
-correlation_length = r_range(index);
+if isnan(index)
+    correlation_length = nan;
+else
+    correlation_length = r_range(index);
+end
 end

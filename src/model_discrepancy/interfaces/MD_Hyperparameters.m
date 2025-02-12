@@ -12,6 +12,8 @@ classdef MD_Hyperparameters < handle
         beta_u
         alpha_z
         beta_z
+        alpha_t
+        beta_t
 
         gsvd_num_sing_vals
         gsvd_oversampling
@@ -27,6 +29,11 @@ classdef MD_Hyperparameters < handle
 
 
     methods
+
+        function [time_nodes] = Load_Time_Node_Data(this)
+            time_nodes = [];
+            disp('Load_Time_Node_Data is required for automate hyperparameters for transient problems')
+        end
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -62,18 +69,27 @@ classdef MD_Hyperparameters < handle
 
         function [] = Determine_beta_u(this)
             nodes = this.Load_Node_Data();
+            n_y = size(nodes,1);
+            n_t = size(this.data_interface.D(:,1),1)/n_y;
+            N = size(this.data_interface.D,2);
             if size(nodes,2) == 1
-                correlation_lengths = zeros(size(this.data_interface.D,2),1);
-                for k = 1:length(correlation_lengths)
-                    correlation_lengths(k) = computeCorrelationLength_1D(nodes(:,1),this.data_interface.D(:,k));
+                correlation_lengths = zeros(N,n_t);
+                for i = 1:N
+                    di = reshape(this.data_interface.D(:,i),n_y,n_t);
+                    for j = 1:n_t
+                        correlation_lengths(i,j) = computeCorrelationLength_1D(nodes(:,1),di(:,j));
+                    end
                 end
-                beta_u_new = mean(correlation_lengths)^2/12;
+                beta_u_new = mean(correlation_lengths(:),'omitnan')^2/12;
             elseif size(nodes,2) == 2
-                correlation_lengths = zeros(size(this.data_interface.D,2),1);
-                for k = 1:length(correlation_lengths)
-                    correlation_lengths(k) = computeCorrelationLength_2D(nodes(:,1),nodes(:,2),this.data_interface.D(:,k));
+                correlation_lengths = zeros(N,n_t);
+                for i = 1:N
+                    di = reshape(this.data_interface.D(:,i),n_y,n_t);
+                    for j = 1:n_t
+                        correlation_lengths(i,j) = computeCorrelationLength_2D(nodes(:,1),nodes(:,2),di(:,j));
+                    end
                 end
-                beta_u_new = mean(correlation_lengths)^2/8;
+                beta_u_new = mean(correlation_lengths(:),'omitnan')^2/8;
             else
                 disp('Determine_beta_u error: Dimensions greater than 2 are not supported.')
             end
@@ -133,17 +149,41 @@ classdef MD_Hyperparameters < handle
                 for k = 1:length(correlation_lengths)
                     correlation_lengths(k) = computeCorrelationLength_1D(nodes(:,1),this.data_interface.Z(:,k));
                 end
-                beta_z_new = mean(correlation_lengths)^2/12;
+                beta_z_new = mean(correlation_lengths,'omitnan')^2/12;
             elseif size(nodes,2) == 2
                 correlation_lengths = zeros(size(this.data_interface.Z,2),1);
                 for k = 1:length(correlation_lengths)
                     correlation_lengths(k) = computeCorrelationLength_2D(nodes(:,1),nodes(:,2),this.data_interface.Z(:,k));
                 end
-                beta_z_new = mean(correlation_lengths)^2/8;
+                beta_z_new = mean(correlation_lengths,'omitnan')^2/8;
             else
                 disp('Determine_beta_z error: Dimensions greater than 2 are not supported.')
             end
             this.Set_beta_z(beta_z_new);
+        end
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        function [] = Set_beta_t(this,beta_t_new)
+            this.beta_t = beta_t_new;
+        end
+
+        function [] = Determine_beta_t(this)
+            time_nodes = this.Load_Time_Node_Data();
+            n_t = length(time_nodes);
+            n_y = size(this.data_interface.D(:,1),1)/n_t;
+            N = size(this.data_interface.D,2);
+
+            correlation_lengths = zeros(N,n_y);
+            for i = 1:N
+                di = reshape(this.data_interface.D(:,i),n_y,n_t)';
+                for j = 1:n_y
+                    correlation_lengths(i,j) = computeCorrelationLength_1D(time_nodes,di(:,j));
+                end
+            end
+            beta_t_new = mean(correlation_lengths(:),'omitnan')^2/12;
+
+            this.Set_beta_t(beta_t_new);
         end
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -183,6 +223,8 @@ classdef MD_Hyperparameters < handle
             this.beta_u = 0.0;
             this.alpha_z = 0.0;
             this.beta_z = 0.0;
+            this.alpha_t = 0.0;
+            this.beta_t = 0.0;
             
             this.gsvd_num_sing_vals = 0;
             this.gsvd_oversampling = 0;

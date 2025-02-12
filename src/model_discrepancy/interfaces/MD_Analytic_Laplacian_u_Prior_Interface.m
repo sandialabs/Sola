@@ -107,6 +107,7 @@ classdef MD_Analytic_Laplacian_u_Prior_Interface < MD_Scaled_u_Prior_Interface
       
         function [] = Set_beta_u(this,beta_u_new)
             this.beta_u = beta_u_new;
+            this.Generate_Spectral_Decomposition();
         end
 
         function this = MD_Analytic_Laplacian_u_Prior_Interface(M,hyperparams)
