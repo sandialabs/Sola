@@ -1,4 +1,4 @@
-classdef MD_Transient_Elliptic_u_Prior_Interface_Adv_Diff < MD_Transient_Elliptic_u_Prior_Interface
+classdef MD_Elliptic_u_Prior_Interface_Adv_Diff < MD_Elliptic_u_Prior_Interface
 
     properties
         E_u
@@ -15,12 +15,12 @@ classdef MD_Transient_Elliptic_u_Prior_Interface_Adv_Diff < MD_Transient_Ellipti
             u_out = linsolve(this.E_u', u_in);
         end
 
-        function [u_out] = Apply_Spatial_M_u(this, u_in)
+        function [u_out] = Apply_M_u(this, u_in)
             u_out = this.M * u_in;
         end
 
-        function this = MD_Transient_Elliptic_u_Prior_Interface_Adv_Diff(alpha_u, transient_prior_cov, sabl_opt)
-            this@MD_Transient_Elliptic_u_Prior_Interface(alpha_u, transient_prior_cov);
+        function this = MD_Elliptic_u_Prior_Interface_Adv_Diff(alpha_u, sabl_opt)
+            this@MD_Elliptic_u_Prior_Interface(alpha_u);
 
             S = sabl_opt.con.S;
             this.M = sabl_opt.con.M;

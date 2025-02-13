@@ -1,11 +1,11 @@
-classdef MD_Laplacian_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
+classdef MD_Numeric_Laplacian_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
 
     properties
         M
         S
         hyperparams
-        E_u
         beta_u
+        E_u
     end
 
     methods (Access = public)
@@ -27,7 +27,7 @@ classdef MD_Laplacian_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
             this.E_u = this.beta_u * this.S + this.M;
         end
 
-        function this = MD_Laplacian_u_Prior_Interface(S,M,hyperparams)
+        function this = MD_Numeric_Laplacian_u_Prior_Interface(S,M,hyperparams)
             this@MD_Elliptic_u_Prior_Interface(hyperparams.alpha_u)
             this.M = M;
             this.S = S;
@@ -45,10 +45,12 @@ classdef MD_Laplacian_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
             end
             this.Compute_E_u_Inverse_GSVD(this.hyperparams.gsvd_num_sing_vals, this.hyperparams.gsvd_oversampling, this.hyperparams.gsvd_num_subspace_iter, u_vec);
 
-            if this.hyperparams.alpha_u == 0.0
-                this.hyperparams.Determine_alpha_u(this);
+            if ~this.hyperparams.is_transient
+                if this.hyperparams.alpha_u == 0.0
+                    this.hyperparams.Determine_alpha_u(this);
+                end
+                this.Set_alpha_u(this.hyperparams.alpha_u);
             end
-            this.Set_alpha_u(this.hyperparams.alpha_u);
         end
 
     end

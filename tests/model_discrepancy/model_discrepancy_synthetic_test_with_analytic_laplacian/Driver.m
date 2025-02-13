@@ -16,9 +16,9 @@ data_interface.Load_Data();
 
 hyperparams = MD_Hyperparameters_synthetic_test_with_hyperparam_auto(data_interface,m);
 
-u_prior_interface_gsvd = MD_Laplacian_u_Prior_Interface(S,M,hyperparams);
+u_prior_interface_gsvd = MD_Numeric_Laplacian_u_Prior_Interface(S,M,hyperparams);
 u_prior_interface = MD_Analytic_Laplacian_u_Prior_Interface(M,hyperparams);
-z_prior_interface = MD_Laplacian_z_Prior_Interface(S,M,hyperparams);
+z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S,M,hyperparams);
 
 %%
 v = randn(m,1);

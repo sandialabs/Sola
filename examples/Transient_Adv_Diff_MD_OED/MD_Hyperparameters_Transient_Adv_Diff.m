@@ -1,4 +1,4 @@
-classdef MD_Hyperparameters_Transient_Test_Problem < MD_Hyperparameters
+classdef MD_Hyperparameters_Transient_Adv_Diff < MD_Hyperparameters
 
     properties
         x
@@ -15,7 +15,7 @@ classdef MD_Hyperparameters_Transient_Test_Problem < MD_Hyperparameters
             time_nodes = this.t;
         end
 
-        function this = MD_Hyperparameters_Transient_Test_Problem(data_interface,n_y)
+        function this = MD_Hyperparameters_Transient_Adv_Diff(data_interface,n_y)
             this@MD_Hyperparameters(data_interface,true);
             this.x = linspace(0,1,n_y)';
             n_t = length(data_interface.u_opt)/n_y;

@@ -1,10 +1,11 @@
 classdef MD_Transient_Prior_Covariance < handle
 
     properties
+        hyperparams
         beta_t
-        beta_i
-        E_t
         M_t
+        S_t
+        E_t
         evecs
         evals
         M_t_inv_evecs
@@ -14,14 +15,26 @@ classdef MD_Transient_Prior_Covariance < handle
 
     methods
 
-        function this = MD_Transient_Prior_Covariance(beta_t, beta_i, M_t, S_t, n_y)
-            this.beta_t = beta_t;
-            this.beta_i = beta_i;
-            this.E_t = beta_t * S_t + M_t;
-            this.E_t(1, 1) = this.E_t(1, 1) + beta_i;
+        function [] = Set_beta_t(this,beta_t_new)
+            this.beta_t = beta_t_new;
+            this.E_t = this.beta_t * this.S_t + this.M_t;
+        end
+
+        function this = MD_Transient_Prior_Covariance(M_t, S_t, n_y,hyperparams)
+            this.hyperparams = hyperparams;
             this.M_t = M_t;
+            this.S_t = S_t;
             this.n_t = size(M_t, 1);
             this.n_y = n_y;
+
+            if this.hyperparams.beta_t == 0.0
+                this.hyperparams.Determine_beta_t();
+            end
+            this.Set_beta_t(this.hyperparams.beta_t);
+
+            num_evals = this.n_t;
+            oversampling = 0;
+            this.Compute_Time_Covariance_GEVP(num_evals, oversampling);
         end
 
         function [] = Compute_Time_Covariance_GEVP(this, num_evals, oversampling)

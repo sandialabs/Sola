@@ -1,11 +1,9 @@
-classdef MD_Analytic_Laplacian_u_Prior_Interface < MD_Scaled_u_Prior_Interface
+classdef MD_Analytic_Laplacian_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
 
     properties
         M
         hyperparams
         beta_u
-        sing_vecs_output
-        sing_vals
     end
 
     methods (Access = public)
@@ -14,26 +12,18 @@ classdef MD_Analytic_Laplacian_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             u_out = this.M * u_in;
         end
 
-        function [u_out] = Apply_W_u_Acute_Plus_scalar_M_u_Inverse(this, u_in, scalar)
-            K = (this.sing_vals.^2) ./ (1 + scalar * this.sing_vals.^2);
-            u_out = this.sing_vecs_output * diag(K) * this.sing_vecs_output' * u_in;
+        function [u_out] = Apply_E_u_Inverse(this, u_in)
+            u_out = [];
+            disp('Apply_E_u_Inverse should not be called from MD_Analytic_Laplacian_u_Prior_Interface')
         end
 
-        function [u_out] = Apply_W_u_Acute_Inverse(this, u_in)
-            u_out = this.sing_vecs_output * diag(this.sing_vals.^2) * this.sing_vecs_output' * u_in;
+        function [u_out] = Apply_E_u_Inverse_Transpose(this, u_in)
+            u_out = [];
+            disp('Apply_E_u_Inverse_Transpose should not be called from MD_Analytic_Laplacian_u_Prior_Interface')
         end
 
-        % Compute samples from a mean zero Gaussian with covariance W_u^{-1}
-        function [u_out] = Sample_with_Covariance_W_u_Inverse(this, num_samples)
-            r = length(this.sing_vals);
-            u_out = sqrt(this.alpha_u) * this.sing_vecs_output * diag(this.sing_vals) * randn(r, num_samples);
-        end
-
-        % Compute samples from a mean zero Gaussian with covariance (W_u+scalar*M_u)^{-1}
-        function [u_out] = Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(this, num_samples, scalar)
-            K = (this.sing_vals.^2) ./ (1 + this.alpha_u * scalar * this.sing_vals.^2);
-            r = length(this.sing_vals);
-            u_out = sqrt(this.alpha_u) * this.sing_vecs_output * diag(sqrt(K)) * randn(r, num_samples);
+        function [] = Compute_E_u_Inverse_GSVD(this, num_sing_vals, oversampling, num_subspace_iters, u_vec)
+            disp('Compute_E_u_Inverse_GSVD should not be called from MD_Analytic_Laplacian_u_Prior_Interface')
         end
 
     end
@@ -42,7 +32,7 @@ classdef MD_Analytic_Laplacian_u_Prior_Interface < MD_Scaled_u_Prior_Interface
 
         function [] = Generate_Spectral_Decomposition(this)
             
-            nodes = this.hyperparams.Load_Node_Data();
+            nodes = this.hyperparams.Load_Spatial_Node_Data();
             m = size(nodes,1);
             d = size(nodes,2);
             r = this.hyperparams.gsvd_num_sing_vals;
@@ -111,7 +101,7 @@ classdef MD_Analytic_Laplacian_u_Prior_Interface < MD_Scaled_u_Prior_Interface
         end
 
         function this = MD_Analytic_Laplacian_u_Prior_Interface(M,hyperparams)
-            this@MD_Scaled_u_Prior_Interface(hyperparams.alpha_u)
+            this@MD_Elliptic_u_Prior_Interface(hyperparams.alpha_u)
             this.M = M;
             this.hyperparams = hyperparams;
             this.beta_u = 0.0;
@@ -127,10 +117,12 @@ classdef MD_Analytic_Laplacian_u_Prior_Interface < MD_Scaled_u_Prior_Interface
 
             this.Generate_Spectral_Decomposition();
 
-            if this.hyperparams.alpha_u == 0.0
-                this.hyperparams.Determine_alpha_u(this);
+            if ~this.hyperparams.is_transient
+                if this.hyperparams.alpha_u == 0.0
+                    this.hyperparams.Determine_alpha_u(this);
+                end
+                this.Set_alpha_u(this.hyperparams.alpha_u);
             end
-            this.Set_alpha_u(this.hyperparams.alpha_u);
         end
 
     end

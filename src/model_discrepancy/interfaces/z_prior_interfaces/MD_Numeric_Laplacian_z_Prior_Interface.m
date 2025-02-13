@@ -1,4 +1,4 @@
-classdef MD_Laplacian_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
+classdef MD_Numeric_Laplacian_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
 
     properties
         beta_z
@@ -46,7 +46,7 @@ classdef MD_Laplacian_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
             this.E_z = this.beta_z * this.S + this.M;
         end
 
-        function this = MD_Laplacian_z_Prior_Interface(S,M,hyperparams)
+        function this = MD_Numeric_Laplacian_z_Prior_Interface(S,M,hyperparams)
             this@MD_Elliptic_z_Prior_Interface(hyperparams.alpha_z)
             this.S = S;
             this.M = M;

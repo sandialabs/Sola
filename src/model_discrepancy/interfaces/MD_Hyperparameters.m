@@ -2,6 +2,7 @@ classdef MD_Hyperparameters < handle
 
     properties
         data_interface
+        is_transient
 
         data_noise_percent
         discrepancy_percent_z_variation
@@ -20,15 +21,16 @@ classdef MD_Hyperparameters < handle
         gsvd_num_subspace_iter
     end
 
-    methods (Access = public, Abstract)
-
-        % Load node data
-        [nodes] = Load_Node_Data(this);
-
-    end
-
-
     methods
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%% Functions to be overloaded to enable some functionality %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        function [spatial_nodes] = Load_Spatial_Node_Data(this)
+            spatial_nodes = [];
+            disp('Load_Spatial_Node_Data is required for automate hyperparameters')
+        end
 
         function [time_nodes] = Load_Time_Node_Data(this)
             time_nodes = [];
@@ -53,11 +55,16 @@ classdef MD_Hyperparameters < handle
         end
 
         function [] = Determine_alpha_u(this, u_prior_interface)
-
             delta = this.data_interface.Load_d_Data();
             delta_norm = delta(:,1)' * u_prior_interface.Apply_M_u(delta(:,1));
 
-            alpha_u_new = delta_norm/sum(u_prior_interface.sing_vals.^2);
+            if this.is_transient
+                u_op_trace = sum(u_prior_interface.spatial_prior_cov.sing_vals.^2) * sum(u_prior_interface.transient_prior_cov.evals);
+            else
+                u_op_trace = sum(u_prior_interface.sing_vals.^2);
+            end
+
+            alpha_u_new = delta_norm/u_op_trace;
             this.Set_alpha_u(alpha_u_new);
         end
 
@@ -68,7 +75,7 @@ classdef MD_Hyperparameters < handle
         end
 
         function [] = Determine_beta_u(this)
-            nodes = this.Load_Node_Data();
+            nodes = this.Load_Spatial_Node_Data();
             n_y = size(nodes,1);
             n_t = size(this.data_interface.D(:,1),1)/n_y;
             N = size(this.data_interface.D,2);
@@ -106,7 +113,7 @@ classdef MD_Hyperparameters < handle
             tmp = z_prior_interface.Apply_M_z(this.data_interface.z_opt);
             zopt_norm = tmp'*this.data_interface.z_opt;
 
-            nodes = this.Load_Node_Data();
+            nodes = this.Load_Spatial_Node_Data();
             if size(nodes,2) == 1
                 Lx = max(nodes(:,1))-min(nodes(:,1));
                 n = length(nodes(:,1))-1;
@@ -143,7 +150,7 @@ classdef MD_Hyperparameters < handle
         end
 
         function [] = Determine_beta_z(this)
-            nodes = this.Load_Node_Data();
+            nodes = this.Load_Spatial_Node_Data();
             if size(nodes,2) == 1
                 correlation_lengths = zeros(size(this.data_interface.Z,2),1);
                 for k = 1:length(correlation_lengths)
@@ -181,7 +188,7 @@ classdef MD_Hyperparameters < handle
                     correlation_lengths(i,j) = computeCorrelationLength_1D(time_nodes,di(:,j));
                 end
             end
-            beta_t_new = mean(correlation_lengths(:),'omitnan')^2/12;
+            beta_t_new = mean(correlation_lengths(:),'omitnan')^2/4;
 
             this.Set_beta_t(beta_t_new);
         end
@@ -195,7 +202,7 @@ classdef MD_Hyperparameters < handle
         end
 
         function [] = Determine_GSVD_Hyperparameters(this)
-            nodes = this.Load_Node_Data();
+            nodes = this.Load_Spatial_Node_Data();
             m = size(nodes,1);
             d = size(nodes,2);
             modes_per_dim = zeros(d,1);
@@ -211,8 +218,9 @@ classdef MD_Hyperparameters < handle
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-        function this = MD_Hyperparameters(data_interface)
+        function this = MD_Hyperparameters(data_interface,is_transient)
             this.data_interface = data_interface;
+            this.is_transient = is_transient;
 
             this.data_noise_percent = 0.001;
             this.discrepancy_percent_z_variation = 1.0;

@@ -7,19 +7,19 @@ classdef MD_Hyperparameters_Transient_Test_Problem < MD_Hyperparameters
 
     methods (Access = public)
 
-        function [nodes] = Load_Spatial_Node_Data(this)
-            nodes = this.x;
+        function [spatial_nodes] = Load_Spatial_Node_Data(this)
+            spatial_nodes = this.x;
         end
+
 
         function [time_nodes] = Load_Time_Node_Data(this)
             time_nodes = this.t;
         end
 
-        function this = MD_Hyperparameters_Transient_Test_Problem(data_interface,n_y)
+        function this = MD_Hyperparameters_Transient_Test_Problem(data_interface,x,t)
             this@MD_Hyperparameters(data_interface,true);
-            this.x = linspace(0,1,n_y)';
-            n_t = length(data_interface.u_opt)/n_y;
-            this.t = linspace(0,1,n_t)';
+            this.x = x;
+            this.t = t;
         end
 
     end

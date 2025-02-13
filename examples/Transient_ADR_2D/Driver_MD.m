@@ -23,17 +23,18 @@ T = t(end);
 n_t = length(t);
 n_y = solver.n_y;
 n_q = solver.n_q;
-beta_t = 1.e0;
-beta_i = 1.e0;
-transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(beta_t, beta_i, T, n_t, n_y);
+
+hyperparams = MD_Hyperparameters(data_interface,true);
+
+hyperparams.beta_t = 1.e0;
+transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(hyperparams, T, n_t, n_y);
 time_series_samples_u = transient_prior_cov.Sample_Time_Series(10);
 
 alpha_u = 1^2; % (1 / 2)^2;
-u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface_Transient_ADR_2D(alpha_u, transient_prior_cov, M, S);
+spatial_u_prior_interface = MD_Elliptic_u_Prior_Interface_Transient_ADR_2D(alpha_u, M, S);
+u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(spatial_u_prior_interface,transient_prior_cov);
 
-beta_t = 1.e0;
-beta_i = 1.e0;
-transient_prior_cov_z = MD_Transient_Prior_Covariance_Sabl(beta_t, beta_i, t(end - 1), n_t - 1, n_q);
+transient_prior_cov_z = MD_Transient_Prior_Covariance_Sabl(hyperparams, t(end - 1), n_t - 1, n_q);
 time_series_samples_z = transient_prior_cov_z.Sample_Time_Series(10);
 z_prior_interface = MD_z_Prior_Interface_Transient_ADR_2D(transient_prior_cov_z, n_q);
 

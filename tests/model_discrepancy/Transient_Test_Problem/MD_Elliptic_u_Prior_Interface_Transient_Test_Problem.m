@@ -1,4 +1,4 @@
-classdef MD_Transient_Elliptic_u_Prior_Interface_Transient_Test_Problem < MD_Transient_Elliptic_u_Prior_Interface
+classdef MD_Elliptic_u_Prior_Interface_Transient_Test_Problem < MD_Elliptic_u_Prior_Interface
 
     properties
         E_u
@@ -15,7 +15,7 @@ classdef MD_Transient_Elliptic_u_Prior_Interface_Transient_Test_Problem < MD_Tra
             u_out = linsolve(this.E_u, u_in);
         end
 
-        function [u_out] = Apply_Spatial_M_u(this, u_in)
+        function [u_out] = Apply_M_u(this, u_in)
             u_out = this.M * u_in;
         end
 
@@ -23,8 +23,8 @@ classdef MD_Transient_Elliptic_u_Prior_Interface_Transient_Test_Problem < MD_Tra
 
     methods
 
-        function this = MD_Transient_Elliptic_u_Prior_Interface_Transient_Test_Problem(alpha_u, transient_prior_cov, sabl_opt, num_sing_vals)
-            this@MD_Transient_Elliptic_u_Prior_Interface(alpha_u, transient_prior_cov);
+        function this = MD_Elliptic_u_Prior_Interface_Transient_Test_Problem(alpha_u, sabl_opt, num_sing_vals)
+            this@MD_Elliptic_u_Prior_Interface(alpha_u);
 
             S = sabl_opt.con.S;
             this.M = sabl_opt.con.M;

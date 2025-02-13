@@ -15,7 +15,7 @@ data_interface.Load_Data();
 hyperparams = MD_Hyperparameters_Discrepancy_Calibration(data_interface,x);
 
 u_prior_interface = MD_Analytic_Laplacian_u_Prior_Interface(con_hifi.M,hyperparams);
-z_prior_interface = MD_Laplacian_z_Prior_Interface(con_hifi.S,con_hifi.M,hyperparams);
+z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(con_hifi.S,con_hifi.M,hyperparams);
 
 alpha_u = (1.0) * hyperparams.alpha_u;
 u_prior_interface.Set_alpha_u(alpha_u);

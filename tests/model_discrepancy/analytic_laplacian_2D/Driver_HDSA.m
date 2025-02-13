@@ -18,7 +18,7 @@ u_prior_interface = MD_Analytic_Laplacian_u_Prior_Interface(M,hyperparams);
 
 hyperparams_gsvd = MD_Hyperparameters_hyperparam_auto_2D(data_interface,x,y);
 hyperparams_gsvd.gsvd_num_sing_vals = 1849;
-u_prior_interface_gsvd = MD_Laplacian_u_Prior_Interface(S,M,hyperparams_gsvd);
+u_prior_interface_gsvd = MD_Numeric_Laplacian_u_Prior_Interface(S,M,hyperparams_gsvd);
 
 
 %%
