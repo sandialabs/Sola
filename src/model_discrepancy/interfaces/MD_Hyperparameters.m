@@ -19,6 +19,10 @@ classdef MD_Hyperparameters < handle
         gsvd_num_sing_vals
         gsvd_oversampling
         gsvd_num_subspace_iter
+
+        d1_norm_sq
+        d_pert_norm_sq
+        z_pert_norm_sq
     end
 
     methods
@@ -56,7 +60,16 @@ classdef MD_Hyperparameters < handle
 
         function [] = Determine_alpha_u(this, u_prior_interface)
             delta = this.data_interface.Load_d_Data();
-            delta_norm = delta(:,1)' * u_prior_interface.Apply_M_u(delta(:,1));
+            this.d1_norm_sq = delta(:,1)' * u_prior_interface.Apply_M_u(delta(:,1));
+
+            N = size(this.data_interface.D,2);
+            if N > 1
+                this.d_pert_norm_sq = zeros(N-1,1);
+                for k = 2:N
+                    v = this.data_interface.D(:,k) - this.data_interface.D(:,1);
+                    this.d_pert_norm_sq(k-1) = v'*u_prior_interface.Apply_M_u(v);
+                end
+            end
 
             if this.is_transient
                 u_op_trace = sum(u_prior_interface.spatial_prior_cov.sing_vals.^2) * sum(u_prior_interface.transient_prior_cov.evals);
@@ -64,7 +77,7 @@ classdef MD_Hyperparameters < handle
                 u_op_trace = sum(u_prior_interface.sing_vals.^2);
             end
 
-            alpha_u_new = delta_norm/u_op_trace;
+            alpha_u_new = this.d1_norm_sq/u_op_trace;
             this.Set_alpha_u(alpha_u_new);
         end
 
@@ -138,7 +151,17 @@ classdef MD_Hyperparameters < handle
             samples = 1000;
             nu = randn(samples,rank).^2;
             tmp = mean(( nu * evals.^4 ) ./ ( nu * evals.^2 ));
+
+            N = size(this.data_interface.Z,2);
+            if N > 1
+                this.z_pert_norm_sq = zeros(N-1,1);
+                for k = 2:N
+                    v = this.data_interface.Z(:,k) - this.data_interface.Z(:,1);
+                    this.z_pert_norm_sq(k-1) = v'*z_prior_interface.Apply_M_z(v);
+                end
+            end
             
+            this.discrepancy_percent_z_variation = sqrt(max(this.d_pert_norm_sq./this.z_pert_norm_sq))*1.25;
             alpha_z_new = (this.discrepancy_percent_z_variation.^2) / (tmp * zopt_norm);
             this.Set_alpha_z(alpha_z_new);
         end
