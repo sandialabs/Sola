@@ -1,28 +1,36 @@
 % config.tex: configuration common to arXiv and TOMS formats.
 % Imports ---------------------------------------------------------------------
+\usepackage{caption}
 \usepackage[nameinlink]{cleveref}
 \usepackage{comment}
-% \usepackage{minted}
+% \usepackage[finalizecache,cachedir=_minted]{minted}
+\usepackage[frozencache,cachedir=_minted]{minted}
 \usepackage[normalem]{ulem}  % Strikeout with \sout{}
 \usepackage{url}
 \usepackage{xcolor}
 \usepackage{xspace}
-% \usepackage{verbatim}
 
-% Page setup ------------------------------------------------------------------
+% Equations, theorems, algorithms, code blocks --------------------------------
 \numberwithin{equation}{section}
 \crefformat{equation}{#2(#1)#3}
-% \usemintedstyle{pastie}
 
-% Environments ----------------------------------------------------------------
+\theoremstyle{definition}
+\newtheorem{remark}{Remark}[section]
+
+\setminted{
+    style=pastie,
+    fontsize=\normalsize,
+    linenos,
+    frame=lines,
+    framesep=2mm,
+}
+\setlength{\abovecaptionskip}{0pt}
+
 % % Algorithm comments: texttt and gray
 % \usepackage[section]{algorithm}
 % \usepackage[noend]{algpseudocode}
 % \algnewcommand{\LineComment}[1]{\State \textcolor{gray}{\texttt{\# #1}}}
 % \algrenewcomment[1]{\hfill\textcolor{gray}{\texttt{\# #1}}}
-
-% \theoremstyle{definition}
-% \newtheorem{remark}{Remark}[section]
 
 % Author comments -------------------------------------------------------------
 \definecolor{blue}{RGB}{0, 61, 165}
@@ -44,12 +52,12 @@
 \newcommand{\bartnote}[1]{{\color{sandiablue}Bart: {#1}}}
 \newcommand{\rev}[2]{\textcolor{red}{\sout{#1}}\,\textcolor{cyan}{#2}}
 
-
 % Macros ----------------------------------------------------------------------
 \newcommand{\MATLAB}{\texttt{MATLAB}\xspace}
 \newcommand{\SABL}{\texttt{SABL}\xspace}
 \newcommand{\cpp}{\texttt{c++}\xspace}
 \newcommand{\MrHyDE}{\texttt{MrHyDE}\xspace}
+\newcommand{\HdsaLib}{\texttt{HdsaLib}\xspace}
 
 \newcommand{\trp}{^{\mathsf{T}}}
 \newcommand{\invtrp}{^{-\mathsf{T}}}
