@@ -45,7 +45,7 @@ classdef MD_Posterior_Sampling < handle
                     coeff = (1 / sqrt(this.post_data.Mu(i, i))) * (sgi + Wz_inv_Mz_yi' * Mz_dz);
                     delta_samples_k = delta_samples_k + coeff * this.post_data.ui_hat{i};
                 end
-                delta_mean_k = (1 / this.post_data.alpha_d) * delta_mean_k;
+                delta_mean_k = (1 / this.post_data.alpha_d) * delta_mean_k + this.data_interface.data_shift;
                 delta_samples_k = sqrt(this.post_data.alpha_d) * delta_samples_k;
 
                 Wz_inv_Mz_dz = this.z_prior_interface.Apply_W_z_Inverse(Mz_dz);

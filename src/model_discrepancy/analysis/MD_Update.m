@@ -63,6 +63,7 @@ classdef MD_Update < handle
                     u = u - this.md_post_sampling.post_data.b_i_ell(i, ell) * sum(this.md_post_sampling.post_data.g_vecs(:, i)) * this.md_post_sampling.post_data.u_i_ell{i}(:, ell);
                 end
             end
+            u = u  + this.md_post_sampling.post_data.alpha_d * this.md_post_sampling.data_interface.data_shift;
             tmp1 = this.opt_prob_interface.Apply_Misfit_Hessian(u, this.u_opt, this.z_opt);
             z_tmp = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(tmp1, this.z_opt);
 

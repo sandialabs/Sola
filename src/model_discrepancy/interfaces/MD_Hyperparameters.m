@@ -3,6 +3,7 @@ classdef MD_Hyperparameters < handle
     properties
         data_interface
         is_transient
+        center_data
 
         data_noise_percent
         discrepancy_percent_z_variation
@@ -22,6 +23,7 @@ classdef MD_Hyperparameters < handle
 
         d1_norm_sq
         d_pert_norm_sq
+        z1_norm_sq
         z_pert_norm_sq
     end
 
@@ -59,14 +61,14 @@ classdef MD_Hyperparameters < handle
         end
 
         function [] = Determine_alpha_u(this, u_prior_interface)
-            delta = this.data_interface.Load_d_Data();
-            this.d1_norm_sq = delta(:,1)' * u_prior_interface.Apply_M_u(delta(:,1));
+            delta1 = this.data_interface.D(:,1);
+            this.d1_norm_sq = delta1' * u_prior_interface.Apply_M_u(delta1);
 
             N = size(this.data_interface.D,2);
             if N > 1
                 this.d_pert_norm_sq = zeros(N-1,1);
                 for k = 2:N
-                    v = this.data_interface.D(:,k) - this.data_interface.D(:,1);
+                    v = this.data_interface.D(:,k) - delta1;
                     this.d_pert_norm_sq(k-1) = v'*u_prior_interface.Apply_M_u(v);
                 end
             end
@@ -154,14 +156,17 @@ classdef MD_Hyperparameters < handle
 
             N = size(this.data_interface.Z,2);
             if N > 1
+                this.z1_norm_sq = this.data_interface.Z(:,1)' * z_prior_interface.Apply_M_z(this.data_interface.Z(:,1));
                 this.z_pert_norm_sq = zeros(N-1,1);
                 for k = 2:N
                     v = this.data_interface.Z(:,k) - this.data_interface.Z(:,1);
                     this.z_pert_norm_sq(k-1) = v'*z_prior_interface.Apply_M_z(v);
                 end
+                if this.discrepancy_percent_z_variation == 1
+                    this.discrepancy_percent_z_variation = mean( sqrt( (this.d_pert_norm_sq/this.d1_norm_sq)./(this.z_pert_norm_sq/this.z1_norm_sq) ) );
+                end
             end
-            
-            this.discrepancy_percent_z_variation = sqrt(max(this.d_pert_norm_sq./this.z_pert_norm_sq))*1.25;
+
             alpha_z_new = (this.discrepancy_percent_z_variation.^2) / (tmp * zopt_norm);
             this.Set_alpha_z(alpha_z_new);
         end
@@ -241,9 +246,27 @@ classdef MD_Hyperparameters < handle
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-        function this = MD_Hyperparameters(data_interface,is_transient)
+        function [] = Determine_Data_Centering(this)
+            data_shift = mean(this.data_interface.D(:,1)) * ones(size(this.data_interface.D,1),1);
+            this.data_interface.data_shift = data_shift;
+            this.data_interface.D = this.data_interface.D - data_shift;
+        end
+
+        function this = MD_Hyperparameters(data_interface,is_transient,center_data)
+            arguments
+                data_interface MD_Data_Interface
+                is_transient {boolean}
+                center_data = false
+            end
+
             this.data_interface = data_interface;
             this.is_transient = is_transient;
+            this.center_data = center_data;
+
+            this.data_interface.Load_Data();
+            if this.center_data
+                this.Determine_Data_Centering();
+            end
 
             this.data_noise_percent = 0.001;
             this.discrepancy_percent_z_variation = 1.0;

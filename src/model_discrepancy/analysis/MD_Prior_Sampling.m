@@ -19,7 +19,7 @@ classdef MD_Prior_Sampling < handle
         end
 
         function [delta_samples] = Prior_Discrepancy_Samples_at_z_opt(this, num_samps)
-            delta_samples = this.u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samps);
+            delta_samples = this.u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samps) + this.data_interface.data_shift;
         end
 
         function [delta_samples,delta_zopt_samples] = Prior_Discrepancy_Samples(this, z, num_samps)
@@ -33,8 +33,8 @@ classdef MD_Prior_Sampling < handle
             delta_samples = cell(num_samps, 1);
             for k = 1:num_samps
                 u_vec = this.u_prior_interface.Sample_with_Covariance_W_u_Inverse(p + 1);
-                delta_samples{k} = u_vec(:, 1:p) * R + u_vec(:, p + 1);
-                delta_zopt_samples(:,k) = u_vec(:, p + 1);
+                delta_samples{k} = u_vec(:, 1:p) * R + u_vec(:, p + 1) + this.data_interface.data_shift;
+                delta_zopt_samples(:,k) = u_vec(:, p + 1) + this.data_interface.data_shift;
             end
         end
 
