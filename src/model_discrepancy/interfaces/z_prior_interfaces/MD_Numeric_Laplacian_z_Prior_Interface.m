@@ -32,7 +32,7 @@ classdef MD_Numeric_Laplacian_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
         end
 
         function [z_out] = Apply_M_z_Inverse(this, z_in)
-            z_out = this.M_z' \ z_in;
+            z_out = this.M' \ z_in;
         end
 
         function [z_out] = Sample_with_Covariance_W_z_Inverse(this, num_samples)

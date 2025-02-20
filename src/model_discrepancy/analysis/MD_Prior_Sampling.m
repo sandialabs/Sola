@@ -37,6 +37,20 @@ classdef MD_Prior_Sampling < handle
                 delta_zopt_samples(:,k) = u_vec(:, p + 1) + this.data_interface.data_shift;
             end
         end
+        
+        function [delta_samples_z_opt,delta_samples_z_pert,z_pert] = Prior_Discrepancy_Samples_for_Visualization(this,num_samps,num_perts)
+            E_z_inv_gsvd = E_z_Inv_GSVD(this.z_prior_interface,this.z_opt);
+            [z_pert, ~, evals] = E_z_inv_gsvd.Compute_GSVD(num_perts,10,1);
+            delta_samples_z_opt = this.u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samps);
+            
+            scaling = .3 * sqrt(this.z_opt'*this.z_prior_interface.Apply_M_z(this.z_opt));
+            z_pert = scaling * z_pert;
+            
+            delta_samples_z_pert = cell(num_perts,1);
+            for k = 1:num_perts
+                delta_samples_z_pert{k} = scaling * sqrt(this.z_prior_interface.alpha_z) * evals(k) * this.u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samps);
+            end
+        end
 
     end
 
