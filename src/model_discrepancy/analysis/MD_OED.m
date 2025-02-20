@@ -43,7 +43,7 @@ classdef MD_OED < handle
                 tmp = this.u_prior_interface.Apply_W_u_Inverse(V_acute(:, k));
                 Mu_Wu_inv_V_acute(:, k) = this.u_prior_interface.Apply_M_u(tmp);
 
-                tmp = this.z_prior_interface.Apply_W_z_Inverse(Mz_V(:,k));
+                tmp = this.z_prior_interface.Apply_W_z_Inverse(Mz_V(:, k));
                 Vt_Mz_Wz_inv_Mz_V(:, k) = Mz_V' * tmp;
             end
             this.offline_data.V_accute = V_acute;

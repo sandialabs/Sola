@@ -39,7 +39,7 @@ classdef MD_Elliptic_z_Prior_Interface_PDE_Test_Problem < MD_Elliptic_z_Prior_In
 
         % This function must be implemented to enable Hessian GEVP
         function [z_out] = Apply_M_z_Inverse(this, z_in)
-            z_out = linsolve(this.M,z_in);
+            z_out = linsolve(this.M, z_in);
         end
 
     end

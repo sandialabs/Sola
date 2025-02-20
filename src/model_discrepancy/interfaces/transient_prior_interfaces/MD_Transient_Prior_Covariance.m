@@ -15,12 +15,12 @@ classdef MD_Transient_Prior_Covariance < handle
 
     methods
 
-        function [] = Set_beta_t(this,beta_t_new)
+        function [] = Set_beta_t(this, beta_t_new)
             this.beta_t = beta_t_new;
             this.E_t = this.beta_t * this.S_t + this.M_t;
         end
 
-        function this = MD_Transient_Prior_Covariance(M_t, S_t, n_y,hyperparams)
+        function this = MD_Transient_Prior_Covariance(M_t, S_t, n_y, hyperparams)
             this.hyperparams = hyperparams;
             this.M_t = M_t;
             this.S_t = S_t;

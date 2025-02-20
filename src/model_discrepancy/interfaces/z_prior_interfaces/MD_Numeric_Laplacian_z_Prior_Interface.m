@@ -9,7 +9,7 @@ classdef MD_Numeric_Laplacian_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
         M_sqrt
     end
 
-    methods ( Access = public)
+    methods (Access = public)
 
         function [z_out] = Apply_E_z_Inverse(this, z_in)
             z_out = this.E_z \ z_in;
@@ -36,18 +36,18 @@ classdef MD_Numeric_Laplacian_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
         end
 
         function [z_out] = Sample_with_Covariance_W_z_Inverse(this, num_samples)
-            omega = randn(size(this.S,1),num_samples);
+            omega = randn(size(this.S, 1), num_samples);
             vec = this.M_sqrt.Matrix_Apply(omega);
             z_out = sqrt(this.alpha_z) * this.Apply_E_z_Inverse(vec);
         end
 
-        function [] = Set_beta_z(this,beta_z_new)
+        function [] = Set_beta_z(this, beta_z_new)
             this.beta_z = beta_z_new;
             this.E_z = this.beta_z * this.S + this.M;
         end
 
-        function this = MD_Numeric_Laplacian_z_Prior_Interface(S,M,hyperparams)
-            this@MD_Elliptic_z_Prior_Interface(hyperparams.alpha_z)
+        function this = MD_Numeric_Laplacian_z_Prior_Interface(S, M, hyperparams)
+            this@MD_Elliptic_z_Prior_Interface(hyperparams.alpha_z);
             this.S = S;
             this.M = M;
             this.hyperparams = hyperparams;

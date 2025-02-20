@@ -46,29 +46,29 @@ classdef Quasi_Newton_Preconditioner < handle
         end
 
         function [] = Add_Block_Quasi_Newton_Step(this, p, w, p_dot_w)
-            num_vecs = length(this.PW_mags)+1;
-            normalization = p'*p;
+            num_vecs = length(this.PW_mags) + 1;
+            normalization = p' * p;
 
             if num_vecs == 1
-                this.P = p/normalization;
-                this.W = w/normalization;
-                this.PW_mags = p_dot_w/normalization^2;
+                this.P = p / normalization;
+                this.W = w / normalization;
+                this.PW_mags = p_dot_w / normalization^2;
             else
-                D = zeros(num_vecs,num_vecs);
-                D(1:(num_vecs-1),1:(num_vecs-1)) = diag(this.PW_mags);
-                D(num_vecs,1:(num_vecs-1)) = w'*this.P/normalization;
-                D(1:(num_vecs-1),num_vecs) = this.W'*p/normalization;
-                D(num_vecs,num_vecs) = p_dot_w/normalization^2;
-                [V,Lambda] = eig(D,'vector');
-                [~,J] = sort(Lambda,'descend');
+                D = zeros(num_vecs, num_vecs);
+                D(1:(num_vecs - 1), 1:(num_vecs - 1)) = diag(this.PW_mags);
+                D(num_vecs, 1:(num_vecs - 1)) = w' * this.P / normalization;
+                D(1:(num_vecs - 1), num_vecs) = this.W' * p / normalization;
+                D(num_vecs, num_vecs) = p_dot_w / normalization^2;
+                [V, Lambda] = eig(D, 'vector');
+                [~, J] = sort(Lambda, 'descend');
                 Lambda = Lambda(J);
-                V = V(:,J);
+                V = V(:, J);
                 I = find(Lambda > this.tau);
                 if length(I) > this.max_size
                     I = I(1:this.max_size);
                 end
-                this.P = [this.P , p/normalization]*V(:,1:I(end));
-                this.W = [this.W , w/normalization]*V(:,1:I(end));
+                this.P = [this.P, p / normalization] * V(:, 1:I(end));
+                this.W = [this.W, w / normalization] * V(:, 1:I(end));
                 this.PW_mags = Lambda(1:I(end));
             end
 
@@ -113,14 +113,14 @@ classdef Quasi_Newton_Preconditioner < handle
                 Wk = this.block_qn_data{block_counter}.Wr;
 
                 tmp1 = Pk' * z_in;
-                tmp1 = linsolve(Dk,tmp1);
+                tmp1 = linsolve(Dk, tmp1);
                 tmp2 = Pk * tmp1;
                 tmp1 = z_in - Wk * tmp1;
 
                 tmp_out = this.Apply_QN_Inverse_Hessian_Approximation(tmp1, param_counter, block_counter - 1);
 
                 tmp3 = Wk' * tmp_out;
-                tmp3 = linsolve(Dk,tmp3);
+                tmp3 = linsolve(Dk, tmp3);
                 tmp3 = tmp_out - Pk * tmp3;
 
                 z_out = tmp3 + tmp2;

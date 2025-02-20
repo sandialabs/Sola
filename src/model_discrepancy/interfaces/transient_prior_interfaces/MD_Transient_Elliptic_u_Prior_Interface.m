@@ -9,7 +9,7 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
 
         % spatial_prior_cov should be an object of type MD_Elliptic_u_Prior_Interface
         % transient_prior_cov should be an object of type MD_Transient_Prior_Covariance
-        function this = MD_Transient_Elliptic_u_Prior_Interface(spatial_prior_cov,transient_prior_cov)
+        function this = MD_Transient_Elliptic_u_Prior_Interface(spatial_prior_cov, transient_prior_cov)
             this@MD_Scaled_u_Prior_Interface(transient_prior_cov.hyperparams.alpha_u);
             this.spatial_prior_cov = spatial_prior_cov;
             this.transient_prior_cov = transient_prior_cov;

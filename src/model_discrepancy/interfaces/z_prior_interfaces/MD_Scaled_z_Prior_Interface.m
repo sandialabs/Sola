@@ -7,17 +7,16 @@ classdef MD_Scaled_z_Prior_Interface < MD_z_Prior_Interface
     methods (Abstract, Access = public)
 
         %% Pure virtual functions
-        
+
         [z_out] = Apply_M_z(this, z_in)
 
         [z_out] = Apply_W_z_Acute_Inverse(this, z_in)
-
 
     end
 
     methods
 
-        function [] = Set_alpha_z(this,alpha_z_new)
+        function [] = Set_alpha_z(this, alpha_z_new)
             this.alpha_z = alpha_z_new;
         end
 

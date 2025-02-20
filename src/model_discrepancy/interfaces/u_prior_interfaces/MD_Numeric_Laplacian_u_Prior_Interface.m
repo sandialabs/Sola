@@ -22,13 +22,13 @@ classdef MD_Numeric_Laplacian_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
             u_out = this.M * u_in;
         end
 
-        function [] = Set_beta_u(this,beta_u_new)
+        function [] = Set_beta_u(this, beta_u_new)
             this.beta_u = beta_u_new;
             this.E_u = this.beta_u * this.S + this.M;
         end
 
-        function this = MD_Numeric_Laplacian_u_Prior_Interface(S,M,hyperparams)
-            this@MD_Elliptic_u_Prior_Interface(hyperparams.alpha_u)
+        function this = MD_Numeric_Laplacian_u_Prior_Interface(S, M, hyperparams)
+            this@MD_Elliptic_u_Prior_Interface(hyperparams.alpha_u);
             this.M = M;
             this.S = S;
             this.hyperparams = hyperparams;
@@ -38,8 +38,8 @@ classdef MD_Numeric_Laplacian_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
             end
             this.Set_beta_u(this.hyperparams.beta_u);
 
-            m = size(this.S,1);
-            u_vec = zeros(m,1);
+            m = size(this.S, 1);
+            u_vec = zeros(m, 1);
             if this.hyperparams.gsvd_num_sing_vals == 0
                 this.hyperparams.Determine_GSVD_Hyperparameters();
             end

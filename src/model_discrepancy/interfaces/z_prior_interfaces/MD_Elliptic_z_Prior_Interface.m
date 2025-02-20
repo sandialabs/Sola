@@ -54,17 +54,16 @@ classdef MD_Elliptic_z_Prior_Interface < MD_Scaled_z_Prior_Interface
         function [z_out] = Apply_W_z(this, z_in)
             tmp = this.Apply_E_z(z_in);
             tmp = this.Apply_M_z_Inverse(tmp);
-            z_out = (1/this.alpha_z) * this.Apply_E_z_Transpose(tmp);
+            z_out = (1 / this.alpha_z) * this.Apply_E_z_Transpose(tmp);
         end
 
-        function [] = Update_alpha_z(this,alpha_z_new)
+        function [] = Update_alpha_z(this, alpha_z_new)
             this.alpha_z = alpha_z_new;
         end
 
         function this = MD_Elliptic_z_Prior_Interface(alpha_z)
             this@MD_Scaled_z_Prior_Interface(alpha_z);
         end
-
 
     end
 

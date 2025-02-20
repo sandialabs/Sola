@@ -52,10 +52,10 @@ classdef MD_Posterior_Data < handle
             this.Mz_Wz_inv_Mz_Z = z_prior_interface.Apply_M_z(this.Wz_inv_Mz_Z);
             this.Mz_Wz_inv_Mz_z_opt = z_prior_interface.Apply_M_z(this.Wz_inv_Mz_z_opt);
 
-            this.Mz_Zc = this.Mz_Z(:,2:end) - this.Mz_z_opt;
-            this.Wz_inv_Mz_Zc = this.Wz_inv_Mz_Z(:,2:end) - this.Wz_inv_Mz_z_opt;
-            this.Mz_Wz_inv_Mz_Zc = this.Mz_Wz_inv_Mz_Z(:,2:end) - this.Mz_Wz_inv_Mz_z_opt;
-            this.Zc_Mz_Wz_inv_Mz_Zc = this.Mz_Zc'*this.Wz_inv_Mz_Zc;
+            this.Mz_Zc = this.Mz_Z(:, 2:end) - this.Mz_z_opt;
+            this.Wz_inv_Mz_Zc = this.Wz_inv_Mz_Z(:, 2:end) - this.Wz_inv_Mz_z_opt;
+            this.Mz_Wz_inv_Mz_Zc = this.Mz_Wz_inv_Mz_Z(:, 2:end) - this.Mz_Wz_inv_Mz_z_opt;
+            this.Zc_Mz_Wz_inv_Mz_Zc = this.Mz_Zc' * this.Wz_inv_Mz_Zc;
             this.Zc = this.Z(:, 2:end) - z_opt;
 
             this.G = (1 + this.Wz_inv_Mz_z_opt' * this.Mz_z_opt) - this.Mz_Z' * this.Wz_inv_Mz_z_opt - this.Wz_inv_Mz_z_opt' * this.Mz_Z + this.Mz_Z' * this.Wz_inv_Mz_Z;

@@ -8,8 +8,8 @@ plot_figures = false;
 
 T = 30;
 n_t = 100;
-con = React_Rate_Eqn(T,n_t);
-obj = Chem_React_Network_Objective(T, n_t,con);
+con = React_Rate_Eqn(T, n_t);
+obj = Chem_React_Network_Objective(T, n_t, con);
 opt = Reduced_Space_Optimization(obj, con);
 
 %%
@@ -26,7 +26,7 @@ num_prior_samples = 500;
 md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 
 prior_delta_samples = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
-t = linspace(0,T,n_t)';
+t = linspace(0, T, n_t)';
 if plot_figures
     figure;
     hold on;
@@ -59,7 +59,7 @@ if plot_figures
         plot(t, md_post_sampling.post_data.D(j:9:end, 1), 'color', 'black', 'LineWidth', 3);
         plot(t, delta_mean{1}(j:9:end), '--', 'color', 'red', 'LineWidth', 3);
         xlabel('Time');
-        ylabel(['Species ',num2str(j)], 'Interpreter', 'latex');
+        ylabel(['Species ', num2str(j)], 'Interpreter', 'latex');
         set(gca, 'fontsize', 18);
     end
 end
@@ -73,14 +73,13 @@ md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 %%
 SSA = SSA_System(con);
 num_samples = 500;
-u_SSA_opt = SSA.SSA_Mean(data_interface.z_opt,num_samples);
-y_SSA_opt = reshape(u_SSA_opt,9,n_t)'*con.nA*con.vol/con.state_scale;
-u_SSA_update_mean = SSA.SSA_Mean(z_update_mean,num_samples);
-y_SSA_update_mean = reshape(u_SSA_update_mean,9,n_t)'*con.nA*con.vol/con.state_scale;
+u_SSA_opt = SSA.SSA_Mean(data_interface.z_opt, num_samples);
+y_SSA_opt = reshape(u_SSA_opt, 9, n_t)' * con.nA * con.vol / con.state_scale;
+u_SSA_update_mean = SSA.SSA_Mean(z_update_mean, num_samples);
+y_SSA_update_mean = reshape(u_SSA_update_mean, 9, n_t)' * con.nA * con.vol / con.state_scale;
 
-disp('Error in terminal species with nominal:')
-disp(abs(y_SSA_opt(end,5)-(obj.target*con.nA*con.vol/con.state_scale))/(obj.target*con.nA*con.vol/con.state_scale))
+disp('Error in terminal species with nominal:');
+disp(abs(y_SSA_opt(end, 5) - (obj.target * con.nA * con.vol / con.state_scale)) / (obj.target * con.nA * con.vol / con.state_scale));
 
-disp('Error in terminal species with update:')
-disp(abs(y_SSA_update_mean(end,5)-(obj.target*con.nA*con.vol/con.state_scale))/(obj.target*con.nA*con.vol/con.state_scale))
-
+disp('Error in terminal species with update:');
+disp(abs(y_SSA_update_mean(end, 5) - (obj.target * con.nA * con.vol / con.state_scale)) / (obj.target * con.nA * con.vol / con.state_scale));

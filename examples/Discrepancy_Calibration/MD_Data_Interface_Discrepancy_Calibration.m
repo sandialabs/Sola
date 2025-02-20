@@ -25,7 +25,7 @@ classdef MD_Data_Interface_Discrepancy_Calibration < MD_Data_Interface
             D = this.D_in;
         end
 
-        function this = MD_Data_Interface_Discrepancy_Calibration(z_lofi,u_lofi,Z,D)
+        function this = MD_Data_Interface_Discrepancy_Calibration(z_lofi, u_lofi, Z, D)
             this.z_lofi_in = z_lofi;
             this.u_lofi_in = u_lofi;
             this.Z_in = Z;

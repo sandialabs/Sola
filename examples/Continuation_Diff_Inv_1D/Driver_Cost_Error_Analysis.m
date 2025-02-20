@@ -1,4 +1,5 @@
-clear;hto 
+clear;
+hto;
 close all;
 clc;
 addpath('../../src/');

@@ -43,7 +43,7 @@ classdef MD_Data_Interface < handle
             this.z_opt = this.Load_Optimal_z();
             this.Z = this.Load_Z_Data();
             this.D = this.Load_d_Data();
-            this.data_shift = zeros(size(this.D,1),1);
+            this.data_shift = zeros(size(this.D, 1), 1);
         end
 
     end

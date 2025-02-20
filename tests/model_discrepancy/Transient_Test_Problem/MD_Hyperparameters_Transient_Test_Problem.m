@@ -11,13 +11,12 @@ classdef MD_Hyperparameters_Transient_Test_Problem < MD_Hyperparameters
             spatial_nodes = this.x;
         end
 
-
         function [time_nodes] = Load_Time_Node_Data(this)
             time_nodes = this.t;
         end
 
-        function this = MD_Hyperparameters_Transient_Test_Problem(data_interface,x,t)
-            this@MD_Hyperparameters(data_interface,true);
+        function this = MD_Hyperparameters_Transient_Test_Problem(data_interface, x, t)
+            this@MD_Hyperparameters(data_interface, true);
             this.x = x;
             this.t = t;
         end

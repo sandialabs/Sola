@@ -44,7 +44,7 @@ classdef Pseudo_Time_Continuation < handle
 
                 w = this.sen_op.Apply_Hessian(p, z, theta);
 
-                p_dot_w = w'*p;
+                p_dot_w = w' * p;
                 this.qn_prec.Add_Block_Quasi_Newton_Step(p, w, p_dot_w);
                 alpha = scalar / p_dot_w;
                 z_out = z_out + alpha * p;
@@ -89,14 +89,14 @@ classdef Pseudo_Time_Continuation < handle
                     this.qn_prec.Add_Parametric_Quasi_Newton_Data(s_k, y_k);
                 end
 
-                f = this.Apply_Inverse_Hessian(grad_tmp,z_tmp,this.theta_bar + k * dt * d_theta);
-                z_k(:,k+1) = z_tmp - f;
-                grad_k(:,k+1) = this.sen_op.Gradient(z_k(:,k+1), this.theta_bar + k * dt * d_theta);
+                f = this.Apply_Inverse_Hessian(grad_tmp, z_tmp, this.theta_bar + k * dt * d_theta);
+                z_k(:, k + 1) = z_tmp - f;
+                grad_k(:, k + 1) = this.sen_op.Gradient(z_k(:, k + 1), this.theta_bar + k * dt * d_theta);
 
                 if this.use_qn_prec
                     this.qn_prec.Add_Block_Quasi_Newton_Data();
-                    s_k = z_k(:,k+1) - z_tmp;
-                    y_k = grad_k(:,k+1) - grad_tmp;
+                    s_k = z_k(:, k + 1) - z_tmp;
+                    y_k = grad_k(:, k + 1) - grad_tmp;
                     this.qn_prec.Add_Parametric_Quasi_Newton_Data(s_k, y_k);
                 end
 
@@ -144,14 +144,14 @@ classdef Pseudo_Time_Continuation < handle
                     this.qn_prec.Add_Parametric_Quasi_Newton_Data(s_k, y_k);
                 end
 
-                f = this.Apply_Inverse_Hessian(grad_tmp2,z_tmp2,this.theta_bar + k * dt * d_theta);
-                z_k(:,k+1) = z_tmp2 - f;
-                grad_k(:,k+1) = this.sen_op.Gradient(z_k(:,k+1), this.theta_bar + k * dt * d_theta);
+                f = this.Apply_Inverse_Hessian(grad_tmp2, z_tmp2, this.theta_bar + k * dt * d_theta);
+                z_k(:, k + 1) = z_tmp2 - f;
+                grad_k(:, k + 1) = this.sen_op.Gradient(z_k(:, k + 1), this.theta_bar + k * dt * d_theta);
 
                 if this.use_qn_prec
                     this.qn_prec.Add_Block_Quasi_Newton_Data();
-                    s_k = z_k(:,k+1) - z_tmp2;
-                    y_k = grad_k(:,k+1) - grad_tmp2;
+                    s_k = z_k(:, k + 1) - z_tmp2;
+                    y_k = grad_k(:, k + 1) - grad_tmp2;
                     this.qn_prec.Add_Parametric_Quasi_Newton_Data(s_k, y_k);
                 end
 

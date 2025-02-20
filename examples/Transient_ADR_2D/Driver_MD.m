@@ -24,7 +24,7 @@ n_t = length(t);
 n_y = solver.n_y;
 n_q = solver.n_q;
 
-hyperparams = MD_Hyperparameters_Transient_ADR_2D(data_interface,solver,t);
+hyperparams = MD_Hyperparameters_Transient_ADR_2D(data_interface, solver, t);
 hyperparams.beta_t = 1.0;
 
 transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(hyperparams, T, n_t, n_y);
@@ -32,7 +32,7 @@ time_series_samples_u = transient_prior_cov.Sample_Time_Series(10);
 
 alpha_u = 1^2; % (1 / 2)^2;
 spatial_u_prior_interface = MD_Elliptic_u_Prior_Interface_Transient_ADR_2D(alpha_u, M, S);
-u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(spatial_u_prior_interface,transient_prior_cov);
+u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(spatial_u_prior_interface, transient_prior_cov);
 
 transient_prior_cov_z = MD_Transient_Prior_Covariance_Sabl(hyperparams, t(end - 1), n_t - 1, n_q);
 time_series_samples_z = transient_prior_cov_z.Sample_Time_Series(10);

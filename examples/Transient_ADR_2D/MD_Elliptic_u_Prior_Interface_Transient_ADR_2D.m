@@ -44,7 +44,7 @@ classdef MD_Elliptic_u_Prior_Interface_Transient_ADR_2D < MD_Elliptic_u_Prior_In
             num_subspace_iters = 1;
             u_vec = zeros(size(M, 1) / 2, 1);
             this.Compute_E_u_Inverse_GSVD(num_sing_vals, oversampling, num_subspace_iters, u_vec);
-            sing_vecs_output = zeros(size(M,1), 2 * num_sing_vals);
+            sing_vecs_output = zeros(size(M, 1), 2 * num_sing_vals);
             sing_vals = zeros(2 * num_sing_vals, 1);
             count = 1;
             for i = 1:num_sing_vals

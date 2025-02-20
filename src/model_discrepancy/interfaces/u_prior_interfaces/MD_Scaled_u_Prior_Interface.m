@@ -18,7 +18,7 @@ classdef MD_Scaled_u_Prior_Interface < MD_u_Prior_Interface
 
     methods
 
-        function [] = Set_alpha_u(this,alpha_u_new)
+        function [] = Set_alpha_u(this, alpha_u_new)
             this.alpha_u = alpha_u_new;
         end
 

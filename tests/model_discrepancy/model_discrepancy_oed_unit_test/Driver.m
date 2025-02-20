@@ -111,7 +111,7 @@ mu_fd_error = zeros(p, 1);
 Mg_fd_error = zeros(p, 1);
 for s = 1:p
     [g_s, mu_s, Mg_s] = md_oed.G_eigs(beta + h(s) * dbeta);
-    sign_normalization = sign(g(1,i))*sign(g_s(1,i));
+    sign_normalization = sign(g(1, i)) * sign(g_s(1, i));
     g_s = sign_normalization * g_s;
     Mg_s = sign_normalization * Mg_s;
 

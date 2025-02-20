@@ -32,7 +32,7 @@ classdef MD_z_Prior_Interface_Adv_Diff < MD_z_Prior_Interface
             R = chol(this.Wz);
             this.F = linsolve(R, eye(size(R, 1)));
 
-            this.alpha_z = 5; 
+            this.alpha_z = 5;
         end
 
     end

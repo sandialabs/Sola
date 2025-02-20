@@ -13,10 +13,10 @@ classdef Randomized_GEVP_FD_Hessian < Randomized_GEVP
 
             h = 1.e-4;
             vec_out = 0.0 * vec_in;
-            for k = 1:size(vec_in,2)
-                zk = this.z_star + h * vec_in(:,k);
-                [~,gradk] = this.opt.Jhat(zk);
-                vec_out(:,k) = (gradk - this.grad_nom)/h;
+            for k = 1:size(vec_in, 2)
+                zk = this.z_star + h * vec_in(:, k);
+                [~, gradk] = this.opt.Jhat(zk);
+                vec_out(:, k) = (gradk - this.grad_nom) / h;
             end
 
         end
@@ -39,13 +39,13 @@ classdef Randomized_GEVP_FD_Hessian < Randomized_GEVP
 
     methods
 
-        function this = Randomized_GEVP_FD_Hessian(opt,z_star)
-            m = size(opt.obj.prior.L,1);
+        function this = Randomized_GEVP_FD_Hessian(opt, z_star)
+            m = size(opt.obj.prior.L, 1);
             vec = zeros(m, 1);
             this@Randomized_GEVP(vec);
             this.M = opt.obj.prior.con.M;
             this.opt = opt;
-            [~,this.grad_nom] = opt.Jhat(z_star);
+            [~, this.grad_nom] = opt.Jhat(z_star);
             this.z_star = z_star;
         end
 

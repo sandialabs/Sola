@@ -9,15 +9,15 @@ suppress_figures = true;
 m = 51;
 x = linspace(0, 1, m)';
 
-[M,S] = Assemble_Mass_and_Stiffness(m);
+[M, S] = Assemble_Mass_and_Stiffness(m);
 
 data_interface = MD_Data_Interface_synthetic_test_with_hyperparam_auto(m);
 data_interface.Load_Data();
 
-hyperparams = MD_Hyperparameters_synthetic_test_with_hyperparam_auto(data_interface,m);
+hyperparams = MD_Hyperparameters_synthetic_test_with_hyperparam_auto(data_interface, m);
 
-u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(S,M,hyperparams);
-z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S,M,hyperparams);
+u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(S, M, hyperparams);
+z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S, M, hyperparams);
 
 %%
 num_prior_samples = 100;

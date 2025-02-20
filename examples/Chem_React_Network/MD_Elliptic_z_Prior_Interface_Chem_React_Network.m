@@ -37,7 +37,7 @@ classdef MD_Elliptic_z_Prior_Interface_Chem_React_Network < MD_Elliptic_z_Prior_
 
         % This function must be implemented to enable Hessian GEVP
         function [z_out] = Apply_M_z_Inverse(this, z_in)
-            z_out = linsolve(this.M , z_in);
+            z_out = linsolve(this.M, z_in);
         end
 
         function this = MD_Elliptic_z_Prior_Interface_Chem_React_Network(alpha_z)

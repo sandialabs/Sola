@@ -35,8 +35,8 @@ u_sol = load('Solution_Example_5.mat', 'u').u;
 z_sol = load('Solution_Example_5.mat', 'z').z;
 
 error = 0;
-error = max(error, norm(u_sol - u)/norm(u_sol));
-error = max(error, norm(z_sol - z)/norm(z_sol));
+error = max(error, norm(u_sol - u) / norm(u_sol));
+error = max(error, norm(z_sol - z) / norm(z_sol));
 if error > 1.e-6
     disp('Error in example 5');
     disp('Computed objective:');

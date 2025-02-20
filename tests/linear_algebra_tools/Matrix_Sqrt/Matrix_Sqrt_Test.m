@@ -15,7 +15,7 @@ classdef Matrix_Sqrt_Test < Matrix_Sqrt
     methods
 
         function this = Matrix_Sqrt_Test(m)
-            h = 1/(m-1);
+            h = 1 / (m - 1);
             M = diag(4 * ones(1, m)) + diag(ones(1, m - 1), 1) + diag(ones(1, m - 1), -1);
             M(1, 1) = .5 * M(1, 1);
             M(end, end) = .5 * M(end, end);

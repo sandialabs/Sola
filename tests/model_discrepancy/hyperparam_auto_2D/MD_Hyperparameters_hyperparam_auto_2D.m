@@ -8,11 +8,11 @@ classdef MD_Hyperparameters_hyperparam_auto_2D < MD_Hyperparameters
     methods (Access = public)
 
         function [spatial_nodes] = Load_Spatial_Node_Data(this)
-            spatial_nodes = [this.x , this.y];
+            spatial_nodes = [this.x, this.y];
         end
 
-        function this = MD_Hyperparameters_hyperparam_auto_2D(data_interface,x,y)
-            this@MD_Hyperparameters(data_interface,false);
+        function this = MD_Hyperparameters_hyperparam_auto_2D(data_interface, x, y)
+            this@MD_Hyperparameters(data_interface, false);
             this.x = x;
             this.y = y;
         end

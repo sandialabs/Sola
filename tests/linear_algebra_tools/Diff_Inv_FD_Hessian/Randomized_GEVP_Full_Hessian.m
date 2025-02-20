@@ -10,10 +10,10 @@ classdef Randomized_GEVP_Full_Hessian < Randomized_GEVP
     methods (Access = public)
 
         function [vec_out] = Apply_Operator(this, vec_in)
-            
+
             vec_out = 0.0 * vec_in;
-            for k = 1:size(vec_in,2)
-                vec_out(:,k) = this.opt.Jhat_hessVec(this.hessian_data,vec_in(:,k));
+            for k = 1:size(vec_in, 2)
+                vec_out(:, k) = this.opt.Jhat_hessVec(this.hessian_data, vec_in(:, k));
             end
 
         end
@@ -36,13 +36,13 @@ classdef Randomized_GEVP_Full_Hessian < Randomized_GEVP
 
     methods
 
-        function this = Randomized_GEVP_Full_Hessian(opt,z_star)
-            m = size(opt.obj.prior.L,1);
+        function this = Randomized_GEVP_Full_Hessian(opt, z_star)
+            m = size(opt.obj.prior.L, 1);
             vec = zeros(m, 1);
             this@Randomized_GEVP(vec);
             this.M = opt.obj.prior.con.M;
             this.opt = opt;
-            [~,~,this.hessian_data] = opt.Jhat(z_star);
+            [~, ~, this.hessian_data] = opt.Jhat(z_star);
             this.z_star = z_star;
         end
 
