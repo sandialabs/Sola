@@ -137,7 +137,7 @@ classdef MD_Hyperparameters < handle
             elseif size(nodes, 2) == 2
                 Lx = max(nodes(:, 1)) - min(nodes(:, 1));
                 Ly = max(nodes(:, 2)) - min(nodes(:, 2));
-                n = sqrt(length(nodes(:, 1))) - 1;
+                n = round(sqrt(length(nodes(:, 1)))) - 1;
                 e = 1 + z_prior_interface.beta_z * pi^2 * (kron(((0:n).^2)', ones(n + 1, 1)) / Lx^2 + kron(ones(n + 1, 1), ((0:n).^2)') / Ly^2);
             else
                 disp('Determine_alpha_z error: Dimensions greater than 2 are not supported.');
