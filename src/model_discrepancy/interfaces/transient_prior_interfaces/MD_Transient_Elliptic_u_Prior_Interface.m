@@ -13,6 +13,15 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             this@MD_Scaled_u_Prior_Interface(transient_prior_cov.hyperparams.alpha_u);
             this.spatial_prior_cov = spatial_prior_cov;
             this.transient_prior_cov = transient_prior_cov;
+
+            if transient_prior_cov.hyperparams.adapt_time_variance
+                transient_prior_cov.hyperparams.Determine_alpha_t(this);
+            end
+
+            num_evals = transient_prior_cov.n_t;
+            oversampling = 0;
+            transient_prior_cov.Compute_Time_Covariance_GEVP(num_evals, oversampling);
+
             if transient_prior_cov.hyperparams.alpha_u == 0.0
                 transient_prior_cov.hyperparams.Determine_alpha_u(this);
             end

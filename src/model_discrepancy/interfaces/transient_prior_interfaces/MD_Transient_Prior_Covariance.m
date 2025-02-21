@@ -31,14 +31,10 @@ classdef MD_Transient_Prior_Covariance < handle
                 this.hyperparams.Determine_beta_t();
             end
             this.Set_beta_t(this.hyperparams.beta_t);
-
-            num_evals = this.n_t;
-            oversampling = 0;
-            this.Compute_Time_Covariance_GEVP(num_evals, oversampling);
         end
 
         function [] = Compute_Time_Covariance_GEVP(this, num_evals, oversampling)
-            gevp = Time_Covariance_GEVP(this.E_t, this.M_t);
+            gevp = Time_Covariance_GEVP(this.E_t, this.M_t, this.hyperparams.alpha_t);
             [this.evecs, this.evals] = gevp.Compute_GEVP(num_evals, oversampling);
             this.M_t_inv_evecs = this.M_t \ this.evecs;
         end

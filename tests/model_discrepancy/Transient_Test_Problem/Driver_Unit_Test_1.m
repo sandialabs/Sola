@@ -21,6 +21,7 @@ hyperparam = MD_Hyperparameters_Transient_Test_Problem(data_interface, x, t);
 hyperparam.beta_t = 11;
 
 transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(hyperparam, T, n_t, n_y);
+transient_prior_cov.Compute_Time_Covariance_GEVP(n_t, 0);
 
 error = 0;
 

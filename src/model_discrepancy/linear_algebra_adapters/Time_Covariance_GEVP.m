@@ -3,13 +3,14 @@ classdef Time_Covariance_GEVP < Randomized_GEVP
     properties
         E_t
         M_t
+        alpha_t
         is_computed
     end
 
     methods (Access = public)
 
         function [vec_out] = Apply_Operator(this, vec_in)
-            vec_out = this.E_t \ vec_in;
+            vec_out = sqrt(this.alpha_t) .* (this.E_t \ (sqrt(this.alpha_t) .* vec_in));
         end
 
         function [vec_out] = Apply_Weighting_Operator(this, vec_in)
@@ -28,11 +29,12 @@ classdef Time_Covariance_GEVP < Randomized_GEVP
 
     methods
 
-        function this = Time_Covariance_GEVP(E_t, M_t)
+        function this = Time_Covariance_GEVP(E_t, M_t, alpha_t)
             vec = zeros(size(E_t, 1), 1);
             this@Randomized_GEVP(vec);
             this.E_t = E_t;
             this.M_t = M_t;
+            this.alpha_t = alpha_t;
         end
 
     end

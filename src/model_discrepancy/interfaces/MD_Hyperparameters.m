@@ -4,6 +4,7 @@ classdef MD_Hyperparameters < handle
         data_interface
         is_transient
         center_data
+        adapt_time_variance
 
         data_noise_percent
         discrepancy_percent_z_variation
@@ -199,6 +200,32 @@ classdef MD_Hyperparameters < handle
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+        function [] = Set_alpha_t(this, alpha_t_new)
+            this.alpha_t = alpha_t_new;
+        end
+
+        function [] = Determine_alpha_t(this, u_prior_interface)
+            time_nodes = this.Load_Time_Node_Data();
+            n_t = length(time_nodes);
+            n_y = size(this.data_interface.D(:, 1), 1) / n_t;
+            N = size(this.data_interface.D, 2);
+            alpha_t_new = zeros(n_t, N);
+            for i = 1:N
+                di = reshape(this.data_interface.D(:, i), n_y, n_t);
+                tmp = diag(di' * u_prior_interface.spatial_prior_cov.Apply_M_u(di));
+                tmp = tmp / max(tmp);
+                tmp = tmp + (1.e-3);
+                tmp = tmp / (1 + 1.e-3);
+                alpha_t_new(:, i) = tmp;
+            end
+
+            alpha_t_new = mean(alpha_t_new, 2);
+
+            this.Set_alpha_t(alpha_t_new);
+        end
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
         function [] = Set_beta_t(this, beta_t_new)
             this.beta_t = beta_t_new;
         end
@@ -252,16 +279,18 @@ classdef MD_Hyperparameters < handle
             this.data_interface.D = this.data_interface.D - data_shift;
         end
 
-        function this = MD_Hyperparameters(data_interface, is_transient, center_data)
+        function this = MD_Hyperparameters(data_interface, is_transient, center_data, adapt_time_variance)
             arguments
                 data_interface MD_Data_Interface
                 is_transient {boolean}
                 center_data = false
+                adapt_time_variance = false
             end
 
             this.data_interface = data_interface;
             this.is_transient = is_transient;
             this.center_data = center_data;
+            this.adapt_time_variance = adapt_time_variance;
 
             this.data_interface.Load_Data();
             if this.center_data
@@ -277,7 +306,7 @@ classdef MD_Hyperparameters < handle
             this.beta_u = 0.0;
             this.alpha_z = 0.0;
             this.beta_z = 0.0;
-            this.alpha_t = 0.0;
+            this.alpha_t = 1.0;
             this.beta_t = 0.0;
 
             this.gsvd_num_sing_vals = 0;

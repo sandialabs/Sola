@@ -20,3 +20,23 @@ transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(hyperparams, T, n_t, n_
 spatial_u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(con_hifi.S, con_hifi.M, hyperparams);
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(spatial_u_prior_interface, transient_prior_cov);
 z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(con_hifi.S, con_hifi.M, hyperparams);
+
+num_samples = 10;
+u_samples = u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samples);
+
+t = hyperparams.Load_Time_Node_Data();
+x = hyperparams.Load_Spatial_Node_Data();
+b = max(abs(u_samples(:)));
+
+for k = 1:num_samples
+    tmp = reshape(u_samples(:, k), n_y, n_t);
+    figure;
+    surf(t, x, tmp);
+    xlabel('Time');
+    ylabel('Space');
+    title(['Sample number ', num2str(k)]);
+    view(2);
+    colorbar();
+    caxis([-b, b]);
+    set(gca, 'fontsize', 24);
+end
