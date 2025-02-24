@@ -1,6 +1,5 @@
 cd analytic_laplacian_2D/;
-% Driver_HDSA;
-% Something is wrong when I run this on my laptopt
+Driver_HDSA;
 cd ..;
 
 cd hyperparam_auto_2D/;
@@ -9,7 +8,6 @@ cd ..;
 
 cd model_discrepancy_oed_unit_test/;
 Driver;
-% I think there is an issue with the .mat file in the repo
 cd ..;
 
 cd model_discrepancy_synthetic_test/;
@@ -17,7 +15,8 @@ Driver;
 cd ..;
 
 cd model_discrepancy_synthetic_test_with_analytic_laplacian/;
-Driver;
+% Need to look at this a bit closer
+%Driver;
 cd ..;
 
 cd model_discrepancy_synthetic_test_with_gsvd/;

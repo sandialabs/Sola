@@ -1,6 +1,6 @@
 clear;
 close all;
-addpath(genpath('../../../src'));
+addpath(genpath('../../src'));
 rng(132253);
 
 working_path = pwd;
