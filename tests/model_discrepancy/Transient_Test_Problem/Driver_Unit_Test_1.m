@@ -21,24 +21,6 @@ hyperparam = MD_Hyperparameters_Transient_Test_Problem(data_interface, x, t);
 hyperparam.beta_t = 11;
 
 transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(hyperparam, T, n_t, n_y);
-transient_prior_cov.Compute_Time_Covariance_GEVP(n_t, 0);
-
-error = 0;
-
-%%
-E_t_inv = linsolve(transient_prior_cov.E_t, eye(n_t));
-M_t_inv = linsolve(transient_prior_cov.M_t, eye(n_t));
-
-local_error = norm(transient_prior_cov.evecs' * M_t_inv * transient_prior_cov.evecs - eye(n_t));
-error = [error, local_error];
-
-local_error = norm(M_t_inv * transient_prior_cov.evecs * diag(transient_prior_cov.evals) - E_t_inv * transient_prior_cov.evecs) / norm(E_t_inv * transient_prior_cov.evecs);
-error = [error, local_error];
-
-local_error = norm(M_t_inv * transient_prior_cov.evecs * diag(transient_prior_cov.evals) * transient_prior_cov.evecs' * M_t_inv - E_t_inv) / norm(E_t_inv);
-error = [error, local_error];
-
-%%
 opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
 hyperparam.alpha_u = 1.e-2;
 hyperparam.alpha_z = 1.e-12;
@@ -46,6 +28,21 @@ num_sing_vals = 100;
 spatial_u_prior_interface = MD_Elliptic_u_Prior_Interface_Transient_Test_Problem(hyperparam.alpha_u, opt, num_sing_vals);
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(spatial_u_prior_interface, transient_prior_cov);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Transient_Test_Problem(hyperparam.alpha_z, opt);
+
+error = 0;
+
+%%
+E_t_inv = linsolve(transient_prior_cov.E_t, eye(n_t));
+M_t_inv = linsolve(transient_prior_cov.M_t, eye(n_t));
+
+local_error = norm(transient_prior_cov.evecs' * transient_prior_cov.M_t * transient_prior_cov.evecs - eye(n_t));
+error = [error, local_error];
+
+local_error = norm(transient_prior_cov.evecs * diag(transient_prior_cov.evals) - E_t_inv * transient_prior_cov.M_t * transient_prior_cov.evecs) / norm(E_t_inv * transient_prior_cov.evecs);
+error = [error, local_error];
+
+local_error = norm(transient_prior_cov.evecs * diag(transient_prior_cov.evals) * transient_prior_cov.evecs' - E_t_inv) / norm(E_t_inv);
+error = [error, local_error];
 
 %%
 
@@ -67,7 +64,7 @@ error = [error, local_error];
 
 %%
 E_t_inv = linsolve(transient_prior_cov.E_t, eye(n_t));
-local_error = norm(E_t_inv - transient_prior_cov.M_t_inv_evecs * diag(transient_prior_cov.evals) * transient_prior_cov.M_t_inv_evecs');
+local_error = norm(E_t_inv - transient_prior_cov.evecs * diag(transient_prior_cov.evals) * transient_prior_cov.evecs');
 error = [error, local_error];
 
 %%

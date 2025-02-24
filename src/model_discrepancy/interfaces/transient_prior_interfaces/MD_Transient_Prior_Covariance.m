@@ -2,18 +2,23 @@ classdef MD_Transient_Prior_Covariance < handle
 
     properties
         hyperparams
+        alpha_t
         beta_t
         M_t
         S_t
         E_t
         evecs
         evals
-        M_t_inv_evecs
         n_t
         n_y
     end
 
     methods
+
+        function [] = Set_alpha_t(this, alpha_t_new)
+            this.alpha_t = alpha_t_new;
+            this.Compute_Time_Covariance_GEVP();
+        end
 
         function [] = Set_beta_t(this, beta_t_new)
             this.beta_t = beta_t_new;
@@ -33,14 +38,18 @@ classdef MD_Transient_Prior_Covariance < handle
             this.Set_beta_t(this.hyperparams.beta_t);
         end
 
-        function [] = Compute_Time_Covariance_GEVP(this, num_evals, oversampling)
-            gevp = Time_Covariance_GEVP(this.E_t, this.M_t, this.hyperparams.alpha_t);
-            [this.evecs, this.evals] = gevp.Compute_GEVP(num_evals, oversampling);
-            this.M_t_inv_evecs = this.M_t \ this.evecs;
+        function [] = Compute_Time_Covariance_GEVP(this)
+            E_t_inv = diag(sqrt(this.alpha_t)) * linsolve(this.E_t, diag(sqrt(this.alpha_t)) * eye(this.n_t));
+            A = this.M_t * E_t_inv * this.M_t;
+            [V, Lambda] = eig(A, this.M_t);
+            n = sqrt(diag(V' * this.M_t * V));
+
+            this.evecs = V * diag(1 ./ n);
+            this.evals = diag(Lambda);
         end
 
         function [samples] = Sample_Time_Series(this, num_samples)
-            samples = this.M_t_inv_evecs * diag(sqrt(this.evals)) * randn(this.n_t, num_samples);
+            samples = this.evecs * diag(sqrt(this.evals)) * randn(this.n_t, num_samples);
         end
 
     end

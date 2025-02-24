@@ -21,6 +21,8 @@ spatial_u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(con_hifi.S, c
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(spatial_u_prior_interface, transient_prior_cov);
 z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(con_hifi.S, con_hifi.M, hyperparams);
 
+% transient_prior_cov.Compute_Time_Covariance_GEVP_test();
+
 num_samples = 10;
 u_samples = u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samples);
 
