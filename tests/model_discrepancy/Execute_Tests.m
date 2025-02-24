@@ -16,7 +16,7 @@ cd ..;
 
 cd model_discrepancy_synthetic_test_with_analytic_laplacian/;
 % Need to look at this a bit closer
-%Driver;
+% Driver;
 cd ..;
 
 cd model_discrepancy_synthetic_test_with_gsvd/;
