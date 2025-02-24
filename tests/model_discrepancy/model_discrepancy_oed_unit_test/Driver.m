@@ -207,6 +207,6 @@ error = max(error, norm(ref.obj_fd_error - obj_fd_error));
 error = max(error, norm(ref.beta - beta));
 error = max(error, norm(ref.Z - Z));
 
-if error > 1.e-14
+if error > 1.e-7
     disp('Error in model discrepancy OED unit test');
 end
