@@ -22,17 +22,52 @@ hyperparams = MD_Hyperparameters_Diff(data_interface, x, y, data_centering);
 u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(pde_meshing.S, pde_meshing.M, hyperparams);
 z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(pde_meshing.S, pde_meshing.M, hyperparams);
 
+hyperparams.beta_z = (5) * hyperparams.beta_z;
+z_prior_interface.Set_beta_z(hyperparams.beta_z);
+
+hyperparams.discrepancy_percent_z_variation = 100 * hyperparams.discrepancy_percent_z_variation;
+hyperparams.Determine_alpha_z(z_prior_interface);
+z_prior_interface.Set_alpha_z(hyperparams.alpha_z);
+
 md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 
 num_prior_samples = 100;
-num_perts = 10;
-[delta_samples_z_opt, delta_samples_z_pert, z_pert] = md_prior_sampling.Prior_Discrepancy_Samples_for_Visualization(num_prior_samples, num_perts);
+num_perts_init = round((18/pi^2)/z_prior_interface.beta_z);
+[delta_samples_z_opt, delta_samples_z_pert, z_pert] = md_prior_sampling.Prior_Discrepancy_Samples_for_Visualization(num_prior_samples, num_perts_init);
+num_perts = size(z_pert,2);
 
-name = 'Discrepancy sample 1 at z_{opt}';
-pde_meshing.Plot_Field(delta_samples_z_opt(:, 1), name);
+z_corr_len = zeros(num_perts,1);
+delta_pert_mag = zeros(num_prior_samples,num_perts);
+initial_guess = 0;
+for k = 1:num_perts
+    z_corr_len(k) = computeCorrelationLength_2D(x,y,z_pert(:,k),initial_guess);
+    initial_guess = z_corr_len(k);
 
-name = 'Discrepancy sample 1 at pertubed z';
-pde_meshing.Plot_Field(delta_samples_z_pert{1}(:, 1), name);
+    for i = 1:num_prior_samples
+        delta_pert_mag(i,k) = max(abs(delta_samples_z_pert{k}(:,i)));
+    end
+end
 
-name = 'Perturbed z';
-pde_meshing.Plot_Field(z_pert(:, 1), name);
+figure,
+scatter(ones(num_prior_samples,1)*z_corr_len',delta_pert_mag)
+
+pert_id = 1;
+[~,sample_id] = max(delta_pert_mag(:,pert_id));
+
+name = 'Discrepancy sample at z_{opt}';
+pde_meshing.Plot_Field(delta_samples_z_opt(:, sample_id), name);
+
+name = 'Discrepancy sample at pertubed z 1';
+pde_meshing.Plot_Field(delta_samples_z_pert{pert_id}(:, sample_id), name);
+
+name = 'Perturbed z 1';
+pde_meshing.Plot_Field(z_pert(:, pert_id), name);
+
+pert_id = num_perts;
+[~,sample_id] = max(delta_pert_mag(:,pert_id));
+
+name = 'Discrepancy sample at pertubed z end';
+pde_meshing.Plot_Field(delta_samples_z_pert{pert_id}(:, sample_id), name);
+
+name = 'Perturbed z end';
+pde_meshing.Plot_Field(z_pert(:, pert_id), name);

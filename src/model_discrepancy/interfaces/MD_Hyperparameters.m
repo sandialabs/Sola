@@ -95,13 +95,16 @@ classdef MD_Hyperparameters < handle
             n_y = size(nodes, 1);
             n_t = size(this.data_interface.D(:, 1), 1) / n_y;
             N = size(this.data_interface.D, 2);
+            initial_guess = 0;
             if size(nodes, 2) == 1
                 correlation_lengths = zeros(N, n_t);
                 for i = 1:N
                     di = reshape(this.data_interface.D(:, i), n_y, n_t);
                     for j = 1:n_t
-                        correlation_lengths(i, j) = computeCorrelationLength_1D(nodes(:, 1), di(:, j));
+                        correlation_lengths(i, j) = computeCorrelationLength_1D(nodes(:, 1), di(:, j),initial_guess);
+                        initial_guess = correlation_lengths(i, j);
                     end
+                    initial_guess = correlation_lengths(i, 1);
                 end
                 beta_u_new = mean(correlation_lengths(:), 'omitnan')^2 / 12;
             elseif size(nodes, 2) == 2
@@ -109,8 +112,10 @@ classdef MD_Hyperparameters < handle
                 for i = 1:N
                     di = reshape(this.data_interface.D(:, i), n_y, n_t);
                     for j = 1:n_t
-                        correlation_lengths(i, j) = computeCorrelationLength_2D(nodes(:, 1), nodes(:, 2), di(:, j));
+                        correlation_lengths(i, j) = computeCorrelationLength_2D(nodes(:, 1), nodes(:, 2), di(:, j), initial_guess);
+                        initial_guess = correlation_lengths(i, j);
                     end
+                    initial_guess = correlation_lengths(i, 1);
                 end
                 beta_u_new = mean(correlation_lengths(:), 'omitnan')^2 / 8;
             else
@@ -180,16 +185,19 @@ classdef MD_Hyperparameters < handle
 
         function [] = Determine_beta_z(this)
             nodes = this.Load_Spatial_Node_Data();
+            initial_guess = 0;
             if size(nodes, 2) == 1
                 correlation_lengths = zeros(size(this.data_interface.Z, 2), 1);
                 for k = 1:length(correlation_lengths)
-                    correlation_lengths(k) = computeCorrelationLength_1D(nodes(:, 1), this.data_interface.Z(:, k));
+                    correlation_lengths(k) = computeCorrelationLength_1D(nodes(:, 1), this.data_interface.Z(:, k), initial_guess);
+                    initial_guess = correlation_lengths(k);
                 end
                 beta_z_new = mean(correlation_lengths, 'omitnan')^2 / 12;
             elseif size(nodes, 2) == 2
                 correlation_lengths = zeros(size(this.data_interface.Z, 2), 1);
                 for k = 1:length(correlation_lengths)
-                    correlation_lengths(k) = computeCorrelationLength_2D(nodes(:, 1), nodes(:, 2), this.data_interface.Z(:, k));
+                    correlation_lengths(k) = computeCorrelationLength_2D(nodes(:, 1), nodes(:, 2), this.data_interface.Z(:, k), initial_guess);
+                    initial_guess = correlation_lengths(k);
                 end
                 beta_z_new = mean(correlation_lengths, 'omitnan')^2 / 8;
             else
@@ -214,8 +222,8 @@ classdef MD_Hyperparameters < handle
                 di = reshape(this.data_interface.D(:, i), n_y, n_t);
                 tmp = diag(di' * u_prior_interface.spatial_prior_cov.Apply_M_u(di));
                 tmp = tmp / max(tmp);
-                tmp = tmp + (1.e-3);
-                tmp = tmp / (1 + 1.e-3);
+                tmp = tmp + (1.e-2);
+                tmp = tmp / (1 + 1.e-2);
                 alpha_t_new(:, i) = tmp;
             end
 
@@ -237,11 +245,14 @@ classdef MD_Hyperparameters < handle
             N = size(this.data_interface.D, 2);
 
             correlation_lengths = zeros(N, n_y);
+            initial_guess = 0;
             for i = 1:N
                 di = reshape(this.data_interface.D(:, i), n_y, n_t)';
                 for j = 1:n_y
-                    correlation_lengths(i, j) = computeCorrelationLength_1D(time_nodes, di(:, j));
+                    correlation_lengths(i, j) = computeCorrelationLength_1D(time_nodes, di(:, j),initial_guess);
+                    initial_guess = correlation_lengths(i, j);
                 end
+                initial_guess = correlation_lengths(i,1);
             end
             beta_t_new = mean(correlation_lengths(:), 'omitnan')^2 / 4;
 
