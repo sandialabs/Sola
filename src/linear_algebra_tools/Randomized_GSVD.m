@@ -48,8 +48,7 @@ classdef Randomized_GSVD < handle
 
             C = B' * Tinv_B;
             R_B = chol(C);
-            R_B_inv = linsolve(R_B, eye(size(R_B, 1)));
-            Q_B = Tinv_B * R_B_inv;
+            Q_B = linsolve(R_B',Tinv_B')';
 
             [U, Sigma, V] = svd(R_B');
 
@@ -68,7 +67,7 @@ classdef Randomized_GSVD < handle
 
         function [Q, WQ] = CholQR(this, Z, type)
             R_Z = chol(Z' * Z);
-            Q_Z = Z * linsolve(R_Z, eye(size(R_Z, 1)));
+            Q_Z = linsolve(R_Z', Z')';
             if strcmp(type, 'input_weighting_inverse')
                 W_Q_Z = this.Apply_Input_Weighting_Operator_Inverse(Q_Z);
             elseif strcmp(type, 'output_weighting')
@@ -80,9 +79,14 @@ classdef Randomized_GSVD < handle
             C = Q_Z' * W_Q_Z;
             R_C = chol(C);
 
-            R_C_inv = linsolve(R_C, eye(size(R_C, 1)));
-            Q = Q_Z * R_C_inv;
-            WQ = W_Q_Z * R_C_inv;
+            Q = linsolve(R_C', Q_Z')';
+            if strcmp(type, 'input_weighting_inverse')
+                WQ = this.Apply_Input_Weighting_Operator_Inverse(Q);
+            elseif strcmp(type, 'output_weighting')
+                WQ = this.Apply_Output_Weighting_Operator(Q);
+            else
+                disp('Error specifying type in CholQR');
+            end
         end
 
     end

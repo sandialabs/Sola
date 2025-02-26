@@ -16,7 +16,6 @@ basis1.Set_Reduced_Dimension_From_Residual_Energy(residual_energies(1));
 basis2.Set_Reduced_Dimension_From_Residual_Energy(residual_energies(1));
 
 data_interface = MD_Data_Interface_Transient_ADR_2D();
-data_interface.Load_Data();
 
 t = load('OpInf_Training_Data.mat', 't').t;
 T = t(end);
@@ -29,8 +28,9 @@ hyperparams = MD_Hyperparameters_Transient_ADR_2D(data_interface, solver, t);
 
 transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(hyperparams, T, n_t, n_y);
 
-alpha_u = 1^2; % (1 / 2)^2;
-spatial_u_prior_interface = MD_Elliptic_u_Prior_Interface_Transient_ADR_2D(alpha_u, M, S);
+%alpha_u = 1^2; % (1 / 2)^2;
+%spatial_u_prior_interface = MD_Elliptic_u_Prior_Interface_Transient_ADR_2D(alpha_u, M, S);
+spatial_u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(S,M,hyperparams);
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(spatial_u_prior_interface, transient_prior_cov);
 
 transient_prior_cov_z = MD_Transient_Prior_Covariance_Sabl(hyperparams, t(end - 1), n_t - 1, n_q);
