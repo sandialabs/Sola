@@ -21,15 +21,9 @@ classdef MD_Opt_Prob_Interface < handle
     methods
 
         % This function must be implemented to enable continuation
-        function [u] = State_Solve(this, z)
-            u = [];
-            disp('State_Solve must be implemented to use continuation algorithm');
-        end
-
-        % This function must be implemented to enable continuation
         function [u_out] = Apply_Solution_Operator_z_Jacobian(this, z_in, z)
             u_out = [];
-            disp('Apply_Solution_Operator_z_Jacobian must be implemented to use continuation algorithm');
+            disp('Apply_Solution_Operator_z_Jacobian must be implemented to use OED algorithm');
         end
 
         function this = MD_Opt_Prob_Interface()
