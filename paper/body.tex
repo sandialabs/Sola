@@ -1,7 +1,15 @@
+\bigskip
+\noindent
+\textbf{Developer Notes}
+
 \bartnote{Decided to focus the paper on HDSA. We can mention in the intro and/or conclusion that there are other outer-loop problems that we can use the \SABL $\to$ \MrHyDE approach for, but let the main focus be HDSA throughout.}
 
 \shanenote{Strategy: focus first on HDSALib (actual implementation of HDSA, agnostic to underlying solvers). Describe \SABL as a MATLAB implementation that preps you for HDSALib. Then show the power of MrHyDE + HDSALib.
 The particular HDSA style that we care about is post optimality sensitivity and model form discrepancy.}
+
+\bartnote{Big thing about \HdsaLib is that it implements the model discrepancy details, abstracts the interface and requires the user to instantiate the things that are needed. The high-level challenge is accessibility because of the complexity of the HPC environment. Need to point to the abstractions, i.e., make sure any code listings are tied to the mathematics. Bart to write model discrepancy part, but might be after the hyperparameter paper.}
+
+\shanenote{Explaining the full OOP structure of \HdsaLib is likely going to be less productive. An alternative might be to show an example of a particular piece of the algorithm in all three elements. Need to drive everything from a very high-level view.}
 
 \section{Introduction}
 
@@ -58,7 +66,7 @@ In this case, \cref{eq:optimization-constrained} can be formulated as the equiva
     \label{eq:optimization-reducedspace}
     \min_{\z} \hat{\J}(\z) := \J(\S(\z),\z)
 \end{align}
-The minimization problem \cref{eq:optimization-reducedspace} can be solved with standard approaches (e.g., Newton Conjugate Gradient) as long as the derivatives iof $\hat{\J}$ can be computed efficiently.
+The minimization problem \cref{eq:optimization-reducedspace} can be solved with standard approaches (e.g., Newton conjugate gradient) as long as the derivatives of $\hat{\J}$ can be computed efficiently.
 % gradient $\grad{\z}\hat{\J}(\z)\in\R^{n_z}$ and, for any vector $\v\in\R^{n_z}$, Hessian-vector products $\v\mapsto \grad{z,z}\hat{J}(\z) \v \in \R^{n_z}$ can be computed efficiently.
 % {prf:ref}`alg:adjoint_gradient` shows how to efficiently calculate the gradient by utilizing adjoint-based derivative formulas.
 % Similarly, {prf:ref}`alg:adjoint_hessvec` shows how to compute Hessian-vector products using incremental state and incremental adjoint equations, which avoids explicitly forming the (very large) Hessian matrix $\grad{z,z}\hat{J}(\z)\in\R^{n_z \times n_z}$.
@@ -75,6 +83,8 @@ The adjoint method~[REF] provides expressions for these derivatives in terms of 
 \subsection{Model discrepancy}
 
 TODO.
+
+\shanenote{First pass: transcribe from existing papers, keep it as high level as possible. Brain dump, worry more about the overall story than the details.}
 
 \begin{purpose}
 \begin{itemize}
@@ -137,7 +147,9 @@ TODO
 
 \section{\SABL: Prototyping HDSA in \MATLAB}
 
-TODO.
+Jumping straight to high-performance computing in \cpp with \HdsaLib can be challenging for new users, especially for practitioners who are accustomed to high-level languages such as \MATLAB and Python.
+Furthermore, the complexities of a full HPC environment make it difficult to assess and verify implementations of novel, complicated algorithms such as HDSA.
+To that end, this section presents \SABL: \textbf{S}andbox for \textbf{A}djoint-\textbf{B}ased outer \textbf{L}oop analysis, a \MATLAB library that implements HDSA for model discrepancy.
 
 \begin{purpose}
 \begin{itemize}
