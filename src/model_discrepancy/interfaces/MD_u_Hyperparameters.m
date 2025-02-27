@@ -1,20 +1,18 @@
-classdef MD_Hyperparameters < handle
+classdef MD_u_Hyperparameters < handle
 
     properties
         data_interface
         is_transient
         center_data
         adapt_time_variance
+        component_id
 
         data_noise_percent
-        discrepancy_percent_z_variation
         W_u_inv_spectral_gap
 
         alpha_d
         alpha_u
         beta_u
-        alpha_z
-        beta_z
         alpha_t
         beta_t
 
@@ -24,8 +22,6 @@ classdef MD_Hyperparameters < handle
 
         d1_norm_sq
         d_pert_norm_sq
-        z1_norm_sq
-        z_pert_norm_sq
     end
 
     methods
@@ -36,12 +32,12 @@ classdef MD_Hyperparameters < handle
 
         function [spatial_nodes] = Load_Spatial_Node_Data(this)
             spatial_nodes = [];
-            disp('Load_Spatial_Node_Data is required for automate hyperparameters');
+            disp('Load_Spatial_Node_Data is required to automate hyperparameters');
         end
 
         function [time_nodes] = Load_Time_Node_Data(this)
             time_nodes = [];
-            disp('Load_Time_Node_Data is required for automate hyperparameters for transient problems');
+            disp('Load_Time_Node_Data is required to automate hyperparameters for transient problems');
         end
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -51,7 +47,9 @@ classdef MD_Hyperparameters < handle
         end
 
         function [] = Determine_alpha_d(this)
-            alpha_d_new = (this.data_noise_percent * mean(abs(this.data_interface.D(:))))^2;
+            I = this.data_interface.Separate_State_Components(this.component_id);
+            tmp = this.data_interface.D(I,:);
+            alpha_d_new = (this.data_noise_percent * mean(abs(tmp(:))))^2;
             this.Set_alpha_d(alpha_d_new);
         end
 
@@ -62,14 +60,15 @@ classdef MD_Hyperparameters < handle
         end
 
         function [] = Determine_alpha_u(this, u_prior_interface)
-            delta1 = this.data_interface.D(:, 1);
+            I = this.data_interface.Separate_State_Components(this.component_id);
+            delta1 = this.data_interface.D(I, 1);
             this.d1_norm_sq = delta1' * u_prior_interface.Apply_M_u(delta1);
 
             N = size(this.data_interface.D, 2);
             if N > 1
                 this.d_pert_norm_sq = zeros(N - 1, 1);
                 for k = 2:N
-                    v = this.data_interface.D(:, k) - delta1;
+                    v = this.data_interface.D(I, k) - delta1;
                     this.d_pert_norm_sq(k - 1) = v' * u_prior_interface.Apply_M_u(v);
                 end
             end
@@ -91,15 +90,16 @@ classdef MD_Hyperparameters < handle
         end
 
         function [] = Determine_beta_u(this)
+            I = this.data_interface.Separate_State_Components(this.component_id);
             nodes = this.Load_Spatial_Node_Data();
             n_y = size(nodes, 1);
-            n_t = size(this.data_interface.D(:, 1), 1) / n_y;
+            n_t = size(this.data_interface.D(I, 1), 1) / n_y;
             N = size(this.data_interface.D, 2);
             initial_guess = 0;
             if size(nodes, 2) == 1
                 correlation_lengths = zeros(N, n_t);
                 for i = 1:N
-                    di = reshape(this.data_interface.D(:, i), n_y, n_t);
+                    di = reshape(this.data_interface.D(I, i), n_y, n_t);
                     for j = 1:n_t
                         correlation_lengths(i, j) = computeCorrelationLength_1D(nodes(:, 1), di(:, j),initial_guess);
                         initial_guess = correlation_lengths(i, j);
@@ -110,7 +110,7 @@ classdef MD_Hyperparameters < handle
             elseif size(nodes, 2) == 2
                 correlation_lengths = zeros(N, n_t);
                 for i = 1:N
-                    di = reshape(this.data_interface.D(:, i), n_y, n_t);
+                    di = reshape(this.data_interface.D(I, i), n_y, n_t);
                     for j = 1:n_t
                         correlation_lengths(i, j) = computeCorrelationLength_2D(nodes(:, 1), nodes(:, 2), di(:, j), initial_guess);
                         initial_guess = correlation_lengths(i, j);
@@ -126,100 +126,19 @@ classdef MD_Hyperparameters < handle
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-        function [] = Set_alpha_z(this, alpha_z_new)
-            this.alpha_z = alpha_z_new;
-        end
-
-        function [] = Determine_alpha_z(this, z_prior_interface)
-            tmp = z_prior_interface.Apply_M_z(this.data_interface.z_opt);
-            zopt_norm = tmp' * this.data_interface.z_opt;
-
-            nodes = this.Load_Spatial_Node_Data();
-            if size(nodes, 2) == 1
-                Lx = max(nodes(:, 1)) - min(nodes(:, 1));
-                n = length(nodes(:, 1)) - 1;
-                e = 1 + z_prior_interface.beta_z * (pi / Lx)^2 * (0:n).^2;
-                e = e';
-            elseif size(nodes, 2) == 2
-                Lx = max(nodes(:, 1)) - min(nodes(:, 1));
-                Ly = max(nodes(:, 2)) - min(nodes(:, 2));
-                n = round(sqrt(length(nodes(:, 1)))) - 1;
-                e = 1 + z_prior_interface.beta_z * pi^2 * (kron(((0:n).^2)', ones(n + 1, 1)) / Lx^2 + kron(ones(n + 1, 1), ((0:n).^2)') / Ly^2);
-            else
-                disp('Determine_alpha_z error: Dimensions greater than 2 are not supported.');
-            end
-
-            evals = sort(1 ./ e, 'descend');
-            I = find(evals < 1.e-2);
-            rank = n;
-            if ~isempty(I)
-                rank = I(1);
-            end
-            evals = evals(1:rank);
-            samples = 1000;
-            nu = randn(samples, rank).^2;
-            tmp = mean((nu * evals.^4) ./ (nu * evals.^2));
-
-            N = size(this.data_interface.Z, 2);
-            if N > 1
-                this.z1_norm_sq = this.data_interface.Z(:, 1)' * z_prior_interface.Apply_M_z(this.data_interface.Z(:, 1));
-                this.z_pert_norm_sq = zeros(N - 1, 1);
-                for k = 2:N
-                    v = this.data_interface.Z(:, k) - this.data_interface.Z(:, 1);
-                    this.z_pert_norm_sq(k - 1) = v' * z_prior_interface.Apply_M_z(v);
-                end
-                if this.discrepancy_percent_z_variation == 1
-                    this.discrepancy_percent_z_variation = mean(sqrt((this.d_pert_norm_sq / this.d1_norm_sq) ./ (this.z_pert_norm_sq / this.z1_norm_sq)));
-                end
-            end
-
-            alpha_z_new = (this.discrepancy_percent_z_variation.^2) / (tmp * zopt_norm);
-            this.Set_alpha_z(alpha_z_new);
-        end
-
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-        function [] = Set_beta_z(this, beta_z_new)
-            this.beta_z = beta_z_new;
-        end
-
-        function [] = Determine_beta_z(this)
-            nodes = this.Load_Spatial_Node_Data();
-            initial_guess = 0;
-            if size(nodes, 2) == 1
-                correlation_lengths = zeros(size(this.data_interface.Z, 2), 1);
-                for k = 1:length(correlation_lengths)
-                    correlation_lengths(k) = computeCorrelationLength_1D(nodes(:, 1), this.data_interface.Z(:, k), initial_guess);
-                    initial_guess = correlation_lengths(k);
-                end
-                beta_z_new = mean(correlation_lengths, 'omitnan')^2 / 12;
-            elseif size(nodes, 2) == 2
-                correlation_lengths = zeros(size(this.data_interface.Z, 2), 1);
-                for k = 1:length(correlation_lengths)
-                    correlation_lengths(k) = computeCorrelationLength_2D(nodes(:, 1), nodes(:, 2), this.data_interface.Z(:, k), initial_guess);
-                    initial_guess = correlation_lengths(k);
-                end
-                beta_z_new = mean(correlation_lengths, 'omitnan')^2 / 8;
-            else
-                disp('Determine_beta_z error: Dimensions greater than 2 are not supported.');
-            end
-            this.Set_beta_z(beta_z_new);
-        end
-
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
         function [] = Set_alpha_t(this, alpha_t_new)
             this.alpha_t = alpha_t_new;
         end
 
         function [] = Determine_alpha_t(this, u_prior_interface)
             time_nodes = this.Load_Time_Node_Data();
+            I = this.data_interface.Separate_State_Components(this.component_id);
             n_t = length(time_nodes);
-            n_y = size(this.data_interface.D(:, 1), 1) / n_t;
+            n_y = size(this.data_interface.D(I, 1), 1) / n_t;
             N = size(this.data_interface.D, 2);
             alpha_t_new = zeros(n_t, N);
             for i = 1:N
-                di = reshape(this.data_interface.D(:, i), n_y, n_t);
+                di = reshape(this.data_interface.D(I, i), n_y, n_t);
                 tmp = diag(di' * u_prior_interface.spatial_prior_cov.Apply_M_u(di));
                 tmp = tmp / max(tmp);
                 tmp = tmp + (1.e-2);
@@ -240,14 +159,15 @@ classdef MD_Hyperparameters < handle
 
         function [] = Determine_beta_t(this)
             time_nodes = this.Load_Time_Node_Data();
+            I = this.data_interface.Separate_State_Components(this.component_id);
             n_t = length(time_nodes);
-            n_y = size(this.data_interface.D(:, 1), 1) / n_t;
+            n_y = size(this.data_interface.D(I, 1), 1) / n_t;
             N = size(this.data_interface.D, 2);
 
             correlation_lengths = zeros(N, n_y);
             initial_guess = 0;
             for i = 1:N
-                di = reshape(this.data_interface.D(:, i), n_y, n_t)';
+                di = reshape(this.data_interface.D(I, i), n_y, n_t)';
                 for j = 1:n_y
                     correlation_lengths(i, j) = computeCorrelationLength_1D(time_nodes, di(:, j),initial_guess);
                     initial_guess = correlation_lengths(i, j);
@@ -285,23 +205,26 @@ classdef MD_Hyperparameters < handle
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
         function [] = Determine_Data_Centering(this)
-            data_shift = mean(this.data_interface.D(:, 1)) * ones(size(this.data_interface.D, 1), 1);
+            I = this.data_interface.Separate_State_Components(this.component_id);
+            data_shift = mean(this.data_interface.D(I, 1)) * ones(size(this.data_interface.D, 1), 1);
             this.data_interface.data_shift = data_shift;
             this.data_interface.D = this.data_interface.D - data_shift;
         end
 
-        function this = MD_Hyperparameters(data_interface, is_transient, center_data, adapt_time_variance)
+        function this = MD_u_Hyperparameters(data_interface, is_transient, center_data, adapt_time_variance, component_id)
             arguments
                 data_interface MD_Data_Interface
                 is_transient {boolean}
                 center_data = false
                 adapt_time_variance = false
+                component_id = 1
             end
 
             this.data_interface = data_interface;
             this.is_transient = is_transient;
             this.center_data = center_data;
             this.adapt_time_variance = adapt_time_variance;
+            this.component_id = component_id;
 
             this.data_interface.Load_Data();
             if this.center_data
@@ -309,14 +232,11 @@ classdef MD_Hyperparameters < handle
             end
 
             this.data_noise_percent = 0.001;
-            this.discrepancy_percent_z_variation = 1.0;
             this.W_u_inv_spectral_gap = 1.e-4;
 
             this.alpha_d = 0.0;
             this.alpha_u = 0.0;
             this.beta_u = 0.0;
-            this.alpha_z = 0.0;
-            this.beta_z = 0.0;
             this.alpha_t = 1.0;
             this.beta_t = 0.0;
 

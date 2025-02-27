@@ -12,12 +12,12 @@ x = linspace(0, 1, m)';
 [M, S] = Assemble_Mass_and_Stiffness(m);
 
 data_interface = MD_Data_Interface_synthetic_test_with_hyperparam_auto(m);
-data_interface.Load_Data();
 
-hyperparams = MD_Hyperparameters_synthetic_test_with_hyperparam_auto(data_interface, m);
+u_hyperparams = MD_u_Hyperparameters_synthetic_test_with_hyperparam_auto(data_interface, m);
+u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(S, M, u_hyperparams);
 
-u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(S, M, hyperparams);
-z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S, M, hyperparams);
+z_hyperparams = MD_z_Hyperparameters_synthetic_test_with_hyperparam_auto(data_interface, u_prior_interface, m);
+z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S, M, z_hyperparams);
 
 %%
 num_prior_samples = 100;
@@ -47,8 +47,8 @@ end
 %%
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 num_post_samples = 100;
-hyperparams.Determine_alpha_d();
-md_post_sampling.Compute_Posterior_Data(hyperparams.alpha_d, num_post_samples);
+u_hyperparams.Determine_alpha_d();
+md_post_sampling.Compute_Posterior_Data(u_hyperparams.alpha_d, num_post_samples);
 Z_test = randn(m, 3);
 Z_test(:, 1:2) = md_post_sampling.post_data.Z;
 Z_test(:, 3) = 1.5 * ones(m, 1);

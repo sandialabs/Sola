@@ -34,6 +34,13 @@ classdef MD_Data_Interface < handle
             disp('Load_d_Data must be implemented for any analyses except for optimal experimental design');
         end
 
+        % Defaults to return all state elements
+        % Overload function to extract component i from the state
+        % Returns a vector of integers I index elements of component i
+        function [I] = Separate_State_Components(this,i)
+            I = 1:length(this.u_opt);
+        end
+
         function this = MD_Data_Interface()
 
         end

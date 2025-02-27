@@ -1,4 +1,4 @@
-classdef MD_Hyperparameters_hyperparam_auto_2D < MD_Hyperparameters
+classdef MD_u_Hyperparameters_hyperparam_auto_2D < MD_u_Hyperparameters
 
     properties
         x
@@ -11,8 +11,8 @@ classdef MD_Hyperparameters_hyperparam_auto_2D < MD_Hyperparameters
             spatial_nodes = [this.x, this.y];
         end
 
-        function this = MD_Hyperparameters_hyperparam_auto_2D(data_interface, x, y)
-            this@MD_Hyperparameters(data_interface, false);
+        function this = MD_u_Hyperparameters_hyperparam_auto_2D(data_interface, x, y)
+            this@MD_u_Hyperparameters(data_interface, false);
             this.x = x;
             this.y = y;
         end

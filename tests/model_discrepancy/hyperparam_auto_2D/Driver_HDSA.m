@@ -19,8 +19,8 @@ opt = Reduced_Space_Optimization(obj, con);
 data_interface = MD_Data_Interface_Adv_Diff();
 data_interface.Load_Data();
 
-hyperparams = MD_Hyperparameters_hyperparam_auto_2D(data_interface, x, y);
-u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(S, M, hyperparams);
+u_hyperparams = MD_u_Hyperparameters_hyperparam_auto_2D(data_interface, x, y);
+u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(S, M, u_hyperparams);
 
 alpha_z = 1.e-4;
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Adv_Diff(alpha_z, opt);

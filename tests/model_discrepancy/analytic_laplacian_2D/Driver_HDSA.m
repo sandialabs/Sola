@@ -11,14 +11,13 @@ S = adv_diff.pde_meshing.S;
 m = length(x);
 
 data_interface = MD_Data_Interface_Adv_Diff();
-data_interface.Load_Data();
 
-hyperparams = MD_Hyperparameters_hyperparam_auto_2D(data_interface, x, y);
-u_prior_interface = MD_Analytic_Laplacian_u_Prior_Interface(M, hyperparams);
+u_hyperparams = MD_u_Hyperparameters_hyperparam_auto_2D(data_interface, x, y);
+u_prior_interface = MD_Analytic_Laplacian_u_Prior_Interface(M, u_hyperparams);
 
-hyperparams_gsvd = MD_Hyperparameters_hyperparam_auto_2D(data_interface, x, y);
-hyperparams_gsvd.gsvd_num_sing_vals = 1849;
-u_prior_interface_gsvd = MD_Numeric_Laplacian_u_Prior_Interface(S, M, hyperparams_gsvd);
+u_hyperparams_gsvd = MD_u_Hyperparameters_hyperparam_auto_2D(data_interface, x, y);
+u_hyperparams_gsvd.gsvd_num_sing_vals = 1849;
+u_prior_interface_gsvd = MD_Numeric_Laplacian_u_Prior_Interface(S, M, u_hyperparams_gsvd);
 
 %%
 v = randn(m, 1);

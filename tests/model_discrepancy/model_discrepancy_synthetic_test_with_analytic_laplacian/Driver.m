@@ -14,11 +14,12 @@ x = linspace(0, 1, m)';
 data_interface = MD_Data_Interface_synthetic_test_with_hyperparam_auto(m);
 data_interface.Load_Data();
 
-hyperparams = MD_Hyperparameters_synthetic_test_with_hyperparam_auto(data_interface, m);
+u_hyperparams = MD_u_Hyperparameters_synthetic_test_with_hyperparam_auto(data_interface, m);
+u_prior_interface_gsvd = MD_Numeric_Laplacian_u_Prior_Interface(S, M, u_hyperparams);
+u_prior_interface = MD_Analytic_Laplacian_u_Prior_Interface(M, u_hyperparams);
 
-u_prior_interface_gsvd = MD_Numeric_Laplacian_u_Prior_Interface(S, M, hyperparams);
-u_prior_interface = MD_Analytic_Laplacian_u_Prior_Interface(M, hyperparams);
-z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S, M, hyperparams);
+z_hyperparams = MD_z_Hyperparameters_synthetic_test_with_hyperparam_auto(data_interface, u_prior_interface, m);
+z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S, M, z_hyperparams);
 
 %%
 v = randn(m, 1);

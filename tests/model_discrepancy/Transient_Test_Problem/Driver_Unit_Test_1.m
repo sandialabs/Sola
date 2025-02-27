@@ -17,17 +17,15 @@ t = linspace(0, T, n_t)';
 data_interface = MD_Data_Interface_Transient_Test_Problem();
 data_interface.Load_Data();
 
-hyperparam = MD_Hyperparameters_Transient_Test_Problem(data_interface, x, t);
+hyperparam = MD_u_Hyperparameters_Transient_Test_Problem(data_interface, x, t);
 hyperparam.beta_t = 11;
 
 transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(hyperparam, T, n_t, n_y);
 opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
 hyperparam.alpha_u = 1.e-2;
-hyperparam.alpha_z = 1.e-12;
 num_sing_vals = 100;
 spatial_u_prior_interface = MD_Elliptic_u_Prior_Interface_Transient_Test_Problem(hyperparam.alpha_u, opt, num_sing_vals);
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(spatial_u_prior_interface, transient_prior_cov);
-z_prior_interface = MD_Elliptic_z_Prior_Interface_Transient_Test_Problem(hyperparam.alpha_z, opt);
 
 error = 0;
 
