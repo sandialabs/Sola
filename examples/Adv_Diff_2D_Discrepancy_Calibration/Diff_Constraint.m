@@ -68,7 +68,7 @@ classdef Diff_Constraint < Constraint
             this.m = size(this.M, 1);
             this.x = pde_meshing.x;
             this.y = pde_meshing.y;
-            this.bnd_nodes = unique(find(this.y == -1));
+            this.bnd_nodes = unique(find(this.y == 0));
 
             this.A = diff_coeff * this.S;
             this.A(this.bnd_nodes, :) = 0;

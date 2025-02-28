@@ -14,7 +14,10 @@ classdef PDE_Meshing < handle
 
             model = createpde;
 
-            geometryFromEdges(model, @squareg);
+            R1 = [3,4,0,1,1,0,1,1,0,0]';
+            g = decsg(R1);
+            geometryFromEdges(model,g);
+            %geometryFromEdges(model, @squareg);
             if false
                 pdegplot(model, "EdgeLabels", "on");
                 axis equal;

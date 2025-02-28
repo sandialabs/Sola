@@ -6,15 +6,15 @@ addpath(genpath('../../src'));
 diff_coeff = 2;
 adv_coeff = 3;
 
-pde_meshing = PDE_Meshing(.1);
+pde_meshing = PDE_Meshing(.05);
 diff = Diff_Constraint(pde_meshing, diff_coeff);
 adv_diff = Adv_Diff(pde_meshing, diff_coeff, adv_coeff);
 
 x = pde_meshing.x;
 y = pde_meshing.y;
-u_true = cos(pi * (x + 1)) .* (-3 - 2 * y + y.^2);
-z = diff_coeff * (pi^2 * cos(pi * (x + 1)) .* (-3 - 2 * y + y.^2) - 2 * cos(pi * (x + 1)));
-z = z + adv_coeff * (-pi * sin(pi * (x + 1)) .* (-3 - 2 * y + y.^2) + (-2 + 2 * y) .* cos(pi * (x + 1)));
+u_true = cos(2 * pi * x) .* (- 2 * y + y.^2);
+z = diff_coeff * (4 * pi^2 * cos(2 * pi * x) .* (-2 * y + y.^2) - 2 * cos(2 * pi * x));
+z = z + adv_coeff * (-2 * pi * sin(2 * pi * x) .* (-2 * y + y.^2) + (-2 + 2 * y) .* cos(2 * pi * x));
 u = adv_diff.State_Solve(z);
 
 e = u - u_true;
@@ -27,7 +27,7 @@ if plot_fields
     pde_meshing.Plot_Field(u, 'Adv-Diff Model Solution');
 end
 
-z = diff_coeff * (pi^2 * cos(pi * (x + 1)) .* (-3 - 2 * y + y.^2) - 2 * cos(pi * (x + 1)));
+z = diff_coeff * (4 * pi^2 * cos(2 * pi * x) .* (-2 * y + y.^2) - 2 * cos(2 * pi * x));
 
 u_diff = diff.State_Solve(z);
 e = u_diff - u_true;

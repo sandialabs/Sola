@@ -39,16 +39,18 @@ for N = 1:K
 
         data_interface = MD_Data_Interface_Discrepancy_Calibration(z_lofi, u_lofi, Z, D);
         data_centering = true;
-        hyperparams = MD_Hyperparameters_Discrepancy_Calibration(data_interface, x, data_centering);
-        % hyperparams.discrepancy_percent_z_variation = 2.5;
 
-        u_prior_interface = MD_Analytic_Laplacian_u_Prior_Interface(con_hifi.M, hyperparams);
-        z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(con_hifi.S, con_hifi.M, hyperparams);
+        u_hyperparams = MD_u_Hyperparameters_Discrepancy_Calibration(data_interface, x, data_centering);
+        u_prior_interface = MD_Analytic_Laplacian_u_Prior_Interface(con_hifi.M, u_hyperparams);
 
-        alpha_u(N, j) = hyperparams.alpha_u;
-        beta_u(N, j) = hyperparams.beta_u;
-        alpha_z(N, j) = hyperparams.alpha_z;
-        beta_z(N, j) = hyperparams.beta_z;
+        num_state_solves = 100;
+        z_hyperparams = MD_z_Hyperparameters_Discrepancy_Calibration(data_interface, u_prior_interface, num_state_solves, x, con_lofi);
+        z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(con_hifi.S, con_hifi.M, z_hyperparams);
+
+        alpha_u(N, j) = u_hyperparams.alpha_u;
+        beta_u(N, j) = u_hyperparams.beta_u;
+        alpha_z(N, j) = z_hyperparams.alpha_z;
+        beta_z(N, j) = z_hyperparams.beta_z;
     end
 end
 

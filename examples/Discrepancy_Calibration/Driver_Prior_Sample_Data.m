@@ -27,10 +27,12 @@ D = con_hifi.State_Solve(Z) - con_lofi.State_Solve(Z);
 
 data_interface = MD_Data_Interface_Discrepancy_Calibration(z_lofi, u_lofi, Z, D);
 data_centering = true;
-hyperparams = MD_Hyperparameters_Discrepancy_Calibration(data_interface, x, data_centering);
 
-u_prior_interface = MD_Analytic_Laplacian_u_Prior_Interface(con_hifi.M, hyperparams);
-z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(con_hifi.S, con_hifi.M, hyperparams);
+u_hyperparams = MD_u_Hyperparameters_Discrepancy_Calibration(data_interface, x, data_centering);
+u_prior_interface = MD_Analytic_Laplacian_u_Prior_Interface(con_hifi.M, u_hyperparams);
+
+z_hyperparams = MD_z_Hyperparameters_Discrepancy_Calibration(data_interface, u_prior_interface, x);
+z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(con_hifi.S, con_hifi.M, z_hyperparams);
 
 md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 

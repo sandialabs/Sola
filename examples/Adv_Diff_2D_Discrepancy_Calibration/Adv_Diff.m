@@ -32,7 +32,7 @@ classdef Adv_Diff < handle
                 Adv_Op(:, k) = FEM.F;
             end
             this.A = FEM.K + FEM.A + sparse(Adv_Op);
-            this.bnd_nodes = unique(find(pde_meshing.y == -1));
+            this.bnd_nodes = unique(find(pde_meshing.y == 0));
             this.A(this.bnd_nodes, :) = 0;
             this.A = this.A + sparse(this.bnd_nodes, this.bnd_nodes, ones(length(this.bnd_nodes), 1), m, m);
             this.M = pde_meshing.M;

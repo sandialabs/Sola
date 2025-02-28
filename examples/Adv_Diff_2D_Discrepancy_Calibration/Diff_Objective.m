@@ -45,7 +45,7 @@ classdef Diff_Objective < Objective
             this.M = this.diff.pde_meshing.M;
             x = this.diff.pde_meshing.x;
             y = this.diff.pde_meshing.y;
-            this.T = 10 * exp(-50 * ((x + .3).^2 + 3 * (y - .1).^2)) + 15 * exp(-50 * ((x - .4).^2 + 3 * (y - .3).^2));
+            this.T = 10 * exp(-50 * ((x - .35).^2 + 3 * (y - .5).^2)) + 15 * exp(-50 * ((x - .7).^2 + 3 * (y - .65).^2));
 
         end
 

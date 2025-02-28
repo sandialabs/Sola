@@ -1,4 +1,4 @@
-classdef MD_Hyperparameters_Diff < MD_Hyperparameters
+classdef MD_u_Hyperparameters_Diff < MD_u_Hyperparameters
 
     properties
         x
@@ -11,8 +11,8 @@ classdef MD_Hyperparameters_Diff < MD_Hyperparameters
             nodes = [this.x, this.y];
         end
 
-        function this = MD_Hyperparameters_Diff(data_interface, x, y, data_centering)
-            this@MD_Hyperparameters(data_interface, false, data_centering);
+        function this = MD_u_Hyperparameters_Diff(data_interface, x, y, data_centering)
+            this@MD_u_Hyperparameters(data_interface, false, data_centering);
             this.x = x;
             this.y = y;
         end
