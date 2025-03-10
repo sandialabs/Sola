@@ -1,3 +1,5 @@
+% !TEX root = main-arxiv.tex
+
 \bigskip
 \noindent
 \textbf{Developer Notes}
@@ -55,22 +57,58 @@ Consider the following constrained minimization problem:
     \begin{aligned}
     \min_{\u,\z} ~& \J(\u,\z)
     \\
-    \text{s.t.}~~& \c(\u,\z) = \0.
+    \text{where}~~& \c(\u,\z) = \0.
     \end{aligned}
 \end{align}
 Here, $\u\in\R^{n_u}$ is the state variable, $\z\in\R^{n_z}$ is the control variable, $\J:\R^{n_u}\times\R^{n_z}\to\R$ is the objective function, and $\c:\R^{n_u}\times\R^{n_z}\to\R^{n_u}$ specifies the constraints.
 % Here, $n_u\in\mathbb{N}$ is the state dimension and $n_z\in\mathbb{N}$ is the control dimension.
-If $\c(\u,\z)=\0$ admits a unique solution for any given $\z$, then there exists a solution operator $\S:\R^{n_z}\to\R^{n_u}$ such that $\c(\S(\z),\z)=\0$ for all possible controls $\z$.
+In the context of interest, $\c$ represents the residual of a discretized PDE, for example after applying a finite element discretization.
+If $\c(\u,\z)=\0$ admits a unique solution for any given $\z$ --- that is, if the discretized PDE is well posed at the given control --- then there exists a solution operator $\S:\R^{n_z}\to\R^{n_u}$ such that $\c(\S(\z),\z)=\0$ for all possible controls $\z$.
 In this case, \cref{eq:optimization-constrained} can be formulated as the equivalent \emph{unconstrained} optimization problem
 \begin{align}
     \label{eq:optimization-reducedspace}
-    \min_{\z} \hat{\J}(\z) := \J(\S(\z),\z)
+    \min_{\z} \hat{\J}(\z)
+    \coloneqq \J(\S(\z),\z).
 \end{align}
 The minimization problem \cref{eq:optimization-reducedspace} can be solved with standard approaches (e.g., Newton conjugate gradient) as long as the derivatives of $\hat{\J}$ can be computed efficiently.
 % gradient $\grad{\z}\hat{\J}(\z)\in\R^{n_z}$ and, for any vector $\v\in\R^{n_z}$, Hessian-vector products $\v\mapsto \grad{z,z}\hat{J}(\z) \v \in \R^{n_z}$ can be computed efficiently.
 % {prf:ref}`alg:adjoint_gradient` shows how to efficiently calculate the gradient by utilizing adjoint-based derivative formulas.
 % Similarly, {prf:ref}`alg:adjoint_hessvec` shows how to compute Hessian-vector products using incremental state and incremental adjoint equations, which avoids explicitly forming the (very large) Hessian matrix $\grad{z,z}\hat{J}(\z)\in\R^{n_z \times n_z}$.
-The adjoint method~[REF] provides expressions for these derivatives in terms of the (partial) derivatives of $\J$ and $\c$.
+
+The adjoint method~[REF] provides expressions for the derivatives of $\hat{\J}$ in terms of the (partial) derivatives of $\J$ and $\c$.
+Using $\c(\S(\z),\z) = \0$, the implicit function theorem gives the formula
+\begin{align}
+    \grad{z}\hat{J}(\z)
+    = \nabla[J(\S(\z),\z)]
+    = \S_z(\z)\trp\grad{u}J(\S(\z),\z) + \grad{z}J(\S(\z),\z).
+\end{align}
+within a neighborhood of
+
+The second term is straightforward, but to calculate the first term we need to express the $\S_z(\z)\in\R^{n_u\times n_z}$, the derivative of the state solution map, in terms of $\c$.
+
+
+$$
+\begin{aligned}
+    \S_z(\z)
+    = -\c_u(\S(\z),\z)^{-1}\c_z(\S(\z),\z).
+\end{aligned}
+$$
+
+For a given $\z$, setting $\u = \S(\z)$ then gives
+
+$$
+\begin{aligned}
+    \S_z(\z)\trp\grad{u}J(\S(\z),\z)
+    &= \left(-\c_u(\u,\z)^{-1}\c_z(\u,\z)\right)\trp\grad{u}J(\u,\z)
+    \\
+    &= -\c_z(\u,\z)\trp\c_u(\u,\z)\invtrp\grad{u}J(\u,\z)
+    = \c_z(\u,\z)\trp\bflambda
+\end{aligned}
+$$
+
+where $\bflambda = \c_u(\u,\z)\invtrp\grad{u}J(\u,\z) \in \R^{n_u}$.
+Hence, $\grad{z}\hat{J}(\z) = \c_z(\u,\z)\trp\bflambda + \grad{z}J(\u,\z)$.
+
 
 
 \begin{purpose}

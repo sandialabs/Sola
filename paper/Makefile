@@ -1,4 +1,7 @@
-.PHONY: arxiv main toms clean help
+.PHONY: all arxiv toms clean help
+
+
+all: arxiv toms
 
 
 arxiv:
@@ -17,6 +20,6 @@ clean:
 
 
 help:
-	@echo "make main  -> main.pdf      (for arXiv)"
-	@echo "make arxiv -> main.pdf      (for arXiv)"
-	@echo "make toms  -> main-toms.pdf (for journal)"
+	@echo "make arxiv -> main-arxiv.pdf  (for arXiv)"
+	@echo "make toms  -> main-toms.pdf   (for journal)"
+	@echo "make clean -> clean extra latex files"
