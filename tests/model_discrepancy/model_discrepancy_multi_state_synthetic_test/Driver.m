@@ -4,7 +4,7 @@ close all;
 addpath(genpath('../../../src'));
 rng(121234);
 
-suppress_figures = false; %true;
+suppress_figures = true;
 
 m = 51;
 [M, S, x] = Assemble_Mass_and_Stiffness(m);
@@ -74,8 +74,6 @@ if ~suppress_figures
     figure;
     subplot(2,1,1)
     hold on
-    plot(x, md_post_sampling.post_data.D(1:m, 1), 'color', 'black', 'LineWidth', 3);
-    plot(x, delta_mean{1}(1:m), '--', 'color', 'red', 'LineWidth', 3);
     for k = 1:num_post_samples
         plot(x, delta_samples{1}(1:m, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
@@ -83,8 +81,6 @@ if ~suppress_figures
     plot(x, delta_mean{1}(1:m), '--', 'color', 'red', 'LineWidth', 3);
     subplot(2,1,2)
     hold on
-    plot(x, md_post_sampling.post_data.D((m+1):end, 1), 'color', 'black', 'LineWidth', 3);
-    plot(x, delta_mean{1}((m+1):end), '--', 'color', 'red', 'LineWidth', 3);
     for k = 1:num_post_samples
         plot(x, delta_samples{1}((m+1):end, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
@@ -94,8 +90,6 @@ if ~suppress_figures
     figure;
     subplot(2,1,1)
     hold on
-    plot(x, md_post_sampling.post_data.D(1:m, 2), 'color', 'black', 'LineWidth', 3);
-    plot(x, delta_mean{2}(1:m), '--', 'color', 'red', 'LineWidth', 3);
     for k = 1:num_post_samples
         plot(x, delta_samples{2}(1:m, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
@@ -103,8 +97,6 @@ if ~suppress_figures
     plot(x, delta_mean{2}(1:m), '--', 'color', 'red', 'LineWidth', 3);
     subplot(2,1,2)
     hold on
-    plot(x, md_post_sampling.post_data.D((m+1):end, 2), 'color', 'black', 'LineWidth', 3);
-    plot(x, delta_mean{2}((m+1):end), '--', 'color', 'red', 'LineWidth', 3);
     for k = 1:num_post_samples
         plot(x, delta_samples{2}((m+1):end, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
@@ -114,14 +106,12 @@ if ~suppress_figures
     figure;
     subplot(2,1,1)
     hold on
-    plot(x, delta_mean{3}(1:m), '--', 'color', 'red', 'LineWidth', 3);
     for k = 1:num_post_samples
         plot(x, delta_samples{3}(1:m, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
     plot(x, delta_mean{3}(1:m), '--', 'color', 'red', 'LineWidth', 3);
     subplot(2,1,2)
     hold on
-    plot(x, delta_mean{3}((m+1):end), '--', 'color', 'red', 'LineWidth', 3);
     for k = 1:num_post_samples
         plot(x, delta_samples{3}((m+1):end, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
@@ -138,22 +128,19 @@ md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 if ~suppress_figures
     figure;
     hold on;
-    plot(x, (1 + x) / (1.2^(2 / 3)), 'color', 'black', 'LineWidth', 3);
-    plot(x, 1 + x, 'color', 'cyan', 'LineWidth', 3);
-    plot(x, z_update_mean, '--', 'color', 'red', 'LineWidth', 3);
     for k = 1:num_post_samples
         plot(x, z_update_samples(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
-    plot(x, (1 + x) / (1.2^(2 / 3)), 'color', 'black', 'LineWidth', 3);
+    plot(x, (1 + x) / (1.1^(2 / 3)), 'color', 'black', 'LineWidth', 3);
     plot(x, 1 + x, 'color', 'cyan', 'LineWidth', 3);
     plot(x, z_update_mean, '--', 'color', 'red', 'LineWidth', 3);
 end
 
-% %%
-% z_mean_ref = load('reference_solution.mat').z_update_mean;
-% z_samples_ref = load('reference_solution.mat').z_update_samples;
-% ref_diff = max(norm(z_mean_ref - z_update_mean) / norm(z_update_mean), norm(z_update_samples - z_samples_ref) / norm(z_update_samples));
-% if ref_diff > 1.e-9
-%     disp('model_discrepancy_sythetic_test difference:');
-%     disp(ref_diff);
-% end
+%%
+z_mean_ref = load('reference_solution.mat').z_update_mean;
+z_samples_ref = load('reference_solution.mat').z_update_samples;
+ref_diff = max(norm(z_mean_ref - z_update_mean) / norm(z_update_mean), norm(z_update_samples - z_samples_ref) / norm(z_update_samples));
+if ref_diff > 1.e-9
+    disp('model_discrepancy_sythetic_test difference:');
+    disp(ref_diff);
+end

@@ -6,6 +6,10 @@ cd hyperparam_auto_2D/;
 % Missing test
 cd ..;
 
+cd model_discrepancy_multi_state_synthetic_test/;
+Driver;
+cd ..;
+
 cd model_discrepancy_oed_unit_test/;
 Driver;
 cd ..;

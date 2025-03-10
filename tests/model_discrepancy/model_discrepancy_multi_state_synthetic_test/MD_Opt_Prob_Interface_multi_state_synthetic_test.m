@@ -22,7 +22,7 @@ classdef MD_Opt_Prob_Interface_multi_state_synthetic_test < MD_Opt_Prob_Interfac
 
         function [grad_u] = Misfit_Gradient(this, u, z)
             grad_u = 0*u;
-            grad_u((this.m+1):end) = this.M * (u((this.m+1):end) - (1 + this.x).^3);
+            grad_u((this.m+1):end) = this.M * (u((this.m+1):end) - 1 - (1 + this.x).^3);
         end
 
         function [u_out] = Apply_Misfit_Hessian(this, u_in, u, z)

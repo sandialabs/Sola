@@ -25,7 +25,7 @@ classdef MD_Data_Interface_multi_state_synthetic_test < MD_Data_Interface
 
         function [D] = Load_d_Data(this)
             Z = this.Load_Z_Data();
-            D = [(1.2-1) * (Z.^3) ; (1.2^2-1) * (Z.^3)];
+            D = [(1.1-1) * (Z.^3) ; (1.1^2-1) * (Z.^3)];
         end
 
         function [I] = Separate_State_Components(this,i)
