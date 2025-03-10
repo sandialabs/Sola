@@ -8,10 +8,10 @@ from scipy.interpolate import griddata
 import os
 
 data_dir = "2d_cache"
-query_matlab = True
+query_matlab = False
 point_size = 40
 selected_point_size = 100
-default_font_size = 14
+default_font_size = 18 #14
 project3d = False #True
 mpl.rcParams['font.size'] = default_font_size
 mpl.rcParams['axes.labelsize'] = default_font_size
@@ -102,6 +102,8 @@ def plot_images():
     actor = delta_z_opt_axis.plot_surface(x_mesh, y_mesh, delta_z_opt_image, cmap='viridis', vmin=delta_samples_z_opt.min(), vmax=delta_samples_z_opt.max(), edgecolor='none') if project3d else delta_z_opt_axis.imshow(delta_z_opt_image, cmap='viridis', vmin=delta_samples_z_opt.min(), vmax=delta_samples_z_opt.max(), origin='lower')
     delta_z_opt_axis.set_title(f"Discrepancy sample {theta_idx} at z_opt")
     fig.colorbar(actor, cax=delta_z_opt_cb_axis)
+    delta_z_opt_axis.set_xticks([])
+    delta_z_opt_axis.set_yticks([])
     
     
     delta_z_pert_image = resample_to_image(sorted_delta_samples_z_pert[pert_idx,:,theta_idx])
@@ -109,11 +111,15 @@ def plot_images():
     actor = delta_z_pert_axis.plot_surface(x_mesh, y_mesh, delta_z_pert_image, cmap='viridis', edgecolor='none') if project3d else delta_z_pert_axis.imshow(delta_z_pert_image, cmap='viridis', origin='lower')
     delta_z_pert_axis.set_title(f"Discrepancy sample {theta_idx} at z_{z_pert.shape[1]-pert_idx}")
     fig.colorbar(actor, cax=delta_z_pert_cb_axis)
+    delta_z_pert_axis.set_xticks([])
+    delta_z_pert_axis.set_yticks([])
     
     z_pert_image = resample_to_image(sorted_z_pert[:,pert_idx])
     actor = z_pert_axis.plot_surface(x_mesh, y_mesh, z_pert_image, cmap='viridis', vmin=z_pert.min(), vmax=z_pert.max(), edgecolor='none') if project3d else z_pert_axis.imshow(z_pert_image, cmap='viridis', vmin=z_pert.min(), vmax=z_pert.max(), origin='lower')
     z_pert_axis.set_title(f"Perturbed z {z_pert.shape[1]-pert_idx}")
     fig.colorbar(actor, cax=z_pert_cb_axis)
+    z_pert_axis.set_xticks([])
+    z_pert_axis.set_yticks([])
 
     if project3d:
         delta_z_opt_axis.set_zlim(delta_samples_z_opt.min(),delta_samples_z_opt.max())
@@ -165,7 +171,7 @@ def plot_scatter(plot_selection=False):
         _y = selected_index[1]
 
         scatter_axis.scatter(sorted_points[_x,_y,0], sorted_points[_x,_y,1], s=selected_point_size, alpha=1, marker='o', color=sc_colors[_y], edgecolors='black', linewidths=2)
-        scatter_axis.axhline(y=sorted_points[_x,_y,1], color='black', linestyle='--')
+        #scatter_axis.axhline(y=sorted_points[_x,_y,1], color='black', linestyle='--')
         plot_images()
     fig.canvas.draw()
 

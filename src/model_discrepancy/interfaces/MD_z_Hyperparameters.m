@@ -77,7 +77,7 @@ classdef MD_z_Hyperparameters < handle
                     e_norm_sqr = diag(e' * this.u_prior_interface.Apply_M_u(e));
                     d1 = this.data_interface.D(:,1);
                     d1_norm_sq = d1' * this.u_prior_interface.Apply_M_u(d1);
-                    this.discrepancy_percent_z_variation = sqrt(1.5 * mean(e_norm_sqr)/d1_norm_sq);
+                    this.discrepancy_percent_z_variation = sqrt(mean(e_norm_sqr)/d1_norm_sq);
                 else
                     N = size(this.data_interface.Z, 2);
                     if N > 1
