@@ -4,18 +4,31 @@
 \noindent
 \textbf{Developer Notes}
 
-\bartnote{Decided to focus the paper on HDSA. We can mention in the intro and/or conclusion that there are other outer-loop problems that we can use the \SABL $\to$ \MrHyDE approach for, but let the main focus be HDSA throughout.}
+\bartnote{Decided to focus the paper on HDSA with respect to model discrepancy. We can mention in the intro and/or conclusion that there are other outer-loop problems that we can use the \SABL $\to$ \MrHyDE approach for, but let the main focus be on HDSA throughout.}
 
-\shanenote{Strategy: focus first on HDSALib (actual implementation of HDSA, agnostic to underlying solvers). Describe \SABL as a MATLAB implementation that preps you for HDSALib. Then show the power of MrHyDE + HDSALib.
-The particular HDSA style that we care about is post optimality sensitivity and model form discrepancy.}
+\shanenote{Strategy: focus first on \HdsaLib (actual implementation of HDSA, agnostic to underlying solvers). Describe \SABL as a \MATLAB implementation that preps you for \HdsaLib. Then show the power of \MrHyDE + \HdsaLib.}
 
-\bartnote{Big thing about \HdsaLib is that it implements the model discrepancy details, abstracts the interface and requires the user to instantiate the things that are needed. The high-level challenge is accessibility because of the complexity of the HPC environment. Need to point to the abstractions, i.e., make sure any code listings are tied to the mathematics. Bart to write model discrepancy part, but might be after the hyperparameter paper.}
+\bartnote{The big thing about \HdsaLib is that it implements the model discrepancy details, abstracts the interface and requires the user to instantiate the things that are needed. The high-level challenge is accessibility because of the complexity of the HPC environment. Need to point to the abstractions, i.e., make sure any sample code listings are tied carefully to the mathematics.}
 
-\shanenote{Explaining the full OOP structure of \HdsaLib is likely going to be less productive. An alternative might be to show an example of a particular piece of the algorithm in all three elements. Need to drive everything from a very high-level view.}
+\shanenote{Explaining the full OOP structure of \HdsaLib would be too much, but showing an example of a particular piece of the algorithm in all three elements might be effective. Need to drive everything from a very high-level view.}
 
 \section{Introduction}
 
-TODO.
+% \shanenote{Really emphasize the mathematics to algorithm to HPC flow. When the mathematics are complicated and the problems we're tackling are already hard on the forward model level, getting all the way to HPC is really difficult.}
+
+Mathematics, algorithms, and implementation.
+These three steps, sequential but intertwined, form the general approach to problems in computational science and engineering, statistics and data science, and scientific machine learning.
+In the first step, a problem is formulated, models are proposed, and mathematical analyses lead to solution strategies; second, the components leading to a solution are grouped, ordered, and articulated as an algorithm; and finally, algorithms are implemented as executable software.
+An implementation should then be verified --- checked for correctness --- before validating the overall approach against available test data~\cite{oden2004verification,oden2002estimation}.
+Implementation difficulty increases rapidly as the complexity of the mathematical setting and the accompanying algorithms grows.
+The field of high-performance computing (HPC) seeks to address the computational challenges that arise from high complexity, yet harnessing the power of HPC tools often requires expert-level knowledge and experience.
+This paper presents a paradigm for developing algorithms and utilizing HPC tools in the highly complex setting of outer-loop analyses.
+
+In contemporary computational science and engineering, an outer-loop problem is a procedure which requires many expensive ``forward'' simulations of a physical process to enable discover, control, or decision making.
+Examples include inverse problems~\cite{ghattas2021learning,stuart2010bayesianinverse}, optimal experimental design~\cite{alexanderian2021oed,aretz2024greedysensorselection,attia2018oed}, sensitivity analysis~\cite{brandes2007stabilityanalysis,buskens2006parametricsensitivity}, large-scale optimization~\cite{akcelik2006parallelpdecon,biegler2007pdeconstrainedopt,zahr2015progressive}, and uncertainty quantification~\cite{oden2004verification,biehler2014efficientuq,na2012reliability,smith2013uqbook}.
+This work focuses on hyper-differential sensitivity analysis~(HDSA) \cite{hart2023hdsaillposed,hart2023hdsaoptimal,hart2025hdsaposterior,hart2020hdsapde,stevens2022hdsaodes,sunseri2024hdsabayesian,sunseri2020hdsainverse}, a recent approach to deriving sensitivities in the context of large-scale optimization problems constrained by partial differential equations~(PDEs).
+
+\shanenote{Maybe have a baby 1D problem just in \SABL (everything is plottable but it doesn't take much space), then a transition problem done in both \SABL and \MrHyDE, then a monster problem done solely in \MrHyDE. Can make the case that this is one way to validate your HPC implementations as well as lower the barrier to entry for new HPC practitioners.}
 
 \begin{purpose}
 \begin{itemize}
@@ -29,9 +42,6 @@ TODO.
 \item Outline the paper.
 \end{itemize}
 \end{purpose}
-
-Many of the most compelling and challenging problems in contemporary computational science and engineering can be posed as outer-loop analyses---procedures which leverage many expensive ``forward'' simulations of a physical process to enable discovery, control, or decision making.
-Examples include inverse problems~[ref], optimal experimental design~[ref], sensitivity analysis~[ref], large-scale optimization~[ref], and uncertainty quantification~[ref].
 
 Like other outer-loop problems, HDSA is characterized by three major challenges:
 \begin{itemize}
@@ -51,6 +61,8 @@ A surrogate problem is introduced in \Cref{sec:model-discrepancy}, and \Cref{sec
 
 \subsection{PDE-constrained optimization}
 \label{sec:optimization}
+
+\SM{Give the sense that this is very complicated. Don't underplay the complexity of the full-order model (finite element is already hard, it could be a time-dependent problem), solving the optimization problem (trust region methods, Newton Krylov, etc.), the HDSA-MD Bayesian inference problem (with a prior, etc.), the posterior update, sampling, etc. The high-level accessibility is still very important, we want it to be publishable but also readable.}
 
 Consider the following constrained minimization problem:
 \begin{align}
@@ -364,6 +376,8 @@ Walk through implementing the Objective, Constraint, and use the ReducedSpaceOpt
 \SM{It would be convenient to do something stationary so that we only need to introduce the \texttt{Objective} and \texttt{Constraint} classes instead of also introducing \texttt{Dynamic\_Objective} and \texttt{Dynamic\_Constraint}.}
 
 \section{\MrHyDE: A high-performance \cpp library for solving differential equations}
+
+\SM{Note that \MrHyDE takes care of a lot of things for us, like calculating the adjoint at the element level via automatic differentiation. Transposes and handling boundary conditions are nontrivial in a parallel environment, but this is handled by Panzer in \MrHyDE.}
 
 TODO.
 
