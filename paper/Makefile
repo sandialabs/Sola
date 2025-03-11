@@ -8,9 +8,6 @@ arxiv:
 	latexmk -pdf -quiet -g main.tex
 
 
-main: arxiv
-
-
 toms:
 	latexmk -pdf -quiet -g main-toms.tex
 

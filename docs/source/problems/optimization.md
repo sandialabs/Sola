@@ -137,7 +137,7 @@ $$
 \end{aligned}
 $$
 
-where $\bflambda = \c_u(\u,\z)\invtrp\grad{u}J(\u,\z) \in \R^{n_u}$.
+where $\bflambda = -\c_u(\u,\z)\invtrp\grad{u}J(\u,\z) \in \R^{n_u}$.
 Hence, $\grad{z}\hat{J}(\z) = \c_z(\u,\z)\trp\bflambda + \grad{z}J(\u,\z)$.
 
 Alternatively, the Lagrangian associated with the equality-constrained problem {eq}`optimization:problem` is defined by
@@ -166,7 +166,7 @@ $$
 $$
 
 The final equation recovers the constraint $\c_u(\u,\z) = \0$.
-Given $\u$ and $\z$, the first equation gives the adjoint formula $\bflambda = \c_u(\u,\z)\invtrp\grad{u}J(\u,\z)$ discovered earlier.
+Given $\u$ and $\z$, the first equation gives the adjoint formula $\bflambda = -\c_u(\u,\z)\invtrp\grad{u}J(\u,\z)$ discovered earlier.
 The second equation gives the desired formula for the desired gradient, $\grad{z}\hat{J}(\z) = \grad{z}\mathcal{L}(\u,\z,\bflambda)$.
 :::
 

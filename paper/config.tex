@@ -1,5 +1,7 @@
 % config.tex: configuration common to arXiv and TOMS formats.
 % Imports ---------------------------------------------------------------------
+\usepackage[section]{algorithm}
+\usepackage[noend]{algpseudocode}
 \usepackage{caption}
 \usepackage[nameinlink]{cleveref}
 \usepackage{comment}
@@ -27,11 +29,9 @@
 }
 \setlength{\abovecaptionskip}{0pt}
 
-% % Algorithm comments: texttt and gray
-% \usepackage[section]{algorithm}
-% \usepackage[noend]{algpseudocode}
-% \algnewcommand{\LineComment}[1]{\State \textcolor{gray}{\texttt{\# #1}}}
-% \algrenewcomment[1]{\hfill\textcolor{gray}{\texttt{\# #1}}}
+% Algorithm comments: texttt and gray
+\algnewcommand{\LineComment}[1]{\State \textcolor{gray}{\texttt{\# #1}}}
+\algrenewcomment[1]{\hfill\textcolor{gray}{\texttt{\# #1}}}
 
 % Author comments -------------------------------------------------------------
 \definecolor{blue}{RGB}{0, 61, 165}
