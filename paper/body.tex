@@ -1,19 +1,34 @@
+% !TEX root = main-arxiv.tex
+
 \bigskip
 \noindent
 \textbf{Developer Notes}
 
-\bartnote{Decided to focus the paper on HDSA. We can mention in the intro and/or conclusion that there are other outer-loop problems that we can use the \SABL $\to$ \MrHyDE approach for, but let the main focus be HDSA throughout.}
+\bartnote{Decided to focus the paper on HDSA with respect to model discrepancy. We can mention in the intro and/or conclusion that there are other outer-loop problems that we can use the \SABL $\to$ \MrHyDE approach for, but let the main focus be on HDSA throughout.}
 
-\shanenote{Strategy: focus first on HDSALib (actual implementation of HDSA, agnostic to underlying solvers). Describe \SABL as a MATLAB implementation that preps you for HDSALib. Then show the power of MrHyDE + HDSALib.
-The particular HDSA style that we care about is post optimality sensitivity and model form discrepancy.}
+\shanenote{Strategy: focus first on \HdsaLib (actual implementation of HDSA, agnostic to underlying solvers). Describe \SABL as a \MATLAB implementation that preps you for \HdsaLib. Then show the power of \MrHyDE + \HdsaLib.}
 
-\bartnote{Big thing about \HdsaLib is that it implements the model discrepancy details, abstracts the interface and requires the user to instantiate the things that are needed. The high-level challenge is accessibility because of the complexity of the HPC environment. Need to point to the abstractions, i.e., make sure any code listings are tied to the mathematics. Bart to write model discrepancy part, but might be after the hyperparameter paper.}
+\bartnote{The big thing about \HdsaLib is that it implements the model discrepancy details, abstracts the interface and requires the user to instantiate the things that are needed. The high-level challenge is accessibility because of the complexity of the HPC environment. Need to point to the abstractions, i.e., make sure any sample code listings are tied carefully to the mathematics.}
 
-\shanenote{Explaining the full OOP structure of \HdsaLib is likely going to be less productive. An alternative might be to show an example of a particular piece of the algorithm in all three elements. Need to drive everything from a very high-level view.}
+\shanenote{Explaining the full OOP structure of \HdsaLib would be too much, but showing an example of a particular piece of the algorithm in all three elements might be effective. Need to drive everything from a very high-level view.}
 
 \section{Introduction}
 
-TODO.
+% \shanenote{Really emphasize the mathematics to algorithm to HPC flow. When the mathematics are complicated and the problems we're tackling are already hard on the forward model level, getting all the way to HPC is really difficult.}
+
+Mathematics, algorithms, and implementation.
+These three steps, sequential but intertwined, form the general approach to problems in computational science and engineering, statistics and data science, and scientific machine learning.
+In the first step, a problem is formulated, models are proposed, and mathematical analyses lead to solution strategies; second, the components leading to a solution are grouped, ordered, and articulated as an algorithm; and finally, algorithms are implemented as executable software.
+An implementation should then be verified --- checked for correctness --- before validating the overall approach against available test data~\cite{oden2004verification,oden2002estimation}.
+Implementation difficulty increases rapidly as the complexity of the mathematical setting and the accompanying algorithms grows.
+The field of high-performance computing (HPC) seeks to address the computational challenges that arise from high complexity, yet harnessing the power of HPC tools often requires expert-level knowledge and experience.
+This paper presents a paradigm for developing algorithms and utilizing HPC tools in the highly complex setting of outer-loop analyses.
+
+In contemporary computational science and engineering, an outer-loop problem is a procedure which requires many expensive ``forward'' simulations of a physical process to enable discover, control, or decision making.
+Examples include inverse problems~\cite{ghattas2021learning,stuart2010bayesianinverse}, optimal experimental design~\cite{alexanderian2021oed,aretz2024greedysensorselection,attia2018oed}, sensitivity analysis~\cite{brandes2007stabilityanalysis,buskens2006parametricsensitivity}, large-scale optimization~\cite{akcelik2006parallelpdecon,biegler2007pdeconstrainedopt,zahr2015progressive}, and uncertainty quantification~\cite{oden2004verification,biehler2014efficientuq,na2012reliability,smith2013uqbook}.
+This work focuses on hyper-differential sensitivity analysis~(HDSA) \cite{hart2023hdsaillposed,hart2023hdsaoptimal,hart2025hdsaposterior,hart2020hdsapde,stevens2022hdsaodes,sunseri2024hdsabayesian,sunseri2020hdsainverse}, a recent approach to deriving sensitivities in the context of large-scale optimization problems constrained by partial differential equations~(PDEs).
+
+\shanenote{Maybe have a baby 1D problem just in \SABL (everything is plottable but it doesn't take much space), then a transition problem done in both \SABL and \MrHyDE, then a monster problem done solely in \MrHyDE. Can make the case that this is one way to validate your HPC implementations as well as lower the barrier to entry for new HPC practitioners.}
 
 \begin{purpose}
 \begin{itemize}
@@ -28,9 +43,6 @@ TODO.
 \end{itemize}
 \end{purpose}
 
-Many of the most compelling and challenging problems in contemporary computational science and engineering can be posed as outer-loop analyses---procedures which leverage many expensive ``forward'' simulations of a physical process to enable discovery, control, or decision making.
-Examples include inverse problems~[ref], optimal experimental design~[ref], sensitivity analysis~[ref], large-scale optimization~[ref], and uncertainty quantification~[ref].
-
 Like other outer-loop problems, HDSA is characterized by three major challenges:
 \begin{itemize}
 \item \textbf{Mathematical complexity.} TODO
@@ -40,51 +52,179 @@ Like other outer-loop problems, HDSA is characterized by three major challenges:
 
 This paper presents a strategy and framework for implementing HDSA in a way that can be applied to many outer-loop analyses.
 
-\section{Hyper differential sensitivity analysis for model discrepancy}
+\section{Hyper-differential sensitivity analysis with respect to model discrepancy}
 \label{sec:hdsa}
 
 This section gives a mathematical description of HDSA for post-optimality sensitivities in the presence of model form insufficiencies.
-\Cref{sec:optimization} establishes the setting of large-scale constrained optimization problems, an outer-loop problem that HDSA wraps around.
+\Cref{sec:optimization} establishes the setting of large-scale constrained optimization problems with adjoint-based solution strategies.
+A surrogate problem is introduced in \Cref{sec:model-discrepancy}, and \Cref{sec:hdsa-algorithm} outlines a strategy for using the solution of the surrogate problem and limited data from the full problem to produce an accurate approximate solution to the full problem.
 
 \subsection{PDE-constrained optimization}
 \label{sec:optimization}
+
+\SM{Give the sense that this is very complicated. Don't underplay the complexity of the full-order model (finite element is already hard, it could be a time-dependent problem), solving the optimization problem (trust region methods, Newton Krylov, etc.), the HDSA-MD Bayesian inference problem (with a prior, etc.), the posterior update, sampling, etc. The high-level accessibility is still very important, we want it to be publishable but also readable.}
 
 Consider the following constrained minimization problem:
 \begin{align}
     \label{eq:optimization-constrained}
     \begin{aligned}
     \min_{\u,\z} ~& \J(\u,\z)
-    \\
-    \text{s.t.}~~& \c(\u,\z) = \0.
+    \qquad
+    \text{where}~~& \c(\u,\z) = \0.
     \end{aligned}
 \end{align}
 Here, $\u\in\R^{n_u}$ is the state variable, $\z\in\R^{n_z}$ is the control variable, $\J:\R^{n_u}\times\R^{n_z}\to\R$ is the objective function, and $\c:\R^{n_u}\times\R^{n_z}\to\R^{n_u}$ specifies the constraints.
 % Here, $n_u\in\mathbb{N}$ is the state dimension and $n_z\in\mathbb{N}$ is the control dimension.
-If $\c(\u,\z)=\0$ admits a unique solution for any given $\z$, then there exists a solution operator $\S:\R^{n_z}\to\R^{n_u}$ such that $\c(\S(\z),\z)=\0$ for all possible controls $\z$.
-In this case, \cref{eq:optimization-constrained} can be formulated as the equivalent \emph{unconstrained} optimization problem
+In the context of interest, $\c$ represents the residual of a discretized PDE, for example after applying a finite element discretization.
+If $\c(\cdot,\z)=\0$ admits a unique state solution over an admissible set of controls $Z \subset\R^{n_z}$ --- that is, if the discretized PDE is well posed for $\z\in Z$ --- then there exists a solution operator $\S:Z\to U \coloneqq S(Z) \subset \R^{n_u}$ such that $\c(\S(\z),\z)=\0$ for all $\z\in Z$.
+In this case, \cref{eq:optimization-constrained} can be formulated as the equivalent optimization problem
 \begin{align}
     \label{eq:optimization-reducedspace}
-    \min_{\z} \hat{\J}(\z) := \J(\S(\z),\z)
+    \min_{\z\in Z} \hat{\J}(\z)
+    \coloneqq \J(\S(\z),\z).
 \end{align}
-The minimization problem \cref{eq:optimization-reducedspace} can be solved with standard approaches (e.g., Newton conjugate gradient) as long as the derivatives of $\hat{\J}$ can be computed efficiently.
+The problem~\cref{eq:optimization-reducedspace} is often called the \emph{reduced-space formulation} of \cref{eq:optimization-constrained}.
+
+Local minima of \cref{eq:optimization-reducedspace} can be computed with standard optimization strategies as long as the derivatives of $\hat{\J}$ can be computed efficiently.
 % gradient $\grad{\z}\hat{\J}(\z)\in\R^{n_z}$ and, for any vector $\v\in\R^{n_z}$, Hessian-vector products $\v\mapsto \grad{z,z}\hat{J}(\z) \v \in \R^{n_z}$ can be computed efficiently.
 % {prf:ref}`alg:adjoint_gradient` shows how to efficiently calculate the gradient by utilizing adjoint-based derivative formulas.
 % Similarly, {prf:ref}`alg:adjoint_hessvec` shows how to compute Hessian-vector products using incremental state and incremental adjoint equations, which avoids explicitly forming the (very large) Hessian matrix $\grad{z,z}\hat{J}(\z)\in\R^{n_z \times n_z}$.
-The adjoint method~[REF] provides expressions for these derivatives in terms of the (partial) derivatives of $\J$ and $\c$.
+The adjoint method~[REF] provides expressions for the derivatives of $\hat{\J}$ in terms of the (partial) derivatives of $\J$ and $\c$.
+Applying the chain rule,
+\begin{align}
+    \grad{z}\hat{\J}(\z)
+    = \nabla[\J(\S(\z),\z)]
+    = \S_z(\z)\trp\grad{u}\J(\S(\z),\z) + \grad{z}\J(\S(\z),\z),
+\end{align}
+where $\S_z(\z)\in\R^{n_u\times n_z}$ is the $\z$ Jacobian of $\S$.
+Note that we are using the convention that the gradient is a column vector.
+Since $\c(\S(\z),\z) = \0$, the implicit function theorem yields the formula
+\begin{align}
+    \S_z(\z)
+    = -\c_u(\S(\z),\z)^{-1}\c_z(\S(\z),\z),
+\end{align}
+where $\c_u(\u,\z)\in\mathbb{R}^{n_u\times n_u}$ and $\c_z(\u,\z)\in\mathbb{R}^{n_u\times n_z}$ denote the $\u$ and $\z$ Jacobians of $\c$, respectively.
+Defining $\u \coloneqq \S(\z)$,
+\begin{align}
+    \begin{aligned}
+    \S_z(\z)\trp\grad{u}\J(\S(\z),\z)
+    &= \left(-\c_u(\u,\z)^{-1}\c_z(\u,\z)\right)\trp\grad{u}\J(\u,\z)
+    \\
+    &= -\c_z(\u,\z)\trp\c_u(\u,\z)\invtrp\grad{u}\J(\u,\z)
+    = \c_z(\u,\z)\trp\bflambda,
+    \end{aligned}
+\end{align}
+where $\bflambda \coloneqq -\c_u(\u,\z)\invtrp\grad{u}\J(\u,\z) \in \R^{n_u}$ is the \emph{adjoint state} and resides in the dual of the state space.
+Hence, for a given $\z$, the gradient $\grad{z}\hat{\J}(\z)$ can be computed by assembling or applying the derivatives of $\J$ and $\c$, as summarized in \Cref{alg:adjoint-gradient}.
+Similar arguments lead to an expression for the product of the Hessian $\grad{z,z}\hat{\J}(\z) \in\R^{n_z\times n_z}$ with a vector $\v\in\R^{n_z}$ in terms of the second-order derivatives of $\J$ and $\c$, detailed in \Cref{alg:adjoint-hessvec}.
+With these derivatives on hand, \cref{eq:optimization-reducedspace} can be solved with a Newton--Raphson approach, i.e., a variation on the iteration
+\begin{align}
+    \label{eq:newton-cg}
+    \z_{k+1}
+    = \z_{k} - \gamma_k\boldsymbol{\eta}_k,
+    \qquad
+    \grad{z,z}\hat{\J}(\z_{k})\boldsymbol{\eta}_{k} = \grad{z}\hat{\J}(\z_{k}),
+\end{align}
+where $\gamma_k > 0$ is the step size, chosen to satisfy standard Wolfe or Armijo conditions~[REF].
+The linear system for the step direction $\boldsymbol{\eta}_{k}$ may be solved, for example, via the conjugate gradient method~[REF], which only requires Hessian-vector applications $\v\mapsto\grad{z,z}\hat{\J}(\z_k)\v$ instead of forming $\grad{z,z}\hat{\J}(\z_k)$ explicitly.
+Note that the computational cost of this approach is typically dominated by the cost of evaluating the solver $\S(\z)$ and solving adjoint equations involving the Jacobians of $\c$.
 
+\begin{algorithm}[t]
+\begin{algorithmic}[1]
+\Procedure{AdjointGradient}{~$\z\in\R^{n_z}$~}
+    % \State $\u \gets \S(\z)\in\R^{n_u}$
+    \State Solve $\c(\u, \z) = \0$ for $\u$, i.e., $\u \gets \S(\z)$
+        \Comment{Solve the (PDE) constraint.}
+    \State Solve $\c_u(\u,\z)\trp \bflambda = - \grad{u}\J(\u,\z)$ for $\bflambda$
+        \Comment{Compute the adjoint.}
+    \State \textbf{return} $\c_z(\u,\z)\trp \bflambda + \grad{z}\J(\u,\z)$
+        \Comment{Assemble the gradient.}
+\EndProcedure
+\end{algorithmic}
+\caption{Adjoint-based computation of the gradient $\grad{z}\hat{\J}(\z)$ for minimizing \cref{eq:optimization-reducedspace}.}
+\label{alg:adjoint-gradient}
+\end{algorithm}
 
-\begin{purpose}
-\begin{itemize}
-    \item Summarize the adjoint method, note which derivatives are needed.
-    \item The inner loop is one forward solve to compute objective/constraint values/residuals and derivatives. The outer loop is the adjoint-based minimization.
-\end{itemize}
-\end{purpose}
+\begin{algorithm}[t]
+\begin{algorithmic}[1]
+\Procedure{AdjointHessvec}{
+    % State
+    $\u\in\R^{n_u}$,
+    % control
+    $\z\in\R^{n_z}$,
+    % adjoint
+    $\bflambda\in\R^{n_u}$,
+    % search direction
+    $\v\in\R^{n_z}$
+}
+    \State Solve $\c_u(\u,\z) \bfmu = -\c_z(\u,\z) \v$ for $\bfmu$
+        % \Comment{Compute the incremental adjoint.}
+    \State $\x_J \gets \grad{z,u}\J(\u,\z) \bfmu +  \grad{z,z}\J(\u,\z) \v$
+    \State $\y_J \gets \grad{u,u}\J(\u,\z) \bfmu + \grad{u,z}\J(\u,\z) \v$
+    \State $\y_c \gets \bflambda\trp \c_{u,u}(\u,\z) \bfmu +  \bflambda\trp \c_{u,z}(\u,\z) \v$
+    \State Solve $\c_u(\u,\z)\trp \bfgamma = -(\y_J + \y_c)$ for $\bfgamma$
+    \State $\x_c \gets \c_z(\u,\z)\trp \bfgamma + \bflambda\trp \c_{z,u}(\u,\z) \bfmu + \bflambda\trp \c_{z,z}(\u,\z)\v$
+    \State \textbf{return} $\x_J + \x_c$
+\EndProcedure
+\end{algorithmic}
+\caption{Adjoint-based computation of the Hessian-vector product $\grad{z,z}\hat{\J}(\z)\v $ for minimizing \cref{eq:optimization-reducedspace}.}
+\label{alg:adjoint-hessvec}
+\end{algorithm}
+
+% \begin{algorithm}[t]  % Gauss--Newton, probably not relevant here.
+% \begin{algorithmic}[1]
+% \Procedure{GaussNewtonHessvec}{
+%     % State
+%     $\u\in\R^{n_u}$,
+%     % control
+%     $\z\in\R^{n_z}$,
+%     % adjoint
+%     $\bflambda\in\R^{n_u}$,
+%     % search direction
+%     $\v\in\R^{n_z}$
+% }
+%     \State Solve $\c_u(\u,\z) \bfmu = -\c_z(\u,\z) \v$ for $\bfmu$
+%         % \Comment{Compute the incremental adjoint.}
+%     \State $\x_J \gets \grad{z,u}\J(\u,\z) \bfmu +  \grad{z,z}\J(\u,\z) \v$
+%     \State $\y_J \gets \grad{u,u}\J(\u,\z) \bfmu + \grad{u,z}\J(\u,\z) \v$
+%     \State Solve $\c_u(\u,\z)\trp \bfgamma = -\y_J$ for $\bfgamma$
+%     \State $\x_c \gets \c_z(\u,\z)\trp \bfgamma$
+%     \State \textbf{return} $\x_J + \x_c$
+% \EndProcedure
+% \end{algorithmic}
+% \caption{Gauss--Newton approximation of the Hessian-vector product $\grad{z,z}\hat{\J}(\z)\v $ for minimizing \cref{eq:optimization-reducedspace}.}
+% \label{alg:gaussnewton-hessvec}
+% \end{algorithm}
+
+A software implementation for solving \cref{eq:optimization-reducedspace} with a specific $\J$ and $\c$ through \cref{eq:newton-cg} via the adjoint method as in \Cref{alg:adjoint-gradient,alg:adjoint-hessvec} requires several ingredients, namely the constraint solver $\S:\z\mapsto\u$ and the derivatives of $\J$ and $\c$.
+The software frameworks introduced in later sections define abstract templates with methods for each ingredient, to be implemented by the user or handled with automatic differentiation when possible.
 
 \subsection{Model discrepancy}
+\label{sec:model-discrepancy}
 
-TODO.
+There are several scenarios in which solving \cref{eq:optimization-reducedspace} is computationally infeasible: (1) solving the constraint and/or forming its derivatives is possible, but highly computationally expensive; (2) the constraint is available only as a black box, meaning it can be evaluated but not differentiated; and (3) the constraint is unknown or unavailable for computation.
+In each scenario, one remedy
+% In large-scale problems, solving the constraint equation $\c(\u, \z) = \0$ or forming the derivatives of $\c$ can be computationally intensive, prohibiting the direct optimization approach described in the previous section. One remedy
+is to replace the constraint with a computationally tractable model based on simplified physics, model order reduction, or data-driven surrogate modeling.
+To that end, let $\tilde{\c}:\R^{n_u}\times\R^{n_z}\to\R^{n_u}$ be an approximation to the original constraint $\c$ with corresponding solution map $\tilde{\S}:Z\to U$, i.e., $\tilde{\c}(\tilde{\S}(\z), \z) = \0$ for all $\z\in Z$, and consider the problem
+\begin{align}
+    \label{eq:optimization-surrogate}
+    % \begin{aligned}
+    % \min_{\u,\z} ~& \J(\u,\z)
+    % \\
+    % \text{where}~~& \tilde{\c}(\u,\z) = \0
+    % \end{aligned}
+    % \qquad\Longleftrightarrow\qquad
+    \min_{\z\in Z} \J(\tilde{\S}(\z), \z).
+\end{align}
+% in which $\tilde{\c}(\tilde{\S}(\z), \z) = \0$ for all $\z\in Z$.
+If $\tilde{\S}$ is less computationally expensive to evaluate than $\S$, and the derivatives of $\tilde{\c}$ are more easily formed than the derivatives of $\c$, then solving \cref{eq:optimization-surrogate} is a feasible alternative to solving \cref{eq:optimization-reducedspace}.
 
-\shanenote{First pass: transcribe from existing papers, keep it as high level as possible. Brain dump, worry more about the overall story than the details.}
+\SM{Might be good to introduce the baby example here? }
+
+However, the approximation error of $\tilde{\S} \approx \S$ may result in nontrivial errors in the solution.
+
+The goal is to use the solution of \cref{eq:optimization-surrogate}, together with a limited number of PDE solutions $\S(\z_1),\ldots,\S(\z_N)$, to approximate the solution to the full problem \cref{eq:optimization-reducedspace}.
 
 \begin{purpose}
 \begin{itemize}
@@ -93,11 +233,14 @@ TODO.
 \end{itemize}
 \end{purpose}
 
-\subsection{Algorithmic summary}
+\subsection{Hyper-differential Sensitivity Analysis}
+\label{sec:hdsa-algorithm}
 
 TODO.
 
 \begin{purpose}
+High-level overview of how $\theta$ is calibrated and the model update is done.
+Don't go into the details (e.g., Kronecker structure), that's all taken care of under the hood. Instead, list the essential ingredients that users of \HdsaLib will need to know about in order to use it.
 Concise summary, consider a diagram like Figure 1 from \cite{hart2023hdsaoptimal}.
 \end{purpose}
 
@@ -233,6 +376,8 @@ Walk through implementing the Objective, Constraint, and use the ReducedSpaceOpt
 \SM{It would be convenient to do something stationary so that we only need to introduce the \texttt{Objective} and \texttt{Constraint} classes instead of also introducing \texttt{Dynamic\_Objective} and \texttt{Dynamic\_Constraint}.}
 
 \section{\MrHyDE: A high-performance \cpp library for solving differential equations}
+
+\SM{Note that \MrHyDE takes care of a lot of things for us, like calculating the adjoint at the element level via automatic differentiation. Transposes and handling boundary conditions are nontrivial in a parallel environment, but this is handled by Panzer in \MrHyDE.}
 
 TODO.
 
