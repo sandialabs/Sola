@@ -37,8 +37,7 @@ end
 u_prior_interface = MD_Multi_State_u_Prior_Interface(ui_prior_interface);
 
 %%
-z_hyperparams = struct;
-z_hyperparams.beta_t = 1.0;
+z_hyperparams = MD_z_Hyperparameters_Transient_ADR_2D(data_interface,u_prior_interface,n_t);
 transient_prior_cov_z = MD_Transient_Prior_Covariance_Sabl(z_hyperparams, t(end - 1), n_t - 1, n_q);
 z_prior_interface = MD_z_Prior_Interface_Transient_ADR_2D(transient_prior_cov_z, n_q);
 

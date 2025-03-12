@@ -113,7 +113,7 @@ plot(x, delta_zopt_samples, 'LineWidth', 3, 'color', [.9, .9, .9]);
 plot(x, delta_zopt_samples(:, 1:6), 'LineWidth', 3);
 xlabel('Spatial Input');
 ylabel('Discrepancy');
-ylim([-40, 20]);
+ylim([-20, 15]);
 set(gca, 'fontsize', 24);
 cd(write_path);
 saveas(gca, ['delta_0_samples_', num2str(alpha_u_pert), '_', num2str(beta_u_pert), '_', num2str(alpha_z_pert), '_', num2str(beta_z_pert)], 'epsc');
@@ -129,7 +129,7 @@ for k = 1:6
 end
 xlabel('Spatial Input');
 ylabel('Discrepancy');
-ylim([-40, 20]);
+ylim([-20, 15]);
 set(gca, 'fontsize', 24);
 cd(write_path);
 saveas(gca, ['delta_z1_samples_', num2str(alpha_u_pert), '_', num2str(beta_u_pert), '_', num2str(alpha_z_pert), '_', num2str(beta_z_pert)], 'epsc');
@@ -145,7 +145,7 @@ for k = 1:6
 end
 xlabel('Spatial Input');
 ylabel('Discrepancy');
-ylim([-40, 20]);
+ylim([-20, 15]);
 set(gca, 'fontsize', 24);
 cd(write_path);
 saveas(gca, ['delta_z2_samples_', num2str(alpha_u_pert), '_', num2str(beta_u_pert), '_', num2str(alpha_z_pert), '_', num2str(beta_z_pert)], 'epsc');

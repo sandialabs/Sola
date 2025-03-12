@@ -3,6 +3,7 @@ classdef MD_z_Hyperparameters < handle
     properties
         data_interface
         u_prior_interface
+        z_type
         
         num_state_solves
         discrepancy_percent_z_variation
@@ -25,6 +26,11 @@ classdef MD_z_Hyperparameters < handle
             disp('Load_Spatial_Node_Data is required for automate hyperparameters');
         end
 
+        function [time_nodes] = Load_Time_Node_Data(this)
+            time_nodes = [];
+            disp('Load_Time_Node_Data is required to automate hyperparameters for transient problems');
+        end
+
         function [u] = State_Solve(this,z)
             u = [];
         end
@@ -39,24 +45,10 @@ classdef MD_z_Hyperparameters < handle
             tmp = z_prior_interface.Apply_M_z(this.data_interface.z_opt);
             zopt_norm = sqrt(tmp' * this.data_interface.z_opt);
 
-            nodes = this.Load_Spatial_Node_Data();
-            if size(nodes, 2) == 1
-                Lx = max(nodes(:, 1)) - min(nodes(:, 1));
-                n = length(nodes(:, 1)) - 1;
-                e = 1 + z_prior_interface.beta_z * (pi / Lx)^2 * (0:n).^2;
-                e = e';
-            elseif size(nodes, 2) == 2
-                Lx = max(nodes(:, 1)) - min(nodes(:, 1));
-                Ly = max(nodes(:, 2)) - min(nodes(:, 2));
-                n = round(sqrt(length(nodes(:, 1)))) - 1;
-                e = 1 + z_prior_interface.beta_z * pi^2 * (kron(((0:n).^2)', ones(n + 1, 1)) / Lx^2 + kron(ones(n + 1, 1), ((0:n).^2)') / Ly^2);
-            else
-                disp('Determine_alpha_z error: Dimensions greater than 2 are not supported.');
-            end
-
+            e = this.Compute_Eigenvalues(z_prior_interface);
             evals = sort(1 ./ e, 'descend');
             I = find(evals < 1.e-2);
-            rank = n;
+            rank = length(evals);
             if ~isempty(I)
                 rank = I(1);
             end
@@ -105,6 +97,38 @@ classdef MD_z_Hyperparameters < handle
             this.Set_alpha_z(alpha_z_new);
         end
 
+        function [e] = Compute_Eigenvalues(this,z_prior_interface)
+
+            if strcmp(this.z_type,'spatial field')
+                nodes = this.Load_Spatial_Node_Data();
+                if size(nodes, 2) == 1
+                    Lx = max(nodes(:, 1)) - min(nodes(:, 1));
+                    n = length(nodes(:, 1)) - 1;
+                    e = 1 + z_prior_interface.beta_z * (pi / Lx)^2 * (0:n).^2;
+                    e = e';
+                elseif size(nodes, 2) == 2
+                    Lx = max(nodes(:, 1)) - min(nodes(:, 1));
+                    Ly = max(nodes(:, 2)) - min(nodes(:, 2));
+                    n = round(sqrt(length(nodes(:, 1)))) - 1;
+                    e = 1 + z_prior_interface.beta_z * pi^2 * (kron(((0:n).^2)', ones(n + 1, 1)) / Lx^2 + kron(ones(n + 1, 1), ((0:n).^2)') / Ly^2);
+                else
+                    disp('Determine_alpha_z error: Dimensions greater than 2 are not supported.');
+                end
+            end
+
+            if strcmp(this.z_type,'transient vector')
+                t = this.Load_Time_Node_Data();
+                L = max(t) - min(t);
+                n = length(t) - 1;
+                e = 1 + z_prior_interface.beta_t * (pi / L)^2 * (0:n).^2;
+                e = e';
+            end
+
+            if strcmp(this.z_type,'vector')
+
+            end
+        end
+
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
         function [] = Set_beta_z(this, beta_z_new)
@@ -136,15 +160,21 @@ classdef MD_z_Hyperparameters < handle
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-        function this = MD_z_Hyperparameters(data_interface, u_prior_interface, num_state_solves)
+        function this = MD_z_Hyperparameters(data_interface, u_prior_interface, z_type, num_state_solves)
             arguments
                 data_interface MD_Data_Interface
                 u_prior_interface MD_u_Prior_Interface
+                z_type string
                 num_state_solves = 0
+            end
+
+            if ~( strcmp(z_type,'spatial field') || strcmp(z_type,'transient vector') || strcmp(z_type,'vector'))
+                disp('Error in MD_z_Hyperparameters: The input z_type should be either "spatial field" "transient vector" or "vector"')
             end
 
             this.data_interface = data_interface;
             this.u_prior_interface = u_prior_interface;
+            this.z_type = z_type;
             this.num_state_solves = num_state_solves;
             this.discrepancy_percent_z_variation = 1.0;
             this.alpha_z = 0.0;

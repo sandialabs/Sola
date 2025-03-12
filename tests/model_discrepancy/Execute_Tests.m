@@ -35,6 +35,10 @@ cd model_discrepancy_synthetic_test_with_hyperparam_auto_1D/;
 Driver;
 cd ..;
 
+cd model_discrepancy_transient_multi_state_synthetic_test/;
+Driver;
+cd ..;
+
 cd PDE_Test_Problem/;
 Driver_HDSA;
 cd ..;

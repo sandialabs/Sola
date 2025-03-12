@@ -23,7 +23,7 @@ classdef MD_z_Hyperparameters_transient_multi_state_synthetic_test < MD_z_Hyperp
         end
 
         function this = MD_z_Hyperparameters_transient_multi_state_synthetic_test(data_interface, u_prior_interface, num_state_solves, n_y, n_t)
-            this@MD_z_Hyperparameters(data_interface, u_prior_interface, num_state_solves);
+            this@MD_z_Hyperparameters(data_interface, u_prior_interface, 'spatial field', num_state_solves);
             this.n_y = n_y;
             this.n_t = n_t;
         end

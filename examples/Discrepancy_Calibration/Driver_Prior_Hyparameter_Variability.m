@@ -124,6 +124,7 @@ plot(N_range, mean(beta_z(:)) * .8 * ones(K, 1), '--', 'Color', 'cyan', 'LineWid
 plot(N_range, mean(beta_z(:)) * 1.2 * ones(K, 1), '--', 'Color', 'cyan', 'LineWidth', 3);
 xlabel('$N$', 'Interpreter', 'latex');
 ylabel('$\beta_z$', 'Interpreter', 'latex');
+ylim([0,.009])
 set(gca, 'fontsize', 24);
 cd(write_path);
 saveas(gca, 'beta_z_variability', 'epsc');

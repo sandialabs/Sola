@@ -104,7 +104,7 @@ md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
 
-if true %~suppress_figures
+if ~suppress_figures
     figure;
     hold on;
     for k = 1:num_post_samples

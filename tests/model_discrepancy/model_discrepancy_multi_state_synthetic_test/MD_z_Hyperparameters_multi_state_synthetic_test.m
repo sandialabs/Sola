@@ -11,7 +11,7 @@ classdef MD_z_Hyperparameters_multi_state_synthetic_test < MD_z_Hyperparameters
         end
 
         function this = MD_z_Hyperparameters_multi_state_synthetic_test(data_interface, u_prior_interface, m)
-            this@MD_z_Hyperparameters(data_interface, u_prior_interface);
+            this@MD_z_Hyperparameters(data_interface, u_prior_interface, 'spatial field');
             this.x = linspace(0, 1, m)';
         end
 
