@@ -3,6 +3,7 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
     properties
         spatial_prior_cov
         transient_prior_cov
+        hyperparams
     end
 
     methods
@@ -13,16 +14,17 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             this@MD_Scaled_u_Prior_Interface(transient_prior_cov.hyperparams.alpha_u);
             this.spatial_prior_cov = spatial_prior_cov;
             this.transient_prior_cov = transient_prior_cov;
+            this.hyperparams = transient_prior_cov.hyperparams;
 
-            if transient_prior_cov.hyperparams.adapt_time_variance
-                transient_prior_cov.hyperparams.Determine_alpha_t(this);
+            if this.hyperparams.adapt_time_variance
+                this.hyperparams.Determine_alpha_t(this);
             end
-            this.transient_prior_cov.Set_alpha_t(transient_prior_cov.hyperparams.alpha_t);
+            this.transient_prior_cov.Set_alpha_t(this.hyperparams.alpha_t);
 
-            if transient_prior_cov.hyperparams.alpha_u == 0.0
-                transient_prior_cov.hyperparams.Determine_alpha_u(this);
+            if this.hyperparams.alpha_u == 0.0
+                this.hyperparams.Determine_alpha_u(this);
             end
-            this.Set_alpha_u(transient_prior_cov.hyperparams.alpha_u);
+            this.Set_alpha_u(this.hyperparams.alpha_u);
         end
 
         function [u_out] = Apply_M_u(this, u_in)

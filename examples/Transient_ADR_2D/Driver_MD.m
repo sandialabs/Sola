@@ -6,16 +6,14 @@ run('../../src/Set_Paths');
 
 suppress_figures = false;
 
-M1 = load('fem_matrices.mat', 'mass_matrix').mass_matrix;
-M = kron(eye(2), M1);
-S1 = load('fem_matrices.mat', 'stiffness_matrix').stiffness_matrix;
-S = kron(eye(2), S1);
+M = load('fem_matrices.mat', 'mass_matrix').mass_matrix;
+S = load('fem_matrices.mat', 'stiffness_matrix').stiffness_matrix;
 
 load('OptimizationSolution.mat');
 basis1.Set_Reduced_Dimension_From_Residual_Energy(residual_energies(1));
 basis2.Set_Reduced_Dimension_From_Residual_Energy(residual_energies(1));
 
-data_interface = MD_Data_Interface_Transient_ADR_2D();
+data_interface = MD_Data_Interface_Transient_ADR_2D(solver);
 
 t = load('OpInf_Training_Data.mat', 't').t;
 T = t(end);
@@ -23,21 +21,29 @@ n_t = length(t);
 n_y = solver.n_y;
 n_q = solver.n_q;
 
-hyperparams = MD_Hyperparameters_Transient_ADR_2D(data_interface, solver, t);
-%hyperparams.beta_t = 1.0;
+%%
+ui_hyperparams = cell(2,1);
+ui_spatial_prior_interface = cell(2,1);
+ui_transient_prior_cov = cell(2,1);
+ui_prior_interface = cell(2,1);
+for k = 1:2
+    ui_hyperparams{k} = MD_u_Hyperparameters_Transient_ADR_2D(data_interface, solver, t, k);
+    ui_hyperparams{k}.gsvd_num_sing_vals = 1000;
+    ui_hyperparams{k}.gsvd_oversampling = 20;
+    ui_spatial_prior_interface{k} = MD_Numeric_Laplacian_u_Prior_Interface(S,M,ui_hyperparams{k});
+    ui_transient_prior_cov{k} = MD_Transient_Prior_Covariance_Sabl(ui_hyperparams{k}, T, n_t, n_y/2);
+    ui_prior_interface{k} = MD_Transient_Elliptic_u_Prior_Interface(ui_spatial_prior_interface{k}, ui_transient_prior_cov{k});
+end
+u_prior_interface = MD_Multi_State_u_Prior_Interface(ui_prior_interface);
 
-transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(hyperparams, T, n_t, n_y);
-
-%alpha_u = 1^2; % (1 / 2)^2;
-%spatial_u_prior_interface = MD_Elliptic_u_Prior_Interface_Transient_ADR_2D(alpha_u, M, S);
-spatial_u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(S,M,hyperparams);
-u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(spatial_u_prior_interface, transient_prior_cov);
-
-transient_prior_cov_z = MD_Transient_Prior_Covariance_Sabl(hyperparams, t(end - 1), n_t - 1, n_q);
-time_series_samples_z = transient_prior_cov_z.Sample_Time_Series(10);
+%%
+z_hyperparams = struct;
+z_hyperparams.beta_t = 1.0;
+transient_prior_cov_z = MD_Transient_Prior_Covariance_Sabl(z_hyperparams, t(end - 1), n_t - 1, n_q);
 z_prior_interface = MD_z_Prior_Interface_Transient_ADR_2D(transient_prior_cov_z, n_q);
 
-time_series_samples_u = transient_prior_cov.Sample_Time_Series(10);
+time_series_samples_z = transient_prior_cov_z.Sample_Time_Series(10);
+time_series_samples_u = ui_transient_prior_cov.Sample_Time_Series(10);
 
 %%
 num_prior_samples = 10;

@@ -1,4 +1,4 @@
-classdef MD_Hyperparameters_Transient_ADR_2D < MD_Hyperparameters
+classdef MD_u_Hyperparameters_Transient_ADR_2D < MD_u_Hyperparameters
 
     properties
         x
@@ -16,8 +16,8 @@ classdef MD_Hyperparameters_Transient_ADR_2D < MD_Hyperparameters
             time_nodes = this.t;
         end
 
-        function this = MD_Hyperparameters_Transient_ADR_2D(data_interface, solver, t)
-            this@MD_Hyperparameters(data_interface, true);
+        function this = MD_u_Hyperparameters_Transient_ADR_2D(data_interface, solver, t, component_id)
+            this@MD_u_Hyperparameters(data_interface, true, false, true, component_id);
             this.x = solver.x;
             this.y = solver.y;
             this.t = t;

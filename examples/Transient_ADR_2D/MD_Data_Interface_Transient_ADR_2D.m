@@ -1,7 +1,7 @@
 classdef MD_Data_Interface_Transient_ADR_2D < MD_Data_Interface
 
     properties
-
+        solver
     end
 
     methods (Access = public)
@@ -32,8 +32,27 @@ classdef MD_Data_Interface_Transient_ADR_2D < MD_Data_Interface
             D = u_hifi - u_lofi;
         end
 
-        function this = MD_Data_Interface_Transient_ADR_2D()
+        % Defaults to return all state elements
+        % Overload function to extract component i from the state
+        % Returns a vector of integers I index elements of component i
+        function [I] = Separate_State_Components(this,i)
+            n = this.solver.n_y/2;
+            n_t = length(this.u_opt)/(2*n);
+            if i == 1
+                I = zeros(n*n_t,1);
+                for k = 1:n_t
+                    I(((k-1)*n+1) : (k*n)) = (1:n) + 2*(k-1)*n;
+                end
+            else
+                I = zeros(n*n_t,1);
+                for k = 1:n_t
+                    I(((k-1)*n+1) : (k*n)) = ((n+1):(2*n)) + 2*(k-1)*n;
+                end
+            end
+        end
 
+        function this = MD_Data_Interface_Transient_ADR_2D(solver)
+            this.solver = solver;
         end
 
     end

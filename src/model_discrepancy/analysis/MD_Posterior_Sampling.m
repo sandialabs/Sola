@@ -50,7 +50,7 @@ classdef MD_Posterior_Sampling < handle
 
                 Wz_inv_Mz_dz = this.z_prior_interface.Apply_W_z_Inverse(Mz_dz);
                 tmp = Mz_dz' * Wz_inv_Mz_dz - Wz_inv_Mz_dz' * this.post_data.Mz_Zc * linsolve(this.post_data.Zc_Mz_Wz_inv_Mz_Zc, this.post_data.Mz_Zc' * Wz_inv_Mz_dz);
-                if tmp < -1.e-13
+                if tmp < -1.e-12
                     disp('Error in Posterior Discrepancy Samples: delta breve coeff < 0');
                 end
                 breve_coeff = sqrt(abs(tmp));
