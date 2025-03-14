@@ -8,7 +8,7 @@ from scipy.interpolate import griddata
 import os
 
 data_dir = "2d_cache"
-query_matlab = False
+query_matlab = True #False
 point_size = 40
 selected_point_size = 100
 default_font_size = 18 #14

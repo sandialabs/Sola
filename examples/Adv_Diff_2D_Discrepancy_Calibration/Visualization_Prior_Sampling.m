@@ -20,12 +20,11 @@ num_state_solves = 100;
 z_hyperparams = MD_z_Hyperparameters_Diff(data_interface, u_prior_interface, num_state_solves, x, y, con);
 z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(pde_meshing.S, pde_meshing.M, z_hyperparams);
 
-% z_hyperparams.beta_z = (5) * hyperparams.beta_z;
-% z_prior_interface.Set_beta_z(hyperparams.beta_z);
-% 
-% z_hyperparams.discrepancy_percent_z_variation = 100 * hyperparams.discrepancy_percent_z_variation;
-% z_hyperparams.Determine_alpha_z(z_prior_interface);
-% z_prior_interface.Set_alpha_z(hyperparams.alpha_z);
+z_hyperparams.beta_z = (5) * z_hyperparams.beta_z;
+z_prior_interface.Set_beta_z(z_hyperparams.beta_z);
+
+z_hyperparams.alpha_z = (1/4) * z_hyperparams.alpha_z;
+z_prior_interface.Set_alpha_z(z_hyperparams.alpha_z);
 
 md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 
