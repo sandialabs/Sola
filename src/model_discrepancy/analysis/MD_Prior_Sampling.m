@@ -38,9 +38,17 @@ classdef MD_Prior_Sampling < handle
             end
         end
 
-        function [delta_samples_z_opt, delta_samples_z_pert, z_pert] = Prior_Discrepancy_Samples_for_Visualization(this, num_samps, num_perts_init)
+        function [delta_samples_z_opt, delta_samples_z_pert, z_pert] = Prior_Discrepancy_Samples_for_Visualization(this, num_samps)
+
+            e = this.z_prior_interface.hyperparams.Compute_Eigenvalues(this.z_prior_interface);
+            num_perts_init = length(find(1./e>.1));
+            if strcmp(this.z_prior_interface.hyperparams.z_type,'transient vector')
+                num_perts_init = this.z_prior_interface.num_controls * num_perts_init;
+            end
+            oversampling = min(10,length(this.data_interface.z_opt)-num_perts_init);
+            num_subspace_iters = 1;
             E_z_inv_gsvd = E_z_Inv_GSVD(this.z_prior_interface, this.z_opt);
-            [z_pert, ~, evals] = E_z_inv_gsvd.Compute_GSVD(num_perts_init, 10, 10);
+            [z_pert, ~, evals] = E_z_inv_gsvd.Compute_GSVD(num_perts_init, oversampling, num_subspace_iters);
             while evals(end) > .1
                 num_perts_init = 2 * num_perts_init;
                 [z_pert, ~, evals] = E_z_inv_gsvd.Compute_GSVD(num_perts_init, 10, 10);
@@ -48,6 +56,7 @@ classdef MD_Prior_Sampling < handle
             I = find(evals>.1);
             z_pert = z_pert(:,I);
             evals = evals(I);
+
             num_perts = size(z_pert,2);
             delta_samples_z_opt = this.u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samps);
 
