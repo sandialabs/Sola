@@ -20,7 +20,7 @@ cd ..;
 
 cd model_discrepancy_synthetic_test_with_analytic_laplacian/;
 % Need to look at this a bit closer
-% Driver;
+Driver;
 cd ..;
 
 cd model_discrepancy_synthetic_test_with_gsvd/;
@@ -44,7 +44,8 @@ Driver_HDSA;
 cd ..;
 
 cd Transient_Hyperparameter_auto_Test_Problem/;
-% Missing test
+% Need to look at this a bit closer
+Driver_Test;
 cd ..;
 
 cd Transient_Test_Problem/;

@@ -35,10 +35,10 @@ classdef MD_Numeric_Laplacian_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
             z_out = this.M' \ z_in;
         end
 
-        function [z_out] = Sample_with_Covariance_W_z_Inverse(this, num_samples)
+        function [z_out] = Sample_with_Covariance_W_z_Acute_Inverse(this, num_samples)
             omega = randn(size(this.S, 1), num_samples);
             vec = this.M_sqrt.Matrix_Apply(omega);
-            z_out = sqrt(this.alpha_z) * this.Apply_E_z_Inverse(vec);
+            z_out = this.Apply_E_z_Inverse(vec);
         end
 
         function [] = Set_beta_z(this, beta_z_new)

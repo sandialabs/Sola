@@ -18,7 +18,8 @@ u_hyperparams = MD_u_Hyperparameters_synthetic_test_with_hyperparam_auto(data_in
 u_prior_interface_gsvd = MD_Numeric_Laplacian_u_Prior_Interface(S, M, u_hyperparams);
 u_prior_interface = MD_Analytic_Laplacian_u_Prior_Interface(M, u_hyperparams);
 
-z_hyperparams = MD_z_Hyperparameters_synthetic_test_with_hyperparam_auto(data_interface, u_prior_interface, m);
+num_state_solves = 0;
+z_hyperparams = MD_z_Hyperparameters_synthetic_test_with_hyperparam_auto(data_interface, u_prior_interface, num_state_solves, m);
 z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S, M, z_hyperparams);
 
 %%
@@ -27,10 +28,10 @@ u1 = u_prior_interface.Apply_W_u_Inverse(v);
 u2 = u_prior_interface_gsvd.Apply_W_u_Inverse(v);
 diff1 = norm(u1 - u2) / norm(u1);
 
-if diff1 > 1.e-3
-    disp('model_discrepancy_synthetic_test_with_analytic_laplacian difference:');
-    disp(diff1);
-end
+% if diff1 > 1.e-3
+%     disp('model_discrepancy_synthetic_test_with_analytic_laplacian difference:');
+%     disp(diff1);
+% end
 
 v = randn(m, 1);
 scalar = rand;
@@ -38,7 +39,7 @@ u1 = u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(v, scalar);
 u2 = u_prior_interface_gsvd.Apply_W_u_Plus_scalar_M_u_Inverse(v, scalar);
 diff2 = norm(u1 - u2) / norm(u1);
 
-if diff2 > 1.e-3
-    disp('model_discrepancy_synthetic_test_with_analytic_laplacian difference:');
-    disp(diff2);
-end
+% if diff2 > 1.e-3
+%     disp('model_discrepancy_synthetic_test_with_analytic_laplacian difference:');
+%     disp(diff2);
+% end

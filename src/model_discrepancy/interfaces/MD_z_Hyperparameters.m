@@ -10,6 +10,7 @@ classdef MD_z_Hyperparameters < handle
 
         alpha_z
         beta_z
+        beta_t
 
         z1_norm_sq
         z_pert_norm_sq
@@ -32,6 +33,7 @@ classdef MD_z_Hyperparameters < handle
         end
 
         function [u] = State_Solve(this,z)
+            disp('State_Solve is required to estimate alpha_z using low-fidelity solves');
             u = [];
         end
 
@@ -61,7 +63,7 @@ classdef MD_z_Hyperparameters < handle
                 if this.num_state_solves > 0
                     u_nom = this.State_Solve(this.data_interface.z_opt);
                     n_z = length(this.data_interface.z_opt);
-                    z_samples = z_prior_interface.Apply_E_z_Inverse(z_prior_interface.M_sqrt.Matrix_Sqrt_Apply(randn(n_z,this.num_state_solves)));
+                    z_samples = z_prior_interface.Sample_with_Covariance_W_z_Acute_Inverse(this.num_state_solves);
                     mags = sqrt(diag(z_samples' * z_prior_interface.Apply_M_z(z_samples)));
                     z_samples = zopt_norm * z_samples * diag(1./mags);
                     u_samples = this.State_Solve(z_samples + this.data_interface.z_opt);
@@ -121,7 +123,7 @@ classdef MD_z_Hyperparameters < handle
                 L = max(t) - min(t);
                 n = length(t) - 1;
                 e = 1 + z_prior_interface.beta_t * (pi / L)^2 * (0:n).^2;
-                e = e';
+                e = sqrt(e');
             end
 
             if strcmp(this.z_type,'vector')
@@ -160,6 +162,31 @@ classdef MD_z_Hyperparameters < handle
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+        function [] = Set_beta_t(this, beta_t_new)
+            this.beta_t = beta_t_new;
+        end
+
+        function [] = Determine_beta_t(this)
+            t = this.Load_Time_Node_Data();
+            initial_guess = 0;
+            N = size(this.data_interface.Z, 2);
+            n_t = length(t);
+            num_comp = size(this.data_interface.Z, 1)/n_t;
+            correlation_lengths = zeros(N, num_comp);
+            for k = 1:N
+                z_data = reshape(this.data_interface.Z(:,k),num_comp,n_t)';
+                for j = 1:num_comp
+                    correlation_lengths(k,j) = computeCorrelationLength_1D(t, z_data(:,j), initial_guess);
+                    initial_guess = correlation_lengths(k,j);
+                end
+            end
+            beta_t_new = mean(correlation_lengths(:), 'omitnan')^2 / 4;
+
+            this.Set_beta_t(beta_t_new);
+        end
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
         function this = MD_z_Hyperparameters(data_interface, u_prior_interface, z_type, num_state_solves)
             arguments
                 data_interface MD_Data_Interface
@@ -179,6 +206,7 @@ classdef MD_z_Hyperparameters < handle
             this.discrepancy_percent_z_variation = 1.0;
             this.alpha_z = 0.0;
             this.beta_z = 0.0;
+            this.beta_t = 0.0;
         end
 
     end

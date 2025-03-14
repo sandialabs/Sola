@@ -10,8 +10,8 @@ classdef MD_z_Hyperparameters_synthetic_test_with_hyperparam_auto < MD_z_Hyperpa
             nodes = this.x;
         end
 
-        function this = MD_z_Hyperparameters_synthetic_test_with_hyperparam_auto(data_interface, u_prior_interface, m)
-            this@MD_z_Hyperparameters(data_interface, u_prior_interface);
+        function this = MD_z_Hyperparameters_synthetic_test_with_hyperparam_auto(data_interface, u_prior_interface, num_state_solves, m)
+            this@MD_z_Hyperparameters(data_interface, u_prior_interface, 'spatial field',num_state_solves);
             this.x = linspace(0, 1, m)';
         end
 

@@ -20,7 +20,8 @@ transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(u_hyperparams, T, n_t, 
 spatial_u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(con_hifi.S, con_hifi.M, u_hyperparams);
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(spatial_u_prior_interface, transient_prior_cov);
 
-z_hyperparams = MD_z_Hyperparameters_Transient_Test_Problem(data_interface, u_prior_interface, n_y);
+num_state_solves = 100;
+z_hyperparams = MD_z_Hyperparameters_Transient_Test_Problem(data_interface, u_prior_interface, num_state_solves, con, n_y);
 z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(con_hifi.S, con_hifi.M, z_hyperparams);
 
 % transient_prior_cov.Compute_Time_Covariance_GEVP_test();
@@ -32,15 +33,15 @@ t = u_hyperparams.Load_Time_Node_Data();
 x = u_hyperparams.Load_Spatial_Node_Data();
 b = max(abs(u_samples(:)));
 
-for k = 1:num_samples
-    tmp = reshape(u_samples(:, k), n_y, n_t);
-    figure;
-    surf(t, x, tmp);
-    xlabel('Time');
-    ylabel('Space');
-    title(['Sample number ', num2str(k)]);
-    view(2);
-    colorbar();
-    caxis([-b, b]);
-    set(gca, 'fontsize', 24);
-end
+% for k = 1:num_samples
+%     tmp = reshape(u_samples(:, k), n_y, n_t);
+%     figure;
+%     surf(t, x, tmp);
+%     xlabel('Time');
+%     ylabel('Space');
+%     title(['Sample number ', num2str(k)]);
+%     view(2);
+%     colorbar();
+%     caxis([-b, b]);
+%     set(gca, 'fontsize', 24);
+% end
