@@ -6,7 +6,8 @@ classdef MD_Transient_Vector_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
         M
         n_t
         num_controls
-        hyperparams
+        z_hyperparam_interface
+        determine_z_hyperparams
         E_t
         V
         lambda
@@ -52,23 +53,24 @@ classdef MD_Transient_Vector_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
             [this.V,this.lambda] = eig(this.E_t,this.M,'vector');
         end
 
-        function this = MD_Transient_Vector_z_Prior_Interface(S, M, num_controls, hyperparams)
-            this@MD_Elliptic_z_Prior_Interface(hyperparams.alpha_z);
+        function this = MD_Transient_Vector_z_Prior_Interface(S, M, num_controls, data_interface, z_hyperparam_interface, u_prior_interface)
+            this@MD_Elliptic_z_Prior_Interface(z_hyperparam_interface.alpha_z);
             this.S = S;
             this.M = M;
             this.n_t = size(M,1);
             this.num_controls = num_controls;
-            this.hyperparams = hyperparams;
+            this.z_hyperparam_interface = z_hyperparam_interface;
+            this.determine_z_hyperparams = MD_Determine_z_Hyperparameters(data_interface,z_hyperparam_interface,u_prior_interface);
 
-            if hyperparams.beta_t == 0.0
-                this.hyperparams.Determine_beta_t();
+            if z_hyperparam_interface.beta_t == 0.0
+                this.determine_z_hyperparams.Determine_beta_t();
             end
-            this.Set_beta_t(this.hyperparams.beta_t);
+            this.Set_beta_t(this.z_hyperparam_interface.beta_t);
 
-            if this.hyperparams.alpha_z == 0.0
-                this.hyperparams.Determine_alpha_z(this);
+            if this.z_hyperparam_interface.alpha_z == 0.0
+                this.determine_z_hyperparams.Determine_alpha_z(this);
             end
-            this.Set_alpha_z(this.hyperparams.alpha_z);
+            this.Set_alpha_z(this.z_hyperparam_interface.alpha_z);
         end
 
     end

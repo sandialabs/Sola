@@ -53,12 +53,12 @@ classdef MD_Prior_Sampling < handle
 
             I = this.data_interface.Separate_State_Components(component_id);
             num_perts = length(this.delta_samples_z_pert);
-            nodes = this.u_prior_interface.hyperparams.Load_Spatial_Node_Data();
+            nodes = this.u_prior_interface.u_hyperparam_interface.Load_Spatial_Node_Data();
             nodes = nodes{component_id};
             spatial_dim = size(nodes,2);
-            is_transient = this.u_prior_interface.hyperparams.is_transient;
+            is_transient = this.u_prior_interface.u_hyperparam_interface.is_transient;
             if is_transient
-                t = this.u_prior_interface.hyperparams.Load_Time_Node_Data();
+                t = this.u_prior_interface.u_hyperparam_interface.Load_Time_Node_Data();
             end
             delta_range = [min(this.delta_samples_z_pert{1}(:)) , max(this.delta_samples_z_pert{1}(:))];
             z_range = [min(this.z_pert(:)),max(this.z_pert(:))];
@@ -67,7 +67,7 @@ classdef MD_Prior_Sampling < handle
                 delta_range(2) = max(delta_range(2),max(this.delta_samples_z_pert{k}(:)));
             end
 
-            if strcmp(this.z_prior_interface.hyperparams.z_type,'transient vector')
+            if strcmp(this.z_prior_interface.z_hyperparam_interface.z_type,'transient vector')
                 generate_z_plot = @(t,u) this.Plot_Transient_Vector(t,u,z_range);
             end
 
@@ -159,12 +159,12 @@ classdef MD_Prior_Sampling < handle
         function [] = Visualization_for_Prior_Discrepancy_at_z_opt(this,component_id)
 
             I = this.data_interface.Separate_State_Components(component_id);
-            nodes = this.u_prior_interface.hyperparams.Load_Spatial_Node_Data();
+            nodes = this.u_prior_interface.u_hyperparam_interface.Load_Spatial_Node_Data();
             nodes = nodes{component_id};
             spatial_dim = size(nodes,2);
-            is_transient = this.u_prior_interface.hyperparams.is_transient;
+            is_transient = this.u_prior_interface.u_hyperparam_interface.is_transient;
             if is_transient
-                t = this.u_prior_interface.hyperparams.Load_Time_Node_Data();
+                t = this.u_prior_interface.u_hyperparam_interface.Load_Time_Node_Data();
             end
             range = [min(this.delta_samples_z_opt(:)) , max(this.delta_samples_z_opt(:))];
 
@@ -233,7 +233,7 @@ classdef MD_Prior_Sampling < handle
             
             num_samps = size(this.delta_samples_z_opt,2);
             I = this.data_interface.Separate_State_Components(component_id);
-            t = this.u_prior_interface.hyperparams.Load_Time_Node_Data();
+            t = this.u_prior_interface.u_hyperparam_interface.Load_Time_Node_Data();
             n_t = length(t);
             n_y = length(this.delta_samples_z_opt(I,1)) / n_t;
             this.delta_z_opt_time_evol{component_id} = zeros(num_samps,n_t);
@@ -326,9 +326,9 @@ classdef MD_Prior_Sampling < handle
         end
 
         function [] = Compute_z_pert(this)
-            e = this.z_prior_interface.hyperparams.Compute_Eigenvalues(this.z_prior_interface);
+            e = this.z_prior_interface.determine_z_hyperparams.Compute_Eigenvalues(this.z_prior_interface);
             num_perts_init = length(find(1./e>.1));
-            if strcmp(this.z_prior_interface.hyperparams.z_type,'transient vector')
+            if strcmp(this.z_prior_interface.z_hyperparam_interface.z_type,'transient vector')
                 num_perts_init = this.z_prior_interface.num_controls * num_perts_init;
             end
             oversampling = min(10,length(this.data_interface.z_opt)-num_perts_init);
@@ -356,7 +356,7 @@ classdef MD_Prior_Sampling < handle
 
         function [] = Compute_Delta_z_opt_Metrics(this)
 
-            nodes = this.u_prior_interface.hyperparams.Load_Spatial_Node_Data();
+            nodes = this.u_prior_interface.u_hyperparam_interface.Load_Spatial_Node_Data();
             num_components = length(nodes);
 
             this.delta_mag = cell(num_components,1);

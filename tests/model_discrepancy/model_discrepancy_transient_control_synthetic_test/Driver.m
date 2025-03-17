@@ -17,16 +17,16 @@ data_interface = MD_Data_Interface_transient_control_synthetic_test(n_y,n_t);
 opt_prob_interface = MD_Opt_Prob_Interface_transient_control_synthetic_test(n_y,n_t);
 
 [M, S] = Assemble_Mass_and_Stiffness(n_y);
-u_hyperparams = MD_u_Hyperparameters_transient_control_synthetic_test(data_interface, n_y);
-transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(u_hyperparams, T, n_t, n_y);
-spatial_u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(S, M, u_hyperparams);
-u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(spatial_u_prior_interface, transient_prior_cov);
+u_hyperparam_interface = MD_u_Hyperparameter_Interface_transient_control_synthetic_test(n_y,n_t);
+transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface,u_hyperparam_interface, T, n_t, n_y);
+spatial_u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface);
+u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_u_prior_interface, transient_prior_cov);
 
 [Mt, St] = Assemble_Mass_and_Stiffness(n_t);
 num_controls = 2;
 num_state_solves = 100;
-z_hyperparams = MD_z_Hyperparameters_transient_control_synthetic_test(data_interface, u_prior_interface, num_state_solves, t, opt_prob_interface);
-z_prior_interface = MD_Transient_Vector_z_Prior_Interface(St, Mt, num_controls, z_hyperparams);
+z_hyperparam_interface = MD_z_Hyperparameter_Interface_transient_control_synthetic_test(num_state_solves, t, opt_prob_interface);
+z_prior_interface = MD_Transient_Vector_z_Prior_Interface(St, Mt, num_controls, data_interface, z_hyperparam_interface, u_prior_interface);
 
 %%
 num_prior_samples = 100;
@@ -39,8 +39,7 @@ md_prior_sampling.Visualization_for_Prior_Discrepancy_at_z_pert(1);
 
 %%
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
-u_hyperparams.Determine_alpha_d();
-alpha_d = u_hyperparams.alpha_d;
+alpha_d = u_hyperparam_interface.alpha_d;
 num_post_samples = 100;
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 
