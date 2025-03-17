@@ -7,7 +7,9 @@ classdef MD_u_Hyperparameters_multi_state_synthetic_test < MD_u_Hyperparameters
     methods (Access = public)
 
         function [nodes] = Load_Spatial_Node_Data(this)
-            nodes = this.x;
+            nodes = cell(2,1);
+            nodes{1} = this.x;
+            nodes{2} = this.x;
         end
 
         function this = MD_u_Hyperparameters_multi_state_synthetic_test(data_interface, component_id, m)

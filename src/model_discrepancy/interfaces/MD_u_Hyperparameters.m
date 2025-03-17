@@ -92,35 +92,33 @@ classdef MD_u_Hyperparameters < handle
         function [] = Determine_beta_u(this)
             I = this.data_interface.Separate_State_Components(this.component_id);
             nodes = this.Load_Spatial_Node_Data();
+            nodes = nodes{this.component_id};
             n_y = size(nodes, 1);
             n_t = size(this.data_interface.D(I, 1), 1) / n_y;
             N = size(this.data_interface.D, 2);
             initial_guess = 0;
+
             if size(nodes, 2) == 1
-                correlation_lengths = zeros(N, n_t);
-                for i = 1:N
-                    di = reshape(this.data_interface.D(I, i), n_y, n_t);
-                    for j = 1:n_t
-                        correlation_lengths(i, j) = computeCorrelationLength_1D(nodes(:, 1), di(:, j),initial_guess);
-                        initial_guess = correlation_lengths(i, j);
-                    end
-                    initial_guess = correlation_lengths(i, 1);
-                end
-                beta_u_new = mean(correlation_lengths(:), 'omitnan')^2 / 12;
-            elseif size(nodes, 2) == 2
-                correlation_lengths = zeros(N, n_t);
-                for i = 1:N
-                    di = reshape(this.data_interface.D(I, i), n_y, n_t);
-                    for j = 1:n_t
-                        correlation_lengths(i, j) = computeCorrelationLength_2D(nodes(:, 1), nodes(:, 2), di(:, j), initial_guess);
-                        initial_guess = correlation_lengths(i, j);
-                    end
-                    initial_guess = correlation_lengths(i, 1);
-                end
-                beta_u_new = mean(correlation_lengths(:), 'omitnan')^2 / 8;
+                corr_len_fun = @(nodes,d,initial_guess) computeCorrelationLength_1D(nodes(:, 1), d, initial_guess);
+                normalization = 12;
+            elseif size(nodes,2) == 2
+                corr_len_fun = @(nodes,d,initial_guess) computeCorrelationLength_2D(nodes(:, 1), nodes(:,2), d, initial_guess);
+                normalization = 8;
             else
                 disp('Determine_beta_u error: Dimensions greater than 2 are not supported.');
             end
+
+            correlation_lengths = zeros(N, n_t);
+            for i = 1:N
+                di = reshape(this.data_interface.D(I, i), n_y, n_t);
+                for j = 1:n_t
+                    correlation_lengths(i, j) = corr_len_fun(nodes, di(:, j),initial_guess);
+                    initial_guess = correlation_lengths(i, j);
+                end
+                initial_guess = correlation_lengths(i, 1);
+            end
+            beta_u_new = mean(correlation_lengths(:), 'omitnan')^2 / normalization;
+
             this.Set_beta_u(beta_u_new);
         end
 
@@ -189,6 +187,7 @@ classdef MD_u_Hyperparameters < handle
 
         function [] = Determine_GSVD_Hyperparameters(this)
             nodes = this.Load_Spatial_Node_Data();
+            nodes = nodes{this.component_id};
             m = size(nodes, 1);
             d = size(nodes, 2);
             modes_per_dim = zeros(d, 1);

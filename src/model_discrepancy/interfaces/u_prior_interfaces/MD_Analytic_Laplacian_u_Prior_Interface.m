@@ -33,6 +33,7 @@ classdef MD_Analytic_Laplacian_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
         function [] = Generate_Spectral_Decomposition(this)
 
             nodes = this.hyperparams.Load_Spatial_Node_Data();
+            nodes = nodes{this.hyperparams.component_id};
             m = size(nodes, 1);
             d = size(nodes, 2);
             r = this.hyperparams.gsvd_num_sing_vals;

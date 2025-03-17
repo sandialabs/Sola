@@ -8,7 +8,8 @@ classdef MD_u_Hyperparameters_transient_control_synthetic_test < MD_u_Hyperparam
     methods (Access = public)
 
         function [nodes] = Load_Spatial_Node_Data(this)
-            nodes = this.x;
+            nodes = cell(1,1);
+            nodes{1} = this.x;
         end
 
         function [time_nodes] = Load_Time_Node_Data(this)
@@ -16,7 +17,7 @@ classdef MD_u_Hyperparameters_transient_control_synthetic_test < MD_u_Hyperparam
         end
 
         function this = MD_u_Hyperparameters_transient_control_synthetic_test(data_interface, n_y)
-            this@MD_u_Hyperparameters(data_interface, true, false, true);
+            this@MD_u_Hyperparameters(data_interface,  true, false, true, 1);
             this.x = linspace(0, 1, n_y)';
             n_t = length(data_interface.u_opt) / n_y;
             this.t = linspace(0, 1, n_t)';

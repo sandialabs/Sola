@@ -1,6 +1,7 @@
 %%
 clear;
 close all;
+clc
 addpath(genpath('../../../src'));
 rng(121234);
 
@@ -30,13 +31,11 @@ z_prior_interface = MD_Transient_Vector_z_Prior_Interface(St, Mt, num_controls, 
 %%
 num_prior_samples = 100;
 md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
-[delta_samples_z_opt, delta_samples_z_pert, z_pert] = md_prior_sampling.Prior_Discrepancy_Samples_for_Visualization(num_prior_samples);
+md_prior_sampling.Generate_Prior_Discrepancy_Sample_Data(num_prior_samples);
 
-delta_samples = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
-for k = 1:5
-    delta_tmp = reshape(delta_samples(:,k),n_t,n_y)';
-    % NEED TO FINISH PLOTTING SAMPLES
-end
+%md_prior_sampling.Visualization_for_Prior_Time_Evolution(1);
+%md_prior_sampling.Visualization_for_Prior_Discrepancy_at_z_opt(1);
+md_prior_sampling.Visualization_for_Prior_Discrepancy_at_z_pert(1);
 
 %%
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
