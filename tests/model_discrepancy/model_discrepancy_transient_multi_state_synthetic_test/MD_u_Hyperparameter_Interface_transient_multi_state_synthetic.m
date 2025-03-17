@@ -1,4 +1,4 @@
-classdef MD_u_Hyperparameters_transient_multi_state_synthetic_test < MD_u_Hyperparameters
+classdef MD_u_Hyperparameter_Interface_transient_multi_state_synthetic < MD_u_Hyperparameter_Interface
 
     properties
         n_y
@@ -17,8 +17,8 @@ classdef MD_u_Hyperparameters_transient_multi_state_synthetic_test < MD_u_Hyperp
             time_nodes = linspace(0,1,this.n_t)';
         end
 
-        function this = MD_u_Hyperparameters_transient_multi_state_synthetic_test(data_interface, n_y, n_t, component_id)
-            this@MD_u_Hyperparameters(data_interface, true, false, true, component_id);
+        function this = MD_u_Hyperparameter_Interface_transient_multi_state_synthetic(n_y, n_t, component_id)
+            this@MD_u_Hyperparameter_Interface(true, false, true, component_id);
             this.n_y = n_y;
             this.n_t = n_t;
         end

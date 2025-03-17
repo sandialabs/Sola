@@ -12,12 +12,12 @@ m = length(x);
 
 data_interface = MD_Data_Interface_Adv_Diff();
 
-u_hyperparams = MD_u_Hyperparameters_hyperparam_auto_2D(data_interface, x, y);
-u_prior_interface = MD_Analytic_Laplacian_u_Prior_Interface(M, u_hyperparams);
+u_hyperparam_interface = MD_u_Hyperparameter_Interface_hyperparam_auto_2D(x, y);
+u_prior_interface = MD_Analytic_Laplacian_u_Prior_Interface(M, data_interface, u_hyperparam_interface);
 
-u_hyperparams_gsvd = MD_u_Hyperparameters_hyperparam_auto_2D(data_interface, x, y);
+u_hyperparams_gsvd = MD_u_Hyperparameter_Interface_hyperparam_auto_2D(x, y);
 u_hyperparams_gsvd.gsvd_num_sing_vals = 1849;
-u_prior_interface_gsvd = MD_Numeric_Laplacian_u_Prior_Interface(S, M, u_hyperparams_gsvd);
+u_prior_interface_gsvd = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparams_gsvd);
 
 %%
 v = randn(m, 1);

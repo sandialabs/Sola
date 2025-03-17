@@ -3,28 +3,30 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
     properties
         spatial_prior_cov
         transient_prior_cov
-        hyperparams
+        u_hyperparam_interface
+        determine_u_hyperparams
     end
 
     methods
 
         % spatial_prior_cov should be an object of type MD_Elliptic_u_Prior_Interface
         % transient_prior_cov should be an object of type MD_Transient_Prior_Covariance
-        function this = MD_Transient_Elliptic_u_Prior_Interface(spatial_prior_cov, transient_prior_cov)
-            this@MD_Scaled_u_Prior_Interface(transient_prior_cov.hyperparams.alpha_u);
+        function this = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_prior_cov, transient_prior_cov)
+            this@MD_Scaled_u_Prior_Interface(transient_prior_cov.u_hyperparam_interface.alpha_u);
             this.spatial_prior_cov = spatial_prior_cov;
             this.transient_prior_cov = transient_prior_cov;
-            this.hyperparams = transient_prior_cov.hyperparams;
+            this.u_hyperparam_interface = transient_prior_cov.u_hyperparam_interface;
+            this.determine_u_hyperparams = MD_Determine_u_Hyperparameters(data_interface,this.u_hyperparam_interface);
 
-            if this.hyperparams.adapt_time_variance
-                this.hyperparams.Determine_alpha_t(this);
+            if this.u_hyperparam_interface.adapt_time_variance
+                this.determine_u_hyperparams.Determine_alpha_t(this);
             end
-            this.transient_prior_cov.Set_alpha_t(this.hyperparams.alpha_t);
+            this.transient_prior_cov.Set_alpha_t(this.u_hyperparam_interface.alpha_t);
 
-            if this.hyperparams.alpha_u == 0.0
-                this.hyperparams.Determine_alpha_u(this);
+            if this.u_hyperparam_interface.alpha_u == 0.0
+                this.determine_u_hyperparams.Determine_alpha_u(this);
             end
-            this.Set_alpha_u(this.hyperparams.alpha_u);
+            this.Set_alpha_u(this.u_hyperparam_interface.alpha_u);
         end
 
         function [u_out] = Apply_M_u(this, u_in)

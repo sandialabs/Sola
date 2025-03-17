@@ -1,4 +1,4 @@
-classdef MD_z_Hyperparameters_Transient_Test_Problem < MD_z_Hyperparameters
+classdef MD_z_Hyperparameter_Interface_Transient_Test_Problem < MD_z_Hyperparameter_Interface
 
     properties
         x
@@ -20,10 +20,9 @@ classdef MD_z_Hyperparameters_Transient_Test_Problem < MD_z_Hyperparameters
             end
         end
 
-        function this = MD_z_Hyperparameters_Transient_Test_Problem(data_interface, u_prior_interface, num_state_solves, con, n_y)
-            this@MD_z_Hyperparameters(data_interface, u_prior_interface,'spatial field',num_state_solves);
+        function this = MD_z_Hyperparameter_Interface_Transient_Test_Problem(num_state_solves, con, n_y, n_t)
+            this@MD_z_Hyperparameter_Interface('spatial field',num_state_solves);
             this.x = linspace(0, 1, n_y)';
-            n_t = length(data_interface.u_opt) / n_y;
             this.t = linspace(0, 1, n_t)';
             this.con = con;
         end

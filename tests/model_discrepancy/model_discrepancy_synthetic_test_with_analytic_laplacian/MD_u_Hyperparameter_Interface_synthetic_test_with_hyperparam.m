@@ -1,4 +1,4 @@
-classdef MD_u_Hyperparameters_synthetic_test_with_hyperparam_auto < MD_u_Hyperparameters
+classdef MD_u_Hyperparameter_Interface_synthetic_test_with_hyperparam < MD_u_Hyperparameter_Interface
 
     properties
         x
@@ -11,8 +11,8 @@ classdef MD_u_Hyperparameters_synthetic_test_with_hyperparam_auto < MD_u_Hyperpa
             nodes{1} = this.x;
         end
 
-        function this = MD_u_Hyperparameters_synthetic_test_with_hyperparam_auto(data_interface, m)
-            this@MD_u_Hyperparameters(data_interface, false);
+        function this = MD_u_Hyperparameter_Interface_synthetic_test_with_hyperparam(m)
+            this@MD_u_Hyperparameter_Interface(false);
             this.x = linspace(0, 1, m)';
         end
 

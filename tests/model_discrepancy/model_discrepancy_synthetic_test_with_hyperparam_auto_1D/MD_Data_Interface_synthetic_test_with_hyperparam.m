@@ -1,4 +1,4 @@
-classdef MD_Data_Interface_synthetic_test_with_hyperparam_auto < MD_Data_Interface
+classdef MD_Data_Interface_synthetic_test_with_hyperparam < MD_Data_Interface
 
     properties
         m
@@ -30,7 +30,7 @@ classdef MD_Data_Interface_synthetic_test_with_hyperparam_auto < MD_Data_Interfa
 
     methods
 
-        function this = MD_Data_Interface_synthetic_test_with_hyperparam_auto(m)
+        function this = MD_Data_Interface_synthetic_test_with_hyperparam(m)
             this.m = m;
             this.x = linspace(0, 1, m)';
         end

@@ -15,17 +15,16 @@ x = con.x;
 t = linspace(0, T, n_t)';
 
 data_interface = MD_Data_Interface_Transient_Test_Problem();
-data_interface.Load_Data();
 
-hyperparam = MD_u_Hyperparameters_Transient_Test_Problem(data_interface, x, t);
-hyperparam.beta_t = 11;
+u_hyperparam_interface = MD_u_Hyperparameter_Interface_Transient_Test_Problem(x, t);
+u_hyperparam_interface.beta_t = 11;
 
-transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(hyperparam, T, n_t, n_y);
+transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface, T, n_t, n_y);
 opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
-hyperparam.alpha_u = 1.e-2;
+u_hyperparam_interface.alpha_u = 1.e-2;
 num_sing_vals = 100;
-spatial_u_prior_interface = MD_Elliptic_u_Prior_Interface_Transient_Test_Problem(hyperparam.alpha_u, opt, num_sing_vals);
-u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(spatial_u_prior_interface, transient_prior_cov);
+spatial_u_prior_interface = MD_Elliptic_u_Prior_Interface_Transient_Test_Problem(u_hyperparam_interface.alpha_u, opt, num_sing_vals);
+u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_u_prior_interface, transient_prior_cov);
 
 error = 0;
 
@@ -53,7 +52,7 @@ W_su_inv = spatial_u_prior_interface.Apply_E_u_Inverse(W_su_inv);
 
 W_su = linsolve(W_su_inv, eye(size(W_su_inv, 1)));
 
-W_u = (1 / hyperparam.alpha_u) * kron(E_t, W_su);
+W_u = (1 / u_hyperparam_interface.alpha_u) * kron(E_t, W_su);
 M_u = kron(M_t, spatial_u_prior_interface.M);
 
 %%
@@ -72,7 +71,7 @@ local_error = norm(u_out - M_u * u_in);
 error = [error, local_error];
 
 %%
-W_u_inv = hyperparam.alpha_u * kron(E_t_inv, W_su_inv);
+W_u_inv = u_hyperparam_interface.alpha_u * kron(E_t_inv, W_su_inv);
 u_in = randn(n_y * n_t, 1);
 u_out = u_prior_interface.Apply_W_u_Inverse(u_in);
 local_error = norm(u_out - W_u_inv * u_in);

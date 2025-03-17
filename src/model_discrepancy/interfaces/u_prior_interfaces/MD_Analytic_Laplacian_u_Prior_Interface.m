@@ -2,7 +2,8 @@ classdef MD_Analytic_Laplacian_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
 
     properties
         M
-        hyperparams
+        u_hyperparam_interface
+        determine_u_hyperparams
         beta_u
     end
 
@@ -32,11 +33,11 @@ classdef MD_Analytic_Laplacian_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
 
         function [] = Generate_Spectral_Decomposition(this)
 
-            nodes = this.hyperparams.Load_Spatial_Node_Data();
-            nodes = nodes{this.hyperparams.component_id};
+            nodes = this.u_hyperparam_interface.Load_Spatial_Node_Data();
+            nodes = nodes{this.u_hyperparam_interface.component_id};
             m = size(nodes, 1);
             d = size(nodes, 2);
-            r = this.hyperparams.gsvd_num_sing_vals;
+            r = this.u_hyperparam_interface.gsvd_num_sing_vals;
 
             if d == 1
 
@@ -59,7 +60,7 @@ classdef MD_Analytic_Laplacian_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
                 L = zeros(2, 1);
                 for j = 1:2
                     L(j) = max(nodes(:, j)) - min(nodes(:, j));
-                    tmp = (L(j) / pi)^2 * (1 / this.beta_u) * (1 / this.hyperparams.W_u_inv_spectral_gap - 1);
+                    tmp = (L(j) / pi)^2 * (1 / this.beta_u) * (1 / this.u_hyperparam_interface.W_u_inv_spectral_gap - 1);
                     r(j) = round(sqrt(tmp));
                     r(j) = min(r(j), rsq);
                 end
@@ -101,28 +102,29 @@ classdef MD_Analytic_Laplacian_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
             this.Generate_Spectral_Decomposition();
         end
 
-        function this = MD_Analytic_Laplacian_u_Prior_Interface(M, hyperparams)
-            this@MD_Elliptic_u_Prior_Interface(hyperparams.alpha_u);
+        function this = MD_Analytic_Laplacian_u_Prior_Interface(M, data_interface, u_hyperparam_interface)
+            this@MD_Elliptic_u_Prior_Interface(u_hyperparam_interface.alpha_u);
             this.M = M;
-            this.hyperparams = hyperparams;
+            this.u_hyperparam_interface = u_hyperparam_interface;
+            this.determine_u_hyperparams = MD_Determine_u_Hyperparameters(data_interface,u_hyperparam_interface);
             this.beta_u = 0.0;
 
-            if this.hyperparams.beta_u == 0.0
-                this.hyperparams.Determine_beta_u();
+            if this.u_hyperparam_interface.beta_u == 0.0
+                this.determine_u_hyperparams.Determine_beta_u();
             end
-            this.Set_beta_u(this.hyperparams.beta_u);
+            this.Set_beta_u(this.u_hyperparam_interface.beta_u);
 
-            if this.hyperparams.gsvd_num_sing_vals == 0
-                this.hyperparams.Determine_GSVD_Hyperparameters();
+            if this.u_hyperparam_interface.gsvd_num_sing_vals == 0
+                this.determine_u_hyperparams.Determine_GSVD_Hyperparameters();
             end
 
             this.Generate_Spectral_Decomposition();
 
-            if ~this.hyperparams.is_transient
-                if this.hyperparams.alpha_u == 0.0
-                    this.hyperparams.Determine_alpha_u(this);
+            if ~this.u_hyperparam_interface.is_transient
+                if this.u_hyperparam_interface.alpha_u == 0.0
+                    this.determine_u_hyperparams.Determine_alpha_u(this);
                 end
-                this.Set_alpha_u(this.hyperparams.alpha_u);
+                this.Set_alpha_u(this.u_hyperparam_interface.alpha_u);
             end
         end
 

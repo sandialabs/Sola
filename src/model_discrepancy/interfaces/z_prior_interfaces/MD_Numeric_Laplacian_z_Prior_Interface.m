@@ -4,7 +4,8 @@ classdef MD_Numeric_Laplacian_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
         beta_z
         S
         M
-        hyperparams
+        z_hyperparam_interface
+        determine_z_hyperparams
         E_z
         M_sqrt
     end
@@ -46,22 +47,23 @@ classdef MD_Numeric_Laplacian_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
             this.E_z = this.beta_z * this.S + this.M;
         end
 
-        function this = MD_Numeric_Laplacian_z_Prior_Interface(S, M, hyperparams)
-            this@MD_Elliptic_z_Prior_Interface(hyperparams.alpha_z);
+        function this = MD_Numeric_Laplacian_z_Prior_Interface(S, M, data_interface, z_hyperparam_interface, u_prior_interface)
+            this@MD_Elliptic_z_Prior_Interface(z_hyperparam_interface.alpha_z);
             this.S = S;
             this.M = M;
-            this.hyperparams = hyperparams;
+            this.z_hyperparam_interface = z_hyperparam_interface;
+            this.determine_z_hyperparams = MD_Determine_z_Hyperparameters(data_interface,z_hyperparam_interface,u_prior_interface);
             this.M_sqrt = M_z_Sqrt(this);
 
-            if hyperparams.beta_z == 0.0
-                this.hyperparams.Determine_beta_z();
+            if this.z_hyperparam_interface.beta_z == 0.0
+                this.determine_z_hyperparams.Determine_beta_z();
             end
-            this.Set_beta_z(this.hyperparams.beta_z);
+            this.Set_beta_z(this.z_hyperparam_interface.beta_z);
 
-            if this.hyperparams.alpha_z == 0.0
-                this.hyperparams.Determine_alpha_z(this);
+            if this.z_hyperparam_interface.alpha_z == 0.0
+                this.determine_z_hyperparams.Determine_alpha_z(this);
             end
-            this.Set_alpha_z(this.hyperparams.alpha_z);
+            this.Set_alpha_z(this.z_hyperparam_interface.alpha_z);
         end
 
     end

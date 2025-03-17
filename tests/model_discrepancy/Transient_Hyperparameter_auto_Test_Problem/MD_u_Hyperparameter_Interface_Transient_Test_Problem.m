@@ -1,4 +1,4 @@
-classdef MD_u_Hyperparameters_Transient_Test_Problem < MD_u_Hyperparameters
+classdef MD_u_Hyperparameter_Interface_Transient_Test_Problem < MD_u_Hyperparameter_Interface
 
     properties
         x
@@ -16,10 +16,9 @@ classdef MD_u_Hyperparameters_Transient_Test_Problem < MD_u_Hyperparameters
             time_nodes = this.t;
         end
 
-        function this = MD_u_Hyperparameters_Transient_Test_Problem(data_interface, n_y)
-            this@MD_u_Hyperparameters(data_interface, true, false, true);
+        function this = MD_u_Hyperparameter_Interface_Transient_Test_Problem(n_y, n_t)
+            this@MD_u_Hyperparameter_Interface(true, false, true);
             this.x = linspace(0, 1, n_y)';
-            n_t = length(data_interface.u_opt) / n_y;
             this.t = linspace(0, 1, n_t)';
         end
 

@@ -14,19 +14,19 @@ state_map_array{2} = ((m+1):(2*m))';
 
 data_interface = MD_Data_Interface_multi_state_synthetic_test(m);
 
-ui_hyperparams = cell(2,1);
+ui_hyperparam_interface = cell(2,1);
 ui_prior_interface = cell(2,1);
 
-ui_hyperparams{1} = MD_u_Hyperparameters_multi_state_synthetic_test(data_interface, 1, m);
-ui_prior_interface{1} = MD_Numeric_Laplacian_u_Prior_Interface(S,M,ui_hyperparams{1});
+ui_hyperparam_interface{1} = MD_u_Hyperparameter_Interface_multi_state_synthetic_test(1, m);
+ui_prior_interface{1} = MD_Numeric_Laplacian_u_Prior_Interface(S,M,data_interface,ui_hyperparam_interface{1});
 
-ui_hyperparams{2} = MD_u_Hyperparameters_multi_state_synthetic_test(data_interface, 2, m);
-ui_prior_interface{2} = MD_Numeric_Laplacian_u_Prior_Interface(S,M,ui_hyperparams{2});
+ui_hyperparam_interface{2} = MD_u_Hyperparameter_Interface_multi_state_synthetic_test(2, m);
+ui_prior_interface{2} = MD_Numeric_Laplacian_u_Prior_Interface(S,M,data_interface,ui_hyperparam_interface{2});
 
-u_prior_interface = MD_Multi_State_u_Prior_Interface(ui_prior_interface);
+u_prior_interface = MD_Multi_State_u_Prior_Interface(data_interface, ui_prior_interface);
 
-z_hyperparams = MD_z_Hyperparameters_multi_state_synthetic_test(data_interface, u_prior_interface, m);
-z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S,M,z_hyperparams);
+z_hyperparam_interface = MD_z_Hyperparameter_Interface_multi_state_synthetic_test(m);
+z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S,M,data_interface,z_hyperparam_interface,u_prior_interface);
 
 num_prior_samples = 100;
 md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
@@ -59,9 +59,7 @@ end
 
 %%
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
-ui_hyperparams{1}.Determine_alpha_d();
-ui_hyperparams{2}.Determine_alpha_d();
-alpha_d = mean([ui_hyperparams{1}.alpha_d() ; ui_hyperparams{2}.alpha_d()]);
+alpha_d = mean([ui_hyperparam_interface{1}.alpha_d() ; ui_hyperparam_interface{2}.alpha_d()]);
 num_post_samples = 100;
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 Z_test = randn(m, 3);

@@ -3,7 +3,8 @@ classdef MD_Numeric_Laplacian_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
     properties
         M
         S
-        hyperparams
+        u_hyperparam_interface
+        determine_u_hyperparams
         beta_u
         E_u
 
@@ -54,29 +55,30 @@ classdef MD_Numeric_Laplacian_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
             end
         end
 
-        function this = MD_Numeric_Laplacian_u_Prior_Interface(S, M, hyperparams)
-            this@MD_Elliptic_u_Prior_Interface(hyperparams.alpha_u);
+        function this = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface)
+            this@MD_Elliptic_u_Prior_Interface(u_hyperparam_interface.alpha_u);
             this.M = M;
             this.S = S;
-            this.hyperparams = hyperparams;
+            this.u_hyperparam_interface = u_hyperparam_interface;
+            this.determine_u_hyperparams = MD_Determine_u_Hyperparameters(data_interface,u_hyperparam_interface);
 
-            if this.hyperparams.beta_u == 0.0
-                this.hyperparams.Determine_beta_u();
+            if this.u_hyperparam_interface.beta_u == 0.0
+                this.determine_u_hyperparams.Determine_beta_u();
             end
-            this.Set_beta_u(this.hyperparams.beta_u);
+            this.Set_beta_u(this.u_hyperparam_interface.beta_u);
 
             m = size(this.S, 1);
             u_vec = zeros(m, 1);
-            if this.hyperparams.gsvd_num_sing_vals == 0
-                this.hyperparams.Determine_GSVD_Hyperparameters();
+            if this.u_hyperparam_interface.gsvd_num_sing_vals == 0
+                this.determine_u_hyperparams.Determine_GSVD_Hyperparameters();
             end
-            this.Compute_E_u_Inverse_GSVD(this.hyperparams.gsvd_num_sing_vals, this.hyperparams.gsvd_oversampling, this.hyperparams.gsvd_num_subspace_iter, u_vec);
+            this.Compute_E_u_Inverse_GSVD(this.u_hyperparam_interface.gsvd_num_sing_vals, this.u_hyperparam_interface.gsvd_oversampling, this.u_hyperparam_interface.gsvd_num_subspace_iter, u_vec);
 
-            if ~this.hyperparams.is_transient
-                if this.hyperparams.alpha_u == 0.0
-                    this.hyperparams.Determine_alpha_u(this);
+            if ~this.u_hyperparam_interface.is_transient
+                if this.u_hyperparam_interface.alpha_u == 0.0
+                    this.determine_u_hyperparams.Determine_alpha_u(this);
                 end
-                this.Set_alpha_u(this.hyperparams.alpha_u);
+                this.Set_alpha_u(this.u_hyperparam_interface.alpha_u);
             end
         end
 

@@ -13,24 +13,23 @@ con = Diff_Constraint(n_y, n_z, T, n_t);
 opt = Reduced_Space_Optimization(obj, con);
 
 data_interface = MD_Data_Interface_Transient_Test_Problem();
-data_interface.Load_Data();
 
-u_hyperparams = MD_u_Hyperparameters_Transient_Test_Problem(data_interface, n_y);
-transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(u_hyperparams, T, n_t, n_y);
-spatial_u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(con_hifi.S, con_hifi.M, u_hyperparams);
-u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(spatial_u_prior_interface, transient_prior_cov);
+u_hyperparam_interface = MD_u_Hyperparameter_Interface_Transient_Test_Problem(n_y,n_t);
+transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface, T, n_t, n_y);
+spatial_u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(con_hifi.S, con_hifi.M, data_interface, u_hyperparam_interface);
+u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_u_prior_interface, transient_prior_cov);
 
 num_state_solves = 100;
-z_hyperparams = MD_z_Hyperparameters_Transient_Test_Problem(data_interface, u_prior_interface, num_state_solves, con, n_y);
-z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(con_hifi.S, con_hifi.M, z_hyperparams);
+z_hyperparam_interface = MD_z_Hyperparameter_Interface_Transient_Test_Problem(num_state_solves, con, n_y, n_t);
+z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(con_hifi.S, con_hifi.M, data_interface, z_hyperparam_interface, u_prior_interface);
 
 % transient_prior_cov.Compute_Time_Covariance_GEVP_test();
 
 num_samples = 10;
 u_samples = u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samples);
 
-t = u_hyperparams.Load_Time_Node_Data();
-x = u_hyperparams.Load_Spatial_Node_Data();
+t = u_hyperparam_interface.Load_Time_Node_Data();
+x = u_hyperparam_interface.Load_Spatial_Node_Data();
 b = max(abs(u_samples(:)));
 
 % for k = 1:num_samples

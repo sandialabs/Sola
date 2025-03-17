@@ -1,4 +1,4 @@
-classdef MD_u_Hyperparameters_hyperparam_auto_2D < MD_u_Hyperparameters
+classdef MD_u_Hyperparameter_Interface_hyperparam_auto_2D < MD_u_Hyperparameter_Interface
 
     properties
         x
@@ -12,8 +12,8 @@ classdef MD_u_Hyperparameters_hyperparam_auto_2D < MD_u_Hyperparameters
             nodes{1} = [this.x, this.y];
         end 
 
-        function this = MD_u_Hyperparameters_hyperparam_auto_2D(data_interface, x, y)
-            this@MD_u_Hyperparameters(data_interface, false);
+        function this = MD_u_Hyperparameter_Interface_hyperparam_auto_2D(x, y)
+            this@MD_u_Hyperparameter_Interface(false);
             this.x = x;
             this.y = y;
         end

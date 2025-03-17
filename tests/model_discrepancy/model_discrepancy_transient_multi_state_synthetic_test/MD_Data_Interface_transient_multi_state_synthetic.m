@@ -1,4 +1,4 @@
-classdef MD_Data_Interface_transient_multi_state_synthetic_test < MD_Data_Interface
+classdef MD_Data_Interface_transient_multi_state_synthetic < MD_Data_Interface
 
     properties
         n_y
@@ -68,7 +68,7 @@ classdef MD_Data_Interface_transient_multi_state_synthetic_test < MD_Data_Interf
 
     methods
 
-        function this = MD_Data_Interface_transient_multi_state_synthetic_test (n_y,n_t,c_low,c_high)
+        function this = MD_Data_Interface_transient_multi_state_synthetic (n_y,n_t,c_low,c_high)
             this.n_y = n_y;
             this.n_t = n_t;
             this.x = linspace(0, 1, n_y)';

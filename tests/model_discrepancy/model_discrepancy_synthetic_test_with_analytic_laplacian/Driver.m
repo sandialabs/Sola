@@ -12,15 +12,10 @@ x = linspace(0, 1, m)';
 [M, S] = Assemble_Mass_and_Stiffness(m);
 
 data_interface = MD_Data_Interface_synthetic_test_with_hyperparam_auto(m);
-data_interface.Load_Data();
 
-u_hyperparams = MD_u_Hyperparameters_synthetic_test_with_hyperparam_auto(data_interface, m);
-u_prior_interface_gsvd = MD_Numeric_Laplacian_u_Prior_Interface(S, M, u_hyperparams);
-u_prior_interface = MD_Analytic_Laplacian_u_Prior_Interface(M, u_hyperparams);
-
-num_state_solves = 0;
-z_hyperparams = MD_z_Hyperparameters_synthetic_test_with_hyperparam_auto(data_interface, u_prior_interface, num_state_solves, m);
-z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S, M, z_hyperparams);
+u_hyperparam_interface = MD_u_Hyperparameter_Interface_synthetic_test_with_hyperparam( m);
+u_prior_interface_gsvd = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface);
+u_prior_interface = MD_Analytic_Laplacian_u_Prior_Interface(M, data_interface, u_hyperparam_interface);
 
 %%
 v = randn(m, 1);

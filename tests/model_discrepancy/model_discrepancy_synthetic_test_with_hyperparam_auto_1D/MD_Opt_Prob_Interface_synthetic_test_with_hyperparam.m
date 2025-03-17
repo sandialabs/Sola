@@ -1,4 +1,4 @@
-classdef MD_Opt_Prob_Interface_synthetic_test_with_hyperparam_auto < MD_Opt_Prob_Interface
+classdef MD_Opt_Prob_Interface_synthetic_test_with_hyperparam < MD_Opt_Prob_Interface
 
     properties
         m
@@ -32,7 +32,7 @@ classdef MD_Opt_Prob_Interface_synthetic_test_with_hyperparam_auto < MD_Opt_Prob
 
     methods
 
-        function this = MD_Opt_Prob_Interface_synthetic_test_with_hyperparam_auto(m)
+        function this = MD_Opt_Prob_Interface_synthetic_test_with_hyperparam(m)
             this.m = m;
             this.x = linspace(0, 1, m)';
 
