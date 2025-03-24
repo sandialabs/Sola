@@ -5,7 +5,7 @@ all: arxiv toms
 
 
 arxiv:
-	latexmk -pdf -quiet -g main.tex
+	latexmk -pdf -quiet -g main-arxiv.tex
 
 
 toms:

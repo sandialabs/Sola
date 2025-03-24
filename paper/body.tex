@@ -1,8 +1,6 @@
 % !TEX root = main-arxiv.tex
 
-\bigskip
-\noindent
-\textbf{Developer Notes}
+\bigskip\noindent\textbf{** Developer Notes **}
 
 \bartnote{Decided to focus the paper on HDSA with respect to model discrepancy. We can mention in the intro and/or conclusion that there are other outer-loop problems that we can use the \SABL $\to$ \MrHyDE approach for, but let the main focus be on HDSA throughout.}
 
@@ -12,52 +10,83 @@
 
 \shanenote{Explaining the full OOP structure of \HdsaLib would be too much, but showing an example of a particular piece of the algorithm in all three elements might be effective. Need to drive everything from a very high-level view.}
 
+\shanenote{Maybe have a baby 1D problem just in \SABL (everything is plottable but it doesn't take much space), then a transition problem done in both \SABL and \MrHyDE, then a monster problem done solely in \MrHyDE. Can make the case that this is one way to validate your HPC implementations as well as lower the barrier to entry for new HPC practitioners.}
+
 \section{Introduction}
 
-% \shanenote{Really emphasize the mathematics to algorithm to HPC flow. When the mathematics are complicated and the problems we're tackling are already hard on the forward model level, getting all the way to HPC is really difficult.}
+\begin{purpose}
+High mathematical complexity leads to high implementation difficulty.
+This paper is about lowering the difficulty of implementing a class of highly complex problems.
+\end{purpose}
 
 Mathematics, algorithms, and implementation.
 These three steps, sequential but intertwined, form the general approach to problems in computational science and engineering, statistics and data science, and scientific machine learning.
 In the first step, a problem is formulated, models are proposed, and mathematical analyses lead to solution strategies; second, the components leading to a solution are grouped, ordered, and articulated as an algorithm; and finally, algorithms are implemented as executable software.
 An implementation should then be verified --- checked for correctness --- before validating the overall approach against available test data~\cite{oden2004verification,oden2002estimation}.
 Implementation difficulty increases rapidly as the complexity of the mathematical setting and the accompanying algorithms grows.
-The field of high-performance computing (HPC) seeks to address the computational challenges that arise from high complexity, yet harnessing the power of HPC tools often requires expert-level knowledge and experience.
+High-performance computing (HPC) seeks to address the computational challenges that arise from high complexity, but harnessing the power of HPC tools often requires expert-level knowledge and experience.
 This paper presents a paradigm for developing algorithms and utilizing HPC tools in the highly complex setting of outer-loop analyses.
 
-In contemporary computational science and engineering, an outer-loop problem is a procedure which requires many expensive ``forward'' simulations of a physical process to enable discover, control, or decision making.
-Examples include inverse problems~\cite{ghattas2021learning,stuart2010bayesianinverse}, optimal experimental design~\cite{alexanderian2021oed,aretz2024greedysensorselection,attia2018oed}, sensitivity analysis~\cite{brandes2007stabilityanalysis,buskens2006parametricsensitivity}, large-scale optimization~\cite{akcelik2006parallelpdecon,biegler2007pdeconstrainedopt,zahr2015progressive}, and uncertainty quantification~\cite{oden2004verification,biehler2014efficientuq,na2012reliability,smith2013uqbook}.
-This work focuses on hyper-differential sensitivity analysis~(HDSA) \cite{hart2023hdsaillposed,hart2023hdsaoptimal,hart2025hdsaposterior,hart2020hdsapde,stevens2022hdsaodes,sunseri2024hdsabayesian,sunseri2020hdsainverse}, a recent approach to deriving sensitivities in the context of large-scale optimization problems constrained by partial differential equations~(PDEs).
-
-\shanenote{Maybe have a baby 1D problem just in \SABL (everything is plottable but it doesn't take much space), then a transition problem done in both \SABL and \MrHyDE, then a monster problem done solely in \MrHyDE. Can make the case that this is one way to validate your HPC implementations as well as lower the barrier to entry for new HPC practitioners.}
-
 \begin{purpose}
-\begin{itemize}
-\item \textbf{Motivation}: Modern computational problems go beyond forward simulation and require outer-loop analyses (inverse problems, optimal experimental design, sensitivity analysis, optimization, uncertainty quantification, etc.)
-\item Introduce and motivate HDSA (really well), an outer-loop sensitivity analysis tool that sits on top of / wraps around large-scale constrained optimization problems. Model-form error, etc.
-\item \textbf{Challenge}: HDSA is mathematically complicated (many moving pieces) and computationally demanding.
-\item \textbf{Challenge}: Moreover, HDSA is difficult to implement at scale within HPC frameworks. HPC has high software complexity, lots of minutia (data types, parallelism and communication, etc.).
-\item \textbf{Solution}: This paper presents two complementary software libraries that aim to lower the barrier to entry for HDSA practitioners. The first is a MATLAB library that implements HDSA in a mathematically intuitive way and provides templates for interfacing with the algorithm. The second is a \cpp library with a similar structure as the \MATLAB library but with state-of-the-art HPC features (parallelism, optimization, etc.).
-\item \textbf{Goals of this paper}: A minimal-but-sufficient, accessible mathematical presentation of HDSA; present an HPC implementation that abstracts away much of the complexity inherent in HDSA and HPC.
-\item Two representative demonstrations: a simple problem (probably advection-diffusion) implemented in \SABL, then \MrHyDE; and a large-scale problem requiring the HPC tools available within \MrHyDE.
-\item Outline the paper.
-\end{itemize}
+Outer-loop problems go beyond forward simulation. Introduce and motivate HDSA.
+% an outer-loop sensitivity analysis tool that sits on top of / wraps around large-scale constrained optimization problems. Model-form error, etc.
 \end{purpose}
 
-Like other outer-loop problems, HDSA is characterized by three major challenges:
-\begin{itemize}
-\item \textbf{Mathematical complexity.} TODO
-\item \textbf{Computational demands.} TODO
-\item \textbf{Implementation cost.} TODO
-\end{itemize}
+In contemporary computational science and engineering, an outer-loop problem is a procedure which requires many expensive ``forward'' simulations of a physical process to enable discovery, control, or decision making.
+Examples include inverse problems~\cite{ghattas2021learning,stuart2010bayesianinverse}, optimal experimental design~\cite{alexanderian2021oed,aretz2024greedysensorselection,attia2018oed}, sensitivity analysis~\cite{brandes2007stabilityanalysis,buskens2006parametricsensitivity}, large-scale optimization~\cite{akcelik2006parallelpdecon,biegler2007pdeconstrainedopt,zahr2015progressive}, and uncertainty quantification~\cite{oden2004verification,biehler2014efficientuq,na2012reliability,smith2013uqbook}.
+This work focuses on hyper-differential sensitivity analysis~(HDSA) \cite{hart2023hdsaillposed,hart2023hdsaoptimal,hart2025hdsaposterior,hart2020hdsapde,stevens2022hdsaodes,sunseri2024hdsabayesian,sunseri2020hdsainverse}, a recent approach to deriving sensitivities for large-scale optimization problems with partial differential equations (PDEs) as constraints.
+In particular, we focus on HDSA in the context of model discrepancy (HDSA-MD), meaning the constraint equations used in the optimization are deficient or only approximate \cite{hart2023hdsaoptimal,hart2025hdsaposterior}.
+This is useful for cases in which (1) numerical models that fully and accurately reflect the true PDE dynamics are computationally expensive to solve --- so that performing adjoint-based optimization with such models is infeasible --- but a computationally inexpensive reduced-physics, low-fidelity, or reduced-order numerical model for the governing PDEs is available, and (2) the true system dynamics are unknown, but limited experimental data and an approximate numerical model are available.
+The main idea is to solve the optimization problem with the inexpensive-but-deficient model, derive sensitivities of the solution with respect to the model form error, and use those sensitivities to update the solution to better reflect the true dynamics.
+This procedure requires many forward and backward/adjoint solves of the inexpensive model, as well as access to a small number of forward solves from the expensive-but-accurate model.
+The HSDA-MD framework has been demonstrated to be effective for \SM{@joey, add short success story statement here?}
 
-This paper presents a strategy and framework for implementing HDSA in a way that can be applied to many outer-loop analyses.
+\begin{purpose}
+HDSA is mathematically complicated and difficult to implement at scale within HPC frameworks.
+% HPC has high software complexity, lots of minutia (data types, parallelism and communication, etc.).
+\end{purpose}
+
+Like other outer-loop procedures, HDSA-MD is highly complex from mathematical, algorithmic, and implementation viewpoints.
+Numerically solving PDEs entails introducing a spatial discretization (e.g., through the finite element method) and often involves complicated meshes, large linear or nonlinear systems, and, in problems with time-dependent dynamics, time integration and stability analysis.
+In addition, PDE-constrained optimization requires derivatives of the objective function and constraint equations (leading to backward/adjoint PDE solves), step size selection, intelligent termination criteria, and \SM{other?}.
+Furthermore, HDSA-MD \SM{something about sampling from prior distributions, gradient / Hessian applications, etc.}
+%
+All of these elements are further complicated in HPC-level applications where the problem size necessitates parallelism and custom data structures.
+Taken together, this results in a high barrier to entry to new practitioners who desire to deploy or extend HDSA-MD and makes implementing HDSA-MD (and validating that implementation) a challenging prospect.
+
+\begin{purpose}
+Goal of this paper: implement HDSA-MD. Do this by writing a high-level library first, then a low-level HPC library.%
+% This paper presents two complementary software libraries that aim to lower the barrier to entry for HDSA practitioners. The first is a MATLAB library that implements HDSA in a mathematically intuitive way and provides templates for interfacing with the algorithm. The second is a \cpp library with a similar structure as the \MATLAB library but with state-of-the-art HPC features (parallelism, optimization, etc.).
+% \textbf{Goals of this paper}: A minimal-but-sufficient, accessible mathematical presentation of HDSA; present an HPC implementation that abstracts away much of the complexity inherent in HDSA and HPC.
+\end{purpose}
+
+This paper addresses these challenges by presenting a software solution for HDSA-MD that, to the extent possible, abstracts the mathematical complexity and defines accessible user interfaces.
+In doing so, we advocate for the following two-step software development strategy: first, write a library in a high-level language (\MATLAB, \texttt{Python}, etc.) to express algorithms in an intuitive / mathematical form, make design choices without heavy risk of technical debt, and validate the method on simple problems; second, use the high-level library as a guide to develop an HPC library in a low-level language (\cpp, \texttt{FORTRAN}, etc.).
+We demonstrate this paradigm for HDSA-MD by presenting a \MATLAB library, followed by a \cpp environment, which each implement HDSA-MD.
+The high-level library is used to validate the low-level library on small test problems, then the low-level library is used to tackle problems at scale.
+Our objectives are twofold: (1) demonstrate a principled approach to implementing complex mathematical frameworks, and (2) lower the barrier to entry for new practitioners who wish to use and/or extend HDSA-MD.
+Although this paper focuses on HDSA-MD, the high-to-low-level paradigm may be employed to approach implementations for other outer-loop algorithms.
+
+\begin{purpose}
+Outline the paper.
+\end{purpose}
+
+The remainder of the paper is organized as follows.
+\Cref{sec:hdsa} gives a high-level mathematical overview of HDSA-MD.
+\Cref{sec:sabl} presents \SABL, a (high-level) \MATLAB library that implements PDE-constrained optimization and HDSA-MD.
+The library is used to solve a prototypical problem.
+\Cref{sec:mrhyde} then present the (low-level) \cpp library \HdsaLib which implements HDSA-MD with high-performance numerical tools, as well as \MrHyDE, a \cpp library with powerful forward solver capabilities.
+\Cref{sec:application} presents a large-scale HPC problem that is solved with \HdsaLib and \MrHyDE, and \Cref{sec:conclusion} offers some concluding remarks.
+% Two representative demonstrations: a simple problem (probably advection-diffusion) implemented in \SABL, then \MrHyDE; and a large-scale problem requiring the HPC tools available within \MrHyDE.
+
+\SM{Not sure yet if \Cref{sec:hdsalib} is going to come before or after \SABL.}
 
 \section{Hyper-differential sensitivity analysis with respect to model discrepancy}
 \label{sec:hdsa}
 
-This section gives a mathematical description of HDSA for post-optimality sensitivities in the presence of model form insufficiencies.
+This section gives a mathematical description of HDSA-MD, which leverages post-optimality sensitivities in the presence of model form insufficiencies to solve PDE-constrained optimization problems with expensive or inaccessible constraint models.
 \Cref{sec:optimization} establishes the setting of large-scale constrained optimization problems with adjoint-based solution strategies.
-A surrogate problem is introduced in \Cref{sec:model-discrepancy}, and \Cref{sec:hdsa-algorithm} outlines a strategy for using the solution of the surrogate problem and limited data from the full problem to produce an accurate approximate solution to the full problem.
+The problem is modified to account for discrepancies in the model form in \Cref{sec:model-discrepancy}, and \Cref{sec:hdsa-algorithm} outlines a strategy for using limited high-fidelity data to improve the quality of the solution despite model inaccuracies.
 
 \subsection{PDE-constrained optimization}
 \label{sec:optimization}
@@ -68,80 +97,82 @@ Consider the following constrained minimization problem:
 \begin{align}
     \label{eq:optimization-constrained}
     \begin{aligned}
-    \min_{\u,\z} ~& \J(\u,\z)
+    \min_{\u,\z} ~& J(\u,\z)
     \qquad
     \text{where}~~& \c(\u,\z) = \0.
     \end{aligned}
 \end{align}
-Here, $\u\in\R^{n_u}$ is the state variable, $\z\in\R^{n_z}$ is the control variable, $\J:\R^{n_u}\times\R^{n_z}\to\R$ is the objective function, and $\c:\R^{n_u}\times\R^{n_z}\to\R^{n_u}$ specifies the constraints.
+Here, $\u\in\R^{n_u}$ is the state variable, $\z\in\R^{n_z}$ is the control variable, $J:\R^{n_u}\times\R^{n_z}\to\R$ is the objective function, and $\c:\R^{n_u}\times\R^{n_z}\to\R^{n_u}$ specifies the constraints.
 % Here, $n_u\in\mathbb{N}$ is the state dimension and $n_z\in\mathbb{N}$ is the control dimension.
-In the context of interest, $\c$ represents the residual of a discretized PDE, for example after applying a finite element discretization.
-If $\c(\cdot,\z)=\0$ admits a unique state solution over an admissible set of controls $Z \subset\R^{n_z}$ --- that is, if the discretized PDE is well posed for $\z\in Z$ --- then there exists a solution operator $\S:Z\to U \coloneqq S(Z) \subset \R^{n_u}$ such that $\c(\S(\z),\z)=\0$ for all $\z\in Z$.
+In the context of PDE-constrained optimization, $\c$ represents the residual of a fully discretized PDE, for example after applying a finite element discretization and, if the problem is time-dependent, a time integration scheme.
+If $\c(\cdot,\z)=\0$ admits a unique state solution over an admissible set of controls $Z \subset\R^{n_z}$ --- that is, if the discretized PDE is well posed for $\z\in Z$ --- then there exists a solution operator $\s:Z\to U \coloneqq \s(Z) \subset \R^{n_u}$ such that $\c(\s(\z),\z)=\0$ for all $\z\in Z$.
 In this case, \cref{eq:optimization-constrained} can be formulated as the equivalent optimization problem
 \begin{align}
     \label{eq:optimization-reducedspace}
-    \min_{\z\in Z} \hat{\J}(\z)
-    \coloneqq \J(\S(\z),\z).
+    \min_{\z\in Z} \hat{J}(\z)
+    \coloneqq J(\s(\z),\z).
 \end{align}
 The problem~\cref{eq:optimization-reducedspace} is often called the \emph{reduced-space formulation} of \cref{eq:optimization-constrained}.
 
-Local minima of \cref{eq:optimization-reducedspace} can be computed with standard optimization strategies as long as the derivatives of $\hat{\J}$ can be computed efficiently.
-% gradient $\grad{\z}\hat{\J}(\z)\in\R^{n_z}$ and, for any vector $\v\in\R^{n_z}$, Hessian-vector products $\v\mapsto \grad{z,z}\hat{J}(\z) \v \in \R^{n_z}$ can be computed efficiently.
+Local minima of \cref{eq:optimization-reducedspace} can be computed with standard optimization strategies as long as the derivatives of $\hat{J}$ can be computed efficiently.
+% gradient $\grad{\z}\hat{J}(\z)\in\R^{n_z}$ and, for any vector $\v\in\R^{n_z}$, Hessian-vector products $\v\mapsto \grad{z,z}\hat{J}(\z) \v \in \R^{n_z}$ can be computed efficiently.
 % {prf:ref}`alg:adjoint_gradient` shows how to efficiently calculate the gradient by utilizing adjoint-based derivative formulas.
 % Similarly, {prf:ref}`alg:adjoint_hessvec` shows how to compute Hessian-vector products using incremental state and incremental adjoint equations, which avoids explicitly forming the (very large) Hessian matrix $\grad{z,z}\hat{J}(\z)\in\R^{n_z \times n_z}$.
-The adjoint method~[REF] provides expressions for the derivatives of $\hat{\J}$ in terms of the (partial) derivatives of $\J$ and $\c$.
+The adjoint method~\cite{courant1962physics,givoli2021adjoint,tarantola2005inverse} provides expressions for the derivatives of $\hat{J}$ in terms of the (partial) derivatives of $J$ and $\c$.
 Applying the chain rule,
 \begin{align}
-    \grad{z}\hat{\J}(\z)
-    = \nabla[\J(\S(\z),\z)]
-    = \S_z(\z)\trp\grad{u}\J(\S(\z),\z) + \grad{z}\J(\S(\z),\z),
+    \label{eq:gradJ-chain-rule}
+    \grad{z}\hat{J}(\z)
+    = \nabla[J(\s(\z),\z)]
+    = \s_z(\z)\trp\grad{u}J(\s(\z),\z) + \grad{z}J(\s(\z),\z),
 \end{align}
-where $\S_z(\z)\in\R^{n_u\times n_z}$ is the $\z$ Jacobian of $\S$.
+where $\s_z(\z)\in\R^{n_u\times n_z}$ is the $\z$ Jacobian of $\s$.
 Note that we are using the convention that the gradient is a column vector.
-Since $\c(\S(\z),\z) = \0$, the implicit function theorem yields the formula
+Since $\c(\s(\z),\z) = \0$, the implicit function theorem yields the formula
 \begin{align}
-    \S_z(\z)
-    = -\c_u(\S(\z),\z)^{-1}\c_z(\S(\z),\z),
+    \label{eq:Sz-implicit-function}
+    \s_z(\z)
+    = -\c_u(\s(\z),\z)^{-1}\c_z(\s(\z),\z),
 \end{align}
 where $\c_u(\u,\z)\in\mathbb{R}^{n_u\times n_u}$ and $\c_z(\u,\z)\in\mathbb{R}^{n_u\times n_z}$ denote the $\u$ and $\z$ Jacobians of $\c$, respectively.
-Defining $\u \coloneqq \S(\z)$,
+Defining $\u \coloneqq \s(\z)$, the first term in \cref{eq:gradJ-chain-rule} becomes
 \begin{align}
     \begin{aligned}
-    \S_z(\z)\trp\grad{u}\J(\S(\z),\z)
-    &= \left(-\c_u(\u,\z)^{-1}\c_z(\u,\z)\right)\trp\grad{u}\J(\u,\z)
+    \s_z(\z)\trp\grad{u}J(\s(\z),\z)
+    &= \left(-\c_u(\u,\z)^{-1}\c_z(\u,\z)\right)\trp\grad{u}J(\u,\z)
     \\
-    &= -\c_z(\u,\z)\trp\c_u(\u,\z)\invtrp\grad{u}\J(\u,\z)
+    &= -\c_z(\u,\z)\trp\c_u(\u,\z)\invtrp\grad{u}J(\u,\z)
     = \c_z(\u,\z)\trp\bflambda,
     \end{aligned}
 \end{align}
-where $\bflambda \coloneqq -\c_u(\u,\z)\invtrp\grad{u}\J(\u,\z) \in \R^{n_u}$ is the \emph{adjoint state} and resides in the dual of the state space.
-Hence, for a given $\z$, the gradient $\grad{z}\hat{\J}(\z)$ can be computed by assembling or applying the derivatives of $\J$ and $\c$, as summarized in \Cref{alg:adjoint-gradient}.
-Similar arguments lead to an expression for the product of the Hessian $\grad{z,z}\hat{\J}(\z) \in\R^{n_z\times n_z}$ with a vector $\v\in\R^{n_z}$ in terms of the second-order derivatives of $\J$ and $\c$, detailed in \Cref{alg:adjoint-hessvec}.
+where $\bflambda \coloneqq -\c_u(\u,\z)\invtrp\grad{u}J(\u,\z) \in \R^{n_u}$ is the \emph{adjoint state} and resides in the dual of the state space.
+Hence, for a given $\z$, the gradient $\grad{z}\hat{J}(\z)$ in \cref{eq:gradJ-chain-rule} can be computed by assembling or applying the derivatives of $J$ and $\c$, as summarized in \Cref{alg:adjoint-gradient}.
+Similar arguments lead to an expression for the product of the Hessian $\grad{z,z}\hat{J}(\z) \in\R^{n_z\times n_z}$ with a vector $\v\in\R^{n_z}$ in terms of the second-order derivatives of $J$ and $\c$, detailed in \Cref{alg:adjoint-hessvec}.
 With these derivatives on hand, \cref{eq:optimization-reducedspace} can be solved with a Newton--Raphson approach, i.e., a variation on the iteration
 \begin{align}
     \label{eq:newton-cg}
     \z_{k+1}
     = \z_{k} - \gamma_k\boldsymbol{\eta}_k,
     \qquad
-    \grad{z,z}\hat{\J}(\z_{k})\boldsymbol{\eta}_{k} = \grad{z}\hat{\J}(\z_{k}),
+    \grad{z,z}\hat{J}(\z_{k})\boldsymbol{\eta}_{k} = \grad{z}\hat{J}(\z_{k}),
 \end{align}
 where $\gamma_k > 0$ is the step size, chosen to satisfy standard Wolfe or Armijo conditions~[REF].
-The linear system for the step direction $\boldsymbol{\eta}_{k}$ may be solved, for example, via the conjugate gradient method~[REF], which only requires Hessian-vector applications $\v\mapsto\grad{z,z}\hat{\J}(\z_k)\v$ instead of forming $\grad{z,z}\hat{\J}(\z_k)$ explicitly.
-Note that the computational cost of this approach is typically dominated by the cost of evaluating the solver $\S(\z)$ and solving adjoint equations involving the Jacobians of $\c$.
+The linear system for the step direction $\boldsymbol{\eta}_{k}$ may be solved, for example, via the conjugate gradient method~[REF], which only requires Hessian-vector applications $\v\mapsto\grad{z,z}\hat{J}(\z_k)\v$ instead of forming $\grad{z,z}\hat{J}(\z_k)$ explicitly.
+Note that the computational cost of this approach is typically dominated by the cost of evaluating the solver $\s(\z)$ and solving adjoint equations involving the Jacobians of $\c$.
 
 \begin{algorithm}[t]
 \begin{algorithmic}[1]
 \Procedure{AdjointGradient}{~$\z\in\R^{n_z}$~}
-    % \State $\u \gets \S(\z)\in\R^{n_u}$
-    \State Solve $\c(\u, \z) = \0$ for $\u$, i.e., $\u \gets \S(\z)$
+    % \State $\u \gets \s(\z)\in\R^{n_u}$
+    \State Solve $\c(\u, \z) = \0$ for $\u$, i.e., $\u \gets \s(\z)$
         \Comment{Solve the (PDE) constraint.}
-    \State Solve $\c_u(\u,\z)\trp \bflambda = - \grad{u}\J(\u,\z)$ for $\bflambda$
+    \State Solve $\c_u(\u,\z)\trp \bflambda = - \grad{u}J(\u,\z)$ for $\bflambda$
         \Comment{Compute the adjoint.}
-    \State \textbf{return} $\c_z(\u,\z)\trp \bflambda + \grad{z}\J(\u,\z)$
+    \State \textbf{return} $\c_z(\u,\z)\trp \bflambda + \grad{z}J(\u,\z)$
         \Comment{Assemble the gradient.}
 \EndProcedure
 \end{algorithmic}
-\caption{Adjoint-based computation of the gradient $\grad{z}\hat{\J}(\z)$ for minimizing \cref{eq:optimization-reducedspace}.}
+\caption{Adjoint-based computation of the gradient $\grad{z}\hat{J}(\z)$ for minimizing \cref{eq:optimization-reducedspace}.}
 \label{alg:adjoint-gradient}
 \end{algorithm}
 
@@ -159,15 +190,15 @@ Note that the computational cost of this approach is typically dominated by the 
 }
     \State Solve $\c_u(\u,\z) \bfmu = -\c_z(\u,\z) \v$ for $\bfmu$
         % \Comment{Compute the incremental adjoint.}
-    \State $\x_J \gets \grad{z,u}\J(\u,\z) \bfmu +  \grad{z,z}\J(\u,\z) \v$
-    \State $\y_J \gets \grad{u,u}\J(\u,\z) \bfmu + \grad{u,z}\J(\u,\z) \v$
+    \State $\x_J \gets \grad{z,u}J(\u,\z) \bfmu +  \grad{z,z}J(\u,\z) \v$
+    \State $\y_J \gets \grad{u,u}J(\u,\z) \bfmu + \grad{u,z}J(\u,\z) \v$
     \State $\y_c \gets \bflambda\trp \c_{u,u}(\u,\z) \bfmu +  \bflambda\trp \c_{u,z}(\u,\z) \v$
     \State Solve $\c_u(\u,\z)\trp \bfgamma = -(\y_J + \y_c)$ for $\bfgamma$
     \State $\x_c \gets \c_z(\u,\z)\trp \bfgamma + \bflambda\trp \c_{z,u}(\u,\z) \bfmu + \bflambda\trp \c_{z,z}(\u,\z)\v$
     \State \textbf{return} $\x_J + \x_c$
 \EndProcedure
 \end{algorithmic}
-\caption{Adjoint-based computation of the Hessian-vector product $\grad{z,z}\hat{\J}(\z)\v $ for minimizing \cref{eq:optimization-reducedspace}.}
+\caption{Adjoint-based computation of the Hessian-vector product $\grad{z,z}\hat{J}(\z)\v $ for minimizing \cref{eq:optimization-reducedspace}.}
 \label{alg:adjoint-hessvec}
 \end{algorithm}
 
@@ -185,19 +216,19 @@ Note that the computational cost of this approach is typically dominated by the 
 % }
 %     \State Solve $\c_u(\u,\z) \bfmu = -\c_z(\u,\z) \v$ for $\bfmu$
 %         % \Comment{Compute the incremental adjoint.}
-%     \State $\x_J \gets \grad{z,u}\J(\u,\z) \bfmu +  \grad{z,z}\J(\u,\z) \v$
-%     \State $\y_J \gets \grad{u,u}\J(\u,\z) \bfmu + \grad{u,z}\J(\u,\z) \v$
+%     \State $\x_J \gets \grad{z,u}J(\u,\z) \bfmu +  \grad{z,z}J(\u,\z) \v$
+%     \State $\y_J \gets \grad{u,u}J(\u,\z) \bfmu + \grad{u,z}J(\u,\z) \v$
 %     \State Solve $\c_u(\u,\z)\trp \bfgamma = -\y_J$ for $\bfgamma$
 %     \State $\x_c \gets \c_z(\u,\z)\trp \bfgamma$
 %     \State \textbf{return} $\x_J + \x_c$
 % \EndProcedure
 % \end{algorithmic}
-% \caption{Gauss--Newton approximation of the Hessian-vector product $\grad{z,z}\hat{\J}(\z)\v $ for minimizing \cref{eq:optimization-reducedspace}.}
+% \caption{Gauss--Newton approximation of the Hessian-vector product $\grad{z,z}\hat{J}(\z)\v $ for minimizing \cref{eq:optimization-reducedspace}.}
 % \label{alg:gaussnewton-hessvec}
 % \end{algorithm}
 
-A software implementation for solving \cref{eq:optimization-reducedspace} with a specific $\J$ and $\c$ through \cref{eq:newton-cg} via the adjoint method as in \Cref{alg:adjoint-gradient,alg:adjoint-hessvec} requires several ingredients, namely the constraint solver $\S:\z\mapsto\u$ and the derivatives of $\J$ and $\c$.
-The software frameworks introduced in later sections define abstract templates with methods for each ingredient, to be implemented by the user or handled with automatic differentiation when possible.
+A software implementation for solving \cref{eq:optimization-reducedspace} with a specific $J$ and $\c$ through \cref{eq:newton-cg} via the adjoint method as in \Cref{alg:adjoint-gradient,alg:adjoint-hessvec} requires several ingredients, namely the constraint solver $\s:\z\mapsto\u$ and the derivatives of $J$ and $\c$.
+The software libraries introduced in later sections define abstract templates with methods for each ingredient, to be implemented by the user or handled with automatic differentiation when possible.
 
 \subsection{Model discrepancy}
 \label{sec:model-discrepancy}
@@ -206,43 +237,50 @@ There are several scenarios in which solving \cref{eq:optimization-reducedspace}
 In each scenario, one remedy
 % In large-scale problems, solving the constraint equation $\c(\u, \z) = \0$ or forming the derivatives of $\c$ can be computationally intensive, prohibiting the direct optimization approach described in the previous section. One remedy
 is to replace the constraint with a computationally tractable model based on simplified physics, model order reduction, or data-driven surrogate modeling.
-To that end, let $\tilde{\c}:\R^{n_u}\times\R^{n_z}\to\R^{n_u}$ be an approximation to the original constraint $\c$ with corresponding solution map $\tilde{\S}:Z\to U$, i.e., $\tilde{\c}(\tilde{\S}(\z), \z) = \0$ for all $\z\in Z$, and consider the problem
+To that end, let $\tilde{\c}:\R^{n_u}\times\R^{n_z}\to\R^{n_u}$ be an approximation to the original constraint $\c$ with corresponding solution map $\tilde{\s}:Z\to U$, i.e., $\tilde{\c}(\tilde{\s}(\z), \z) = \0$ for all $\z\in Z$, and consider the reduced-space problem
 \begin{align}
     \label{eq:optimization-surrogate}
     % \begin{aligned}
-    % \min_{\u,\z} ~& \J(\u,\z)
+    % \min_{\u,\z} ~& J(\u,\z)
     % \\
     % \text{where}~~& \tilde{\c}(\u,\z) = \0
     % \end{aligned}
     % \qquad\Longleftrightarrow\qquad
-    \min_{\z\in Z} \J(\tilde{\S}(\z), \z).
+    \min_{\z\in Z} J(\tilde{\s}(\z), \z).
 \end{align}
-% in which $\tilde{\c}(\tilde{\S}(\z), \z) = \0$ for all $\z\in Z$.
-If $\tilde{\S}$ is less computationally expensive to evaluate than $\S$, and the derivatives of $\tilde{\c}$ are more easily formed than the derivatives of $\c$, then solving \cref{eq:optimization-surrogate} is a feasible alternative to solving \cref{eq:optimization-reducedspace}.
+The discrepancy between the model constaint $\tilde{\c}$ and the true constraint $\c$ may cause minimizers of \cref{eq:optimization-surrogate} to be far from minimizers of \cref{eq:optimization-reducedspace}.
+We will show, however, that solutions of \cref{eq:optimization-reducedspace} can be written in terms of solutions of \cref{eq:optimization-surrogate}.
+% in which $\tilde{\c}(\tilde{\s}(\z), \z) = \0$ for all $\z\in Z$.
+If $\tilde{\s}$ is less expensive to evaluate than $\s$, and if the derivatives of $\tilde{\c}$ are more easily formed than the derivatives of $\c$, then solving \cref{eq:optimization-surrogate} and updating that solution is a computationally tractable alternative to solving \cref{eq:optimization-reducedspace} directly.
 
-\SM{Might be good to introduce the baby example here? }
-
-However, the approximation error of $\tilde{\S} \approx \S$ may result in nontrivial errors in the solution.
-
-The goal is to use the solution of \cref{eq:optimization-surrogate}, together with a limited number of PDE solutions $\S(\z_1),\ldots,\S(\z_N)$, to approximate the solution to the full problem \cref{eq:optimization-reducedspace}.
-
-\begin{purpose}
-\begin{itemize}
-\item Define the model discrepancy problem: our model for the PDE constraint may not account for all complexities of the true physics, so the solution to the PDE-constrained optimization problem must be adjusted.
-\item Define the rest of HDSA
-\end{itemize}
-\end{purpose}
+% \SM{Might be good to introduce the baby example here, define $\c$ and $\tilde{\c}$?}
 
 \subsection{Hyper-differential Sensitivity Analysis}
 \label{sec:hdsa-algorithm}
 
-TODO.
-
 \begin{purpose}
-High-level overview of how $\theta$ is calibrated and the model update is done.
-Don't go into the details (e.g., Kronecker structure), that's all taken care of under the hood. Instead, list the essential ingredients that users of \HdsaLib will need to know about in order to use it.
-Concise summary, consider a diagram like Figure 1 from \cite{hart2023hdsaoptimal}.
+High-level overview of how $\bftheta$ is calibrated and the model update is done.
+Don't go into the details (e.g., Kronecker structure), just list the essential ingredients that users of \HdsaLib will need to know about in order to use it.
+% Concise summary, consider a diagram like Figure~1 from \cite{hart2023hdsaoptimal}.
 \end{purpose}
+
+To address the model discrepancy error in \cref{eq:optimization-surrogate}, let $\bfdelta \coloneqq \bfdelta(\z;\bftheta)\in\R^{n_z}$ for some parameter vector $\bftheta\in\R^{n_\theta}$ and consider the perturbed objective function
+\begin{align}
+    \label{eq:optimization-discrepancy}
+    \J(\z, \bftheta)
+    \coloneqq J\big(\tilde{\s}(\z) + \bfdelta(\z;\bftheta), \z\big).
+\end{align}
+If $\bftheta$ can be chosen so that $\bfdelta(\z;\bftheta) \approx \s(\z) - \tilde{\s}(\z)$ for all $\z$, then $\tilde{\s}(\z) + \bfdelta(\z;\bftheta) \approx \s(\z)$ and
+$
+    \J(\z,\bftheta)
+    % = J(\tilde{\s}(\z) + \bfdelta(\z;\bftheta), \z)
+    \approx
+    J(\s(\z), \z).
+    % = \hat{J}(\z).
+$
+\SM{Implicit function theorem on $\grad{z}\J$. Why is the update $\tilde{\z} + \grad{\theta}F(\0)\bftheta$? Applying the update is hard. View the update as a Bayesian problem, then we need a prior for $\bftheta$, which will be written in terms of priors for $\u$ and $\z$.}
+
+% The goal is to use the solution of \cref{eq:optimization-surrogate}, together with a limited number of PDE solutions $\s(\z_1),\ldots,\s(\z_N)$, to approximate the solution to the full problem \cref{eq:optimization-reducedspace}.
 
 \section{\HdsaLib: A template-based implementation of HDSA in \cpp}
 \label{sec:hdsalib}
@@ -252,11 +290,9 @@ TODO.
 \begin{purpose}
 \begin{itemize}
 \item Introduce \HdsaLib: scope, style, repository, etc.
-\item Connect the mathematical objects defined in \Cref{sec:hdsa} to
+\item Connect the mathematical objects defined in \Cref{sec:hdsa} to software classes
 \end{itemize}
 \end{purpose}
-
-\SM{Joey, let me know what classes you want to include here and I can list them.}
 
 \subsection{Analysis classes}
 
@@ -288,7 +324,8 @@ TODO
 \caption{\HdsaLib interface classes.}
 \end{listing}
 
-\section{\SABL: Prototyping HDSA in \MATLAB}
+\section{\SABL: Prototyping HDSA-MD in \MATLAB}
+\label{sec:sabl}
 
 Jumping straight to high-performance computing in \cpp with \HdsaLib can be challenging for new users, especially for practitioners who are accustomed to high-level languages such as \MATLAB and Python.
 Furthermore, the complexities of a full HPC environment make it difficult to assess and verify implementations of novel, complicated algorithms such as HDSA.
@@ -376,8 +413,11 @@ Walk through implementing the Objective, Constraint, and use the ReducedSpaceOpt
 \SM{It would be convenient to do something stationary so that we only need to introduce the \texttt{Objective} and \texttt{Constraint} classes instead of also introducing \texttt{Dynamic\_Objective} and \texttt{Dynamic\_Constraint}.}
 
 \section{\MrHyDE: A high-performance \cpp library for solving differential equations}
+\label{sec:mrhyde}
 
 \SM{Note that \MrHyDE takes care of a lot of things for us, like calculating the adjoint at the element level via automatic differentiation. Transposes and handling boundary conditions are nontrivial in a parallel environment, but this is handled by Panzer in \MrHyDE.}
+
+\SM{Not convinced that \HdsaLib should come first. Maybe we should have HDSA first, then \SABL, then a section called ``\HdsaLib and \MrHyDE: implementing HDSA-MD in \cpp''.}
 
 TODO.
 
@@ -409,6 +449,7 @@ This will gives us confidence that we've implemented HDSA correctly in \cpp desp
 \end{purpose}
 
 \section{Example 2: Big fat HPC-worthy problem}
+\label{sec:application}
 
 \begin{purpose}
 Solve a really huge problem that requires parallelism, etc. using \MrHyDE.
@@ -426,6 +467,7 @@ Maybe?
 \subsection{Numerical results}
 
 \section{Conclusion}
+\label{sec:conclusion}
 
 TODO.
 

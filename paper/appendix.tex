@@ -5,13 +5,16 @@
     \textbf{PDE-constrained optimization} \\
     $\u(t) \in \mathbb{R}^{n_u}$ & state variable \\
     $\z(t) \in \mathbb{R}^{n_z}$ & control variable \\
+    $J:\R^{n_u}\times\R^{n_z}\to\R$ & optimization objective \\
     $\c:\R^{n_u}\times\R^{n_z}\to\R^{n_u}$ & optimization constraint \\
-    $\S:\R^{n_z}\to\R^{n_u}$ & solution operator \\
-    $\mathcal{J}:\R^{n_u}\times\R^{n_z}\to\R$ & objective function \\
-    $\hat{\mathcal{J}}:\R^{n_z}\to\R$ & reduced-space objective function \\[.0625in]
+    $\s:\R^{n_z}\to\R^{n_u}$ & constraint solution operator \\
+    $\hat{J}:\R^{n_z}\to\R$ & reduced-space objective function
+    \\[.0625in]
 
     \textbf{Hyper differential sensitivity analysis} \\
-    TODO & TODO
+    $\bfdelta:\R^{n_z\times n_\theta}\to\R^{n_z}$ & model discrepancy term \\
+    $\bftheta\in\R^{n_\theta}$ & (unknown) parameters for the model discrepancy term \\
+    $\J:\R^{n_z\times n_\theta}\to\R$ & objective with model discrepancy
 \end{tabular}
 
 \section{Another appendix if needed}
