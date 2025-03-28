@@ -12,19 +12,19 @@ n_t = 10;
 c_low = 0.95;
 c_high = 0.92;
 
-data_interface = MD_Data_Interface_transient_multi_state_synthetic(n_y,n_t,c_low,c_high);
+data_interface = MD_Data_Interface_transient_multi_state_synthetic(n_y, n_t, c_low, c_high);
 
-ui_hyperparam_interface = cell(2,1);
-ui_spatial_prior_interface = cell(2,1);
-transient_prior_cov = cell(2,1);
-ui_prior_interface = cell(2,1);
+ui_hyperparam_interface = cell(2, 1);
+ui_spatial_prior_interface = cell(2, 1);
+transient_prior_cov = cell(2, 1);
+ui_prior_interface = cell(2, 1);
 for k = 1:2
     ui_hyperparam_interface{k} = MD_u_Hyperparameter_Interface_transient_multi_state_synthetic(n_y, n_t, k);
-    ui_spatial_prior_interface{k} = MD_Numeric_Laplacian_u_Prior_Interface(S,M,data_interface,ui_hyperparam_interface{k});
+    ui_spatial_prior_interface{k} = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, ui_hyperparam_interface{k});
     transient_prior_cov{k} = MD_Transient_Prior_Covariance_Sabl(data_interface, ui_hyperparam_interface{k}, 1, n_t, n_y);
     ui_prior_interface{k} = MD_Transient_Elliptic_u_Prior_Interface(data_interface, ui_spatial_prior_interface{k}, transient_prior_cov{k});
 end
-u_prior_interface = MD_Multi_State_u_Prior_Interface(data_interface,ui_prior_interface);
+u_prior_interface = MD_Multi_State_u_Prior_Interface(data_interface, ui_prior_interface);
 
 num_state_solves = 100;
 z_hyperparam_interface = MD_z_Hyperparameter_Interface_transient_multi_state_synthetic(data_interface, num_state_solves, n_y, n_t);
@@ -56,7 +56,7 @@ end
 
 %%
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
-alpha_d = mean([ui_hyperparam_interface{1}.alpha_d;ui_hyperparam_interface{2}.alpha_d]);
+alpha_d = mean([ui_hyperparam_interface{1}.alpha_d; ui_hyperparam_interface{2}.alpha_d]);
 num_post_samples = 100;
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 Z_test = randn(n_y, 3);
@@ -95,7 +95,7 @@ if ~suppress_figures
 
 end
 %%
-opt_prob_interface = MD_Opt_Prob_Interface_transient_multi_state_synthetic_test(n_y,n_t,x,M,c_low);
+opt_prob_interface = MD_Opt_Prob_Interface_transient_multi_state_synthetic_test(n_y, n_t, x, M, c_low);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 
@@ -107,7 +107,7 @@ if ~suppress_figures
     for k = 1:num_post_samples
         plot(x, z_update_samples(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
-    plot(x, ( (c_low/c_high)^(n_t/3) ) * (1 + x), 'color', 'black', 'LineWidth', 3);
+    plot(x, ((c_low / c_high)^(n_t / 3)) * (1 + x), 'color', 'black', 'LineWidth', 3);
     plot(x, 1 + x, 'color', 'cyan', 'LineWidth', 3);
     plot(x, z_update_mean, '--', 'color', 'red', 'LineWidth', 3);
 end

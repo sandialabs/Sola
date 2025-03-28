@@ -48,7 +48,7 @@ classdef Randomized_GSVD < handle
 
             C = B' * Tinv_B;
             R_B = chol(C);
-            Q_B = linsolve(R_B',Tinv_B')';
+            Q_B = linsolve(R_B', Tinv_B')';
 
             [U, Sigma, V] = svd(R_B');
 

@@ -44,10 +44,10 @@ classdef MD_Determine_u_Hyperparameters < handle
             initial_guess = 0;
 
             if size(nodes, 2) == 1
-                corr_len_fun = @(nodes,d,initial_guess) computeCorrelationLength_1D(nodes(:, 1), d, initial_guess);
+                corr_len_fun = @(nodes, d, initial_guess) computeCorrelationLength_1D(nodes(:, 1), d, initial_guess);
                 normalization = 12;
-            elseif size(nodes,2) == 2
-                corr_len_fun = @(nodes,d,initial_guess) computeCorrelationLength_2D(nodes(:, 1), nodes(:,2), d, initial_guess);
+            elseif size(nodes, 2) == 2
+                corr_len_fun = @(nodes, d, initial_guess) computeCorrelationLength_2D(nodes(:, 1), nodes(:, 2), d, initial_guess);
                 normalization = 8;
             else
                 disp('Determine_beta_u error: Dimensions greater than 2 are not supported.');
@@ -57,7 +57,7 @@ classdef MD_Determine_u_Hyperparameters < handle
             for i = 1:N
                 di = reshape(this.data_interface.D(I, i), n_y, n_t);
                 for j = 1:n_t
-                    correlation_lengths(i, j) = corr_len_fun(nodes, di(:, j),initial_guess);
+                    correlation_lengths(i, j) = corr_len_fun(nodes, di(:, j), initial_guess);
                     initial_guess = correlation_lengths(i, j);
                 end
                 initial_guess = correlation_lengths(i, 1);
@@ -100,10 +100,10 @@ classdef MD_Determine_u_Hyperparameters < handle
             for i = 1:N
                 di = reshape(this.data_interface.D(I, i), n_y, n_t)';
                 for j = 1:n_y
-                    correlation_lengths(i, j) = computeCorrelationLength_1D(time_nodes, di(:, j),initial_guess);
+                    correlation_lengths(i, j) = computeCorrelationLength_1D(time_nodes, di(:, j), initial_guess);
                     initial_guess = correlation_lengths(i, j);
                 end
-                initial_guess = correlation_lengths(i,1);
+                initial_guess = correlation_lengths(i, 1);
             end
             beta_t_new = mean(correlation_lengths(:), 'omitnan')^2 / 4;
 
@@ -112,7 +112,7 @@ classdef MD_Determine_u_Hyperparameters < handle
 
         function [] = Determine_alpha_d(this)
             I = this.data_interface.Separate_State_Components(this.component_id);
-            tmp = this.data_interface.D(I,:);
+            tmp = this.data_interface.D(I, :);
             alpha_d_new = (this.u_hyperparam_interface.data_noise_percent * mean(abs(tmp(:))))^2;
             this.u_hyperparam_interface.Set_alpha_d(alpha_d_new);
         end
@@ -141,7 +141,7 @@ classdef MD_Determine_u_Hyperparameters < handle
             this.data_interface.D = this.data_interface.D - data_shift;
         end
 
-        function this = MD_Determine_u_Hyperparameters(data_interface,u_hyperparam_interface)
+        function this = MD_Determine_u_Hyperparameters(data_interface, u_hyperparam_interface)
             arguments
                 data_interface MD_Data_Interface
                 u_hyperparam_interface MD_u_Hyperparameter_Interface

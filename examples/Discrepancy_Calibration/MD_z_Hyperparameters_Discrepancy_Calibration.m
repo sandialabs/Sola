@@ -11,7 +11,7 @@ classdef MD_z_Hyperparameters_Discrepancy_Calibration < MD_z_Hyperparameters
             nodes = this.x;
         end
 
-        function [u] = State_Solve(this,z)
+        function [u] = State_Solve(this, z)
             u = this.con_lofi.State_Solve(z);
         end
 

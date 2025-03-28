@@ -13,7 +13,7 @@ x = linspace(0, 1, m)';
 
 data_interface = MD_Data_Interface_synthetic_test_with_hyperparam_auto(m);
 
-u_hyperparam_interface = MD_u_Hyperparameter_Interface_synthetic_test_with_hyperparam( m);
+u_hyperparam_interface = MD_u_Hyperparameter_Interface_synthetic_test_with_hyperparam(m);
 u_prior_interface_gsvd = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface);
 u_prior_interface = MD_Analytic_Laplacian_u_Prior_Interface(M, data_interface, u_hyperparam_interface);
 

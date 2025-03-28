@@ -12,7 +12,7 @@ adv_diff = Adv_Diff(pde_meshing, diff_coeff, adv_coeff);
 
 x = pde_meshing.x;
 y = pde_meshing.y;
-u_true = cos(2 * pi * x) .* (- 2 * y + y.^2);
+u_true = cos(2 * pi * x) .* (-2 * y + y.^2);
 z = diff_coeff * (4 * pi^2 * cos(2 * pi * x) .* (-2 * y + y.^2) - 2 * cos(2 * pi * x));
 z = z + adv_coeff * (-2 * pi * sin(2 * pi * x) .* (-2 * y + y.^2) + (-2 + 2 * y) .* cos(2 * pi * x));
 u = adv_diff.State_Solve(z);

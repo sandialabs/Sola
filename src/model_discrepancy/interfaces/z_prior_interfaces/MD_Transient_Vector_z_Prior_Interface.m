@@ -16,11 +16,11 @@ classdef MD_Transient_Vector_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
     methods (Access = public)
 
         function [z_out] = Apply_E_z_Inverse(this, z_in)
-            z_out = kron(this.V * diag(1./sqrt(this.lambda)) * this.V', eye(this.num_controls)) * z_in;
+            z_out = kron(this.V * diag(1 ./ sqrt(this.lambda)) * this.V', eye(this.num_controls)) * z_in;
         end
 
         function [z_out] = Apply_E_z_Inverse_Transpose(this, z_in)
-            z_out = kron(this.V * diag(1./sqrt(this.lambda)) * this.V', eye(this.num_controls)) * z_in;
+            z_out = kron(this.V * diag(1 ./ sqrt(this.lambda)) * this.V', eye(this.num_controls)) * z_in;
         end
 
         function [z_out] = Apply_E_z(this, z_in)
@@ -32,35 +32,35 @@ classdef MD_Transient_Vector_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
         end
 
         function [z_out] = Apply_M_z(this, z_in)
-            z_out = kron(this.M,eye(this.num_controls)) * z_in;
+            z_out = kron(this.M, eye(this.num_controls)) * z_in;
         end
 
         function [z_out] = Apply_M_z_Inverse(this, z_in)
-            z_out = linsolve(kron(this.M,eye(this.num_controls)),z_in);
+            z_out = linsolve(kron(this.M, eye(this.num_controls)), z_in);
         end
 
         function [z_out] = Sample_with_Covariance_W_z_Acute_Inverse(this, num_samples)
-            z_out = zeros(this.n_t*this.num_controls,num_samples);
+            z_out = zeros(this.n_t * this.num_controls, num_samples);
             for k = 1:this.num_controls
-                I = k:this.num_controls:(this.n_t*this.num_controls);
-                z_out(I,:) = this.V * diag(sqrt(this.lambda)) * randn(this.n_t,num_samples);
+                I = k:this.num_controls:(this.n_t * this.num_controls);
+                z_out(I, :) = this.V * diag(sqrt(this.lambda)) * randn(this.n_t, num_samples);
             end
         end
 
         function [] = Set_beta_t(this, beta_t_new)
             this.beta_t = beta_t_new;
             this.E_t = this.beta_t * this.S + this.M;
-            [this.V,this.lambda] = eig(this.E_t,this.M,'vector');
+            [this.V, this.lambda] = eig(this.E_t, this.M, 'vector');
         end
 
         function this = MD_Transient_Vector_z_Prior_Interface(S, M, num_controls, data_interface, z_hyperparam_interface, u_prior_interface)
             this@MD_Elliptic_z_Prior_Interface(z_hyperparam_interface.alpha_z);
             this.S = S;
             this.M = M;
-            this.n_t = size(M,1);
+            this.n_t = size(M, 1);
             this.num_controls = num_controls;
             this.z_hyperparam_interface = z_hyperparam_interface;
-            this.determine_z_hyperparams = MD_Determine_z_Hyperparameters(data_interface,z_hyperparam_interface,u_prior_interface);
+            this.determine_z_hyperparams = MD_Determine_z_Hyperparameters(data_interface, z_hyperparam_interface, u_prior_interface);
 
             if z_hyperparam_interface.beta_t == 0.0
                 this.determine_z_hyperparams.Determine_beta_t();

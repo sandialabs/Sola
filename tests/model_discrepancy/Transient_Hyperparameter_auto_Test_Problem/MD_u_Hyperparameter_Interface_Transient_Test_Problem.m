@@ -8,7 +8,7 @@ classdef MD_u_Hyperparameter_Interface_Transient_Test_Problem < MD_u_Hyperparame
     methods (Access = public)
 
         function [nodes] = Load_Spatial_Node_Data(this)
-            nodes = cell(1,1);
+            nodes = cell(1, 1);
             nodes{1} = this.x;
         end
 

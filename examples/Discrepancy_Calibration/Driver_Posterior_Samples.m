@@ -81,8 +81,8 @@ plot(x, z_hifi, 'color', 'cyan', 'LineWidth', 3);
 plot(x, z_update_mean, '--', 'color', 'red', 'LineWidth', 3);
 xlabel('Spatial Input');
 ylabel('Optimal Controller');
-ylim([.5,2])
-legend({'Low-fidelity Control', 'High-fidelity Control', 'Posterior Mean','Posterior Samples'},'Position',[0.1696    0.2036    0.4125    0.2607]);
+ylim([.5, 2]);
+legend({'Low-fidelity Control', 'High-fidelity Control', 'Posterior Mean', 'Posterior Samples'}, 'Position', [0.1696    0.2036    0.4125    0.2607]);
 set(gca, 'fontsize', 24);
 cd(write_path);
 saveas(gca, ['posterior_z_samples_', num2str(alpha_u_pert), '_', num2str(beta_u_pert), '_', num2str(alpha_z_pert), '_', num2str(beta_z_pert)], 'epsc');

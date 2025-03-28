@@ -52,7 +52,7 @@ classdef MD_Numeric_Laplacian_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
             this.S = S;
             this.M = M;
             this.z_hyperparam_interface = z_hyperparam_interface;
-            this.determine_z_hyperparams = MD_Determine_z_Hyperparameters(data_interface,z_hyperparam_interface,u_prior_interface);
+            this.determine_z_hyperparams = MD_Determine_z_Hyperparameters(data_interface, z_hyperparam_interface, u_prior_interface);
             this.M_sqrt = M_z_Sqrt(this);
 
             if this.z_hyperparam_interface.beta_z == 0.0

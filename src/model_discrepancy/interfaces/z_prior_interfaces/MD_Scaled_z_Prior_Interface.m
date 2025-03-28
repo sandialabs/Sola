@@ -30,7 +30,6 @@ classdef MD_Scaled_z_Prior_Interface < MD_z_Prior_Interface
 
     methods
 
-
         function [z_out] = Sample_with_Covariance_W_z_Inverse(this, num_samples)
             z_out = this.Sample_with_Covariance_W_z_Acute_Inverse(num_samples);
             z_out = sqrt(this.alpha_z) * z_out;
@@ -38,7 +37,7 @@ classdef MD_Scaled_z_Prior_Interface < MD_z_Prior_Interface
 
         function [z_out] = Apply_W_z(this, z_in)
             z_out = this.Apply_W_z_Acute(z_in);
-            z_out = (1/this.alpha_z) * z_out;
+            z_out = (1 / this.alpha_z) * z_out;
         end
 
         function [] = Set_alpha_z(this, alpha_z_new)

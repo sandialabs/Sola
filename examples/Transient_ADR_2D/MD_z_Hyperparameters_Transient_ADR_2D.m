@@ -13,7 +13,7 @@ classdef MD_z_Hyperparameters_Transient_ADR_2D < MD_z_Hyperparameters
         function this = MD_z_Hyperparameters_Transient_ADR_2D(data_interface, u_prior_interface, n_t)
             this@MD_z_Hyperparameters(data_interface, u_prior_interface, 'transient vector');
             this.t = linspace(0, 1, n_t)';
-            this.t = this.t(1:end-1);
+            this.t = this.t(1:end - 1);
         end
 
     end

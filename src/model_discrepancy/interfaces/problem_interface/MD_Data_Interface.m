@@ -37,7 +37,7 @@ classdef MD_Data_Interface < handle
         % Defaults to return all state elements
         % Overload function to extract component i from the state
         % Returns a vector of integers I index elements of component i
-        function [I] = Separate_State_Components(this,i)
+        function [I] = Separate_State_Components(this, i)
             I = 1:length(this.u_opt);
         end
 

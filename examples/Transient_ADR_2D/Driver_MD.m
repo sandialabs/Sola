@@ -22,22 +22,22 @@ n_y = solver.n_y;
 n_q = solver.n_q;
 
 %%
-ui_hyperparams = cell(2,1);
-ui_spatial_prior_interface = cell(2,1);
-ui_transient_prior_cov = cell(2,1);
-ui_prior_interface = cell(2,1);
+ui_hyperparams = cell(2, 1);
+ui_spatial_prior_interface = cell(2, 1);
+ui_transient_prior_cov = cell(2, 1);
+ui_prior_interface = cell(2, 1);
 for k = 1:2
     ui_hyperparams{k} = MD_u_Hyperparameters_Transient_ADR_2D(data_interface, solver, t, k);
     ui_hyperparams{k}.gsvd_num_sing_vals = 1000;
     ui_hyperparams{k}.gsvd_oversampling = 20;
-    ui_spatial_prior_interface{k} = MD_Numeric_Laplacian_u_Prior_Interface(S,M,ui_hyperparams{k});
-    ui_transient_prior_cov{k} = MD_Transient_Prior_Covariance_Sabl(ui_hyperparams{k}, T, n_t, n_y/2);
+    ui_spatial_prior_interface{k} = MD_Numeric_Laplacian_u_Prior_Interface(S, M, ui_hyperparams{k});
+    ui_transient_prior_cov{k} = MD_Transient_Prior_Covariance_Sabl(ui_hyperparams{k}, T, n_t, n_y / 2);
     ui_prior_interface{k} = MD_Transient_Elliptic_u_Prior_Interface(ui_spatial_prior_interface{k}, ui_transient_prior_cov{k});
 end
 u_prior_interface = MD_Multi_State_u_Prior_Interface(ui_prior_interface);
 
 %%
-z_hyperparams = MD_z_Hyperparameters_Transient_ADR_2D(data_interface,u_prior_interface,n_t);
+z_hyperparams = MD_z_Hyperparameters_Transient_ADR_2D(data_interface, u_prior_interface, n_t);
 transient_prior_cov_z = MD_Transient_Prior_Covariance_Sabl(z_hyperparams, t(end - 1), n_t - 1, n_q);
 z_prior_interface = MD_z_Prior_Interface_Transient_ADR_2D(transient_prior_cov_z, n_q);
 

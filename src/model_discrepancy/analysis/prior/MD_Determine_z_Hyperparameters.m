@@ -30,13 +30,13 @@ classdef MD_Determine_z_Hyperparameters < handle
                     u_nom = this.z_hypeparam_interface.State_Solve(this.data_interface.z_opt);
                     z_samples = z_prior_interface.Sample_with_Covariance_W_z_Acute_Inverse(this.z_hypeparam_interface.num_state_solves);
                     mags = sqrt(diag(z_samples' * z_prior_interface.Apply_M_z(z_samples)));
-                    z_samples = zopt_norm * z_samples * diag(1./mags);
+                    z_samples = zopt_norm * z_samples * diag(1 ./ mags);
                     u_samples = this.z_hypeparam_interface.State_Solve(z_samples + this.data_interface.z_opt);
                     e = u_samples - u_nom;
                     e_norm_sqr = diag(e' * this.u_prior_interface.Apply_M_u(e));
-                    d1 = this.data_interface.D(:,1);
+                    d1 = this.data_interface.D(:, 1);
                     d1_norm_sq = d1' * this.u_prior_interface.Apply_M_u(d1);
-                    this.z_hypeparam_interface.discrepancy_percent_z_variation = sqrt(mean(e_norm_sqr)/d1_norm_sq);
+                    this.z_hypeparam_interface.discrepancy_percent_z_variation = sqrt(mean(e_norm_sqr) / d1_norm_sq);
                 else
                     N = size(this.data_interface.Z, 2);
                     if N > 1
@@ -47,12 +47,12 @@ classdef MD_Determine_z_Hyperparameters < handle
                             this.z_hypeparam_interface.z_pert_norm_sq(k - 1) = v' * z_prior_interface.Apply_M_z(v);
                         end
                         if this.z_hypeparam_interface.discrepancy_percent_z_variation == 1
-                            d1 = this.data_interface.D(:,1);
+                            d1 = this.data_interface.D(:, 1);
                             d1_norm_sq = d1' * this.u_prior_interface.Apply_M_u(d1);
-                            d_pert_norm_sq = zeros(N-1,1);
+                            d_pert_norm_sq = zeros(N - 1, 1);
                             for k = 2:N
-                                d = this.data_interface.D(:,k) - d1;
-                                d_pert_norm_sq(k-1) = d' * this.u_prior_interface.Apply_M_u(d);
+                                d = this.data_interface.D(:, k) - d1;
+                                d_pert_norm_sq(k - 1) = d' * this.u_prior_interface.Apply_M_u(d);
                             end
                             this.z_hypeparam_interface.discrepancy_percent_z_variation = mean(sqrt((d_pert_norm_sq / d1_norm_sq) ./ (this.z_hypeparam_interface.z_pert_norm_sq / this.z_hypeparam_interface.z1_norm_sq)));
                         end
@@ -64,9 +64,9 @@ classdef MD_Determine_z_Hyperparameters < handle
             this.z_hypeparam_interface.Set_alpha_z(alpha_z_new);
         end
 
-        function [e] = Compute_Eigenvalues(this,z_prior_interface)
+        function [e] = Compute_Eigenvalues(this, z_prior_interface)
 
-            if strcmp(this.z_type,'spatial field')
+            if strcmp(this.z_type, 'spatial field')
                 nodes = this.z_hypeparam_interface.Load_Spatial_Node_Data();
                 if size(nodes, 2) == 1
                     Lx = max(nodes(:, 1)) - min(nodes(:, 1));
@@ -83,7 +83,7 @@ classdef MD_Determine_z_Hyperparameters < handle
                 end
             end
 
-            if strcmp(this.z_type,'transient vector')
+            if strcmp(this.z_type, 'transient vector')
                 t = this.z_hypeparam_interface.Load_Time_Node_Data();
                 L = max(t) - min(t);
                 n = length(t) - 1;
@@ -91,7 +91,7 @@ classdef MD_Determine_z_Hyperparameters < handle
                 e = sqrt(e');
             end
 
-            if strcmp(this.z_type,'vector')
+            if strcmp(this.z_type, 'vector')
 
             end
         end
@@ -124,13 +124,13 @@ classdef MD_Determine_z_Hyperparameters < handle
             initial_guess = 0;
             N = size(this.data_interface.Z, 2);
             n_t = length(t);
-            num_comp = size(this.data_interface.Z, 1)/n_t;
+            num_comp = size(this.data_interface.Z, 1) / n_t;
             correlation_lengths = zeros(N, num_comp);
             for k = 1:N
-                z_data = reshape(this.data_interface.Z(:,k),num_comp,n_t)';
+                z_data = reshape(this.data_interface.Z(:, k), num_comp, n_t)';
                 for j = 1:num_comp
-                    correlation_lengths(k,j) = computeCorrelationLength_1D(t, z_data(:,j), initial_guess);
-                    initial_guess = correlation_lengths(k,j);
+                    correlation_lengths(k, j) = computeCorrelationLength_1D(t, z_data(:, j), initial_guess);
+                    initial_guess = correlation_lengths(k, j);
                 end
             end
             beta_t_new = mean(correlation_lengths(:), 'omitnan')^2 / 4;

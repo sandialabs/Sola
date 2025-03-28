@@ -16,7 +16,7 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             this.spatial_prior_cov = spatial_prior_cov;
             this.transient_prior_cov = transient_prior_cov;
             this.u_hyperparam_interface = transient_prior_cov.u_hyperparam_interface;
-            this.determine_u_hyperparams = MD_Determine_u_Hyperparameters(data_interface,this.u_hyperparam_interface);
+            this.determine_u_hyperparams = MD_Determine_u_Hyperparameters(data_interface, this.u_hyperparam_interface);
 
             if this.u_hyperparam_interface.adapt_time_variance
                 this.determine_u_hyperparams.Determine_alpha_t(this);

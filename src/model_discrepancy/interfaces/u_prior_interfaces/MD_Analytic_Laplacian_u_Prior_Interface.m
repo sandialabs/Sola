@@ -106,7 +106,7 @@ classdef MD_Analytic_Laplacian_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
             this@MD_Elliptic_u_Prior_Interface(u_hyperparam_interface.alpha_u);
             this.M = M;
             this.u_hyperparam_interface = u_hyperparam_interface;
-            this.determine_u_hyperparams = MD_Determine_u_Hyperparameters(data_interface,u_hyperparam_interface);
+            this.determine_u_hyperparams = MD_Determine_u_Hyperparameters(data_interface, u_hyperparam_interface);
             this.beta_u = 0.0;
 
             if this.u_hyperparam_interface.beta_u == 0.0

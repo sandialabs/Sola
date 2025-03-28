@@ -7,7 +7,7 @@ classdef MD_u_Hyperparameter_Interface_synthetic_test_with_hyperparam < MD_u_Hyp
     methods (Access = public)
 
         function [nodes] = Load_Spatial_Node_Data(this)
-            nodes = cell(1,1);
+            nodes = cell(1, 1);
             nodes{1} = this.x;
         end
 

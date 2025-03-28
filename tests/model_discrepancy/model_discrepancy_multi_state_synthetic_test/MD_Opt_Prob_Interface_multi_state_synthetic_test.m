@@ -9,7 +9,7 @@ classdef MD_Opt_Prob_Interface_multi_state_synthetic_test < MD_Opt_Prob_Interfac
     methods (Access = public)
 
         function [z_out] = Apply_Solution_Operator_z_Jacobian_Transpose(this, u_in, z)
-            z_out = kron(ones(1,2),3 * diag(z.^2)) * u_in;
+            z_out = kron(ones(1, 2), 3 * diag(z.^2)) * u_in;
         end
 
         % This implementation assumes that it is evaluated at the optimal z so that
@@ -21,13 +21,13 @@ classdef MD_Opt_Prob_Interface_multi_state_synthetic_test < MD_Opt_Prob_Interfac
         end
 
         function [grad_u] = Misfit_Gradient(this, u, z)
-            grad_u = 0*u;
-            grad_u((this.m+1):end) = this.M * (u((this.m+1):end) - 1 - (1 + this.x).^3);
+            grad_u = 0 * u;
+            grad_u((this.m + 1):end) = this.M * (u((this.m + 1):end) - 1 - (1 + this.x).^3);
         end
 
         function [u_out] = Apply_Misfit_Hessian(this, u_in, u, z)
             u_out = 0 * u_in;
-            u_out((this.m+1):end,:) = this.M * u_in((this.m+1):end,:);
+            u_out((this.m + 1):end, :) = this.M * u_in((this.m + 1):end, :);
         end
 
     end

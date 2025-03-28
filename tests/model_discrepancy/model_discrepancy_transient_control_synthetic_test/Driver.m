@@ -1,7 +1,7 @@
 %%
 clear;
 close all;
-clc
+clc;
 addpath(genpath('../../../src'));
 rng(121234);
 
@@ -11,14 +11,14 @@ n_y = 50;
 x = linspace(0, 1, n_y)';
 n_t = 20;
 T = 1;
-t = linspace(0,T,n_t)';
+t = linspace(0, T, n_t)';
 
-data_interface = MD_Data_Interface_transient_control_synthetic_test(n_y,n_t);
-opt_prob_interface = MD_Opt_Prob_Interface_transient_control_synthetic_test(n_y,n_t);
+data_interface = MD_Data_Interface_transient_control_synthetic_test(n_y, n_t);
+opt_prob_interface = MD_Opt_Prob_Interface_transient_control_synthetic_test(n_y, n_t);
 
 [M, S] = Assemble_Mass_and_Stiffness(n_y);
-u_hyperparam_interface = MD_u_Hyperparameter_Interface_transient_control_synthetic_test(n_y,n_t);
-transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface,u_hyperparam_interface, T, n_t, n_y);
+u_hyperparam_interface = MD_u_Hyperparameter_Interface_transient_control_synthetic_test(n_y, n_t);
+transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface, T, n_t, n_y);
 spatial_u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface);
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_u_prior_interface, transient_prior_cov);
 
@@ -33,8 +33,8 @@ num_prior_samples = 100;
 md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 md_prior_sampling.Generate_Prior_Discrepancy_Sample_Data(num_prior_samples);
 
-%md_prior_sampling.Visualization_for_Prior_Time_Evolution(1);
-%md_prior_sampling.Visualization_for_Prior_Discrepancy_at_z_opt(1);
+% md_prior_sampling.Visualization_for_Prior_Time_Evolution(1);
+% md_prior_sampling.Visualization_for_Prior_Discrepancy_at_z_opt(1);
 md_prior_sampling.Visualization_for_Prior_Discrepancy_at_z_pert(1);
 
 %%
@@ -62,7 +62,7 @@ md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 %     plot(x, 1 + x, 'color', 'cyan', 'LineWidth', 3);
 %     plot(x, z_update_mean, '--', 'color', 'red', 'LineWidth', 3);
 % end
-% 
+%
 % %%
 % z_mean_ref = load('reference_solution.mat').z_update_mean;
 % z_samples_ref = load('reference_solution.mat').z_update_samples;

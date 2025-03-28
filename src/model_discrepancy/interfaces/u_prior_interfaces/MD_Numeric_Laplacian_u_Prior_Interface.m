@@ -46,9 +46,9 @@ classdef MD_Numeric_Laplacian_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
             this.E_u = this.beta_u * this.S + this.M;
             this.is_sparse = issparse(this.E_u);
             if this.is_sparse
-                [this.R,flag,this.P] = chol(this.E_u);
+                [this.R, flag, this.P] = chol(this.E_u);
                 if flag ~= 0
-                    disp('Error in Cholesky factorization of E_u')
+                    disp('Error in Cholesky factorization of E_u');
                 end
             else
                 this.R = chol(this.E_u);
@@ -60,7 +60,7 @@ classdef MD_Numeric_Laplacian_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
             this.M = M;
             this.S = S;
             this.u_hyperparam_interface = u_hyperparam_interface;
-            this.determine_u_hyperparams = MD_Determine_u_Hyperparameters(data_interface,u_hyperparam_interface);
+            this.determine_u_hyperparams = MD_Determine_u_Hyperparameters(data_interface, u_hyperparam_interface);
 
             if this.u_hyperparam_interface.beta_u == 0.0
                 this.determine_u_hyperparams.Determine_beta_u();

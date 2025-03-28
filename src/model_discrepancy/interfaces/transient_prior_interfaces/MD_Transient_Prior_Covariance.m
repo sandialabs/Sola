@@ -28,7 +28,7 @@ classdef MD_Transient_Prior_Covariance < handle
 
         function this = MD_Transient_Prior_Covariance(M_t, S_t, n_y, data_interface, u_hyperparam_interface)
             this.u_hyperparam_interface = u_hyperparam_interface;
-            this.determine_u_hyperparams = MD_Determine_u_Hyperparameters(data_interface,u_hyperparam_interface);
+            this.determine_u_hyperparams = MD_Determine_u_Hyperparameters(data_interface, u_hyperparam_interface);
             this.M_t = M_t;
             this.S_t = S_t;
             this.n_t = size(M_t, 1);

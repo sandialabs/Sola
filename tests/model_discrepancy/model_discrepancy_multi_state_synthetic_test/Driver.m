@@ -8,25 +8,25 @@ suppress_figures = true;
 
 m = 51;
 [M, S, x] = Assemble_Mass_and_Stiffness(m);
-state_map_array = cell(2,1);
+state_map_array = cell(2, 1);
 state_map_array{1} = (1:m)';
-state_map_array{2} = ((m+1):(2*m))';
+state_map_array{2} = ((m + 1):(2 * m))';
 
 data_interface = MD_Data_Interface_multi_state_synthetic_test(m);
 
-ui_hyperparam_interface = cell(2,1);
-ui_prior_interface = cell(2,1);
+ui_hyperparam_interface = cell(2, 1);
+ui_prior_interface = cell(2, 1);
 
 ui_hyperparam_interface{1} = MD_u_Hyperparameter_Interface_multi_state_synthetic_test(1, m);
-ui_prior_interface{1} = MD_Numeric_Laplacian_u_Prior_Interface(S,M,data_interface,ui_hyperparam_interface{1});
+ui_prior_interface{1} = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, ui_hyperparam_interface{1});
 
 ui_hyperparam_interface{2} = MD_u_Hyperparameter_Interface_multi_state_synthetic_test(2, m);
-ui_prior_interface{2} = MD_Numeric_Laplacian_u_Prior_Interface(S,M,data_interface,ui_hyperparam_interface{2});
+ui_prior_interface{2} = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, ui_hyperparam_interface{2});
 
 u_prior_interface = MD_Multi_State_u_Prior_Interface(data_interface, ui_prior_interface);
 
 z_hyperparam_interface = MD_z_Hyperparameter_Interface_multi_state_synthetic_test(m);
-z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S,M,data_interface,z_hyperparam_interface,u_prior_interface);
+z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S, M, data_interface, z_hyperparam_interface, u_prior_interface);
 
 num_prior_samples = 100;
 md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
@@ -36,10 +36,10 @@ delta_samples = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_s
 
 if ~suppress_figures
     figure;
-    subplot(2,1,1)
-    plot(x, delta_samples(1:m,:), 'LineWidth', 3, 'color', [.9, .9, .9]);
-    subplot(2,1,2)
-    plot(x, delta_samples((m+1):end,:), 'LineWidth', 3, 'color', [.9, .9, .9]);
+    subplot(2, 1, 1);
+    plot(x, delta_samples(1:m, :), 'LineWidth', 3, 'color', [.9, .9, .9]);
+    subplot(2, 1, 2);
+    plot(x, delta_samples((m + 1):end, :), 'LineWidth', 3, 'color', [.9, .9, .9]);
 end
 
 z = zeros(m, 3);
@@ -50,16 +50,16 @@ delta_prior_samples = md_prior_sampling.Prior_Discrepancy_Samples(z, num_prior_s
 if ~suppress_figures
     for k = 1:10
         figure;
-        subplot(2,1,1)
-        plot(x, delta_prior_samples{k}(1:m,:), 'LineWidth', 3, 'color', [.9, .9, .9]);
-        subplot(2,1,2)
-        plot(x, delta_prior_samples{k}((m+1):end,:), 'LineWidth', 3, 'color', [.9, .9, .9]);
+        subplot(2, 1, 1);
+        plot(x, delta_prior_samples{k}(1:m, :), 'LineWidth', 3, 'color', [.9, .9, .9]);
+        subplot(2, 1, 2);
+        plot(x, delta_prior_samples{k}((m + 1):end, :), 'LineWidth', 3, 'color', [.9, .9, .9]);
     end
 end
 
 %%
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
-alpha_d = mean([ui_hyperparam_interface{1}.alpha_d() ; ui_hyperparam_interface{2}.alpha_d()]);
+alpha_d = mean([ui_hyperparam_interface{1}.alpha_d(); ui_hyperparam_interface{2}.alpha_d()]);
 num_post_samples = 100;
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 Z_test = randn(m, 3);
@@ -70,50 +70,50 @@ Z_test(:, 3) = 1.5 * ones(m, 1);
 if ~suppress_figures
 
     figure;
-    subplot(2,1,1)
-    hold on
+    subplot(2, 1, 1);
+    hold on;
     for k = 1:num_post_samples
         plot(x, delta_samples{1}(1:m, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
     plot(x, md_post_sampling.post_data.D(1:m, 1), 'color', 'black', 'LineWidth', 3);
     plot(x, delta_mean{1}(1:m), '--', 'color', 'red', 'LineWidth', 3);
-    subplot(2,1,2)
-    hold on
+    subplot(2, 1, 2);
+    hold on;
     for k = 1:num_post_samples
-        plot(x, delta_samples{1}((m+1):end, k), 'color', [.9, .9, .9], 'LineWidth', 3);
+        plot(x, delta_samples{1}((m + 1):end, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
-    plot(x, md_post_sampling.post_data.D((m+1):end, 1), 'color', 'black', 'LineWidth', 3);
-    plot(x, delta_mean{1}((m+1):end), '--', 'color', 'red', 'LineWidth', 3);
+    plot(x, md_post_sampling.post_data.D((m + 1):end, 1), 'color', 'black', 'LineWidth', 3);
+    plot(x, delta_mean{1}((m + 1):end), '--', 'color', 'red', 'LineWidth', 3);
 
     figure;
-    subplot(2,1,1)
-    hold on
+    subplot(2, 1, 1);
+    hold on;
     for k = 1:num_post_samples
         plot(x, delta_samples{2}(1:m, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
     plot(x, md_post_sampling.post_data.D(1:m, 2), 'color', 'black', 'LineWidth', 3);
     plot(x, delta_mean{2}(1:m), '--', 'color', 'red', 'LineWidth', 3);
-    subplot(2,1,2)
-    hold on
+    subplot(2, 1, 2);
+    hold on;
     for k = 1:num_post_samples
-        plot(x, delta_samples{2}((m+1):end, k), 'color', [.9, .9, .9], 'LineWidth', 3);
+        plot(x, delta_samples{2}((m + 1):end, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
-    plot(x, md_post_sampling.post_data.D((m+1):end, 2), 'color', 'black', 'LineWidth', 3);
-    plot(x, delta_mean{2}((m+1):end), '--', 'color', 'red', 'LineWidth', 3);
+    plot(x, md_post_sampling.post_data.D((m + 1):end, 2), 'color', 'black', 'LineWidth', 3);
+    plot(x, delta_mean{2}((m + 1):end), '--', 'color', 'red', 'LineWidth', 3);
 
     figure;
-    subplot(2,1,1)
-    hold on
+    subplot(2, 1, 1);
+    hold on;
     for k = 1:num_post_samples
         plot(x, delta_samples{3}(1:m, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
     plot(x, delta_mean{3}(1:m), '--', 'color', 'red', 'LineWidth', 3);
-    subplot(2,1,2)
-    hold on
+    subplot(2, 1, 2);
+    hold on;
     for k = 1:num_post_samples
-        plot(x, delta_samples{3}((m+1):end, k), 'color', [.9, .9, .9], 'LineWidth', 3);
+        plot(x, delta_samples{3}((m + 1):end, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
-    plot(x, delta_mean{3}((m+1):end), '--', 'color', 'red', 'LineWidth', 3);
+    plot(x, delta_mean{3}((m + 1):end), '--', 'color', 'red', 'LineWidth', 3);
 
 end
 %%

@@ -100,6 +100,5 @@ classdef MD_u_Hyperparameter_Interface < handle
             this.gsvd_num_subspace_iter = gsvd_num_subspace_iter_new;
         end
 
-
     end
 end
