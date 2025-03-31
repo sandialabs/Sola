@@ -3,6 +3,7 @@ clear;
 close all;
 clc;
 addpath(genpath('../../src'));
+rng(123413);
 
 m = 200;
 x = linspace(0, 1, m)';
@@ -60,7 +61,7 @@ S(1, 1) = .5 * S(1, 1);
 S(end, end) = .5 * S(end, end);
 S = (1 / h) * S;
 
-n = 10;
+n = 5;
 E = (1.e-2) * S + M;
 tmp = linsolve(E, randn(m, n));
 scaling = .2 * mean(abs(T)) / mean(abs(tmp(:)));
@@ -72,7 +73,7 @@ for k = 1:n
 end
 
 [U, Sigma, V] = svd(D);
-r = 20;
+r = 10;
 Ur = U(:, 1:r);
 Sigmar = Sigma(1:r, 1:r);
 Vr = V(:, 1:r);
@@ -85,20 +86,57 @@ for k = 1:r
     L(k, :) = linsolve(Tr_samples', zr_samples(k, :)');
 end
 
-z_approx_1 = z + D * (T_samples - T);
-z_approx_2 = z + Ur * Sigmar * Vr' * (T_samples - T);
-z_approx_3 = z + Ur * L * Vr' * (T_samples - T);
+%%
+if execute_test
+    z_approx_1 = z + D * (T_samples - T);
+    z_approx_2 = z + Ur * Sigmar * Vr' * (T_samples - T);
+    z_approx_3 = z + Ur * L * Vr' * (T_samples - T);
 
-for k = 1:n
-    figure;
-    hold on;
-    plot(x, z_samples(:, k), 'LineWidth', 3);
-    plot(x, z_approx_1(:, k), '--', 'LineWidth', 3);
-    plot(x, z_approx_2(:, k), '*', 'LineWidth', 3);
-    plot(x, z_approx_3(:, k), 'LineWidth', 3);
-    xlabel('$x$', 'Interpreter', 'latex');
-    ylabel('Source', 'Interpreter', 'latex');
-    legend({'Optimal', 'Post-Opt Approx', 'LR Post-Opt Approx', 'NO2'}, 'location', 'south', 'Interpreter', 'latex');
-    set(gca, 'FontSize', 24);
-    set(gcf, 'Color', 'White');
+    for k = 1:n
+        figure;
+        hold on;
+        plot(x, z_samples(:, k), 'LineWidth', 3);
+        plot(x, z_approx_1(:, k), '--', 'LineWidth', 3);
+        plot(x, z_approx_2(:, k), '*', 'LineWidth', 3);
+        plot(x, z_approx_3(:, k), 'LineWidth', 3);
+        xlabel('$x$', 'Interpreter', 'latex');
+        ylabel('Source', 'Interpreter', 'latex');
+        legend({'Optimal', 'Post-Opt Approx', 'LR Post-Opt Approx', 'NO2'}, 'location', 'south', 'Interpreter', 'latex');
+        set(gca, 'FontSize', 24);
+        set(gcf, 'Color', 'White');
+    end
 end
+
+%%
+tmp = linsolve(E, randn(m, 1));
+scaling = .15 * mean(abs(T)) / mean(abs(tmp(:)));
+T_test = T + scaling * tmp;
+
+z_approx = z + Ur * L * Vr' * (T_test - T);
+[~, z_test, ~] = Optimal_Solution_Map(T_test, z);
+
+figure;
+hold on;
+plot(x, T_samples(:, 1), 'LineWidth', 3, 'color', [.9, .9, .9]);
+plot(x, T_test, 'LineWidth', 3, 'color', 'magenta');
+plot(x, T_samples, 'LineWidth', 3, 'color', [.9, .9, .9]);
+plot(x, T_test, 'LineWidth', 3, 'color', 'magenta');
+xlabel('$x$', 'Interpreter', 'latex');
+ylabel('$T$', 'Interpreter', 'latex');
+legend({'Training Data', 'Testing Data'}, 'location', 'best', 'Interpreter', 'latex');
+set(gca, 'FontSize', 24);
+set(gcf, 'Color', 'White');
+
+figure;
+hold on;
+plot(x, z_samples(:, 1), 'LineWidth', 3, 'color', [.9, .9, .9]);
+plot(x, z_test, 'LineWidth', 3, 'color', 'magenta');
+plot(x, z_approx, 'LineWidth', 3, 'color', 'cyan');
+plot(x, z_samples, 'LineWidth', 3, 'color', [.9, .9, .9]);
+plot(x, z_test, 'LineWidth', 3, 'color', 'magenta');
+plot(x, z_approx, 'LineWidth', 3, 'color', 'cyan');
+xlabel('$x$', 'Interpreter', 'latex');
+ylabel('$z$', 'Interpreter', 'latex');
+legend({'Training Data', 'Testing Data', 'NO2 Prediction'}, 'location', 'best', 'Interpreter', 'latex');
+set(gca, 'FontSize', 24);
+set(gcf, 'Color', 'White');
