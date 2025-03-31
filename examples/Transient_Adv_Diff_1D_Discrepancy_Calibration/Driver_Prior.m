@@ -21,19 +21,19 @@ num_samples = 500;
 
 %%
 adapt_time_variance = true;
-u_hyperparams = MD_u_Hyperparameters_Transient_Test_Problem(data_interface, n_y, adapt_time_variance);
-transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(u_hyperparams, T, n_t, n_y);
-spatial_u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(con_hifi.S, con_hifi.M, u_hyperparams);
-u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(spatial_u_prior_interface, transient_prior_cov);
+u_hyperparam_interface = MD_u_Hyperparameter_Interface_Transient_Test_Problem(n_t, n_y, adapt_time_variance);
+transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface, T, n_t, n_y);
+spatial_u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(con_hifi.S, con_hifi.M, data_interface, u_hyperparam_interface);
+u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_u_prior_interface, transient_prior_cov);
 
 u_samples_adapt = u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samples);
 
 %%
 adapt_time_variance = false;
-u_hyperparams = MD_u_Hyperparameters_Transient_Test_Problem(data_interface, n_y, adapt_time_variance);
-transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(u_hyperparams, T, n_t, n_y);
-spatial_u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(con_hifi.S, con_hifi.M, u_hyperparams);
-u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(spatial_u_prior_interface, transient_prior_cov);
+u_hyperparam_interface = MD_u_Hyperparameter_Interface_Transient_Test_Problem(n_t, n_y, adapt_time_variance);
+transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface, T, n_t, n_y);
+spatial_u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(con_hifi.S, con_hifi.M, data_interface, u_hyperparam_interface);
+u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_u_prior_interface, transient_prior_cov);
 
 u_samples_no_adapt = u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samples);
 
@@ -51,7 +51,7 @@ end
 tmp = reshape(data_interface.D(:, 1), n_y, n_t);
 d1_ts = sqrt(diag(tmp' * spatial_u_prior_interface.Apply_M_u(tmp)));
 
-t = u_hyperparams.Load_Time_Node_Data();
+t = u_hyperparam_interface.Load_Time_Node_Data();
 b = 1.1 * max([ts_adapt(:); ts_no_adapt(:)]);
 
 figure;

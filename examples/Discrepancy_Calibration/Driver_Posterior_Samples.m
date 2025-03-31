@@ -12,7 +12,7 @@ write_path = '~/Documents/dasco/papers/Model_Discrepancy_Hyperparameters/figures
 alpha_u_pert = 100;
 beta_u_pert = 100;
 alpha_z_pert = 100;
-beta_z_pert = 100;
+beta_z_pert = 10;
 
 con_hifi = Adv_Diff_Constraint(m, diff_coeff, vel_coeff, robin_coeff);
 con_lofi = Diff_Constraint(con_hifi);
@@ -36,27 +36,26 @@ D = con_hifi.State_Solve(Z) - con_lofi.State_Solve(Z);
 data_interface = MD_Data_Interface_Discrepancy_Calibration(z_lofi, u_lofi, Z, D);
 data_centering = true;
 
-u_hyperparams = MD_u_Hyperparameters_Discrepancy_Calibration(data_interface, x, data_centering);
-u_prior_interface = MD_Analytic_Laplacian_u_Prior_Interface(con_hifi.M, u_hyperparams);
+u_hyperparam_interface = MD_u_Hyperparameter_Interface_Discrepancy_Calibration(x, data_centering);
+u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(con_hifi.S, con_hifi.M, data_interface, u_hyperparam_interface);
 
 num_state_solves = 100;
-z_hyperparams = MD_z_Hyperparameters_Discrepancy_Calibration(data_interface, u_prior_interface, num_state_solves, x, con_lofi);
-z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(con_hifi.S, con_hifi.M, z_hyperparams);
+z_hyperparam_interface = MD_z_Hyperparameter_Interface_Discrepancy_Calibration(num_state_solves, x, con_lofi);
+z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(con_hifi.S, con_hifi.M, data_interface, z_hyperparam_interface, u_prior_interface);
 
-alpha_u = alpha_u_pert / 100 * u_hyperparams.alpha_u;
+alpha_u = alpha_u_pert / 100 * u_hyperparam_interface.alpha_u;
 u_prior_interface.Set_alpha_u(alpha_u);
-beta_u = beta_u_pert / 100 * u_hyperparams.beta_u;
+beta_u = beta_u_pert / 100 * u_hyperparam_interface.beta_u;
 u_prior_interface.Set_beta_u(beta_u);
 
-alpha_z = alpha_z_pert / 100 * z_hyperparams.alpha_z;
+alpha_z = alpha_z_pert / 100 * z_hyperparam_interface.alpha_z;
 z_prior_interface.Set_alpha_z(alpha_z);
-beta_z = beta_z_pert / 100 * z_hyperparams.beta_z;
+beta_z = beta_z_pert / 100 * z_hyperparam_interface.beta_z;
 z_prior_interface.Set_beta_z(beta_z);
 
 %%
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
-u_hyperparams.Determine_alpha_d();
-alpha_d = u_hyperparams.alpha_d;
+alpha_d = u_hyperparam_interface.alpha_d;
 num_post_samples = 100;
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 
