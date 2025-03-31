@@ -1,4 +1,4 @@
-classdef MD_z_Hyperparameters_Diff < MD_z_Hyperparameters
+classdef MD_z_Hyperparameter_Interface_Diff < MD_z_Hyperparameter_Interface
 
     properties
         x
@@ -16,8 +16,8 @@ classdef MD_z_Hyperparameters_Diff < MD_z_Hyperparameters
             u = this.con_lofi.State_Solve(z);
         end
 
-        function this = MD_z_Hyperparameters_Diff(data_interface, u_prior_interface, num_state_solves, x, y, con_lofi)
-            this@MD_z_Hyperparameters(data_interface, u_prior_interface, 'spatial field', num_state_solves);
+        function this = MD_z_Hyperparameter_Interface_Diff(num_state_solves, x, y, con_lofi)
+            this@MD_z_Hyperparameter_Interface('spatial field', num_state_solves);
             this.x = x;
             this.y = y;
             this.con_lofi = con_lofi;
