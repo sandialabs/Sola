@@ -127,7 +127,7 @@ Applying the chain rule,
     = \s_z(\z)\trp\grad{u}J(\s(\z),\z) + \grad{z}J(\s(\z),\z),
 \end{align}
 where $\s_z(\z)\in\R^{n_u\times n_z}$ is the $\z$ Jacobian of $\s$.
-Note that we are using the convention that the gradient is a column vector.
+Note that we are using the convention that the gradient is a column vector.\footnote{\SM{If row vector (more mathematically standard) it's pretty much the same, but the implementation doesn't really care.}}
 Since $\c(\s(\z),\z) = \0$, the implicit function theorem yields the formula
 \begin{align}
     \label{eq:Sz-implicit-function}
@@ -135,7 +135,7 @@ Since $\c(\s(\z),\z) = \0$, the implicit function theorem yields the formula
     = -\c_u(\s(\z),\z)^{-1}\c_z(\s(\z),\z),
 \end{align}
 where $\c_u(\u,\z)\in\mathbb{R}^{n_u\times n_u}$ and $\c_z(\u,\z)\in\mathbb{R}^{n_u\times n_z}$ denote the $\u$ and $\z$ Jacobians of $\c$, respectively.
-Defining $\u \coloneqq \s(\z)$, the first term in \cref{eq:gradJ-chain-rule} becomes
+Writing $\u = \s(\z)$, the first term in \cref{eq:gradJ-chain-rule} becomes
 \begin{align}
     \begin{aligned}
     \s_z(\z)\trp\grad{u}J(\s(\z),\z)
@@ -246,7 +246,9 @@ To that end, let $\tilde{\c}:\R^{n_u}\times\R^{n_z}\to\R^{n_u}$ be an approximat
     % \text{where}~~& \tilde{\c}(\u,\z) = \0
     % \end{aligned}
     % \qquad\Longleftrightarrow\qquad
-    \min_{\z\in Z} J(\tilde{\s}(\z), \z).
+    \min_{\z\in Z}
+    \tilde{J}(\z) \coloneqq
+    J(\tilde{\s}(\z), \z).
 \end{align}
 The discrepancy between the model constaint $\tilde{\c}$ and the true constraint $\c$ may cause minimizers of \cref{eq:optimization-surrogate} to be far from minimizers of \cref{eq:optimization-reducedspace}.
 We will show, however, that solutions of \cref{eq:optimization-reducedspace} can be written in terms of solutions of \cref{eq:optimization-surrogate}.
@@ -255,7 +257,32 @@ If $\tilde{\s}$ is less expensive to evaluate than $\s$, and if the derivatives 
 
 % \SM{Might be good to introduce the baby example here, define $\c$ and $\tilde{\c}$?}
 
-\subsection{Hyper-differential Sensitivity Analysis}
+To relate \cref{eq:optimization-surrogate} to \cref{eq:optimization-reducedspace}, let $\bfdelta \coloneqq \bfdelta(\z;\bftheta)\in\R^{n_z}$ for $\bftheta\in\R^{n_\theta}$ be a smooth function, parameterized such that $\bfdelta(\z,\0) = \0$ for all $\z$ (hence the Jacobian $\bfdelta_z(\z,\0)$ is the zero matrix), and consider the perturbed objective function
+\begin{align}
+    \label{eq:optimization-discrepancy}
+    \J(\z, \bftheta)
+    \coloneqq J\big(\tilde{\s}(\z) + \bfdelta(\z;\bftheta), \z\big).
+\end{align}
+By construction,
+$
+    \J(\z,\0)
+    % = J(\tilde{\s}(\z) + \bfdelta(\z;\0),\z)
+    = J(\tilde{\s}(\z),\z)
+    = \tilde{J}(\z),
+$
+the objective function in the surrogate problem~\cref{eq:optimization-surrogate}.
+On the other hand, if $\bftheta$ can be chosen so that $\tilde{\s}(\z) + \bfdelta(\z;\bftheta) \approx \s(\z)$ for all $\z$, then
+$
+    \J(\z,\bftheta)
+    % = J(\tilde{\s}(\z) + \bfdelta(\z;\bftheta), \z)
+    \approx
+    J(\s(\z), \z)
+    = \hat{J}(\z),
+$
+the objective function for the original optimization problem \cref{eq:optimization-reducedspace}.
+The next section uses sensitivity analysis to connect solutions of \cref{eq:optimization-surrogate} to solutions of \cref{eq:optimization-reducedspace} in terms of $\bftheta$.
+
+\subsection{Post-optimality sensitivity analysis}
 \label{sec:hdsa-algorithm}
 
 \begin{purpose}
@@ -264,21 +291,79 @@ Don't go into the details (e.g., Kronecker structure), just list the essential i
 % Concise summary, consider a diagram like Figure~1 from \cite{hart2023hdsaoptimal}.
 \end{purpose}
 
-To address the model discrepancy error in \cref{eq:optimization-surrogate}, let $\bfdelta \coloneqq \bfdelta(\z;\bftheta)\in\R^{n_z}$ for some parameter vector $\bftheta\in\R^{n_\theta}$ and consider the perturbed objective function
+Let $\tilde{\z}\in\R^{n_z}$ be a local minimizer of~\cref{eq:optimization-surrogate}.
+Fixing $\bftheta = \0$, the necessary conditions for optimality give
+\begin{align*}
+    \grad{z}\J(\z,\0)
+    = \grad{z}\tilde{J}(\z)
+    = \0
+\end{align*}
+and that $\grad{z,z}\J(\z,\0)$ is positive definite.
+By the implicit function theorem, there exists a smooth function $\f:\R^{n_\theta}\to\R^{n_z}$ such that $\f(\0) = \tilde{\z}$ and $\grad{z}\J(\f(\bftheta),\bftheta) = \0$ for all $\bftheta$ in a neighborhood of $\bftheta = \0$, where $\f$ has the $n_z \times n_\theta$ Jacobian
 \begin{align}
-    \label{eq:optimization-discrepancy}
-    \J(\z, \bftheta)
-    \coloneqq J\big(\tilde{\s}(\z) + \bfdelta(\z;\bftheta), \z\big).
+    \label{eq:theta-jacobian}
+    \f_\theta(\bftheta)
+    = - \grad{z,z}\J(\f(\bftheta),\bftheta)^{-1}\grad{z,\theta}\J(\f(\bftheta),\bftheta).
+    % = -\H(\bftheta)^{-1}\B(\bftheta),
 \end{align}
-If $\bftheta$ can be chosen so that $\bfdelta(\z;\bftheta) \approx \s(\z) - \tilde{\s}(\z)$ for all $\z$, then $\tilde{\s}(\z) + \bfdelta(\z;\bftheta) \approx \s(\z)$ and
-$
-    \J(\z,\bftheta)
-    % = J(\tilde{\s}(\z) + \bfdelta(\z;\bftheta), \z)
-    \approx
-    J(\s(\z), \z).
-    % = \hat{J}(\z).
-$
-\SM{Implicit function theorem on $\grad{z}\J$. Why is the update $\tilde{\z} + \grad{\theta}F(\0)\bftheta$? Applying the update is hard. View the update as a Bayesian problem, then we need a prior for $\bftheta$, which will be written in terms of priors for $\u$ and $\z$.}
+Now let $\z'$ be a solution to the original problem \cref{eq:optimization-reducedspace}.
+If we can find $\bftheta'$ such that $\z' = \f(\bftheta')$, then linearizing $\f$ around $\bftheta = \0$ yields the approximation
+\begin{align}
+    \label{eq:control-update}
+    \z'
+    = \f(\bftheta')
+    \approx \f(\0) + \f_\theta(\0)\bftheta'
+    = \tilde{\z} + \f_\theta(\0)\bftheta',
+\end{align}
+which is an update formula from the solution of \cref{eq:optimization-surrogate} to the solution of \cref{eq:optimization-reducedspace}.
+
+The right-hand side of \cref{eq:control-update} has three components: the solution $\tilde{\z}$, which can computed by applying the adjoint method to \cref{eq:optimization-surrogate};
+the Jacobian $\f_\theta$ given in \cref{eq:theta-jacobian} at $\bftheta=\0$;
+and the optimal discrepancy parameters $\bftheta'$, to be chosen so that $\tilde{\s}(\z) + \bfdelta(\z;\bftheta') \approx \s(\z)$.
+\Cref{alg:adjoint-gradient,alg:adjoint-hessvec} describe the ingredients needed to compute $\tilde{\z}$ (replacing $\c$ with $\tilde{\c}$, $\s$ with $\tilde{\s}$, and $\hat{J}$ with $\tilde{J}$).
+For $\f_\theta(\0)$, let $\H \coloneqq \grad{z,z}\J(\f(\0),\0) \in \R^{n_z\times n_z}$ and note that, since $\bftheta=\0$, $\H = \grad{z,z}\tilde{J}(\tilde{\z})$, which is already computed in \Cref{alg:adjoint-hessvec}.
+The remaining piece is
+$\B \coloneqq \grad{z,\theta}\J(\f(\0),\0)\in\R^{n_z\times n_\theta}$ so that $\f_\theta(\0) = -\H^{-1}\B$.
+Observe that
+\begin{align}
+    \begin{aligned}
+    \label{eq:B-expanded}
+    \grad{z,\theta}\J(\z, \bftheta)
+    % &= \grad{\theta}\grad{z}[J(\tilde{\s}(\z) + \bfdelta(\z;\bftheta),\z)]
+    &= \grad{\theta}\grad{z}[J(\tilde{\s} + \bfdelta,\z)]
+    % \\
+    % &= \grad{\theta}[
+    %     (\tilde{\s}_z(\z) + \bfdelta_z(\z;\bftheta))\trp\grad{u}J(\tilde{\s}(\z) + \bfdelta(\z;\bftheta),\z)
+    %     + \grad{z}J(\tilde{s}(\z)+\bfdelta(\z;\bftheta), \z)
+    % ]
+    \\
+    &= \grad{\theta}[
+        (\tilde{\s}_z + \bfdelta_z)\trp\grad{u}J(\tilde{\s} + \bfdelta,\z)
+        + \grad{z}J(\tilde{\s} + \bfdelta, \z)
+    ]
+    \\
+    &= (\tilde{\s}_{z} + \bfdelta_{z})\trp\grad{u,u}J(\tilde{\s} + \bfdelta, \z)\bfdelta_\theta
+    + \grad{u}J(\tilde{\s} + \bfdelta, \z)\trp\bfdelta_{z,\theta}
+    + \grad{z,u}J(\tilde{\s} + \bfdelta, \z)\bfdelta_\theta.
+    \end{aligned}
+\end{align}
+Evaluated at $\bftheta = \0$ (hence $\z = \tilde{\z}$) and recalling $\bfdelta_z(\z,\0) = \0$, this simplifies to give
+\begin{align}
+    \B
+    % = \tilde{\s}_z(\tilde{\z})\trp\grad{u,u}J(\tilde{\s}(\tilde{\z}),\tilde{\z})\bfdelta_\theta(\0)
+    % + \grad{u}J(\tilde{\s}(\tilde{\z}),\tilde{\z})\trp\bfdelta_{z,\theta}(\0)
+    % + \nabla_{z,u}J(\tilde{\s}(\tilde{\z}), \tilde{\z})\bfdelta_\theta(\0).
+    = \tilde{\s}_z(\tilde{\z})\trp\grad{u,u}J(\tilde{\u},\tilde{\z})\bfdelta_\theta(\0)
+    + \grad{u}J(\tilde{\u},\tilde{\z})\trp\bfdelta_{z,\theta}(\0)
+    + \nabla_{z,u}J(\tilde{\u}, \tilde{\z})\bfdelta_\theta(\0),
+\end{align}
+where $\tilde{\u} \coloneqq \tilde{\s}(\tilde{\z})$.
+
+\SM{$\bfdelta$ is affine in $\z$ and linear in $\bftheta$}
+
+\begin{purpose}
+    Applying the update is hard. View the update as a Bayesian problem, then we need a prior for $\bftheta$, which will be written in terms of priors for $\u$ and $\z$.
+\end{purpose}
 
 % The goal is to use the solution of \cref{eq:optimization-surrogate}, together with a limited number of PDE solutions $\s(\z_1),\ldots,\s(\z_N)$, to approximate the solution to the full problem \cref{eq:optimization-reducedspace}.
 
