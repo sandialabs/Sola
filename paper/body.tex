@@ -230,7 +230,7 @@ Note that the computational cost of this approach is typically dominated by the 
 A software implementation for solving \cref{eq:optimization-reducedspace} with a specific $J$ and $\c$ through \cref{eq:newton-cg} via the adjoint method as in \Cref{alg:adjoint-gradient,alg:adjoint-hessvec} requires several ingredients, namely the constraint solver $\s:\z\mapsto\u$ and the derivatives of $J$ and $\c$.
 The software libraries introduced in later sections define abstract templates with methods for each ingredient, to be implemented by the user or handled with automatic differentiation when possible.
 
-\subsection{Model discrepancy}
+\subsection{Model discrepancy sensitivities}
 \label{sec:model-discrepancy}
 
 There are several scenarios in which solving \cref{eq:optimization-reducedspace} is computationally infeasible: (1) solving the constraint and/or forming its derivatives is possible, but highly computationally expensive; (2) the constraint is available only as a black box, meaning it can be evaluated but not differentiated; and (3) the constraint is unknown or unavailable for computation.
@@ -257,7 +257,7 @@ If $\tilde{\s}$ is less expensive to evaluate than $\s$, and if the derivatives 
 
 % \SM{Might be good to introduce the baby example here, define $\c$ and $\tilde{\c}$?}
 
-To relate \cref{eq:optimization-surrogate} to \cref{eq:optimization-reducedspace}, let $\bfdelta \coloneqq \bfdelta(\z;\bftheta)\in\R^{n_z}$ for $\bftheta\in\R^{n_\theta}$ be a smooth function, parameterized such that $\bfdelta(\z,\0) = \0$ for all $\z$ (hence the Jacobian $\bfdelta_z(\z,\0)$ is the zero matrix), and consider the perturbed objective function
+To relate \cref{eq:optimization-surrogate} to \cref{eq:optimization-reducedspace}, let $\bfdelta \coloneqq \bfdelta(\z;\bftheta)\in\R^{n_z}$ for $\bftheta\in\R^{n_\theta}$ be a smooth function, parameterized such that $\bfdelta(\z;\0) = \0$ for all $\z$ (hence the Jacobian $\bfdelta_z(\z;\0)$ is the zero matrix), and consider the perturbed objective function
 \begin{align}
     \label{eq:optimization-discrepancy}
     \J(\z, \bftheta)
@@ -271,27 +271,18 @@ $
     = \tilde{J}(\z),
 $
 the objective function in the surrogate problem~\cref{eq:optimization-surrogate}.
-On the other hand, if $\bftheta$ can be chosen so that $\tilde{\s}(\z) + \bfdelta(\z;\bftheta) \approx \s(\z)$ for all $\z$, then
+On the other hand, if $\bftheta$ is such that $\tilde{\s}(\z) + \bfdelta(\z;\bftheta) \approx \s(\z)$ for all $\z$, then
 $
-    \J(\z,\bftheta)
+    \J(\z, \bftheta)
     % = J(\tilde{\s}(\z) + \bfdelta(\z;\bftheta), \z)
     \approx
     J(\s(\z), \z)
     = \hat{J}(\z),
 $
 the objective function for the original optimization problem \cref{eq:optimization-reducedspace}.
-The next section uses sensitivity analysis to connect solutions of \cref{eq:optimization-surrogate} to solutions of \cref{eq:optimization-reducedspace} in terms of $\bftheta$.
+% The next section uses sensitivity analysis to connect solutions of \cref{eq:optimization-surrogate} to solutions of \cref{eq:optimization-reducedspace} in terms of $\bftheta$.
 
-\subsection{Post-optimality sensitivity analysis}
-\label{sec:hdsa-algorithm}
-
-\begin{purpose}
-High-level overview of how $\bftheta$ is calibrated and the model update is done.
-Don't go into the details (e.g., Kronecker structure), just list the essential ingredients that users of \HdsaLib will need to know about in order to use it.
-% Concise summary, consider a diagram like Figure~1 from \cite{hart2023hdsaoptimal}.
-\end{purpose}
-
-Let $\tilde{\z}\in\R^{n_z}$ be a local minimizer of~\cref{eq:optimization-surrogate}.
+Next, let $\tilde{\z}\in\R^{n_z}$ be a local minimizer of~\cref{eq:optimization-surrogate}.
 Fixing $\bftheta = \0$, the necessary conditions for optimality give
 \begin{align*}
     \grad{z}\J(\z,\0)
@@ -299,11 +290,11 @@ Fixing $\bftheta = \0$, the necessary conditions for optimality give
     = \0
 \end{align*}
 and that $\grad{z,z}\J(\z,\0)$ is positive definite.
-By the implicit function theorem, there exists a smooth function $\f:\R^{n_\theta}\to\R^{n_z}$ such that $\f(\0) = \tilde{\z}$ and $\grad{z}\J(\f(\bftheta),\bftheta) = \0$ for all $\bftheta$ in a neighborhood of $\bftheta = \0$, where $\f$ has the $n_z \times n_\theta$ Jacobian
+By the implicit function theorem, there exists a smooth function $\f:\R^{n_\theta}\to\R^{n_z}$ such that $\f(\0) = \tilde{\z}$ and $\grad{z}\J(\f(\bftheta), \bftheta) = \0$ for all $\bftheta$ in a neighborhood of $\bftheta = \0$, where $\f$ has the $n_z \times n_\theta$ Jacobian
 \begin{align}
     \label{eq:theta-jacobian}
     \f_\theta(\bftheta)
-    = - \grad{z,z}\J(\f(\bftheta),\bftheta)^{-1}\grad{z,\theta}\J(\f(\bftheta),\bftheta).
+    = - \grad{z,z}\J(\f(\bftheta), \bftheta)^{-1}\grad{z,\theta}\J(\f(\bftheta), \bftheta).
     % = -\H(\bftheta)^{-1}\B(\bftheta),
 \end{align}
 Now let $\z'$ be a solution to the original problem \cref{eq:optimization-reducedspace}.
@@ -317,7 +308,11 @@ If we can find $\bftheta'$ such that $\z' = \f(\bftheta')$, then linearizing $\f
 \end{align}
 which is an update formula from the solution of \cref{eq:optimization-surrogate} to the solution of \cref{eq:optimization-reducedspace}.
 
-The right-hand side of \cref{eq:control-update} has three components: the solution $\tilde{\z}$, which can computed by applying the adjoint method to \cref{eq:optimization-surrogate};
+\subsection{Hyper-differential sensitivity analysis}
+\label{sec:hdsa-algorithm}
+
+Computing $\tilde{\z}'$ with \cref{eq:control-update} and requires three components:
+the surrogate problem solution $\tilde{\z}$, which can computed by applying the adjoint method to \cref{eq:optimization-surrogate};
 the Jacobian $\f_\theta$ given in \cref{eq:theta-jacobian} at $\bftheta=\0$;
 and the optimal discrepancy parameters $\bftheta'$, to be chosen so that $\tilde{\s}(\z) + \bfdelta(\z;\bftheta') \approx \s(\z)$.
 \Cref{alg:adjoint-gradient,alg:adjoint-hessvec} describe the ingredients needed to compute $\tilde{\z}$ (replacing $\c$ with $\tilde{\c}$, $\s$ with $\tilde{\s}$, and $\hat{J}$ with $\tilde{J}$).
@@ -359,11 +354,44 @@ Evaluated at $\bftheta = \0$ (hence $\z = \tilde{\z}$) and recalling $\bfdelta_z
 \end{align}
 where $\tilde{\u} \coloneqq \tilde{\s}(\tilde{\z})$.
 
-\SM{$\bfdelta$ is affine in $\z$ and linear in $\bftheta$}
+Constructing $\B$ requires expressions for the derivatives of $\bfdelta(\z;\bftheta)$.
+Our strategy is to...
 
 \begin{purpose}
-    Applying the update is hard. View the update as a Bayesian problem, then we need a prior for $\bftheta$, which will be written in terms of priors for $\u$ and $\z$.
+    Calibrating $\bftheta$ from data.
+    % Don't go into the details (e.g., Kronecker structure), just list the essential ingredients that users of \HdsaLib will need to know about in order to use it.
+    % Concise summary, consider a diagram like Figure~1 from \cite{hart2023hdsaoptimal}.
 \end{purpose}
+
+{\color{royalblue}
+We know that $\bfdelta$ is linear-affine,
+\begin{align}
+    \bfdelta(\z,\bftheta) = \left[\begin{array}{cc}
+        \I_m & \I_m\otimes\z\trp\M_z
+    \end{array}\right]\bftheta
+\end{align}
+so now we can calibrate $\bftheta$ to $\bftheta'$ using a limited number of high-fidelity solution samples.
+}
+
+\begin{purpose}
+    View the update \cref{eq:control-update} as a Bayesian problem. Need a prior for $\bftheta$, written in terms of priors for $\u$ and $\z$.
+\end{purpose}
+
+{\color{royalblue}
+Mass matrices for state and control spaces: $\M_u\in\R^{n_u\times n_u}$ and $\M_z\in\R^{n_z}\times\R^{n_z}$.
+
+Precision matrix for the prior on the parameters:
+\begin{align}
+    \W_\theta
+    = \left[\begin{array}{cc}
+        \W_u & \W_u \otimes \tilde{\z}\trp\M_z \\
+        \W_u\otimes\M_z\tilde{\z} & \W_u\otimes\M_z(\W_z + \tilde{z}\tilde{z}\trp\M_z)
+    \end{array}\right]
+    \in\R^{p\times p}.
+\end{align}
+
+Posterior is also Bayesian, also uses $\M_u$ matvecs due to the noise model.
+}
 
 % The goal is to use the solution of \cref{eq:optimization-surrogate}, together with a limited number of PDE solutions $\s(\z_1),\ldots,\s(\z_N)$, to approximate the solution to the full problem \cref{eq:optimization-reducedspace}.
 
