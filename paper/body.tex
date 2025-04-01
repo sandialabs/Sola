@@ -39,7 +39,7 @@ In particular, we focus on HDSA in the context of model discrepancy (HDSA-MD), m
 This is useful for cases in which (1) numerical models that fully and accurately reflect the true PDE dynamics are computationally expensive to solve --- so that performing adjoint-based optimization with such models is infeasible --- but a computationally inexpensive reduced-physics, low-fidelity, or reduced-order numerical model for the governing PDEs is available, and (2) the true system dynamics are unknown, but limited experimental data and an approximate numerical model are available.
 The main idea is to solve the optimization problem with the inexpensive-but-deficient model, derive sensitivities of the solution with respect to the model form error, and use those sensitivities to update the solution to better reflect the true dynamics.
 This procedure requires many forward and backward/adjoint solves of the inexpensive model, as well as access to a small number of forward solves from the expensive-but-accurate model.
-The HSDA-MD framework has been demonstrated to be effective for \SM{@joey, add short success story statement here?}
+The HDSA-MD framework has been demonstrated to be effective for \SM{@joey, add short success story statement here?}
 
 \begin{purpose}
 HDSA is mathematically complicated and difficult to implement at scale within HPC frameworks.
@@ -61,7 +61,7 @@ Goal of this paper: implement HDSA-MD. Do this by writing a high-level library f
 \end{purpose}
 
 This paper addresses these challenges by presenting a software solution for HDSA-MD that, to the extent possible, abstracts the mathematical complexity and defines accessible user interfaces.
-In doing so, we advocate for the following two-step software development strategy: first, write a library in a high-level language (\MATLAB, \texttt{Python}, etc.) to express algorithms in an intuitive / mathematical form, make design choices without heavy risk of technical debt, and validate the method on simple problems; second, use the high-level library as a guide to develop an HPC library in a low-level language (\cpp, \texttt{FORTRAN}, etc.).
+In doing so, we advocate for the following two-step software development strategy: first, write a library in a high-level language (\MATLAB, \texttt{Python}, etc.) to express algorithms in an intuitive / mathematical form, make design choices without a high risk of technical debt, and validate the method on simple problems; second, use the high-level library as a guide to develop an HPC library in a low-level, high-performance language (\cpp, \texttt{FORTRAN}, etc.).
 We demonstrate this paradigm for HDSA-MD by presenting a \MATLAB library, followed by a \cpp environment, which each implement HDSA-MD.
 The high-level library is used to validate the low-level library on small test problems, then the low-level library is used to tackle problems at scale.
 Our objectives are twofold: (1) demonstrate a principled approach to implementing complex mathematical frameworks, and (2) lower the barrier to entry for new practitioners who wish to use and/or extend HDSA-MD.
@@ -79,7 +79,7 @@ The library is used to solve a prototypical problem.
 \Cref{sec:application} presents a large-scale HPC problem that is solved with \HdsaLib and \MrHyDE, and \Cref{sec:conclusion} offers some concluding remarks.
 % Two representative demonstrations: a simple problem (probably advection-diffusion) implemented in \SABL, then \MrHyDE; and a large-scale problem requiring the HPC tools available within \MrHyDE.
 
-\SM{Not sure yet if \Cref{sec:hdsalib} is going to come before or after \SABL.}
+% \SM{Not sure yet if \Cref{sec:hdsalib} is going to come before or after \SABL.}
 
 \section{Hyper-differential sensitivity analysis with respect to model discrepancy}
 \label{sec:hdsa}
@@ -127,7 +127,7 @@ Applying the chain rule,
     = \s_z(\z)\trp\grad{u}J(\s(\z),\z) + \grad{z}J(\s(\z),\z),
 \end{align}
 where $\s_z(\z)\in\R^{n_u\times n_z}$ is the $\z$ Jacobian of $\s$.
-Note that we are using the convention that the gradient is a column vector.\footnote{\SM{If row vector (more mathematically standard) it's pretty much the same, but the implementation doesn't really care.}}
+Note that we are using the convention that the gradient is a column vector.\footnote{If the gradient is defined as a row vector, the mathematics are equivalent but read slightly differently. For example,~\cref{eq:gradJ-chain-rule} would be $\grad{z}\hat{J}(\z) = \grad{u}J(\s(\z),\z)\s_z(\z) + \grad{z}J(\s(\z),\z)$. The choice of convention does not affect the implementation.}
 Since $\c(\s(\z),\z) = \0$, the implicit function theorem yields the formula
 \begin{align}
     \label{eq:Sz-implicit-function}
@@ -250,19 +250,20 @@ To that end, let $\tilde{\c}:\R^{n_u}\times\R^{n_z}\to\R^{n_u}$ be an approximat
     \tilde{J}(\z) \coloneqq
     J(\tilde{\s}(\z), \z).
 \end{align}
-The discrepancy between the model constaint $\tilde{\c}$ and the true constraint $\c$ may cause minimizers of \cref{eq:optimization-surrogate} to be far from minimizers of \cref{eq:optimization-reducedspace}.
+The discrepancy between the model constraint $\tilde{\c}$ and the true constraint $\c$ may cause minimizers of \cref{eq:optimization-surrogate} to be far from minimizers of \cref{eq:optimization-reducedspace}.
 We will show, however, that solutions of \cref{eq:optimization-reducedspace} can be written in terms of solutions of \cref{eq:optimization-surrogate}.
 % in which $\tilde{\c}(\tilde{\s}(\z), \z) = \0$ for all $\z\in Z$.
-If $\tilde{\s}$ is less expensive to evaluate than $\s$, and if the derivatives of $\tilde{\c}$ are more easily formed than the derivatives of $\c$, then solving \cref{eq:optimization-surrogate} and updating that solution is a computationally tractable alternative to solving \cref{eq:optimization-reducedspace} directly.
+If $\tilde{\s}$ is less expensive to evaluate than $\s$, and if the derivatives of $\tilde{\c}$ are more easily formed than the derivatives of $\c$, then solving \cref{eq:optimization-surrogate} and strategically updating that solution is a computationally tractable alternative to solving \cref{eq:optimization-reducedspace} directly.
 
 % \SM{Might be good to introduce the baby example here, define $\c$ and $\tilde{\c}$?}
 
-To relate \cref{eq:optimization-surrogate} to \cref{eq:optimization-reducedspace}, let $\bfdelta \coloneqq \bfdelta(\z;\bftheta)\in\R^{n_z}$ for $\bftheta\in\R^{n_\theta}$ be a smooth function, parameterized such that $\bfdelta(\z;\0) = \0$ for all $\z$ (hence the Jacobian $\bfdelta_z(\z;\0)$ is the zero matrix), and consider the perturbed objective function
+To relate \cref{eq:optimization-surrogate} to \cref{eq:optimization-reducedspace}, let $\bfdelta \coloneqq \bfdelta(\z;\bftheta)\in\R^{n_z}$ for $\bftheta\in\R^{n_\theta}$ be a smooth function, parameterized such that $\bfdelta(\z;\0) = \0$ for all $\z$ (hence $\bfdelta_z(\z;\0)$ is the zero matrix), and consider the perturbed objective function
 \begin{align}
     \label{eq:optimization-discrepancy}
     \J(\z, \bftheta)
     \coloneqq J\big(\tilde{\s}(\z) + \bfdelta(\z;\bftheta), \z\big).
 \end{align}
+We call $\bfdelta(\z,\bftheta)$ the \emph{discrepancy term}.
 By construction,
 $
     \J(\z,\0)
@@ -280,10 +281,9 @@ $
     = \hat{J}(\z),
 $
 the objective function for the original optimization problem \cref{eq:optimization-reducedspace}.
-% The next section uses sensitivity analysis to connect solutions of \cref{eq:optimization-surrogate} to solutions of \cref{eq:optimization-reducedspace} in terms of $\bftheta$.
 
 Next, let $\tilde{\z}\in\R^{n_z}$ be a local minimizer of~\cref{eq:optimization-surrogate}.
-Fixing $\bftheta = \0$, the necessary conditions for optimality give
+Fixing $\bftheta = \0$, the necessary optimality conditions give
 \begin{align*}
     \grad{z}\J(\z,\0)
     = \grad{z}\tilde{J}(\z)
@@ -306,20 +306,20 @@ If we can find $\bftheta'$ such that $\z' = \f(\bftheta')$, then linearizing $\f
     \approx \f(\0) + \f_\theta(\0)\bftheta'
     = \tilde{\z} + \f_\theta(\0)\bftheta',
 \end{align}
-which is an update formula from the solution of \cref{eq:optimization-surrogate} to the solution of \cref{eq:optimization-reducedspace}.
+which is an update formula from the solution $\tilde{\z}$ of \cref{eq:optimization-surrogate} to the solution $\z'$ of \cref{eq:optimization-reducedspace}.
 
 \subsection{Hyper-differential sensitivity analysis}
 \label{sec:hdsa-algorithm}
 
-Computing $\tilde{\z}'$ with \cref{eq:control-update} and requires three components:
+Computing $\tilde{\z}'$ with \cref{eq:control-update} requires three components:
 the surrogate problem solution $\tilde{\z}$, which can computed by applying the adjoint method to \cref{eq:optimization-surrogate};
 the Jacobian $\f_\theta$ given in \cref{eq:theta-jacobian} at $\bftheta=\0$;
 and the optimal discrepancy parameters $\bftheta'$, to be chosen so that $\tilde{\s}(\z) + \bfdelta(\z;\bftheta') \approx \s(\z)$.
 \Cref{alg:adjoint-gradient,alg:adjoint-hessvec} describe the ingredients needed to compute $\tilde{\z}$ (replacing $\c$ with $\tilde{\c}$, $\s$ with $\tilde{\s}$, and $\hat{J}$ with $\tilde{J}$).
-For $\f_\theta(\0)$, let $\H \coloneqq \grad{z,z}\J(\f(\0),\0) \in \R^{n_z\times n_z}$ and note that, since $\bftheta=\0$, $\H = \grad{z,z}\tilde{J}(\tilde{\z})$, which is already computed in \Cref{alg:adjoint-hessvec}.
+For $\f_\theta(\0)$, let $\H \coloneqq \grad{z,z}\J(\f(\0),\0) \in \R^{n_z\times n_z}$ and note that, since $\bftheta=\0$, $\H = \grad{z,z}\tilde{J}(\tilde{\z})$, which is calculated in \Cref{alg:adjoint-hessvec}.
 The remaining piece is
 $\B \coloneqq \grad{z,\theta}\J(\f(\0),\0)\in\R^{n_z\times n_\theta}$ so that $\f_\theta(\0) = -\H^{-1}\B$.
-Observe that
+Observe, with some abbreviation, that
 \begin{align}
     \begin{aligned}
     \label{eq:B-expanded}
@@ -342,59 +342,77 @@ Observe that
     + \grad{z,u}J(\tilde{\s} + \bfdelta, \z)\bfdelta_\theta.
     \end{aligned}
 \end{align}
-Evaluated at $\bftheta = \0$ (hence $\z = \tilde{\z}$) and recalling $\bfdelta_z(\z,\0) = \0$, this simplifies to give
+Evaluated at $(\z,\bftheta) = (\f(\0),\0) = (\tilde{\z},\0)$ and recalling $\bfdelta_z(\z,\0) = \0$, this simplifies to give
 \begin{align}
+    \label{eq:B-matrix}
     \B
     % = \tilde{\s}_z(\tilde{\z})\trp\grad{u,u}J(\tilde{\s}(\tilde{\z}),\tilde{\z})\bfdelta_\theta(\0)
     % + \grad{u}J(\tilde{\s}(\tilde{\z}),\tilde{\z})\trp\bfdelta_{z,\theta}(\0)
     % + \nabla_{z,u}J(\tilde{\s}(\tilde{\z}), \tilde{\z})\bfdelta_\theta(\0).
-    = \tilde{\s}_z(\tilde{\z})\trp\grad{u,u}J(\tilde{\u},\tilde{\z})\bfdelta_\theta(\0)
-    + \grad{u}J(\tilde{\u},\tilde{\z})\trp\bfdelta_{z,\theta}(\0)
-    + \nabla_{z,u}J(\tilde{\u}, \tilde{\z})\bfdelta_\theta(\0),
+    = \tilde{\s}_z(\tilde{\z})\trp\grad{u,u}J(\tilde{\u},\tilde{\z})\bfdelta_\theta(\tilde{\z},\0)
+    + \grad{u}J(\tilde{\u},\tilde{\z})\trp\bfdelta_{z,\theta}(\tilde{\z},\0)
+    + \nabla_{z,u}J(\tilde{\u}, \tilde{\z})\bfdelta_\theta(\tilde{\z},\0),
 \end{align}
 where $\tilde{\u} \coloneqq \tilde{\s}(\tilde{\z})$.
-
-Constructing $\B$ requires expressions for the derivatives of $\bfdelta(\z;\bftheta)$.
-Our strategy is to...
-
-\begin{purpose}
-    Calibrating $\bftheta$ from data.
-    % Don't go into the details (e.g., Kronecker structure), just list the essential ingredients that users of \HdsaLib will need to know about in order to use it.
-    % Concise summary, consider a diagram like Figure~1 from \cite{hart2023hdsaoptimal}.
-\end{purpose}
-
-{\color{royalblue}
-We know that $\bfdelta$ is linear-affine,
+%
+Because $\H$ is independent of the discrepancy term $\bfdelta$, and since $\B$ depends only on $\bfdelta_\theta(\tilde{\z},\0)$ and $\bfdelta_{z,\theta}(\tilde{\z},\0)$, an application of the Riesz representation theorem leads to a linear-affine form for $\bfdelta$,
 \begin{align}
+    \label{eq:affine-discrepancy}
     \bfdelta(\z,\bftheta) = \left[\begin{array}{cc}
-        \I_m & \I_m\otimes\z\trp\M_z
-    \end{array}\right]\bftheta
+        \I_{n_u} & \I_{n_u}\otimes\z\trp\M_z
+    \end{array}\right]\bftheta,
 \end{align}
-so now we can calibrate $\bftheta$ to $\bftheta'$ using a limited number of high-fidelity solution samples.
-}
+where $\otimes$ denotes the Kronecker product~\cite{vanloan2000kronecker} and $\M_z\in\R^{n_z\times n_z}$ is a mass matrix defining an appropriate inner product $\langle\z_1,\z_2\rangle = \sqrt{\z_1\trp\M_z\z_2}$ on $Z\subset\R^{n_z}$, the space of admissible controls (see \cite{hart2023hdsaoptimal} for more detail).
+Hence, the dimension of $\bftheta$ is $n_\theta = n_u(n_z + 1)$.
+This Kronecker structure of \cref{eq:affine-discrepancy} enables efficient matrix-vector products $\v\mapsto\B\v$ without assembling $\B$ explicitly.
 
-\begin{purpose}
-    View the update \cref{eq:control-update} as a Bayesian problem. Need a prior for $\bftheta$, written in terms of priors for $\u$ and $\z$.
-\end{purpose}
+% \begin{purpose}
+%     Calibrating $\bftheta$ from data.
+%     A prior for $\bftheta$ can be written in terms of priors for $\u$ and $\z$.
+%     % Don't go too far into the weeds (e.g., Kronecker structure), just list the essential ingredients that users of \HdsaLib will need to know about in order to use it.
+%     % Concise summary, consider a diagram like Figure~1 from \cite{hart2023hdsaoptimal}.
+% \end{purpose}
 
+The final ingredient needed for \cref{eq:control-update} is an optimal $\bftheta'$ such that $\bfdelta(\z;\bftheta') \approx \s(\z) - \tilde{\s}(\z)$.
+Although solving~\cref{eq:optimization-reducedspace} directly is intractable due to the derivatives of the full constraint $\c$ being inaccessible or highly expensive, we assume that we can either (1) solve the constraint equation (evaluate $\s(\z)$) a limited number of times or (2) in a data-driven scenario, observe a limited number of state solutions.
+To that end, for a linearly independent set of controls $\{\z_{\ell}\}_{\ell=1}^{n_d}$ for which we have access to $\s(\z_1),\ldots,\s(\z_{n_d})$ and $\tilde{\s}(\z_1),\ldots,\tilde{\s}(\z_{n_d})$ and consider the Bayesian linear inference problem
+\begin{align}
+    \left[\begin{array}{cc}
+        \I_{n_u} & \I_{n_u}\otimes\z_1\trp\M_z\\
+        \vdots & \vdots \\
+        \I_{n_u} & \I_{n_u}\otimes\z_{n_d}\trp\M_z
+    \end{array}\right]
+    \bftheta
+    = \left[\begin{array}{c}
+        \s(\z_1) - \tilde{\s}(\z_1)
+        \\ \vdots \\
+        \s(\z_{n_d}) - \tilde{\s}(\z_{n_d})
+    \end{array}\right]
+    + \bfepsilon,
+\end{align}
+where $\bfepsilon\sim\mathcal{N}(\0, \alpha\M_u^{-1})$ is an uncorrelated Gaussian noise term with variance $\alpha > 0$ and in which $\M_u\in\R^{n_u\times n_u}$ is a mass matrix for the state space.
 {\color{royalblue}
-Mass matrices for state and control spaces: $\M_u\in\R^{n_u\times n_u}$ and $\M_z\in\R^{n_z}\times\R^{n_z}$.
-
-Precision matrix for the prior on the parameters:
+To develop a prior distribution for $\bftheta$, we impose priors for the state and control spaces.
+Let $\W_u\in\R^{n_u\times n_u}$ and $\W_z\in\R^{n_z\times n_z}$ be precision (inverse covariance) matrices for the state and control spaces, respectively.
+In the context of PDEs, these precision matrices are often (inverse?) elliptic operators.
+It can be shown that an appropriate precision matrix for the parameters $\bftheta$ is
 \begin{align}
     \W_\theta
     = \left[\begin{array}{cc}
         \W_u & \W_u \otimes \tilde{\z}\trp\M_z \\
-        \W_u\otimes\M_z\tilde{\z} & \W_u\otimes\M_z(\W_z + \tilde{z}\tilde{z}\trp\M_z)
+        \W_u\otimes\M_z\tilde{\z} & \W_u\otimes\M_z(\W_z + \tilde{\z}\tilde{\z}\trp\M_z)
     \end{array}\right]
     \in\R^{p\times p}.
 \end{align}
+Posterior is also Bayesian, also uses $\M_u$ matrix-vector products due to the noise model (??)
 
-Posterior is also Bayesian, also uses $\M_u$ matvecs due to the noise model.
+At this point we're pretty much done, lots of previous work has gone into showing how to do all of the computations efficiently with randomized linear algebra, matrix factorizations, and tuning hyperparameters for the priors.
+Citations.
 }
 
 % The goal is to use the solution of \cref{eq:optimization-surrogate}, together with a limited number of PDE solutions $\s(\z_1),\ldots,\s(\z_N)$, to approximate the solution to the full problem \cref{eq:optimization-reducedspace}.
 
+\begin{comment}
 \section{\HdsaLib: A template-based implementation of HDSA in \cpp}
 \label{sec:hdsalib}
 
@@ -415,13 +433,6 @@ TODO.
 List and describe classes from \texttt{hdsalib/src/core/model\_discrepancy/analysis}?
 \end{purpose}
 
-\begin{listing}[t]
-\begin{minted}{cpp}
-TODO
-\end{minted}
-\caption{\HdsaLib analysis classes.}
-\end{listing}
-
 \subsection{Interface classes}
 
 TODO.
@@ -429,20 +440,14 @@ TODO.
 \begin{purpose}
 List and describe classes from \texttt{hdsalib/src/core/model\_discrepancy/interfaces}?
 \end{purpose}
-
-\begin{listing}[t]
-\begin{minted}{cpp}
-TODO
-\end{minted}
-\caption{\HdsaLib interface classes.}
-\end{listing}
+\end{comment}
 
 \section{\SABL: Prototyping HDSA-MD in \MATLAB}
 \label{sec:sabl}
 
 Jumping straight to high-performance computing in \cpp with \HdsaLib can be challenging for new users, especially for practitioners who are accustomed to high-level languages such as \MATLAB and Python.
 Furthermore, the complexities of a full HPC environment make it difficult to assess and verify implementations of novel, complicated algorithms such as HDSA.
-To that end, this section presents \SABL: \textbf{S}andbox for \textbf{A}djoint-\textbf{B}ased outer \textbf{L}oop analysis, a \MATLAB library that implements HDSA for model discrepancy.
+To that end, this section presents \SABL: \textbf{S}andbox for \textbf{A}adjoint-\textbf{B}ased outer \textbf{L}oop analysis, a \MATLAB library that implements HDSA for model discrepancy.
 
 \begin{purpose}
 \begin{itemize}
@@ -453,7 +458,7 @@ To that end, this section presents \SABL: \textbf{S}andbox for \textbf{A}djoint-
 \end{itemize}
 \end{purpose}
 
-\subsection{Optimization classes}
+\subsection{Optimization implementation}
 
 TODO.
 
@@ -464,25 +469,39 @@ List and detail \texttt{Objective} and \texttt{Constraint}, the classes used for
 \begin{listing}[t]
 \begin{minted}{matlab}
 classdef Objective < handle
-    methods (Abstract, Access = public)
-        [val, grad_u, grad_z] = J(this, u, z)
-        [u_out] = J_uu_Apply(this, u_in, u, z)
-        [u_out] = J_uz_Apply(this, z_in, u, z)
-        [z_out] = J_zu_Apply(this, u_in, u, z)
-        [z_out] = J_zz_Apply(this, z_in, u, z)
-    end
-    methods (Access = public)
-        [diffs_u, diffs_z] = Finite_Difference_Gradient_Check(this, u, z)
-    end
+  methods (Abstract, Access = public)
+    [val, grad_u, grad_z] = J(this, u, z)       % $J(\u,\z)$, $\grad{u}J(\u,\z)$, and $\grad{z}J(\u,\z)$
+    [u_out] = J_uu_Apply(this, u_in, u, z)      % $\v\mapsto\grad{u,u}J(\u,\z)\v$
+    [u_out] = J_uz_Apply(this, z_in, u, z)      % $\v\mapsto\grad{u,z}J(\u,\z)\v$
+    [z_out] = J_zu_Apply(this, u_in, u, z)      % $\v\mapsto\grad{z,u}J(\u,\z)\v$
+    [z_out] = J_zz_Apply(this, z_in, u, z)      % $\v\mapsto\grad{z,z}J(\u,\z)\v$
+  end
 end
 
 classdef Constraint < handle
-    methods (Abstract, Access = public)
-        TODO
-    end
+  methods (Abstract, Access = public)
+    [u] = State_Solve(this, z)            % Solve $\c(\u,\z)$ for $\u$, i.e., evaluate $\s(\z)$
+    [u_out] = c_u_Transpose_Inverse_Apply(this, u_in, u, z)  % $\v\mapsto\c_u(\u,\z)^{-\mathsf{T}}\v$
+    [z_out] = c_z_Transpose_Apply(this, u_in, u, z)          % $\v\mapsto\c_z(\u,\z)\trp\v$
+    [u_out] = c_u_Inverse_Apply(this, u_in, u, z)            % $\v\mapsto\c_u(\u,\z)^{-1}\v$
+    [u_out] = c_z_Apply(this, z_in, u, z)                    % $\v\mapsto\c_z(\u,\z)\v$
+    [u_out] = c_uu_Apply(this, u_in, u, z, lambda)           % $(\v,\bflambda) \mapsto \bflambda\trp\c_{u,u}(\u,\z)\v$
+    [u_out] = c_uz_Apply(this, z_in, u, z, lambda)           % $(\v,\bflambda) \mapsto \bflambda\trp\c_{u,z}(\u,\z)\v$
+    [z_out] = c_zu_Apply(this, u_in, u, z, lambda)           % $(\v,\bflambda) \mapsto \bflambda\trp\c_{z,u}(\u,\z)\v$
+    [z_out] = c_zz_Apply(this, z_in, u, z, lambda)           % $(\v,\bflambda) \mapsto \bflambda\trp\c_{z,z}(\u,\z)\v$
+  end
+end
+
+classdef Reduced_Space_Optimization < handle
+  methods (Access = public)
+    ReducedSpaceOptimization(obj, con)                % Store objective and constraint
+    [u, z] = Optimize(this, z0)                       % Adjoint-based optimization
+    [val, grad, hessian_data] = Jhat(this, z)         % $\grad{z}\hat{J}(\z)$ (Algorithm 2.1)
+    [z_out] = Jhat_hessVec(this, hessian_data, z_in)  % $\v\mapsto\grad{z,z}\hat{J}(\z)\v$ (Algorithm 2.2)
+  end
 end
 \end{minted}
-\caption{Abstract classes for constrained optimization in \SABL.}
+\caption{Outline of \MATLAB classes for constrained optimization in \SABL.}
 \end{listing}
 
 \begin{remark}[Time-dependent problems]
@@ -495,7 +514,7 @@ For time-dependent problems, \SABL also provides two abstract classes \texttt{Dy
 Alternative templates exist that use automatic differentiation via AdiGator \cite{weinstein2017adigator}
 \end{remark}
 
-\subsection{HDSA classes}
+\subsection{HDSA implementation}
 
 TODO.
 
@@ -505,11 +524,29 @@ List and detail the classes used for HDSA.
 
 \begin{listing}[t]
 \begin{minted}{matlab}
-classdef MD_Data_Interface < handle
-    methods (Abstract, Access = public)
-        [u_opt] = Load_Optimal_u(this)
-        [z_opt] = Load_Optimal_z(this)
-    end
+classdef MD_u_Prior_Interface < handle
+  methods (Abstract, Access = public)
+    % $(\v,\alpha)\mapsto(\W_u + \alpha\M_u)^{-1}\v$
+    [u_out] = Apply_W_u_Plus_scalar_M_u_Inverse(this, u_in, scalar)
+    [u_out] = Apply_M_u(this, u_in)          % $\v\mapsto\M_u\v$
+    [u_out] = Apply_W_u_Inverse(this, u_in)  % $\v\mapsto\W_u^{-1}\v$
+  end
+end
+
+classdef MD_z_Prior_Interface < handle
+  methods (Abstract, Access = public)
+    [z_out] = Apply_M_z(this, z_in)           % $\v\mapsto\M_z\v$
+    [z_out] = Apply_W_z_Inverse(this, z_in)   % $\v\mapsto\W_z^{-1}\v$
+  end
+end
+
+classdef MD_Opt_Prob_Interface < handle
+  methods (Abstract, Access = public)
+    [z_out] = Apply_Solution_Operator_z_Jacobian_Transpose(this, u_in, z)  % $\v\mapsto\tilde{\s}_z(\z)\trp\v$
+    [z_out] = Apply_RS_Hessian(this, z_in, z)         % $\v\mapsto\grad{z,z}\tilde{J}(\z)$ (Algorithm 2.2)
+    [grad_u] = Misfit_Gradient(this, u, z)            % $\grad{u}J(\u, \z)$
+    [u_out] = Apply_Misfit_Hessian(this, u_in, u, z)  % $\v\mapsto\grad{u,u}J(\u, \z)\v$
+  end
 end
 \end{minted}
 \caption{HDSA classes in \SABL.}
@@ -557,7 +594,7 @@ This will gives us confidence that we've implemented HDSA correctly in \cpp desp
 \begin{itemize}
     \item Demonstrate forward solver capabilities.
     \item Emphasize efficient automatic differentiation tools.
-    \item Show that results match with SABL experiment.
+    \item Show that results match with \SABL experiment.
 \end{itemize}
 \end{purpose}
 
