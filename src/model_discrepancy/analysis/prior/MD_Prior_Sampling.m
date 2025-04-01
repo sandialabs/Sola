@@ -11,9 +11,13 @@ classdef MD_Prior_Sampling < handle
         delta_samples_z_pert
         z_pert
         z_pert_evals
+        z_pert_corr
+        z_pert_corr_binned
+        z_pert_corr_bin_means
         delta_mag
         delta_corr
         delta_pert_mag
+        delta_pert_mag_binned
 
         delta_z_opt_time_evol
         data_time_evol
@@ -62,12 +66,8 @@ classdef MD_Prior_Sampling < handle
             else
                 t = [];
             end
-            delta_range = [min(this.delta_samples_z_pert{1}(:)), max(this.delta_samples_z_pert{1}(:))];
+
             z_range = [min(this.z_pert(:)), max(this.z_pert(:))];
-            for k = 2:num_perts
-                delta_range(1) = min(delta_range(1), min(this.delta_samples_z_pert{k}(:)));
-                delta_range(2) = max(delta_range(2), max(this.delta_samples_z_pert{k}(:)));
-            end
 
             if strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'transient vector')
                 generate_z_plot = @(nodes, t, u, name) this.Plot_Transient_Vector(t, u, z_range, name);
@@ -80,23 +80,25 @@ classdef MD_Prior_Sampling < handle
             end
 
             if is_transient && (spatial_dim == 1)
-                generate_delta_plot = @(nodes, t, u, name) this.Plot_Transient_1D(nodes, t, u, delta_range, name);
+                generate_delta_plot = @(nodes, t, u, range, name) this.Plot_Transient_1D(nodes, t, u, range, name);
             elseif is_transient && (spatial_dim == 2)
-                generate_delta_plot = @(nodes, t, u, name) this.Plot_Transient_2D(nodes, t, u, delta_range, name);
+                generate_delta_plot = @(nodes, t, u, range, name) this.Plot_Transient_2D(nodes, t, u, range, name);
             elseif ~is_transient && (spatial_dim == 1)
-                generate_delta_plot = @(nodes, t, u, name) this.Plot_Stationary_1D(nodes, t, u, delta_range, name);
+                generate_delta_plot = @(nodes, t, u, range, name) this.Plot_Stationary_1D(nodes, t, u, range, name);
             elseif ~is_transient && (spatial_dim == 2)
-                generate_delta_plot = @(nodes, t, u, name) this.Plot_Stationary_2D(nodes, t, u, delta_range, name);
+                generate_delta_plot = @(nodes, t, u, range, name) this.Plot_Stationary_2D(nodes, t, u, range, name);
             end
 
             z_fig = figure;
             generate_z_plot(nodes, t, this.data_interface.Z(:, 1), '$z_1$');
 
             delta_fig = figure;
-            generate_delta_plot(nodes, t, this.data_interface.D(I, 1) + this.data_interface.data_shift(I), '$d_1$');
+            c_range = [min(this.data_interface.D(I, 1) + this.data_interface.data_shift(I)),max(this.data_interface.D(I, 1) + this.data_interface.data_shift(I))];
+            generate_delta_plot(nodes, t, this.data_interface.D(I, 1) + this.data_interface.data_shift(I), c_range, '$d_1$');
 
-            xmin = 0.05;
-            xmax = 1.05;
+            margin = max(this.z_pert_corr)*.05;
+            xmin = min(this.z_pert_corr)-margin;
+            xmax = max(this.z_pert_corr)+margin;
             yrange = [0, 0];
             for k = 1:num_perts
                 yrange(1) = min(yrange(1), min(this.delta_pert_mag{component_id, k}));
@@ -104,11 +106,12 @@ classdef MD_Prior_Sampling < handle
             end
             ymin = yrange(1) * .9;
             ymax = yrange(2) * 1.1;
-            num_samps = size(this.delta_pert_mag{component_id, 1}, 1);
+            colors = lines(length(this.z_pert_corr_binned));
             scatter_fig = figure;
             hold on;
-            for k = 1:num_perts
-                plot(this.z_pert_evals(k) * ones(num_samps, 1), this.delta_pert_mag{component_id, k}, 'o');
+            for k = 1:length(this.z_pert_corr_binned)
+                violinplot(this.z_pert_corr_bin_means(k),this.delta_pert_mag_binned{component_id, k},'DensityDirection','positive','DensityWidth',.05,'DensityScale','width','FaceColor','black')
+                plot(this.z_pert_corr_bin_means(k), this.delta_pert_mag_binned{component_id, k}, 'o','Color',colors(k,:),'MarkerSize',8);
             end
             xlabel('$\Delta z$ Correlation Length','Interpreter','latex');
             ylabel('$\delta(\Delta z)$ Magnitude','Interpreter','latex');
@@ -129,11 +132,15 @@ classdef MD_Prior_Sampling < handle
                     user_continue = false;
                 else
 
-                    [~, i] = min(abs(this.z_pert_evals - x));
-                    [val, j] = min(abs(this.delta_pert_mag{i} - y));
-                    J = find(abs(this.z_pert_evals - x) < 1.e-3);
-                    for k = 1:length(J)
-                        [valk, jk] = min(abs(this.delta_pert_mag{J(k)} - y));
+                    bin = find(abs(this.z_pert_corr_bin_means - x) < .02);
+                    J = find(this.z_pert_corr==this.z_pert_corr_binned{bin}(1));
+                    for k = 2:length(this.z_pert_corr_binned{bin})
+                        J = [J;find(this.z_pert_corr==this.z_pert_corr_binned{bin}(k))];
+                    end
+                    i = J(1);
+                    [val, j] = min(abs(this.delta_pert_mag{component_id,i} - y));
+                    for k = 2:length(J)
+                        [valk, jk] = min(abs(this.delta_pert_mag{component_id,J(k)} - y));
                         if valk < val
                             val = valk;
                             j = jk;
@@ -145,13 +152,14 @@ classdef MD_Prior_Sampling < handle
                     if length(scatter_fig.Children(1).Children) > num_perts
                         delete(scatter_fig.Children(1).Children(1));
                     end
-                    plot(this.z_pert_evals(i), this.delta_pert_mag{i}(j), 'x', 'MarkerSize', 20, 'color', 'black');
+                    plot(this.z_pert_corr_bin_means(bin), this.delta_pert_mag{component_id,i}(j), 'x', 'MarkerSize', 20, 'color', 'black');
 
                     figure(z_fig);
                     generate_z_plot(nodes, t, this.z_pert(:, i),'$\Delta z_k$');
 
                     figure(delta_fig);
-                    generate_delta_plot(nodes, t, this.delta_samples_z_pert{i}(I, j), '$\delta(\Delta z_k,\theta_i)$');
+                    c_range = [min(this.delta_samples_z_pert{i}(I, j)),max(this.delta_samples_z_pert{i}(I, j))];
+                    generate_delta_plot(nodes, t, this.delta_samples_z_pert{i}(I, j), c_range, '$\delta(\Delta z_k,\theta_i)$');
 
                     figure(delta_fig);
                     figure(z_fig);
@@ -338,13 +346,15 @@ classdef MD_Prior_Sampling < handle
         end
 
         function [] = Compute_z_pert(this)
+
+
             e = this.z_prior_interface.determine_z_hyperparams.Compute_Eigenvalues(this.z_prior_interface);
             num_perts_init = length(find(1 ./ e > .1));
             if strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'transient vector')
                 num_perts_init = this.z_prior_interface.num_controls * num_perts_init;
             end
             oversampling = min(10, length(this.data_interface.z_opt) - num_perts_init);
-            num_subspace_iters = 1;
+            num_subspace_iters = 10;
             E_z_inv_gsvd = E_z_Inv_GSVD(this.z_prior_interface, this.z_opt);
             [this.z_pert, ~, this.z_pert_evals] = E_z_inv_gsvd.Compute_GSVD(num_perts_init, oversampling, num_subspace_iters);
             while this.z_pert_evals(end) > .1
@@ -352,6 +362,7 @@ classdef MD_Prior_Sampling < handle
                 oversampling = min(10, length(this.data_interface.z_opt) - num_perts_init);
                 [this.z_pert, ~, this.z_pert_evals] = E_z_inv_gsvd.Compute_GSVD(num_perts_init, oversampling, num_subspace_iters);
             end
+
             I = find(this.z_pert_evals > .1);
             this.z_pert = this.z_pert(:, I);
             this.z_pert_evals = this.z_pert_evals(I);
@@ -404,6 +415,7 @@ classdef MD_Prior_Sampling < handle
         function Compute_Delta_z_pert_Metrics(this)
             num_components = length(this.delta_mag);
             num_perts = size(this.z_pert, 2);
+            
             this.delta_pert_mag = cell(num_components, num_perts);
             for k = 1:num_components
                 I = this.data_interface.Separate_State_Components(k);
@@ -411,6 +423,45 @@ classdef MD_Prior_Sampling < handle
                     this.delta_pert_mag{k, j} = max(abs(this.delta_samples_z_pert{j}(I, :)))';
                 end
             end
+
+            if strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'spatial field')
+                nodes = this.z_prior_interface.z_hyperparam_interface.Load_Spatial_Node_Data();
+                if size(nodes, 2) == 1
+                    corr_len_fun = @(nodes, z, initial_guess) computeCorrelationLength_1D(nodes(:, 1), z, initial_guess);
+                elseif size(nodes, 2) == 2
+                    corr_len_fun = @(nodes, z, initial_guess) computeCorrelationLength_2D(nodes(:, 1), nodes(:, 2), z, initial_guess);
+                end
+            elseif strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'transient vector')
+                corr_len_fun = [];
+            end
+            this.z_pert_corr = zeros(num_perts,1);
+            initial_guess = 0;
+            for j = 1:num_perts
+                this.z_pert_corr(j) = corr_len_fun(nodes,this.z_pert(:,j),initial_guess);
+                initial_guess = this.z_pert_corr(j);
+            end
+
+            bin_width = 0.05;
+            bin_centers = (min(this.z_pert_corr)-bin_width/2):bin_width:(max(this.z_pert_corr)+bin_width/2);
+            num_bins = length(bin_centers);
+            this.z_pert_corr_binned = cell(num_bins,1);
+            this.delta_pert_mag_binned = cell(num_components, num_bins);
+            for i = 1:num_bins
+                this.z_pert_corr_binned{i} = [];
+                for k = 1:num_components
+                    this.delta_pert_mag_binned{k,i} = [];
+                end
+            end
+            for j = 1:num_perts
+                [~,i] = min(abs(bin_centers-this.z_pert_corr(j)));
+                this.z_pert_corr_binned{i} = [this.z_pert_corr_binned{i};this.z_pert_corr(j)];
+                for k = 1:num_components
+                    this.delta_pert_mag_binned{k,i} = [this.delta_pert_mag_binned{k,i};this.delta_pert_mag{k,j}];
+                end
+            end
+            this.z_pert_corr_binned = this.z_pert_corr_binned(~cellfun('isempty', this.z_pert_corr_binned));
+            this.z_pert_corr_bin_means = cellfun(@(x)mean(x), this.z_pert_corr_binned);
+            this.delta_pert_mag_binned = this.delta_pert_mag_binned(~cellfun('isempty', this.delta_pert_mag_binned));
         end
 
         function [] = Plot_Transient_1D(this, nodes, t, u, range, name)
