@@ -5,8 +5,8 @@
 \usepackage{caption}
 \usepackage[nameinlink]{cleveref}
 \usepackage{comment}
-% \usepackage[finalizecache,cachedir=_minted]{minted}
 \usepackage{mathtools}
+% \usepackage[finalizecache,cachedir=_minted]{minted}
 \usepackage[frozencache,cachedir=_minted]{minted}
 \usepackage[normalem]{ulem}  % Strikeout with \sout{}
 \usepackage{url}
@@ -24,7 +24,8 @@
     style=pastie,
     fontsize=\normalsize,
     linenos,
-    frame=lines,
+    mathescape=true,
+    % frame=lines,
     framesep=2mm,
 }
 \setlength{\abovecaptionskip}{0pt}
@@ -62,8 +63,9 @@
 
 \newcommand{\trp}{^{\mathsf{T}}}
 \newcommand{\invtrp}{^{-\mathsf{T}}}
-\newcommand{\grad}[1]{\nabla_{\!#1}\,}
+\newcommand{\grad}[1]{\nabla_{\!#1}}
 \newcommand{\ddt}{\frac{\textrm{d}}{\textup{d}t}}
+
 \newcommand{\J}{\mathcal{J}}
 \newcommand{\N}{\mathbb{N}}
 \newcommand{\R}{\mathbb{R}}
@@ -98,6 +100,7 @@
 \newcommand{\Z}{\mathbf{Z}}
 \newcommand{\0}{\mathbf{0}}
 \newcommand{\1}{\mathbf{1}}
+\newcommand{\bfepsilon}{\boldsymbol{\varepsilon}}
 \newcommand{\bfdelta}{\boldsymbol{\delta}}
 \newcommand{\bflambda}{\boldsymbol{\lambda}}
 \newcommand{\bfmu}{\boldsymbol{\mu}}

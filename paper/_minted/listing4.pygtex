@@ -1,8 +1,0 @@
-\begin{Verbatim}[commandchars=\\\{\}]
-\PYG{k}{classdef}\PYG{+w}{ }\PYG{n}{MD\PYGZus{}Data\PYGZus{}Interface}\PYG{+w}{ }\PYG{o}{\PYGZlt{}}\PYG{+w}{ }\PYG{n+nb}{handle}
-\PYG{+w}{    }\PYG{k}{methods}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{Abstract}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{Access}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{public}\PYG{p}{)}
-\PYG{+w}{        }\PYG{p}{[}\PYG{n}{u\PYGZus{}opt}\PYG{p}{]}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{Load\PYGZus{}Optimal\PYGZus{}u}\PYG{p}{(}\PYG{n}{this}\PYG{p}{)}
-\PYG{+w}{        }\PYG{p}{[}\PYG{n}{z\PYGZus{}opt}\PYG{p}{]}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{Load\PYGZus{}Optimal\PYGZus{}z}\PYG{p}{(}\PYG{n}{this}\PYG{p}{)}
-\PYG{+w}{    }\PYG{k}{end}
-\PYG{k}{end}
-\end{Verbatim}
