@@ -393,7 +393,7 @@ classdef MD_Prior_Sampling < handle
                 this.delta_mag{k} = max(abs(this.delta_samples_z_opt(I, :)))';
 
                 initial_guess = 0;
-                correlation_lengths = zeros(num_samps, n_t);
+                correlation_lengths = zeros(num_samps, 1);
                 if size(nodes{k}, 2) == 1
                     corr_len_fun = @(nodes, d, initial_guess) computeCorrelationLength_1D(nodes(:, 1), d, initial_guess);
                 elseif size(nodes{k}, 2) == 2
@@ -401,14 +401,11 @@ classdef MD_Prior_Sampling < handle
                 end
 
                 for i = 1:num_samps
-                    di = reshape(this.delta_samples_z_opt(I, i), n_y, n_t);
-                    for j = 1:n_t
-                        correlation_lengths(i, j) = corr_len_fun(nodes{k}, di(:, j), initial_guess);
-                        initial_guess = correlation_lengths(i, j);
-                    end
-                    initial_guess = correlation_lengths(i, 1);
+                    di = mean(reshape(this.delta_samples_z_opt(I, i), n_y, n_t),2);
+                    correlation_lengths(i) = corr_len_fun(nodes{k}, di, initial_guess);
+                    initial_guess = correlation_lengths(i);
                 end
-                this.delta_corr{k} = mean(correlation_lengths, 2);
+                this.delta_corr{k} = correlation_lengths;
             end
         end
 

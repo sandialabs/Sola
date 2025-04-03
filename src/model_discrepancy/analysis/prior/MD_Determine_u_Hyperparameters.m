@@ -53,16 +53,13 @@ classdef MD_Determine_u_Hyperparameters < handle
                 disp('Determine_beta_u error: Dimensions greater than 2 are not supported.');
             end
 
-            correlation_lengths = zeros(N, n_t);
+            correlation_lengths = zeros(N, 1);
             for i = 1:N
-                di = reshape(this.data_interface.D(I, i), n_y, n_t);
-                for j = 1:n_t
-                    correlation_lengths(i, j) = corr_len_fun(nodes, di(:, j), initial_guess);
-                    initial_guess = correlation_lengths(i, j);
-                end
-                initial_guess = correlation_lengths(i, 1);
+                di = mean(reshape(this.data_interface.D(I, i), n_y, n_t),2);
+                correlation_lengths(i) = corr_len_fun(nodes, di, initial_guess);
+                initial_guess = correlation_lengths(i);
             end
-            beta_u_new = mean(correlation_lengths(:), 'omitnan')^2 / normalization;
+            beta_u_new = mean(correlation_lengths, 'omitnan')^2 / normalization;
 
             this.u_hyperparam_interface.Set_beta_u(beta_u_new);
         end
