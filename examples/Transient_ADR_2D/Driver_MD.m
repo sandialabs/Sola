@@ -22,129 +22,139 @@ n_y = solver.n_y;
 n_q = solver.n_q;
 
 %%
-ui_hyperparams = cell(2, 1);
-ui_spatial_prior_interface = cell(2, 1);
-ui_transient_prior_cov = cell(2, 1);
-ui_prior_interface = cell(2, 1);
+u_hyperparam_interface_cell = cell(2, 1);
+u_spatial_prior_interface_cell = cell(2, 1);
+u_transient_prior_cov = cell(2, 1);
+u_prior_interface_cell = cell(2, 1);
 for k = 1:2
-    ui_hyperparams{k} = MD_u_Hyperparameters_Transient_ADR_2D(data_interface, solver, t, k);
-    ui_hyperparams{k}.gsvd_num_sing_vals = 1000;
-    ui_hyperparams{k}.gsvd_oversampling = 20;
-    ui_spatial_prior_interface{k} = MD_Numeric_Laplacian_u_Prior_Interface(S, M, ui_hyperparams{k});
-    ui_transient_prior_cov{k} = MD_Transient_Prior_Covariance_Sabl(ui_hyperparams{k}, T, n_t, n_y / 2);
-    ui_prior_interface{k} = MD_Transient_Elliptic_u_Prior_Interface(ui_spatial_prior_interface{k}, ui_transient_prior_cov{k});
+    u_hyperparam_interface_cell{k} = MD_u_Hyperparameter_Interface_Transient_ADR_2D(true, true, true, k, solver, t);
+    u_hyperparam_interface_cell{k}.gsvd_num_sing_vals = 1000;
+    u_hyperparam_interface_cell{k}.gsvd_oversampling = 20;
+    u_spatial_prior_interface_cell{k} = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface_cell{k});
+    u_transient_prior_cov{k} = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface_cell{k}, T, n_t, n_y / 2);
+    u_prior_interface_cell{k} = MD_Transient_Elliptic_u_Prior_Interface(data_interface, u_spatial_prior_interface_cell{k}, u_transient_prior_cov{k});
 end
-u_prior_interface = MD_Multi_State_u_Prior_Interface(ui_prior_interface);
+u_prior_interface = MD_Multi_State_u_Prior_Interface(data_interface, u_prior_interface_cell, u_hyperparam_interface_cell);
 
 %%
-z_hyperparams = MD_z_Hyperparameters_Transient_ADR_2D(data_interface, u_prior_interface, n_t);
-transient_prior_cov_z = MD_Transient_Prior_Covariance_Sabl(z_hyperparams, t(end - 1), n_t - 1, n_q);
-z_prior_interface = MD_z_Prior_Interface_Transient_ADR_2D(transient_prior_cov_z, n_q);
+num_state_solves = 100;
+z_hyperparam_interface = MD_z_Hyperparameter_Interface_Transient_ADR_2D(num_state_solves,opt,basis1,basis2);
 
-time_series_samples_z = transient_prior_cov_z.Sample_Time_Series(10);
-time_series_samples_u = ui_transient_prior_cov.Sample_Time_Series(10);
+h = t(2)-t(1);
+m = n_t - 1;
+M_t = diag(4 * ones(1, m)) + diag(ones(1, m - 1), 1) + diag(ones(1, m - 1), -1);
+M_t(1, 1) = .5 * M_t(1, 1);
+M_t(end, end) = .5 * M_t(end, end);
+M_t = (1 / 6) * h * M_t;
+S_t = diag(2 * ones(1, m)) + (-1) * diag(ones(1, m - 1), 1) + (-1) * diag(ones(1, m - 1), -1);
+S_t(1, 1) = .5 * S_t(1, 1);
+S_t(end, end) = .5 * S_t(end, end);
+S_t = (1 / h) * S_t;
+z_prior_interface = MD_Transient_Vector_z_Prior_Interface(S_t, M_t, n_q, data_interface, z_hyperparam_interface, u_prior_interface);
 
 %%
-num_prior_samples = 10;
+num_prior_samples = 100;
 md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
+md_prior_sampling.Generate_Prior_Discrepancy_Sample_Data(num_prior_samples);
 
-prior_delta_samples_z_opt = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
-if ~suppress_figures
-
-    u = data_interface.D;
-    u_tmp = reshape(u, n_y, n_t);
-    u1 = u_tmp(1:(n_y / 2), :);
-    u2 = u_tmp((n_y / 2 + 1):end, :);
-    data1_min = min(u1, [], 1);
-    data1_max = max(u1, [], 1);
-    data2_min = min(u2, [], 1);
-    data2_max = max(u2, [], 1);
-
-    delta1_min = zeros(n_t, num_prior_samples);
-    delta1_max = zeros(n_t, num_prior_samples);
-    delta2_min = zeros(n_t, num_prior_samples);
-    delta2_max = zeros(n_t, num_prior_samples);
-    for k = 1:num_prior_samples
-        u = prior_delta_samples_z_opt(:, k);
-        u_tmp = reshape(u, n_y, n_t);
-        u1 = u_tmp(1:(n_y / 2), :);
-        u2 = u_tmp((n_y / 2 + 1):end, :);
-        delta1_min(:, k) = min(u1, [], 1);
-        delta1_max(:, k) = max(u1, [], 1);
-        delta2_min(:, k) = min(u2, [], 1);
-        delta2_max(:, k) = max(u2, [], 1);
-    end
-
-    figure;
-    hold on;
-    for k = 1:num_prior_samples
-        plot(t, delta1_min(:, k), 'LineWidth', 3, 'color', .9 * [1, 1, 1]);
-        plot(t, delta1_max(:, k), 'LineWidth', 3, 'color', .9 * [1, 1, 1]);
-    end
-    plot(t, data1_min, 'LineWidth', 3, 'color', 'black');
-    plot(t, data1_max, 'LineWidth', 3, 'color', 'black');
-    title('Discrepancy 1 Magnitude');
-
-    figure;
-    hold on;
-    for k = 1:num_prior_samples
-        plot(t, delta2_min(:, k), 'LineWidth', 3, 'color', .9 * [1, 1, 1]);
-        plot(t, delta2_max(:, k), 'LineWidth', 3, 'color', .9 * [1, 1, 1]);
-    end
-    plot(t, data2_min, 'LineWidth', 3, 'color', 'black');
-    plot(t, data2_max, 'LineWidth', 3, 'color', 'black');
-    title('Discrepancy 2 Magnitude');
-
-    k = 1;
-    time_step = 1;
-
-    u = reshape(data_interface.D, n_y, n_t);
-    figure;
-    pdeplot(solver.model.Mesh, XYData = u(1:(n_y / 2), time_step), colormap = 'parula');
-    u = reshape(prior_delta_samples_z_opt(:, k), n_y, n_t);
-    figure;
-    pdeplot(solver.model.Mesh, XYData = u(1:(n_y / 2), time_step), colormap = 'parula');
-
-    u = reshape(data_interface.D, n_y, n_t);
-    figure;
-    pdeplot(solver.model.Mesh, XYData = u((n_y / 2 + 1):end, time_step), colormap = 'parula');
-    u = reshape(prior_delta_samples_z_opt(:, k), n_y, n_t);
-    figure;
-    pdeplot(solver.model.Mesh, XYData = u((n_y / 2 + 1):end, time_step), colormap = 'parula');
-
-end
-
-%%
-z_lofi = Q_rom(:);
-z = zeros(length(z_lofi), 1);
-z(:, 1) = z_lofi .* 1.2;
-if ~suppress_figures
-    for j = 1:size(z, 2)
-        Q = reshape(z(:, j), n_q, n_t - 1).^2;
-        figure;
-        semilogy(t(2:end), Q);
-        title('Optimal controls');
-    end
-end
-
-prior_delta_samples = md_prior_sampling.Prior_Discrepancy_Samples(z, num_prior_samples);
-if ~suppress_figures
-
-    k = 2;
-    u = reshape(prior_delta_samples{k}, n_y, n_t);
-    time_step = 5;
-    figure;
-    pdeplot(solver.model.Mesh, XYData = u((n_y / 2 + 1):end, time_step), colormap = 'parula');
-
-    u = reshape(prior_delta_samples_z_opt(:, k), n_y, n_t);
-    figure;
-    pdeplot(solver.model.Mesh, XYData = u((n_y / 2 + 1):end, time_step), colormap = 'parula');
-
-    u = reshape(data_interface.u_opt, n_y, n_t);
-    figure;
-    pdeplot(solver.model.Mesh, XYData = u((n_y / 2 + 1):end, time_step), colormap = 'parula');
-
-end
+%% OLD CODE
+% prior_delta_samples_z_opt = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
+% if ~suppress_figures
+% 
+%     u = data_interface.D;
+%     u_tmp = reshape(u, n_y, n_t);
+%     u1 = u_tmp(1:(n_y / 2), :);
+%     u2 = u_tmp((n_y / 2 + 1):end, :);
+%     data1_min = min(u1, [], 1);
+%     data1_max = max(u1, [], 1);
+%     data2_min = min(u2, [], 1);
+%     data2_max = max(u2, [], 1);
+% 
+%     delta1_min = zeros(n_t, num_prior_samples);
+%     delta1_max = zeros(n_t, num_prior_samples);
+%     delta2_min = zeros(n_t, num_prior_samples);
+%     delta2_max = zeros(n_t, num_prior_samples);
+%     for k = 1:num_prior_samples
+%         u = prior_delta_samples_z_opt(:, k);
+%         u_tmp = reshape(u, n_y, n_t);
+%         u1 = u_tmp(1:(n_y / 2), :);
+%         u2 = u_tmp((n_y / 2 + 1):end, :);
+%         delta1_min(:, k) = min(u1, [], 1);
+%         delta1_max(:, k) = max(u1, [], 1);
+%         delta2_min(:, k) = min(u2, [], 1);
+%         delta2_max(:, k) = max(u2, [], 1);
+%     end
+% 
+%     figure;
+%     hold on;
+%     for k = 1:num_prior_samples
+%         plot(t, delta1_min(:, k), 'LineWidth', 3, 'color', .9 * [1, 1, 1]);
+%         plot(t, delta1_max(:, k), 'LineWidth', 3, 'color', .9 * [1, 1, 1]);
+%     end
+%     plot(t, data1_min, 'LineWidth', 3, 'color', 'black');
+%     plot(t, data1_max, 'LineWidth', 3, 'color', 'black');
+%     title('Discrepancy 1 Magnitude');
+% 
+%     figure;
+%     hold on;
+%     for k = 1:num_prior_samples
+%         plot(t, delta2_min(:, k), 'LineWidth', 3, 'color', .9 * [1, 1, 1]);
+%         plot(t, delta2_max(:, k), 'LineWidth', 3, 'color', .9 * [1, 1, 1]);
+%     end
+%     plot(t, data2_min, 'LineWidth', 3, 'color', 'black');
+%     plot(t, data2_max, 'LineWidth', 3, 'color', 'black');
+%     title('Discrepancy 2 Magnitude');
+% 
+%     k = 1;
+%     time_step = 1;
+% 
+%     u = reshape(data_interface.D, n_y, n_t);
+%     figure;
+%     pdeplot(solver.model.Mesh, XYData = u(1:(n_y / 2), time_step), colormap = 'parula');
+%     u = reshape(prior_delta_samples_z_opt(:, k), n_y, n_t);
+%     figure;
+%     pdeplot(solver.model.Mesh, XYData = u(1:(n_y / 2), time_step), colormap = 'parula');
+% 
+%     u = reshape(data_interface.D, n_y, n_t);
+%     figure;
+%     pdeplot(solver.model.Mesh, XYData = u((n_y / 2 + 1):end, time_step), colormap = 'parula');
+%     u = reshape(prior_delta_samples_z_opt(:, k), n_y, n_t);
+%     figure;
+%     pdeplot(solver.model.Mesh, XYData = u((n_y / 2 + 1):end, time_step), colormap = 'parula');
+% 
+% end
+% 
+% %%
+% z_lofi = Q_rom(:);
+% z = zeros(length(z_lofi), 1);
+% z(:, 1) = z_lofi .* 1.2;
+% if ~suppress_figures
+%     for j = 1:size(z, 2)
+%         Q = reshape(z(:, j), n_q, n_t - 1).^2;
+%         figure;
+%         semilogy(t(2:end), Q);
+%         title('Optimal controls');
+%     end
+% end
+% 
+% prior_delta_samples = md_prior_sampling.Prior_Discrepancy_Samples(z, num_prior_samples);
+% if ~suppress_figures
+% 
+%     k = 2;
+%     u = reshape(prior_delta_samples{k}, n_y, n_t);
+%     time_step = 5;
+%     figure;
+%     pdeplot(solver.model.Mesh, XYData = u((n_y / 2 + 1):end, time_step), colormap = 'parula');
+% 
+%     u = reshape(prior_delta_samples_z_opt(:, k), n_y, n_t);
+%     figure;
+%     pdeplot(solver.model.Mesh, XYData = u((n_y / 2 + 1):end, time_step), colormap = 'parula');
+% 
+%     u = reshape(data_interface.u_opt, n_y, n_t);
+%     figure;
+%     pdeplot(solver.model.Mesh, XYData = u((n_y / 2 + 1):end, time_step), colormap = 'parula');
+% 
+% end
 
 %%
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);

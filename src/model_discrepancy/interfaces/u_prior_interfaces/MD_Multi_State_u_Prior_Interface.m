@@ -2,6 +2,7 @@ classdef MD_Multi_State_u_Prior_Interface < MD_u_Prior_Interface
 
     properties
         u_prior_interface_cell
+        u_hyperparam_interface
         n_c
         I
     end
@@ -53,8 +54,9 @@ classdef MD_Multi_State_u_Prior_Interface < MD_u_Prior_Interface
             end
         end
 
-        function this = MD_Multi_State_u_Prior_Interface(data_interface, u_prior_interface_cell)
+        function this = MD_Multi_State_u_Prior_Interface(data_interface, u_prior_interface_cell, u_hyperparam_interface_cell)
             this.u_prior_interface_cell = u_prior_interface_cell;
+            this.u_hyperparam_interface = MD_Multi_State_u_Hyperparameter_Interface(u_hyperparam_interface_cell);
             this.n_c = length(u_prior_interface_cell);
             this.I = cell(this.n_c, 1);
             for i = 1:this.n_c
