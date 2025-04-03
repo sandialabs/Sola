@@ -57,13 +57,23 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
         end
 
         function [u_out] = Apply_W_u_Acute_Inverse(this, u_in)
-            u_out = 0.0 * u_in;
-            for k = 1:size(u_out, 2)
-                u_tmp = reshape(u_in(:, k), this.transient_prior_cov.n_y, this.transient_prior_cov.n_t);
-                u_tmp = u_tmp * this.transient_prior_cov.evecs * diag(this.transient_prior_cov.evals) * this.transient_prior_cov.evecs';
-                u_tmp = this.spatial_prior_cov.sing_vecs_output * diag(this.spatial_prior_cov.sing_vals.^2) * this.spatial_prior_cov.sing_vecs_output' * u_tmp;
-                u_out(:, k) = u_tmp(:);
-            end
+            u_tmp = reshape(u_in, this.transient_prior_cov.n_y, this.transient_prior_cov.n_t, size(u_in,2));
+            tmp1 = pagemtimes(this.spatial_prior_cov.sing_vecs_output * diag(this.spatial_prior_cov.sing_vals.^2) * this.spatial_prior_cov.sing_vecs_output',u_tmp);
+            tmp2 = pagemtimes(this.transient_prior_cov.evecs * diag(this.transient_prior_cov.evals) * this.transient_prior_cov.evecs','transpose',tmp1,'transpose');
+            tmp3 = pagetranspose(tmp2);
+            u_out = reshape(tmp3,size(u_in,1),size(u_in,2));
+
+            % This original code loops over the columns of u_in, and
+            % consequently, is an easier piece of code to read.
+            % The optimized code above computes the same matrix multiply
+            % using tensor operations for greater efficiency
+            % u_out = 0.0 * u_in;
+            % for k = 1:size(u_out, 2)
+            %     u_tmp = reshape(u_in(:, k), this.transient_prior_cov.n_y, this.transient_prior_cov.n_t);
+            %     u_tmp = u_tmp * this.transient_prior_cov.evecs * diag(this.transient_prior_cov.evals) * this.transient_prior_cov.evecs';
+            %     u_tmp = this.spatial_prior_cov.sing_vecs_output * diag(this.spatial_prior_cov.sing_vals.^2) * this.spatial_prior_cov.sing_vecs_output' * u_tmp;
+            %     u_out(:, k) = u_tmp(:);
+            % end
         end
 
         % Compute samples from a mean zero Gaussian with covariance W_u^{-1}
@@ -71,13 +81,24 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             r_s = length(this.spatial_prior_cov.sing_vals);
             r_t = length(this.transient_prior_cov.evals);
             m = size(this.spatial_prior_cov.sing_vecs_output, 1) * size(this.transient_prior_cov.evecs, 1);
-            u_out = 0.0 * zeros(m, num_samples);
-            for k = 1:size(u_out, 2)
-                omega = diag(this.spatial_prior_cov.sing_vals) * randn(r_s, r_t) * diag(sqrt(this.transient_prior_cov.evals));
-                u_space = sqrt(this.alpha_u) * this.spatial_prior_cov.sing_vecs_output * omega;
-                u_tmp = u_space * this.transient_prior_cov.evecs';
-                u_out(:, k) = u_tmp(:);
-            end
+
+            omega = randn(r_s, r_t, num_samples);
+            tmp1 = pagemtimes(this.spatial_prior_cov.sing_vecs_output * diag(this.spatial_prior_cov.sing_vals),omega);
+            tmp2 = pagemtimes(this.transient_prior_cov.evecs * diag(sqrt(this.transient_prior_cov.evals)),'none',tmp1,'transpose');
+            tmp3 = pagetranspose(tmp2);
+            u_out = sqrt(this.alpha_u) * reshape(tmp3,m,num_samples);
+
+            % This original code loops over the columns of u_out, and
+            % consequently, is an easier piece of code to read.
+            % The optimized code above computes the same matrix multiply
+            % using tensor operations for greater efficiency
+            % u_out = 0.0 * zeros(m, num_samples);
+            % for k = 1:size(u_out, 2)
+            %     omega = diag(this.spatial_prior_cov.sing_vals) * randn(r_s, r_t) * diag(sqrt(this.transient_prior_cov.evals));
+            %     u_space = sqrt(this.alpha_u) * this.spatial_prior_cov.sing_vecs_output * omega;
+            %     u_tmp = u_space * this.transient_prior_cov.evecs';
+            %     u_out(:, k) = u_tmp(:);
+            % end
         end
 
         % Compute samples from a mean zero Gaussian with covariance (W_u+scalar*M_u)^{-1}
