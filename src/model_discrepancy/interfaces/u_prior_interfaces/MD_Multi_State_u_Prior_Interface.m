@@ -5,6 +5,7 @@ classdef MD_Multi_State_u_Prior_Interface < MD_u_Prior_Interface
         u_hyperparam_interface
         n_c
         I
+        total_dofs
     end
 
     methods (Access = public)
@@ -12,7 +13,12 @@ classdef MD_Multi_State_u_Prior_Interface < MD_u_Prior_Interface
         function [u_out] = Apply_M_u(this, u_in)
             u_out = 0 * u_in;
             for i = 1:this.n_c
-                u_out(this.I{i}, :) = this.u_prior_interface_cell{i}.Apply_M_u(u_in(this.I{i}, :));
+                if size(u_in,1) == this.total_dofs
+                    J = this.I{i};
+                else
+                    J = this.I{i}(1:this.u_prior_interface_cell{i}.transient_prior_cov.n_y);
+                end
+                u_out(J, :) = this.u_prior_interface_cell{i}.Apply_M_u(u_in(J, :));
             end
         end
 
@@ -59,8 +65,10 @@ classdef MD_Multi_State_u_Prior_Interface < MD_u_Prior_Interface
             this.u_hyperparam_interface = MD_Multi_State_u_Hyperparameter_Interface(u_hyperparam_interface_cell);
             this.n_c = length(u_prior_interface_cell);
             this.I = cell(this.n_c, 1);
+            this.total_dofs = 0;
             for i = 1:this.n_c
                 this.I{i} = data_interface.Separate_State_Components(i);
+                this.total_dofs = this.total_dofs + length(this.I{i});
             end
         end
 

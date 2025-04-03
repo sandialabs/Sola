@@ -16,6 +16,8 @@ classdef MD_Prior_Sampling < handle
         z_pert_corr_bin_means
         delta_mag
         delta_corr
+        temporal_mag
+        temporal_corr_len 
         delta_pert_mag
         delta_pert_mag_binned
 
@@ -33,6 +35,7 @@ classdef MD_Prior_Sampling < handle
             this.z_opt = this.data_interface.z_opt;
         end
 
+        %%
         function [delta_samples] = Prior_Discrepancy_Samples_at_z_opt(this, num_samps)
             delta_samples = this.u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samps) + this.data_interface.data_shift;
         end
@@ -53,6 +56,26 @@ classdef MD_Prior_Sampling < handle
             end
         end
 
+        %%
+        function [] = Generate_Prior_Discrepancy_Sample_Data(this, num_samps)
+            this.Generate_Prior_Discrepancy_z_opt_Sample_Data(num_samps);
+            this.Generate_Prior_Discrepancy_z_pert_Sample_Data(num_samps);
+        end
+
+        function [] = Generate_Prior_Discrepancy_z_opt_Sample_Data(this, num_samps)
+            this.delta_samples_z_opt = this.u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samps)  + this.data_interface.data_shift;
+            this.Compute_Delta_z_opt_Metrics();
+            if this.u_prior_interface.u_hyperparam_interface.is_transient
+                this.Compute_temporal_data();
+            end
+        end
+
+        function [] = Generate_Prior_Discrepancy_z_pert_Sample_Data(this, num_samps)
+            this.Compute_z_pert();
+            this.Compute_Delta_z_pert_Metrics();
+        end
+
+        %%
         function [] = Visualization_for_Prior_Discrepancy_at_z_pert(this, component_id)
 
             I = this.data_interface.Separate_State_Components(component_id);
@@ -246,41 +269,14 @@ classdef MD_Prior_Sampling < handle
 
         function [] = Visualization_for_Prior_Time_Evolution(this, component_id)
 
-            num_components = length(this.delta_mag);
-            if isempty(this.delta_z_opt_time_evol)
-                this.delta_z_opt_time_evol = cell(num_components, 1);
-            end
-
-            num_samps = size(this.delta_samples_z_opt, 2);
-            I = this.data_interface.Separate_State_Components(component_id);
-            t = this.u_prior_interface.u_hyperparam_interface.Load_Time_Node_Data();
-            n_t = length(t);
-            n_y = length(this.delta_samples_z_opt(I, 1)) / n_t;
-            this.delta_z_opt_time_evol{component_id} = zeros(num_samps, n_t);
-
-            for i = 1:num_samps
-                di = reshape(this.delta_samples_z_opt(I, i), n_y, n_t);
-                this.delta_z_opt_time_evol{component_id}(i, :) = sqrt(diag(di' * this.u_prior_interface.Apply_M_u(di)));
-            end
-
-            d = reshape(this.data_interface.D(I, 1), n_y, n_t);
-            this.data_time_evol = sqrt(diag(d' * this.u_prior_interface.Apply_M_u(d)));
-
-            temporal_corr_len = zeros(num_samps, 1);
-            initial_guess = 0;
-            for i = 1:num_samps
-                temporal_corr_len(i) = computeCorrelationLength_1D(t, this.delta_z_opt_time_evol{component_id}(i, :), initial_guess);
-                initial_guess = temporal_corr_len(i);
-            end
-            temporal_mag = max(abs(this.delta_z_opt_time_evol{component_id}), [], 2);
-
             delta_min = .95 * min(this.delta_z_opt_time_evol{component_id}(:));
-            delta_max = 1.05 * max(temporal_mag);
+            delta_max = 1.05 * max(this.temporal_mag{component_id});
+            t = this.u_prior_interface.u_hyperparam_interface.Load_Time_Node_Data();
 
             sample_fig = figure;
             hold on;
             plot(t, this.delta_z_opt_time_evol{component_id}, 'LineWidth', 3, 'Color', [.9, .9, .9]);
-            plot(t, this.data_time_evol, 'LineWidth', 3, 'Color', 'red');
+            plot(t, this.data_time_evol{component_id}, 'LineWidth', 3, 'Color', 'red');
             xlabel('Time');
             ylabel('Discrepancy Spatial Norm');
             ylim([delta_min, delta_max]);
@@ -288,21 +284,21 @@ classdef MD_Prior_Sampling < handle
 
             data_fig = figure;
             hold on;
-            plot(t, this.data_time_evol, 'LineWidth', 3, 'Color', 'red');
+            plot(t, this.data_time_evol{component_id}, 'LineWidth', 3, 'Color', 'red');
             xlabel('Time');
             ylabel('Discrepancy Spatial Norm');
             ylim([delta_min, delta_max]);
             set(gca, 'fontsize', 24);
 
-            xmid = median(temporal_corr_len);
-            ymid = median(temporal_mag);
-            xmin = min(temporal_corr_len) - 0.3 * xmid;
-            xmax = max(temporal_corr_len) + 0.3 * xmid;
-            ymin = min(temporal_mag) - 0.3 * ymid;
-            ymax = max(temporal_mag) + 0.3 * ymid;
+            xmid = median(this.temporal_corr_len{component_id});
+            ymid = median(this.temporal_mag{component_id});
+            xmin = min(this.temporal_corr_len{component_id}) - 0.3 * xmid;
+            xmax = max(this.temporal_corr_len{component_id}) + 0.3 * xmid;
+            ymin = min(this.temporal_mag{component_id}) - 0.3 * ymid;
+            ymax = max(this.temporal_mag{component_id}) + 0.3 * ymid;
             scatter_fig = figure;
             hold on;
-            plot(temporal_corr_len, temporal_mag, 'o');
+            plot(this.temporal_corr_len{component_id}, this.temporal_mag{component_id}, 'o');
             xlabel('Temporal Correlation Length');
             ylabel('Magnitude');
             xlim([xmin, xmax]);
@@ -323,9 +319,9 @@ classdef MD_Prior_Sampling < handle
                     user_continue = false;
                 else
 
-                    [~, i] = min(vecnorm([temporal_corr_len, temporal_mag] - [x, y], 2, 2));
+                    [~, i] = min(vecnorm([this.temporal_corr_len{component_id}, this.temporal_mag{component_id}] - [x, y], 2, 2));
                     plot(data_fig.CurrentAxes, t, this.delta_z_opt_time_evol{component_id}(i, :), 'LineWidth', 3, 'Color', colors(current_selection, :));
-                    plot(scatter_fig.CurrentAxes, temporal_corr_len(i), temporal_mag(i), 'x', 'MarkerSize', 15, 'Color', colors(current_selection, :));
+                    plot(scatter_fig.CurrentAxes, this.temporal_corr_len{component_id}(i), this.temporal_mag{component_id}(i), 'x', 'MarkerSize', 15, 'Color', colors(current_selection, :));
 
                     current_selection = current_selection + 1;
                     figure(sample_fig);
@@ -336,13 +332,59 @@ classdef MD_Prior_Sampling < handle
             disp('Concluded interactive visualization');
         end
 
-        function [] = Generate_Prior_Discrepancy_Sample_Data(this, num_samps)
+        %%
+        function [] = Compute_temporal_data(this)
+            num_components = length(this.delta_mag);
+            if isempty(this.delta_z_opt_time_evol)
+                this.delta_z_opt_time_evol = cell(num_components, 1);
+            end
+            num_samps = size(this.delta_samples_z_opt, 2);
 
-            this.delta_samples_z_opt = this.u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samps)  + this.data_interface.data_shift;
-            this.Compute_Delta_z_opt_Metrics();
+            t = this.u_prior_interface.u_hyperparam_interface.Load_Time_Node_Data();
+            n_t = length(t);
+            n_y = length(this.delta_samples_z_opt(:, 1)) / n_t;
+            for component_id = 1:num_components
+                this.delta_z_opt_time_evol{component_id} = zeros(num_samps, n_t);
+            end
 
-            this.Compute_z_pert();
-            this.Compute_Delta_z_pert_Metrics();
+            for i = 1:num_samps
+                di = reshape(this.delta_samples_z_opt(:, i), n_y, n_t);
+                tmp = this.u_prior_interface.Apply_M_u(di);
+                if num_components > 1
+                    for component_id = 1:num_components
+                        J = this.u_prior_interface.I{component_id};
+                        J = J(1:this.u_prior_interface.u_prior_interface_cell{component_id}.transient_prior_cov.n_y);
+                        this.delta_z_opt_time_evol{component_id}(i,:) = sqrt(diag(di(J,:)'*tmp(J,:)));
+                    end
+                else
+                    this.delta_z_opt_time_evol{1}(i,:) = sqrt(diag(di' * tmp));
+                end
+            end
+
+            this.data_time_evol = cell(num_components, 1);
+            d = reshape(this.data_interface.D(:, 1), n_y, n_t);
+            tmp = this.u_prior_interface.Apply_M_u(d);
+            if num_components > 1
+                for component_id = 1:num_components
+                    J = this.u_prior_interface.I{component_id};
+                    J = J(1:this.u_prior_interface.u_prior_interface_cell{component_id}.transient_prior_cov.n_y);
+                    this.data_time_evol{component_id} = sqrt(diag(d(J,:)' * tmp(J,:)));
+                end
+            else
+                this.data_time_evol{1} = sqrt(diag(d' * tmp));
+            end
+
+            this.temporal_mag = cell(num_components,1);
+            this.temporal_corr_len = cell(num_components,1);
+            for component_id = 1:num_components
+                this.temporal_corr_len{component_id} = zeros(num_samps, 1);
+                initial_guess = 0;
+                for i = 1:num_samps
+                    this.temporal_corr_len{component_id}(i) = computeCorrelationLength_1D(t, this.delta_z_opt_time_evol{component_id}(i, :), initial_guess);
+                    initial_guess = this.temporal_corr_len{component_id}(i);
+                end
+                this.temporal_mag{component_id} = max(abs(this.delta_z_opt_time_evol{component_id}), [], 2);
+            end
         end
 
         function [] = Compute_z_pert(this)
@@ -377,6 +419,7 @@ classdef MD_Prior_Sampling < handle
             end
         end
 
+        %%
         function [] = Compute_Delta_z_opt_Metrics(this)
 
             nodes = this.u_prior_interface.u_hyperparam_interface.Load_Spatial_Node_Data();
@@ -461,6 +504,7 @@ classdef MD_Prior_Sampling < handle
             this.delta_pert_mag_binned = this.delta_pert_mag_binned(~cellfun('isempty', this.delta_pert_mag_binned));
         end
 
+        %%
         function [] = Plot_Transient_1D(this, nodes, t, u, range, name)
             n_t = length(t);
             n_y = length(nodes);

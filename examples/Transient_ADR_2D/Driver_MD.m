@@ -37,7 +37,7 @@ end
 u_prior_interface = MD_Multi_State_u_Prior_Interface(data_interface, u_prior_interface_cell, u_hyperparam_interface_cell);
 
 %%
-num_state_solves = 100;
+num_state_solves = 50;
 z_hyperparam_interface = MD_z_Hyperparameter_Interface_Transient_ADR_2D(num_state_solves,opt,basis1,basis2);
 
 h = t(2)-t(1);
@@ -53,9 +53,13 @@ S_t = (1 / h) * S_t;
 z_prior_interface = MD_Transient_Vector_z_Prior_Interface(S_t, M_t, n_q, data_interface, z_hyperparam_interface, u_prior_interface);
 
 %%
-num_prior_samples = 100;
+num_prior_samples = 50;
 md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
-md_prior_sampling.Generate_Prior_Discrepancy_Sample_Data(num_prior_samples);
+
+%%
+md_prior_sampling.Generate_Prior_Discrepancy_z_opt_Sample_Data(num_prior_samples);
+md_prior_sampling.Visualization_for_Prior_Time_Evolution(1);
+
 
 %% OLD CODE
 % prior_delta_samples_z_opt = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);

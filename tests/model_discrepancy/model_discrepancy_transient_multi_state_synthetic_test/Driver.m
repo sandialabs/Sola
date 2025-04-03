@@ -33,26 +33,7 @@ z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S, M, data_interface,
 %%
 num_prior_samples = 100;
 md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
-
-delta_samples = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
-
-if ~suppress_figures
-    figure;
-    plot(x, delta_samples, 'LineWidth', 3, 'color', [.9, .9, .9]);
-end
-
-z = zeros(n_y, 3);
-z(:, 1) = x;
-z(:, 2) = x.^2 + 1;
-z(:, 3) = sin(2 * pi * x);
-delta_prior_samples = md_prior_sampling.Prior_Discrepancy_Samples(z, num_prior_samples);
-if ~suppress_figures
-    for k = 1:10
-        figure;
-        hold on;
-        plot(x, delta_prior_samples{k}, 'LineWidth', 3);
-    end
-end
+md_prior_sampling.Generate_Prior_Discrepancy_z_opt_Sample_Data(num_prior_samples);
 
 %%
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
