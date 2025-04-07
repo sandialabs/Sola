@@ -16,6 +16,7 @@ classdef MD_u_Hyperparameter_Interface < handle
         gsvd_oversampling
         gsvd_num_subspace_iter
 
+        time_variance_inflation
         data_noise_percent
         W_u_inv_spectral_gap
 
@@ -66,6 +67,7 @@ classdef MD_u_Hyperparameter_Interface < handle
             this.gsvd_oversampling = 0;
             this.gsvd_num_subspace_iter = 1;
 
+            this.time_variance_inflation = .01;
             this.data_noise_percent = 0.001;
             this.W_u_inv_spectral_gap = 1.e-4;
         end

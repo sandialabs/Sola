@@ -3,6 +3,7 @@ clear;
 close all;
 clc;
 run('../../src/Set_Paths');
+rng(13424)
 
 suppress_figures = false;
 
@@ -27,9 +28,10 @@ u_spatial_prior_interface_cell = cell(2, 1);
 u_transient_prior_cov = cell(2, 1);
 u_prior_interface_cell = cell(2, 1);
 for k = 1:2
-    u_hyperparam_interface_cell{k} = MD_u_Hyperparameter_Interface_Transient_ADR_2D(true, true, true, k, solver, t);
+    u_hyperparam_interface_cell{k} = MD_u_Hyperparameter_Interface_Transient_ADR_2D(true, false, true, k, solver, t);
     u_hyperparam_interface_cell{k}.gsvd_num_sing_vals = 1000;
     u_hyperparam_interface_cell{k}.gsvd_oversampling = 20;
+    u_hyperparam_interface_cell{k}.time_variance_inflation = .05;
     u_spatial_prior_interface_cell{k} = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface_cell{k});
     u_transient_prior_cov{k} = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface_cell{k}, T, n_t, n_y / 2);
     u_prior_interface_cell{k} = MD_Transient_Elliptic_u_Prior_Interface(data_interface, u_spatial_prior_interface_cell{k}, u_transient_prior_cov{k});
@@ -53,119 +55,36 @@ S_t = (1 / h) * S_t;
 z_prior_interface = MD_Transient_Vector_z_Prior_Interface(S_t, M_t, n_q, data_interface, z_hyperparam_interface, u_prior_interface);
 
 %%
-num_prior_samples = 50;
-md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
+% Hyper-parameter adjustments
+u_prior_interface.u_prior_interface_cell{2}.u_hyperparam_interface.Set_beta_u(25*u_prior_interface.u_prior_interface_cell{2}.u_hyperparam_interface.beta_u);
+z_prior_interface.z_hyperparam_interface.Set_beta_t(16*z_prior_interface.z_hyperparam_interface.beta_t);
 
 %%
-md_prior_sampling.Generate_Prior_Discrepancy_z_opt_Sample_Data(num_prior_samples);
-md_prior_sampling.Visualization_for_Prior_Time_Evolution(1);
+% Uncomment the code below to test hyper-parameter values
+%num_prior_samples = 50;
+%md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 
+%%
+%md_prior_sampling.Generate_Prior_Discrepancy_z_opt_Sample_Data(num_prior_samples);
+%md_prior_sampling.Visualization_for_Prior_Time_Evolution(1,false);
+%md_prior_sampling.Visualization_for_Prior_Time_Evolution(2,false);
+%md_prior_sampling.Visualization_for_Prior_Discrepancy_at_z_opt(1);
+%md_prior_sampling.Visualization_for_Prior_Discrepancy_at_z_opt(2);
 
-%% OLD CODE
-% prior_delta_samples_z_opt = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
-% if ~suppress_figures
-% 
-%     u = data_interface.D;
-%     u_tmp = reshape(u, n_y, n_t);
-%     u1 = u_tmp(1:(n_y / 2), :);
-%     u2 = u_tmp((n_y / 2 + 1):end, :);
-%     data1_min = min(u1, [], 1);
-%     data1_max = max(u1, [], 1);
-%     data2_min = min(u2, [], 1);
-%     data2_max = max(u2, [], 1);
-% 
-%     delta1_min = zeros(n_t, num_prior_samples);
-%     delta1_max = zeros(n_t, num_prior_samples);
-%     delta2_min = zeros(n_t, num_prior_samples);
-%     delta2_max = zeros(n_t, num_prior_samples);
-%     for k = 1:num_prior_samples
-%         u = prior_delta_samples_z_opt(:, k);
-%         u_tmp = reshape(u, n_y, n_t);
-%         u1 = u_tmp(1:(n_y / 2), :);
-%         u2 = u_tmp((n_y / 2 + 1):end, :);
-%         delta1_min(:, k) = min(u1, [], 1);
-%         delta1_max(:, k) = max(u1, [], 1);
-%         delta2_min(:, k) = min(u2, [], 1);
-%         delta2_max(:, k) = max(u2, [], 1);
-%     end
-% 
-%     figure;
-%     hold on;
-%     for k = 1:num_prior_samples
-%         plot(t, delta1_min(:, k), 'LineWidth', 3, 'color', .9 * [1, 1, 1]);
-%         plot(t, delta1_max(:, k), 'LineWidth', 3, 'color', .9 * [1, 1, 1]);
-%     end
-%     plot(t, data1_min, 'LineWidth', 3, 'color', 'black');
-%     plot(t, data1_max, 'LineWidth', 3, 'color', 'black');
-%     title('Discrepancy 1 Magnitude');
-% 
-%     figure;
-%     hold on;
-%     for k = 1:num_prior_samples
-%         plot(t, delta2_min(:, k), 'LineWidth', 3, 'color', .9 * [1, 1, 1]);
-%         plot(t, delta2_max(:, k), 'LineWidth', 3, 'color', .9 * [1, 1, 1]);
-%     end
-%     plot(t, data2_min, 'LineWidth', 3, 'color', 'black');
-%     plot(t, data2_max, 'LineWidth', 3, 'color', 'black');
-%     title('Discrepancy 2 Magnitude');
-% 
-%     k = 1;
-%     time_step = 1;
-% 
-%     u = reshape(data_interface.D, n_y, n_t);
-%     figure;
-%     pdeplot(solver.model.Mesh, XYData = u(1:(n_y / 2), time_step), colormap = 'parula');
-%     u = reshape(prior_delta_samples_z_opt(:, k), n_y, n_t);
-%     figure;
-%     pdeplot(solver.model.Mesh, XYData = u(1:(n_y / 2), time_step), colormap = 'parula');
-% 
-%     u = reshape(data_interface.D, n_y, n_t);
-%     figure;
-%     pdeplot(solver.model.Mesh, XYData = u((n_y / 2 + 1):end, time_step), colormap = 'parula');
-%     u = reshape(prior_delta_samples_z_opt(:, k), n_y, n_t);
-%     figure;
-%     pdeplot(solver.model.Mesh, XYData = u((n_y / 2 + 1):end, time_step), colormap = 'parula');
-% 
-% end
-% 
-% %%
-% z_lofi = Q_rom(:);
-% z = zeros(length(z_lofi), 1);
-% z(:, 1) = z_lofi .* 1.2;
-% if ~suppress_figures
-%     for j = 1:size(z, 2)
-%         Q = reshape(z(:, j), n_q, n_t - 1).^2;
-%         figure;
-%         semilogy(t(2:end), Q);
-%         title('Optimal controls');
-%     end
-% end
-% 
-% prior_delta_samples = md_prior_sampling.Prior_Discrepancy_Samples(z, num_prior_samples);
-% if ~suppress_figures
-% 
-%     k = 2;
-%     u = reshape(prior_delta_samples{k}, n_y, n_t);
-%     time_step = 5;
-%     figure;
-%     pdeplot(solver.model.Mesh, XYData = u((n_y / 2 + 1):end, time_step), colormap = 'parula');
-% 
-%     u = reshape(prior_delta_samples_z_opt(:, k), n_y, n_t);
-%     figure;
-%     pdeplot(solver.model.Mesh, XYData = u((n_y / 2 + 1):end, time_step), colormap = 'parula');
-% 
-%     u = reshape(data_interface.u_opt, n_y, n_t);
-%     figure;
-%     pdeplot(solver.model.Mesh, XYData = u((n_y / 2 + 1):end, time_step), colormap = 'parula');
-% 
-% end
+%md_prior_sampling.z_pert_subsample_factor = 20;
+%md_prior_sampling.Generate_Prior_Discrepancy_z_pert_Sample_Data(num_prior_samples);
+%md_prior_sampling.Visualization_for_Prior_Discrepancy_at_z_pert(1);
+%md_prior_sampling.Visualization_for_Prior_Discrepancy_at_z_pert(2);
 
 %%
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 
-alpha_d = 1.e-8;
-num_post_samples = 1;
+alpha_d = mean([u_prior_interface.u_prior_interface_cell{1}.u_hyperparam_interface.alpha_d,u_prior_interface.u_prior_interface_cell{2}.u_hyperparam_interface.alpha_d]);
+alpha_d = (1.e-1) * alpha_d;
+num_post_samples = 50;
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
+
+z_lofi = data_interface.Load_Optimal_z();
 Z_test = zeros(length(z_lofi), 2);
 Z_test(:, 1) = z_lofi;
 Z_test(:, 2) = z_lofi .* 1.2;
@@ -225,4 +144,4 @@ u_update_mean = utmp(:);
 obj_update_mean = obj_hifi.J(u_update_mean, z_update_mean);
 
 %%
-save('MD_Results.mat', 'z_lofi', 'z_update_mean', 'z_update_samples', 'Y_lofi', 'Y_update_mean');
+%save('MD_Results.mat', 'z_lofi', 'z_update_mean', 'z_update_samples', 'Y_lofi', 'Y_update_mean');

@@ -75,8 +75,8 @@ classdef MD_Determine_u_Hyperparameters < handle
                 di = reshape(this.data_interface.D(I, i), n_y, n_t);
                 tmp = diag(di' * u_prior_interface.spatial_prior_cov.Apply_M_u(di));
                 tmp = tmp / max(tmp);
-                tmp = tmp + (1.e-2);
-                tmp = tmp / (1 + 1.e-2);
+                tmp = tmp + this.u_hyperparam_interface.time_variance_inflation;
+                tmp = tmp / (1 + this.u_hyperparam_interface.time_variance_inflation);
                 alpha_t_new(:, i) = tmp;
             end
 
