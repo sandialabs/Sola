@@ -92,7 +92,7 @@ classdef MD_Determine_z_Hyperparameters < handle
             end
 
             if strcmp(this.z_type, 'vector')
-
+                e = ones(length(this.data_interface.z_opt),1);
             end
         end
 

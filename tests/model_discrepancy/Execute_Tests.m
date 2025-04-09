@@ -18,6 +18,10 @@ cd model_discrepancy_synthetic_test/;
 Driver;
 cd ..;
 
+cd model_discrepancy_synthetic_test_control_vec/;
+Driver;
+cd ..;
+
 cd model_discrepancy_synthetic_test_with_analytic_laplacian/;
 % Need to look at this a bit closer
 Driver;

@@ -20,7 +20,7 @@ classdef MD_Prior_Sampling < handle
         d1_mag
         d1_corr
         temporal_mag
-        temporal_corr_len 
+        temporal_corr_len
         delta_pert_mag
         delta_pert_mag_binned
 
@@ -82,119 +82,227 @@ classdef MD_Prior_Sampling < handle
         %%
         function [] = Visualization_for_Prior_Discrepancy_at_z_pert(this, component_id)
 
-            I = this.data_interface.Separate_State_Components(component_id);
-            num_perts = length(this.delta_samples_z_pert);
-            nodes = this.u_prior_interface.u_hyperparam_interface.Load_Spatial_Node_Data();
-            nodes = nodes{component_id};
-            spatial_dim = size(nodes, 2);
-            is_transient = this.u_prior_interface.u_hyperparam_interface.is_transient;
-            if is_transient
-                t = this.u_prior_interface.u_hyperparam_interface.Load_Time_Node_Data();
-                t_z = this.z_prior_interface.z_hyperparam_interface.Load_Time_Node_Data();
-            else
-                t = [];
-            end
+            if ~strcmp(this.z_prior_interface.z_hyperparam_interface.z_type,'vector')
 
-            z_range = [min(this.z_pert(:)), max(this.z_pert(:))];
-
-            if strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'transient vector')
-                generate_z_plot = @(nodes, t, u, z_range, name) this.Plot_Transient_Vector(t, u, z_range, name);
-            elseif strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'spatial field')
-                if spatial_dim == 1
-                    generate_z_plot = @(nodes, t, u, z_range, name) this.Plot_Stationary_1D(nodes, t, u, z_range, name);
-                elseif spatial_dim == 2
-                    generate_z_plot = @(nodes, t, u, z_range, name) this.Plot_Stationary_2D(nodes, t, u, z_range, name);
-                end
-            end
-
-            if is_transient && (spatial_dim == 1)
-                generate_delta_plot = @(nodes, t, u, range, name) this.Plot_Transient_1D(nodes, t, u, range, name);
-            elseif is_transient && (spatial_dim == 2)
-                generate_delta_plot = @(nodes, t, u, range, name) this.Plot_Transient_2D(nodes, t, u, range, name);
-            elseif ~is_transient && (spatial_dim == 1)
-                generate_delta_plot = @(nodes, t, u, range, name) this.Plot_Stationary_1D(nodes, t, u, range, name);
-            elseif ~is_transient && (spatial_dim == 2)
-                generate_delta_plot = @(nodes, t, u, range, name) this.Plot_Stationary_2D(nodes, t, u, range, name);
-            end
-
-            z_fig = figure;
-            generate_z_plot(nodes, t_z, this.data_interface.Z(:, 1), z_range, '$z_1$');
-
-            delta_fig = figure;
-            c_range = [min(this.data_interface.D(I, 1) + this.data_interface.data_shift(I)),max(this.data_interface.D(I, 1) + this.data_interface.data_shift(I))];
-            generate_delta_plot(nodes, t, this.data_interface.D(I, 1) + this.data_interface.data_shift(I), c_range, '$d_1$');
-
-            margin = max(this.z_pert_corr)*.05;
-            xmin = min(this.z_pert_corr)-margin;
-            xmax = max(this.z_pert_corr)+margin;
-            yrange = [0, 0];
-            for k = 1:num_perts
-                yrange(1) = min(yrange(1), min(this.delta_pert_mag{component_id, k}));
-                yrange(2) = max(yrange(2), max(this.delta_pert_mag{component_id, k}));
-            end
-            ymin = yrange(1) * .9;
-            ymax = yrange(2) * 1.1;
-            colors = lines(length(this.z_pert_corr_binned));
-            scatter_fig = figure;
-            hold on;
-            for k = 1:length(this.z_pert_corr_binned)
-                violinplot(this.z_pert_corr_bin_means(k),this.delta_pert_mag_binned{component_id, k},'DensityDirection','positive','DensityWidth',.05,'DensityScale','width','FaceColor','black')
-                plot(this.z_pert_corr_bin_means(k), this.delta_pert_mag_binned{component_id, k}, 'o','Color',colors(k,:),'MarkerSize',8);
-            end
-            xlabel('$\Delta z$ Correlation Length','Interpreter','latex');
-            ylabel('$\delta(\Delta z)$ Magnitude','Interpreter','latex');
-            xlim([xmin, xmax]);
-            ylim([ymin, ymax]);
-            set(gca, 'fontsize', 24);
-
-            user_continue = true;
-            bnd_check = @(x, y) (x < xmin) || (x > xmax) || (y < ymin) || (y > ymax);
-
-            disp('Please select point number for rendering. Select a point outside of the plotting domain to terminate');
-            while user_continue
-
-                figure(scatter_fig);
-                [x, y] = ginput(1);
-
-                if bnd_check(x, y)
-                    user_continue = false;
+                I = this.data_interface.Separate_State_Components(component_id);
+                num_perts = length(this.delta_samples_z_pert);
+                nodes = this.u_prior_interface.u_hyperparam_interface.Load_Spatial_Node_Data();
+                nodes = nodes{component_id};
+                spatial_dim = size(nodes, 2);
+                is_transient = this.u_prior_interface.u_hyperparam_interface.is_transient;
+                if is_transient
+                    t = this.u_prior_interface.u_hyperparam_interface.Load_Time_Node_Data();
+                    t_z = this.z_prior_interface.z_hyperparam_interface.Load_Time_Node_Data();
                 else
-
-                    bin = find(abs(this.z_pert_corr_bin_means - x) < .01);
-                    J = find(this.z_pert_corr==this.z_pert_corr_binned{bin}(1));
-                    for k = 2:length(this.z_pert_corr_binned{bin})
-                        J = [J;find(this.z_pert_corr==this.z_pert_corr_binned{bin}(k))];
-                    end
-                    i = J(1);
-                    [val, j] = min(abs(this.delta_pert_mag{component_id,i} - y));
-                    for k = 2:length(J)
-                        [valk, jk] = min(abs(this.delta_pert_mag{component_id,J(k)} - y));
-                        if valk < val
-                            val = valk;
-                            j = jk;
-                            i = J(k);
-                        end
-                    end
-
-                    figure(scatter_fig);
-                    if length(scatter_fig.Children(1).Children) > num_perts
-                        delete(scatter_fig.Children(1).Children(1));
-                    end
-                    plot(this.z_pert_corr_bin_means(bin), this.delta_pert_mag{component_id,i}(j), 'x', 'MarkerSize', 20, 'color', 'black');
-
-                    figure(z_fig);
-                    generate_z_plot(nodes, t_z, this.z_pert(:, i), z_range,'$\Delta z_k$');
-
-                    figure(delta_fig);
-                    c_range = [min(this.delta_samples_z_pert{i}(I, j)),max(this.delta_samples_z_pert{i}(I, j))];
-                    generate_delta_plot(nodes, t, this.delta_samples_z_pert{i}(I, j), c_range, '$\delta(\Delta z_k,\theta_i)$');
-
-                    figure(delta_fig);
-                    figure(z_fig);
-                    figure(scatter_fig);
+                    t = [];
+                    t_z = [];
                 end
+
+                z_range = [min(this.z_pert(:)), max(this.z_pert(:))];
+
+                if strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'transient vector')
+                    generate_z_plot = @(nodes, t, u, z_range, name) this.Plot_Transient_Vector(t, u, z_range, name);
+                elseif strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'spatial field')
+                    if spatial_dim == 1
+                        generate_z_plot = @(nodes, t, u, z_range, name) this.Plot_Stationary_1D(nodes, t, u, z_range, name);
+                    elseif spatial_dim == 2
+                        generate_z_plot = @(nodes, t, u, z_range, name) this.Plot_Stationary_2D(nodes, t, u, z_range, name);
+                    end
+                end
+
+                if is_transient && (spatial_dim == 1)
+                    generate_delta_plot = @(nodes, t, u, range, name) this.Plot_Transient_1D(nodes, t, u, range, name);
+                elseif is_transient && (spatial_dim == 2)
+                    generate_delta_plot = @(nodes, t, u, range, name) this.Plot_Transient_2D(nodes, t, u, range, name);
+                elseif ~is_transient && (spatial_dim == 1)
+                    generate_delta_plot = @(nodes, t, u, range, name) this.Plot_Stationary_1D(nodes, t, u, range, name);
+                elseif ~is_transient && (spatial_dim == 2)
+                    generate_delta_plot = @(nodes, t, u, range, name) this.Plot_Stationary_2D(nodes, t, u, range, name);
+                end
+
+                z_fig = figure;
+                generate_z_plot(nodes, t_z, this.data_interface.Z(:, 1), z_range, '$z_1$');
+
+                delta_fig = figure;
+                c_range = [min(this.data_interface.D(I, 1) + this.data_interface.data_shift(I)),max(this.data_interface.D(I, 1) + this.data_interface.data_shift(I))];
+                generate_delta_plot(nodes, t, this.data_interface.D(I, 1) + this.data_interface.data_shift(I), c_range, '$d_1$');
+
+                margin = max(this.z_pert_corr)*.05;
+                xmin = min(this.z_pert_corr)-margin;
+                xmax = max(this.z_pert_corr)+margin;
+                yrange = [0, 0];
+                for k = 1:num_perts
+                    yrange(1) = min(yrange(1), min(this.delta_pert_mag{component_id, k}));
+                    yrange(2) = max(yrange(2), max(this.delta_pert_mag{component_id, k}));
+                end
+                ymin = yrange(1) * .9;
+                ymax = yrange(2) * 1.1;
+                colors = lines(length(this.z_pert_corr_binned));
+                scatter_fig = figure;
+                hold on;
+                for k = 1:length(this.z_pert_corr_binned)
+                    violinplot(this.z_pert_corr_bin_means(k),this.delta_pert_mag_binned{component_id, k},'DensityDirection','positive','DensityWidth',.05,'DensityScale','width','FaceColor','black')
+                    plot(this.z_pert_corr_bin_means(k), this.delta_pert_mag_binned{component_id, k}, 'o','Color',colors(k,:),'MarkerSize',8);
+                end
+                xlabel('$\Delta z$ Correlation Length','Interpreter','latex');
+                ylabel('$\delta(\Delta z)$ Magnitude','Interpreter','latex');
+                xlim([xmin, xmax]);
+                ylim([ymin, ymax]);
+                set(gca, 'fontsize', 24);
+
+                user_continue = true;
+                bnd_check = @(x, y) (x < xmin) || (x > xmax) || (y < ymin) || (y > ymax);
+
+                disp('Please select point number for rendering. Select a point outside of the plotting domain to terminate');
+                while user_continue
+
+                    figure(scatter_fig);
+                    [x, y] = ginput(1);
+
+                    if bnd_check(x, y)
+                        user_continue = false;
+                    else
+
+                        bin = find(abs(this.z_pert_corr_bin_means - x) < .01);
+                        J = find(this.z_pert_corr==this.z_pert_corr_binned{bin}(1));
+                        for k = 2:length(this.z_pert_corr_binned{bin})
+                            J = [J;find(this.z_pert_corr==this.z_pert_corr_binned{bin}(k))];
+                        end
+                        i = J(1);
+                        [val, j] = min(abs(this.delta_pert_mag{component_id,i} - y));
+                        for k = 2:length(J)
+                            [valk, jk] = min(abs(this.delta_pert_mag{component_id,J(k)} - y));
+                            if valk < val
+                                val = valk;
+                                j = jk;
+                                i = J(k);
+                            end
+                        end
+
+                        figure(scatter_fig);
+                        if length(scatter_fig.Children(1).Children) > num_perts
+                            delete(scatter_fig.Children(1).Children(1));
+                        end
+                        plot(this.z_pert_corr_bin_means(bin), this.delta_pert_mag{component_id,i}(j), 'x', 'MarkerSize', 20, 'color', 'black');
+
+                        figure(z_fig);
+                        generate_z_plot(nodes, t_z, this.z_pert(:, i), z_range,'$\Delta z_k$');
+
+                        figure(delta_fig);
+                        c_range = [min(this.delta_samples_z_pert{i}(I, j)),max(this.delta_samples_z_pert{i}(I, j))];
+                        generate_delta_plot(nodes, t, this.delta_samples_z_pert{i}(I, j), c_range, '$\delta(\Delta z_k,\theta_i)$');
+
+                        figure(delta_fig);
+                        figure(z_fig);
+                        figure(scatter_fig);
+                    end
+                end
+                disp('Concluded interactive visualization');
+
+            else
+
+                I = this.data_interface.Separate_State_Components(component_id);
+                num_perts = length(this.delta_samples_z_pert);
+                nodes = this.u_prior_interface.u_hyperparam_interface.Load_Spatial_Node_Data();
+                nodes = nodes{component_id};
+                spatial_dim = size(nodes, 2);
+                is_transient = this.u_prior_interface.u_hyperparam_interface.is_transient;
+                if is_transient
+                    t = this.u_prior_interface.u_hyperparam_interface.Load_Time_Node_Data();
+                else
+                    t = [];
+                    t_z = [];
+                end
+
+                z_range = [min(this.z_pert(:)), max(this.z_pert(:))];
+                generate_z_plot = @(nodes, t, u, z_range, name) this.Plot_Vector(u, z_range, name);
+
+                if is_transient && (spatial_dim == 1)
+                    generate_delta_plot = @(nodes, t, u, range, name) this.Plot_Transient_1D(nodes, t, u, range, name);
+                elseif is_transient && (spatial_dim == 2)
+                    generate_delta_plot = @(nodes, t, u, range, name) this.Plot_Transient_2D(nodes, t, u, range, name);
+                elseif ~is_transient && (spatial_dim == 1)
+                    generate_delta_plot = @(nodes, t, u, range, name) this.Plot_Stationary_1D(nodes, t, u, range, name);
+                elseif ~is_transient && (spatial_dim == 2)
+                    generate_delta_plot = @(nodes, t, u, range, name) this.Plot_Stationary_2D(nodes, t, u, range, name);
+                end
+
+                z_fig = figure;
+                generate_z_plot(nodes, t_z, this.data_interface.Z(:, 1), z_range, '$z_1$');
+
+                if is_transient && (spatial_dim == 1)
+                    generate_delta_plot = @(nodes, t, u, range, name) this.Plot_Transient_1D(nodes, t, u, range, name);
+                elseif is_transient && (spatial_dim == 2)
+                    generate_delta_plot = @(nodes, t, u, range, name) this.Plot_Transient_2D(nodes, t, u, range, name);
+                elseif ~is_transient && (spatial_dim == 1)
+                    generate_delta_plot = @(nodes, t, u, range, name) this.Plot_Stationary_1D(nodes, t, u, range, name);
+                elseif ~is_transient && (spatial_dim == 2)
+                    generate_delta_plot = @(nodes, t, u, range, name) this.Plot_Stationary_2D(nodes, t, u, range, name);
+                end
+
+                delta_fig = figure;
+                c_range = [min(this.data_interface.D(I, 1) + this.data_interface.data_shift(I)),max(this.data_interface.D(I, 1) + this.data_interface.data_shift(I))];
+                generate_delta_plot(nodes, t, this.data_interface.D(I, 1) + this.data_interface.data_shift(I), c_range, '$d_1$');
+
+                xmin = 0;
+                xmax = this.z_prior_interface.n_z + 1;
+                yrange = [0, 0];
+                for k = 1:num_perts
+                    yrange(1) = min(yrange(1), min(this.delta_pert_mag{component_id, k}));
+                    yrange(2) = max(yrange(2), max(this.delta_pert_mag{component_id, k}));
+                end
+                ymin = yrange(1) * .9;
+                ymax = yrange(2) * 1.1;
+                colors = lines(this.z_prior_interface.n_z);
+                scatter_fig = figure;
+                hold on;
+                for k = 1:this.z_prior_interface.n_z
+                    violinplot(k,this.delta_pert_mag{component_id, k},'DensityDirection','positive','DensityWidth',.05,'DensityScale','width','FaceColor','black')
+                    plot(k, this.delta_pert_mag{component_id, k}, 'o','Color',colors(k,:),'MarkerSize',8);
+                end
+                xlabel('$z$ Component','Interpreter','latex');
+                ylabel('$\delta(\Delta z)$ Magnitude','Interpreter','latex');
+                xlim([xmin, xmax]);
+                ylim([ymin, ymax]);
+                set(gca, 'fontsize', 24);
+
+                user_continue = true;
+                bnd_check = @(x, y) (x < xmin) || (x > xmax) || (y < ymin) || (y > ymax);
+
+                disp('Please select point number for rendering. Select a point outside of the plotting domain to terminate');
+                while user_continue
+
+                    figure(scatter_fig);
+                    [x, y] = ginput(1);
+
+                    if bnd_check(x, y)
+                        user_continue = false;
+                    else
+
+                        i = find(abs((1:this.z_prior_interface.n_z)' - x) < .1);
+                        [~, j] = min(abs(this.delta_pert_mag{component_id,i} - y));
+
+                        figure(scatter_fig);
+                        if length(scatter_fig.Children(1).Children) > num_perts
+                            delete(scatter_fig.Children(1).Children(1));
+                        end
+                        plot(i, this.delta_pert_mag{component_id,i}(j), 'x', 'MarkerSize', 20, 'color', 'black');
+
+                        figure(z_fig);
+                        generate_z_plot(nodes, t_z, this.z_pert(:, i), z_range,'$\Delta z_k$');
+
+                        figure(delta_fig);
+                        c_range = [min(this.delta_samples_z_pert{i}(I, j)),max(this.delta_samples_z_pert{i}(I, j))];
+                        generate_delta_plot(nodes, t, this.delta_samples_z_pert{i}(I, j), c_range, '$\delta(\Delta z_k,\theta_i)$');
+
+                        figure(delta_fig);
+                        figure(z_fig);
+                        figure(scatter_fig);
+                    end
+                end
+                disp('Concluded interactive visualization');
+
             end
-            disp('Concluded interactive visualization');
 
         end
 
@@ -398,19 +506,24 @@ classdef MD_Prior_Sampling < handle
         function [] = Compute_z_pert(this)
 
 
-            e = this.z_prior_interface.determine_z_hyperparams.Compute_Eigenvalues(this.z_prior_interface);
-            num_perts_init = length(find(1 ./ e > .1));
-            if strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'transient vector')
-                num_perts_init = this.z_prior_interface.num_controls * num_perts_init;
-            end
-            oversampling = min(10, length(this.data_interface.z_opt) - num_perts_init);
-            num_subspace_iters = 10;
-            E_z_inv_gsvd = E_z_Inv_GSVD(this.z_prior_interface, this.z_opt);
-            [this.z_pert, ~, this.z_pert_evals] = E_z_inv_gsvd.Compute_GSVD(num_perts_init, oversampling, num_subspace_iters);
-            while this.z_pert_evals(end) > .1
-                num_perts_init = 2 * num_perts_init;
+            if strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'vector')
+                this.z_pert = eye(this.z_prior_interface.n_z);
+                this.z_pert_evals = ones(this.z_prior_interface.n_z,1);
+            else
+                e = this.z_prior_interface.determine_z_hyperparams.Compute_Eigenvalues(this.z_prior_interface);
+                num_perts_init = length(find(1 ./ e > .1));
+                if strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'transient vector')
+                    num_perts_init = this.z_prior_interface.num_controls * num_perts_init;
+                end
                 oversampling = min(10, length(this.data_interface.z_opt) - num_perts_init);
+                num_subspace_iters = 10;
+                E_z_inv_gsvd = E_z_Inv_GSVD(this.z_prior_interface, this.z_opt);
                 [this.z_pert, ~, this.z_pert_evals] = E_z_inv_gsvd.Compute_GSVD(num_perts_init, oversampling, num_subspace_iters);
+                while this.z_pert_evals(end) > .1
+                    num_perts_init = 2 * num_perts_init;
+                    oversampling = min(10, length(this.data_interface.z_opt) - num_perts_init);
+                    [this.z_pert, ~, this.z_pert_evals] = E_z_inv_gsvd.Compute_GSVD(num_perts_init, oversampling, num_subspace_iters);
+                end
             end
 
             I = find(this.z_pert_evals > .1);
@@ -476,46 +589,49 @@ classdef MD_Prior_Sampling < handle
                 end
             end
 
-            if strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'spatial field')
-                nodes = this.z_prior_interface.z_hyperparam_interface.Load_Spatial_Node_Data();
-                if size(nodes, 2) == 1
-                    corr_len_fun = @(nodes, z, initial_guess) computeCorrelationLength_1D(nodes(:, 1), z, initial_guess);
-                elseif size(nodes, 2) == 2
-                    corr_len_fun = @(nodes, z, initial_guess) computeCorrelationLength_2D(nodes(:, 1), nodes(:, 2), z, initial_guess);
-                end
-            elseif strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'transient vector')
-                nodes = this.z_prior_interface.z_hyperparam_interface.Load_Time_Node_Data();
-                corr_len_fun = @(t,z,initial_guess) computeCorrelationLength_transientVector(t,z,initial_guess);
-            end
-            this.z_pert_corr = zeros(num_perts,1);
-            initial_guess = 0;
-            for j = 1:num_perts
-                this.z_pert_corr(j) = corr_len_fun(nodes,this.z_pert(:,j),initial_guess);
-                initial_guess = this.z_pert_corr(j);
-            end
+            if ~strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'vector')
 
-            bin_width = 0.05;
-            bin_centers = (min(this.z_pert_corr)-bin_width/2):bin_width:(max(this.z_pert_corr)+bin_width/2);
-            num_bins = length(bin_centers);
-            this.z_pert_corr_binned = cell(num_bins,1);
-            this.delta_pert_mag_binned = cell(num_components, num_bins);
-            for i = 1:num_bins
-                this.z_pert_corr_binned{i} = [];
-                for k = 1:num_components
-                    this.delta_pert_mag_binned{k,i} = [];
+                if strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'spatial field')
+                    nodes = this.z_prior_interface.z_hyperparam_interface.Load_Spatial_Node_Data();
+                    if size(nodes, 2) == 1
+                        corr_len_fun = @(nodes, z, initial_guess) computeCorrelationLength_1D(nodes(:, 1), z, initial_guess);
+                    elseif size(nodes, 2) == 2
+                        corr_len_fun = @(nodes, z, initial_guess) computeCorrelationLength_2D(nodes(:, 1), nodes(:, 2), z, initial_guess);
+                    end
+                elseif strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'transient vector')
+                    nodes = this.z_prior_interface.z_hyperparam_interface.Load_Time_Node_Data();
+                    corr_len_fun = @(t,z,initial_guess) computeCorrelationLength_transientVector(t,z,initial_guess);
                 end
-            end
-            for j = 1:num_perts
-                [~,i] = min(abs(bin_centers-this.z_pert_corr(j)));
-                this.z_pert_corr_binned{i} = [this.z_pert_corr_binned{i};this.z_pert_corr(j)];
-                for k = 1:num_components
-                    this.delta_pert_mag_binned{k,i} = [this.delta_pert_mag_binned{k,i};this.delta_pert_mag{k,j}];
+                this.z_pert_corr = zeros(num_perts,1);
+                initial_guess = 0;
+                for j = 1:num_perts
+                    this.z_pert_corr(j) = corr_len_fun(nodes,this.z_pert(:,j),initial_guess);
+                    initial_guess = this.z_pert_corr(j);
                 end
+
+                bin_width = 0.05;
+                bin_centers = (min(this.z_pert_corr)-bin_width/2):bin_width:(max(this.z_pert_corr)+bin_width/2);
+                num_bins = length(bin_centers);
+                this.z_pert_corr_binned = cell(num_bins,1);
+                this.delta_pert_mag_binned = cell(num_components, num_bins);
+                for i = 1:num_bins
+                    this.z_pert_corr_binned{i} = [];
+                    for k = 1:num_components
+                        this.delta_pert_mag_binned{k,i} = [];
+                    end
+                end
+                for j = 1:num_perts
+                    [~,i] = min(abs(bin_centers-this.z_pert_corr(j)));
+                    this.z_pert_corr_binned{i} = [this.z_pert_corr_binned{i};this.z_pert_corr(j)];
+                    for k = 1:num_components
+                        this.delta_pert_mag_binned{k,i} = [this.delta_pert_mag_binned{k,i};this.delta_pert_mag{k,j}];
+                    end
+                end
+                J = ~cellfun('isempty', this.z_pert_corr_binned);
+                this.z_pert_corr_binned = this.z_pert_corr_binned(J);
+                this.z_pert_corr_bin_means = cellfun(@(x)mean(x), this.z_pert_corr_binned);
+                this.delta_pert_mag_binned = this.delta_pert_mag_binned(:,J);
             end
-            J = ~cellfun('isempty', this.z_pert_corr_binned);
-            this.z_pert_corr_binned = this.z_pert_corr_binned(J);
-            this.z_pert_corr_bin_means = cellfun(@(x)mean(x), this.z_pert_corr_binned);
-            this.delta_pert_mag_binned = this.delta_pert_mag_binned(:,J);
         end
 
         %%
@@ -578,7 +694,12 @@ classdef MD_Prior_Sampling < handle
         end
 
         function [] = Plot_Stationary_1D(this, nodes, t, u, range, name)
-
+            plot(nodes,u)
+            xlabel('$x$','Interpreter','latex')
+            ylabel(name,'Interpreter','latex')
+            view(2);
+            ylim(range);
+            set(gca, 'fontsize', 24);
         end
 
         function [] = Plot_Stationary_2D(this, nodes, t, u, range, name)
@@ -599,6 +720,18 @@ classdef MD_Prior_Sampling < handle
             title(name,'Interpreter','latex');
             set(gca, 'fontsize', 24);
 
+        end
+
+        function [] = Plot_Vector(this, u, range, name)
+            clf;
+            plot(1:length(u), u, 'o', 'MarkerSize',10);
+            xlabel('Component');
+            ylabel(name,'Interpreter','latex');
+            xlim([0,length(u)+1])
+            range(1) = min(range(1),min(u) - .05*abs(min(u)));
+            range(2) = max(range(2),max(u) + .05*abs(max(u)));
+            ylim(range);
+            set(gca, 'fontsize', 24);
         end
 
         function [] = Plot_Transient_Vector(this, t, u, range, name)
