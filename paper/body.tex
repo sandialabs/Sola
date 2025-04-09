@@ -12,6 +12,8 @@
 
 \shanenote{Maybe have a baby 1D problem just in \SABL (everything is plottable but it doesn't take much space), then a transition problem done in both \SABL and \MrHyDE, then a monster problem done solely in \MrHyDE. Can make the case that this is one way to validate your HPC implementations as well as lower the barrier to entry for new HPC practitioners.}
 
+\bartnote{Implementation strategy is really step by step, to the level of verifying matvecs at each stage of the algorithm. Also, \MrHyDE is a particular driver, but not the only driver for \HdsaLib. Maybe have Section~3 be \HdsaLib, Section~4 HPC simulator with \MrHyDE as an example.}
+
 \section{Introduction}
 
 \begin{purpose}
@@ -374,28 +376,39 @@ This Kronecker structure of \cref{eq:affine-discrepancy} enables efficient matri
 % \end{purpose}
 
 The final ingredient needed for \cref{eq:control-update} is an optimal $\bftheta'$ such that $\bfdelta(\z;\bftheta') \approx \s(\z) - \tilde{\s}(\z)$.
-Although solving~\cref{eq:optimization-reducedspace} directly is intractable due to the derivatives of the full constraint $\c$ being inaccessible or highly expensive, we assume that we can either (1) solve the constraint equation (evaluate $\s(\z)$) a limited number of times or (2) in a data-driven scenario, observe a limited number of state solutions.
-To that end, for a linearly independent set of controls $\{\z_{\ell}\}_{\ell=1}^{n_d}$ for which we have access to $\s(\z_1),\ldots,\s(\z_{n_d})$ and $\tilde{\s}(\z_1),\ldots,\tilde{\s}(\z_{n_d})$ and consider the Bayesian linear inference problem
+Although solving~\cref{eq:optimization-reducedspace} directly is intractable due to the derivatives of the full constraint $\c$ being inaccessible or highly expensive, we assume that we can either (1) solve the constraint equation (evaluate $\s(\z)$) a limited number of times or (2) in a data-driven scenario, observe a limited number of state solutions with known controls.
+To that end, for a linearly independent set of controls $\{\z_{\ell}\}_{\ell=1}^{n_d}$ for which we have access to $\s(\z_1),\ldots,\s(\z_{n_d})$ and $\tilde{\s}(\z_1),\ldots,\tilde{\s}(\z_{n_d})$, we consider the Bayesian linear inference problem $\A\bftheta = \mathbf{d} + \bfeta$, where
 \begin{align}
+    \A =
     \left[\begin{array}{cc}
         \I_{n_u} & \I_{n_u}\otimes\z_1\trp\M_z\\
         \vdots & \vdots \\
         \I_{n_u} & \I_{n_u}\otimes\z_{n_d}\trp\M_z
-    \end{array}\right]
-    \bftheta
+    \end{array}\right],
+    % \in\mathbb{R}^{n_u n_d \times n_\theta},
+    \quad
+    \mathbf{d}
     = \left[\begin{array}{c}
         \s(\z_1) - \tilde{\s}(\z_1)
         \\ \vdots \\
         \s(\z_{n_d}) - \tilde{\s}(\z_{n_d})
-    \end{array}\right]
-    + \bfepsilon,
+    \end{array}\right],
+    % \in\mathbb{R}^{n_u n_d},
+    \quad
+    \bfeta
+    = \left[\begin{array}{c}
+        \bfepsilon_1
+        \\ \vdots \\
+        \bfepsilon_{n_d}
+    \end{array}\right],
+    % \in\mathbb{R}^{n_u n_d},
 \end{align}
-where $\bfepsilon\sim\mathcal{N}(\0, \alpha\M_u^{-1})$ is an uncorrelated Gaussian noise term with variance $\alpha > 0$ and in which $\M_u\in\R^{n_u\times n_u}$ is a mass matrix for the state space.
-{\color{royalblue}
+and in which each $\bfepsilon_{\ell}\sim\mathcal{N}(\0, \alpha\M_u^{-1})$ is an uncorrelated Gaussian noise term with variance scaling $\alpha > 0$ and where $\M_u\in\R^{n_u\times n_u}$ is a mass matrix for the state space.
+% Note that the $n_u n_d \times n_u(1 + n_z)$ data matrix $\A$ is large and that the system is likely underdetermined.
 To develop a prior distribution for $\bftheta$, we impose priors for the state and control spaces.
 Let $\W_u\in\R^{n_u\times n_u}$ and $\W_z\in\R^{n_z\times n_z}$ be precision (inverse covariance) matrices for the state and control spaces, respectively.
-In the context of PDEs, these precision matrices are often (inverse?) elliptic operators.
-It can be shown that an appropriate precision matrix for the parameters $\bftheta$ is
+In the context of PDEs, these precision matrices are often {\color{royalblue}(inverse?)} elliptic operators.
+It can be shown that an appropriate precision matrix for a zero-mean prior distribution on the parameter vector $\bftheta$ is
 \begin{align}
     \W_\theta
     = \left[\begin{array}{cc}
@@ -404,13 +417,21 @@ It can be shown that an appropriate precision matrix for the parameters $\bfthet
     \end{array}\right]
     \in\R^{p\times p}.
 \end{align}
-Posterior is also Bayesian, also uses $\M_u$ matrix-vector products due to the noise model (??)
-
-At this point we're pretty much done, lots of previous work has gone into showing how to do all of the computations efficiently with randomized linear algebra, matrix factorizations, and tuning hyperparameters for the priors.
-Citations.
-}
-
-% The goal is to use the solution of \cref{eq:optimization-surrogate}, together with a limited number of PDE solutions $\s(\z_1),\ldots,\s(\z_N)$, to approximate the solution to the full problem \cref{eq:optimization-reducedspace}.
+The posterior distribution for $\bftheta$ is also Gaussian, with the following mean and covariance:
+\begin{subequations}
+\begin{align}
+    \bar{\bftheta}
+    &= \tfrac{1}{\alpha}\bfSigma\A\trp(\I_{n_d}\otimes\M_{u})\mathbf{d},
+    \\
+    \bfSigma
+    &= \left(\W_{\bftheta} + \tfrac{1}{\alpha}\A\trp(\I_{n_d}\otimes \M_u)\A\right)^{-1}.
+\end{align}
+\end{subequations}
+Making appropriate choices for the prior distributions, sampling from the posterior distribution, and propagating the result through the product $\bftheta\mapsto\H^{-1}\B\bftheta$ for \cref{eq:control-update} is nontrivial
+% Doing so efficiently involves advanced randomized linear algebra and matrix factorization techniques
+and is the subject of several previous works~\cite{hart2023hdsaoptimal,hart2025hdsaposterior}. % TODO: hyperparameter paper.
+For our purposes, the key observation is the minimal amount of information that must be provided by a user in order to fully specify the problem:
+\SM{TODO}
 
 \begin{comment}
 \section{\HdsaLib: A template-based implementation of HDSA in \cpp}
@@ -549,7 +570,7 @@ classdef MD_Opt_Prob_Interface < handle
   end
 end
 \end{minted}
-\caption{HDSA classes in \SABL.}
+\caption{Outline of \MATLAB classes for HDSA in \SABL.}
 \end{listing}
 
 \subsection{Example 1: Small prototypical problem}
@@ -585,6 +606,23 @@ TODO.
 TODO (Tim?).
 
 \subsection{\HdsaLib interfaces for \MrHyDE}
+
+TODO
+
+\begin{listing}[t]
+\begin{minted}{cpp}
+// TODO: abbreviate this somehow.
+template <class RealT>class MD_u_Prior_Interface {
+  public:
+    virtual void Apply_M_u(HDSA::Vector<RealT> & u_out, const HDSA::Vector<RealT> & u_in) const = 0;
+
+    virtual void Apply_W_u_Plus_scalar_M_u_Inverse(HDSA::Vector<RealT> & u_out, const HDSA::Vector<RealT> & u_in, const RealT & scalar) const = 0;
+
+    virtual void Apply_W_u_Inverse(HDSA::Vector<RealT> & u_out, const HDSA::Vector<RealT> & u_in) const = 0;
+};
+\end{minted}
+\caption{Outline of \cpp classes for HDSA in \HdsaLib.}
+\end{listing}
 
 \subsection{Example 1 with \MrHyDE}
 
