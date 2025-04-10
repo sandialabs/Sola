@@ -1,6 +1,6 @@
 import numpy as np
 import sys
-sys.path.append('../../../../src/python_adapter/model_discrepancy/')
+sys.path.append('../../../../src/python_adapter/model_discrepancy/interfaces/z_prior_interfaces')
 from MD_z_Prior_Interface_Py import *
 
 class MD_z_Prior_Interface_Python_Synthetic_Test(MD_z_Prior_Interface_Py):

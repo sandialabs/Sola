@@ -1,6 +1,6 @@
 import numpy as np
 import sys
-sys.path.append('../../../../src/python_adapter/model_discrepancy/')
+sys.path.append('../../../../src/python_adapter/model_discrepancy/interfaces/problem_interfaces')
 from MD_Opt_Prob_Interface_Py import *
 
 class MD_Opt_Prob_Interface_Python_Synthetic_Test(MD_Opt_Prob_Interface_Py):
