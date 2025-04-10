@@ -45,7 +45,7 @@ mod = py.importlib.import_module('MD_Elliptic_z_Prior_Interface_Python_Synthetic
 if update_python
     py.importlib.reload(mod);
 end
-z_prior_interface_python = mod.MD_Elliptic_z_Prior_Interface_Python_Synthetic_Test(m);
+z_prior_interface_python = mod.MD_Elliptic_z_Prior_Interface_Python_Synthetic_Test(m, alpha_z);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Py(z_prior_interface_python, alpha_z);
 
 num_sing_vals = 50;

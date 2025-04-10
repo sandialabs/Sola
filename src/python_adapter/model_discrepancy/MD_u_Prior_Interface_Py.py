@@ -25,13 +25,13 @@ class MD_u_Prior_Interface_Py():
     # Optional methods which must be implemented to enable some analyes
 
     # Compute samples from a mean zero Gaussian with covariance W_u^{-1}
-    def Sample_with_Covariance_W_u_Inverse_Py(this,num_samples):
+    def Sample_with_Covariance_W_u_Inverse_Py(self, num_samples):
         u_out = [];
         print('Sample_with_Covariance_W_u_Inverse_Py must be implemented to use sampling algorithms');
         return u_out
 
     # Compute samples from a mean zero Gaussian with covariance (W_u+scalar*M_u)^{-1}
-    def Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse_Py(this,num_samples,scalar):
+    def Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse_Py(self, num_samples,scalar):
         u_out = [];
         disp('Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse_Py must be implemented to use sampling algorithms');
         return u_out
@@ -52,9 +52,9 @@ class MD_u_Prior_Interface_Py():
         return self.Apply_W_u_Plus_scalar_M_u_Inverse_Py(u_in,scalar)
 
     # Compute samples from a mean zero Gaussian with covariance W_u^{-1}
-    def Sample_with_Covariance_W_u_Inverse(this,num_samples):
+    def Sample_with_Covariance_W_u_Inverse(self, num_samples):
         return self.Sample_with_Covariance_W_u_Inverse_Py(num_samples)
 
     # Compute samples from a mean zero Gaussian with covariance (W_u+scalar*M_u)^{-1}
-    def Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(this,num_samples,scalar):
+    def Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(self, num_samples, scalar):
         return self.Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse_Py(num_samples,scalar)

@@ -6,6 +6,14 @@ classdef MD_z_Prior_Interface_Py < MD_z_Prior_Interface
 
     methods
 
+        function [z_out] = Apply_M_z(this, z_in)
+            z_out = this.z_prior_interface_py.Apply_M_z(z_in);
+            z_out = double(z_out);
+            if size(z_out, 1) == 1
+                z_out = z_out';
+            end
+        end
+
         function [z_out] = Apply_W_z_Inverse(this, z_in)
             z_out = this.z_prior_interface_py.Apply_W_z_Inverse(z_in);
             z_out = double(z_out);
