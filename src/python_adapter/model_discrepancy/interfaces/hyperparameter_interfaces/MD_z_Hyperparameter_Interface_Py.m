@@ -9,7 +9,7 @@ classdef MD_z_Hyperparameter_Interface_Py < MD_z_Hyperparameter_Interface
         function [spatial_nodes] = Load_Spatial_Node_Data(this)
             spatial_nodes = this.z_hyperparam_interface_py.Load_Spatial_Node_Data();
             spatial_nodes = double(spatial_nodes);
-            if size(spatial_nodes, 1) > 3
+            if size(spatial_nodes, 2) > 3
                 spatial_nodes = spatial_nodes';
             end
         end
@@ -17,7 +17,7 @@ classdef MD_z_Hyperparameter_Interface_Py < MD_z_Hyperparameter_Interface
         function [time_nodes] = Load_Time_Node_Data(this)
             time_nodes = this.z_hyperparam_interface_py.Load_Time_Node_Data();
             time_nodes = double(time_nodes);
-            if size(time_nodes, 1) > 1
+            if size(time_nodes, 2) > 1
                 time_nodes = time_nodes';
             end
         end
