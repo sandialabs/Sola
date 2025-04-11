@@ -496,7 +496,7 @@ classdef MD_Prior_Sampling < handle
                 this.temporal_corr_len{component_id} = zeros(num_samps, 1);
                 initial_guess = 0;
                 for i = 1:num_samps
-                    this.temporal_corr_len{component_id}(i) = computeCorrelationLength_1D(t, this.delta_z_opt_time_evol{component_id}(i, :), initial_guess);
+                    this.temporal_corr_len{component_id}(i) = Compute_Correlation_Length_1D(t, this.delta_z_opt_time_evol{component_id}(i, :), initial_guess);
                     initial_guess = this.temporal_corr_len{component_id}(i);
                 end
                 this.temporal_mag{component_id} = max(abs(this.delta_z_opt_time_evol{component_id}), [], 2);
@@ -561,9 +561,9 @@ classdef MD_Prior_Sampling < handle
                 initial_guess = 0;
                 correlation_lengths = zeros(num_samps, 1);
                 if size(nodes{k}, 2) == 1
-                    corr_len_fun = @(nodes, d, initial_guess) computeCorrelationLength_1D(nodes(:, 1), d, initial_guess);
+                    corr_len_fun = @(nodes, d, initial_guess) Compute_Correlation_Length_1D(nodes(:, 1), d, initial_guess);
                 elseif size(nodes{k}, 2) == 2
-                    corr_len_fun = @(nodes, d, initial_guess) computeCorrelationLength_2D(nodes(:, 1), nodes(:, 2), d, initial_guess);
+                    corr_len_fun = @(nodes, d, initial_guess) Compute_Correlation_Length_2D(nodes(:, 1), nodes(:, 2), d, initial_guess);
                 end
 
                 for i = 1:num_samps
@@ -594,13 +594,13 @@ classdef MD_Prior_Sampling < handle
                 if strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'spatial field')
                     nodes = this.z_prior_interface.z_hyperparam_interface.Load_Spatial_Node_Data();
                     if size(nodes, 2) == 1
-                        corr_len_fun = @(nodes, z, initial_guess) computeCorrelationLength_1D(nodes(:, 1), z, initial_guess);
+                        corr_len_fun = @(nodes, z, initial_guess) Compute_Correlation_Length_1D(nodes(:, 1), z, initial_guess);
                     elseif size(nodes, 2) == 2
-                        corr_len_fun = @(nodes, z, initial_guess) computeCorrelationLength_2D(nodes(:, 1), nodes(:, 2), z, initial_guess);
+                        corr_len_fun = @(nodes, z, initial_guess) Compute_Correlation_Length_2D(nodes(:, 1), nodes(:, 2), z, initial_guess);
                     end
                 elseif strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'transient vector')
                     nodes = this.z_prior_interface.z_hyperparam_interface.Load_Time_Node_Data();
-                    corr_len_fun = @(t,z,initial_guess) computeCorrelationLength_transientVector(t,z,initial_guess);
+                    corr_len_fun = @(t,z,initial_guess) Compute_Correlation_Length_Transient_Vector(t,z,initial_guess);
                 end
                 this.z_pert_corr = zeros(num_perts,1);
                 initial_guess = 0;

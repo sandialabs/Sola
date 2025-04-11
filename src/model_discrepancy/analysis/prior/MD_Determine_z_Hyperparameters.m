@@ -102,14 +102,14 @@ classdef MD_Determine_z_Hyperparameters < handle
             if size(nodes, 2) == 1
                 correlation_lengths = zeros(size(this.data_interface.Z, 2), 1);
                 for k = 1:length(correlation_lengths)
-                    correlation_lengths(k) = computeCorrelationLength_1D(nodes(:, 1), this.data_interface.Z(:, k), initial_guess);
+                    correlation_lengths(k) = Compute_Correlation_Length_1D(nodes(:, 1), this.data_interface.Z(:, k), initial_guess);
                     initial_guess = correlation_lengths(k);
                 end
                 beta_z_new = mean(correlation_lengths, 'omitnan')^2 / 12;
             elseif size(nodes, 2) == 2
                 correlation_lengths = zeros(size(this.data_interface.Z, 2), 1);
                 for k = 1:length(correlation_lengths)
-                    correlation_lengths(k) = computeCorrelationLength_2D(nodes(:, 1), nodes(:, 2), this.data_interface.Z(:, k), initial_guess);
+                    correlation_lengths(k) = Compute_Correlation_Length_2D(nodes(:, 1), nodes(:, 2), this.data_interface.Z(:, k), initial_guess);
                     initial_guess = correlation_lengths(k);
                 end
                 beta_z_new = mean(correlation_lengths, 'omitnan')^2 / 8;
@@ -129,7 +129,7 @@ classdef MD_Determine_z_Hyperparameters < handle
             for k = 1:N
                 z_data = reshape(this.data_interface.Z(:, k), num_comp, n_t)';
                 for j = 1:num_comp
-                    correlation_lengths(k, j) = computeCorrelationLength_1D(t, z_data(:, j), initial_guess);
+                    correlation_lengths(k, j) = Compute_Correlation_Length_1D(t, z_data(:, j), initial_guess);
                     initial_guess = correlation_lengths(k, j);
                 end
             end

@@ -1,4 +1,4 @@
-function correlation_length = computeCorrelationLength_1D(x, u, initial_guess)
+function correlation_length = Compute_Correlation_Length_1D(x, u, initial_guess)
 
     N = size(u, 2);
     num_samples = 200;
@@ -34,4 +34,5 @@ function correlation_length = computeCorrelationLength_1D(x, u, initial_guess)
     end
 
     correlation_length = xl(index + 1) - xl(1);
+    
 end

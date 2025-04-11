@@ -44,10 +44,10 @@ classdef MD_Determine_u_Hyperparameters < handle
             initial_guess = 0;
 
             if size(nodes, 2) == 1
-                corr_len_fun = @(nodes, d, initial_guess) computeCorrelationLength_1D(nodes(:, 1), d, initial_guess);
+                corr_len_fun = @(nodes, d, initial_guess) Compute_Correlation_Length_1D(nodes(:, 1), d, initial_guess);
                 normalization = 12;
             elseif size(nodes, 2) == 2
-                corr_len_fun = @(nodes, d, initial_guess) computeCorrelationLength_2D(nodes(:, 1), nodes(:, 2), d, initial_guess);
+                corr_len_fun = @(nodes, d, initial_guess) Compute_Correlation_Length_2D(nodes(:, 1), nodes(:, 2), d, initial_guess);
                 normalization = 8;
             else
                 disp('Determine_beta_u error: Dimensions greater than 2 are not supported.');
@@ -97,7 +97,7 @@ classdef MD_Determine_u_Hyperparameters < handle
             for i = 1:N
                 di = reshape(this.data_interface.D(I, i), n_y, n_t)';
                 for j = 1:n_y
-                    correlation_lengths(i, j) = computeCorrelationLength_1D(time_nodes, di(:, j), initial_guess);
+                    correlation_lengths(i, j) = Compute_Correlation_Length_1D(time_nodes, di(:, j), initial_guess);
                     initial_guess = correlation_lengths(i, j);
                 end
                 initial_guess = correlation_lengths(i, 1);

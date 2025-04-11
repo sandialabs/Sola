@@ -1,4 +1,4 @@
-function correlation_length = computeCorrelationLength_2D(x, y, u, initial_guess)
+function correlation_length = Compute_Correlation_Length_2D(x, y, u, initial_guess)
 
     N = 100;
     xl = linspace(min(x), max(x), N)';
@@ -79,4 +79,5 @@ function correlation_length = computeCorrelationLength_2D(x, y, u, initial_guess
     end
 
     correlation_length = r_range(index);
+    
 end
