@@ -66,15 +66,16 @@ z_prior_interface.z_hyperparam_interface.Set_beta_t(16*z_prior_interface.z_hyper
 
 %%
 %md_prior_sampling.Generate_Prior_Discrepancy_z_opt_Sample_Data(num_prior_samples);
-%md_prior_sampling.Visualization_for_Prior_Time_Evolution(1,false);
-%md_prior_sampling.Visualization_for_Prior_Time_Evolution(2,false);
-%md_prior_sampling.Visualization_for_Prior_Discrepancy_at_z_opt(1);
-%md_prior_sampling.Visualization_for_Prior_Discrepancy_at_z_opt(2);
+%md_prior_vis = MD_Prior_Visualization(md_prior_sampling);
+%md_prior_vis.Visualization_for_Prior_Time_Evolution(1,false);
+%md_prior_vis.Visualization_for_Prior_Time_Evolution(2,false);
+%md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_opt(1);
+%md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_opt(2);
 
-%md_prior_sampling.z_pert_subsample_factor = 20;
-%md_prior_sampling.Generate_Prior_Discrepancy_z_pert_Sample_Data(num_prior_samples);
-%md_prior_sampling.Visualization_for_Prior_Discrepancy_at_z_pert(1);
-%md_prior_sampling.Visualization_for_Prior_Discrepancy_at_z_pert(2);
+%md_prior_vis.md_prior_sampling.z_pert_subsample_factor = 20;
+%md_prior_vis.md_prior_sampling.Generate_Prior_Discrepancy_z_pert_Sample_Data(num_prior_samples);
+%md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_pert(1);
+%md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_pert(2);
 
 %%
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);

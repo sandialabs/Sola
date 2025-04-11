@@ -3,11 +3,35 @@ classdef MD_Determine_u_Hyperparameters < handle
     properties
         data_interface
         u_hyperparam_interface
-
         component_id
         is_transient
     end
 
+    %% Constructor
+    methods
+
+        function this = MD_Determine_u_Hyperparameters(data_interface, u_hyperparam_interface)
+            arguments
+                data_interface MD_Data_Interface
+                u_hyperparam_interface MD_u_Hyperparameter_Interface
+            end
+
+            this.data_interface = data_interface;
+            this.u_hyperparam_interface = u_hyperparam_interface;
+
+            this.component_id = u_hyperparam_interface.component_id;
+            this.is_transient = u_hyperparam_interface.is_transient;
+
+            this.data_interface.Load_Data();
+            if this.u_hyperparam_interface.center_data
+                this.Determine_Data_Centering();
+            end
+            this.Determine_alpha_d();
+        end
+
+    end
+
+    %% Functions to determine hyperparameters
     methods
 
         function [] = Determine_alpha_u(this, u_prior_interface)
@@ -136,25 +160,6 @@ classdef MD_Determine_u_Hyperparameters < handle
             data_shift = mean(this.data_interface.D(I, 1)) * ones(size(this.data_interface.D, 1), 1);
             this.data_interface.data_shift = data_shift;
             this.data_interface.D = this.data_interface.D - data_shift;
-        end
-
-        function this = MD_Determine_u_Hyperparameters(data_interface, u_hyperparam_interface)
-            arguments
-                data_interface MD_Data_Interface
-                u_hyperparam_interface MD_u_Hyperparameter_Interface
-            end
-
-            this.data_interface = data_interface;
-            this.u_hyperparam_interface = u_hyperparam_interface;
-
-            this.component_id = u_hyperparam_interface.component_id;
-            this.is_transient = u_hyperparam_interface.is_transient;
-
-            this.data_interface.Load_Data();
-            if this.u_hyperparam_interface.center_data
-                this.Determine_Data_Centering();
-            end
-            this.Determine_alpha_d();
         end
 
     end

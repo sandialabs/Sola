@@ -7,6 +7,25 @@ classdef MD_Determine_z_Hyperparameters < handle
         z_type
     end
 
+    %% Constructor
+    methods
+
+        function this = MD_Determine_z_Hyperparameters(data_interface, z_hypeparam_interface, u_prior_interface)
+            arguments
+                data_interface MD_Data_Interface
+                z_hypeparam_interface MD_z_Hyperparameter_Interface
+                u_prior_interface MD_u_Prior_Interface
+            end
+
+            this.data_interface = data_interface;
+            this.z_hypeparam_interface = z_hypeparam_interface;
+            this.u_prior_interface = u_prior_interface;
+            this.z_type = this.z_hypeparam_interface.z_type;
+        end
+
+    end
+
+    %% Functions to determine hyperparameters
     methods
 
         function [] = Determine_alpha_z(this, z_prior_interface)
@@ -136,19 +155,6 @@ classdef MD_Determine_z_Hyperparameters < handle
             beta_t_new = mean(correlation_lengths(:), 'omitnan')^2 / 4;
 
             this.z_hypeparam_interface.Set_beta_t(beta_t_new);
-        end
-
-        function this = MD_Determine_z_Hyperparameters(data_interface, z_hypeparam_interface, u_prior_interface)
-            arguments
-                data_interface MD_Data_Interface
-                z_hypeparam_interface MD_z_Hyperparameter_Interface
-                u_prior_interface MD_u_Prior_Interface
-            end
-
-            this.data_interface = data_interface;
-            this.z_hypeparam_interface = z_hypeparam_interface;
-            this.u_prior_interface = u_prior_interface;
-            this.z_type = this.z_hypeparam_interface.z_type;
         end
 
     end
