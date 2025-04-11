@@ -10,6 +10,7 @@ classdef MD_Numeric_Laplacian_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
         M_sqrt
     end
 
+    %% Implementation of base class virtual functions
     methods (Access = public)
 
         function [z_out] = Apply_E_z_Inverse(this, z_in)
@@ -42,10 +43,10 @@ classdef MD_Numeric_Laplacian_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
             z_out = this.Apply_E_z_Inverse(vec);
         end
 
-        function [] = Set_beta_z(this, beta_z_new)
-            this.beta_z = beta_z_new;
-            this.E_z = this.beta_z * this.S + this.M;
-        end
+    end
+
+    %% Constructor and helper functions
+    methods
 
         function this = MD_Numeric_Laplacian_z_Prior_Interface(S, M, data_interface, z_hyperparam_interface, u_prior_interface)
             this@MD_Elliptic_z_Prior_Interface(z_hyperparam_interface.alpha_z);
@@ -66,6 +67,12 @@ classdef MD_Numeric_Laplacian_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
             this.Set_alpha_z(this.z_hyperparam_interface.alpha_z);
         end
 
+        function [] = Set_beta_z(this, beta_z_new)
+            this.beta_z = beta_z_new;
+            this.E_z = this.beta_z * this.S + this.M;
+        end
+
     end
 
 end
+

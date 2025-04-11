@@ -4,6 +4,7 @@ classdef Elliptic_GSVD < Randomized_GSVD
         u_prior_interface
     end
 
+    %% Implementation of base class virtual functions
     methods (Access = public)
 
         function [vec_out] = Apply_Operator(this, vec_in)
@@ -24,6 +25,7 @@ classdef Elliptic_GSVD < Randomized_GSVD
 
     end
 
+    %% Constructor
     methods
 
         function this = Elliptic_GSVD(u_prior_interface, u_in, u_out)

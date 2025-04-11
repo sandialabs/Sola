@@ -1,12 +1,13 @@
 classdef MD_Scaled_z_Prior_Interface < MD_z_Prior_Interface
 
+    %%%%%%%%%%%%%%%%% Express covariance matrix as W_z^{-1} = alpha_z * \acute{W}_z^{-1} so that alpha_z may be isolated %%%%%%%%%%%%%%%%%
+
     properties
         alpha_z
     end
 
+    %% Pure virtual functions for user implementation
     methods (Abstract, Access = public)
-
-        %% Pure virtual functions
 
         [z_out] = Apply_M_z(this, z_in)
 
@@ -14,6 +15,7 @@ classdef MD_Scaled_z_Prior_Interface < MD_z_Prior_Interface
 
     end
 
+    %% Virtual functions for user implementation
     methods (Access = public)
 
         function [z_out] = Sample_with_Covariance_W_z_Acute_Inverse(this, num_samples)
@@ -28,7 +30,25 @@ classdef MD_Scaled_z_Prior_Interface < MD_z_Prior_Interface
 
     end
 
+    %% Constructor and helper functions
     methods
+
+        function this = MD_Scaled_z_Prior_Interface(alpha_z)
+            this.alpha_z = alpha_z;
+        end
+
+        function [] = Set_alpha_z(this, alpha_z_new)
+            this.alpha_z = alpha_z_new;
+        end
+
+    end
+
+    %% Implementation of base class virtual functions
+    methods
+
+        function [z_out] = Apply_W_z_Inverse(this, z_in)
+            z_out = this.alpha_z * this.Apply_W_z_Acute_Inverse(z_in);
+        end
 
         function [z_out] = Sample_with_Covariance_W_z_Inverse(this, num_samples)
             z_out = this.Sample_with_Covariance_W_z_Acute_Inverse(num_samples);
@@ -38,18 +58,6 @@ classdef MD_Scaled_z_Prior_Interface < MD_z_Prior_Interface
         function [z_out] = Apply_W_z(this, z_in)
             z_out = this.Apply_W_z_Acute(z_in);
             z_out = (1 / this.alpha_z) * z_out;
-        end
-
-        function [] = Set_alpha_z(this, alpha_z_new)
-            this.alpha_z = alpha_z_new;
-        end
-
-        function [z_out] = Apply_W_z_Inverse(this, z_in)
-            z_out = this.alpha_z * this.Apply_W_z_Acute_Inverse(z_in);
-        end
-
-        function this = MD_Scaled_z_Prior_Interface(alpha_z)
-            this.alpha_z = alpha_z;
         end
 
     end

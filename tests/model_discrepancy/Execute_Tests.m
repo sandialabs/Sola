@@ -1,7 +1,3 @@
-cd analytic_laplacian_2D/;
-Driver_HDSA;
-cd ..;
-
 cd hyperparam_auto_2D/;
 % Missing test
 cd ..;
@@ -19,11 +15,6 @@ Driver;
 cd ..;
 
 cd model_discrepancy_synthetic_test_control_vec/;
-Driver;
-cd ..;
-
-cd model_discrepancy_synthetic_test_with_analytic_laplacian/;
-% Need to look at this a bit closer
 Driver;
 cd ..;
 

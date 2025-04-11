@@ -8,9 +8,8 @@ classdef MD_Data_Interface < handle
         data_shift
     end
 
+    %% Pure virtual functions for user implementation
     methods (Abstract, Access = public)
-
-        %% Pure virtual functions
 
         [u_opt] = Load_Optimal_u(this)
 
@@ -18,6 +17,7 @@ classdef MD_Data_Interface < handle
 
     end
 
+    %% Virtual functions for user implementation
     methods
 
         % Defaults to return empty array
@@ -40,6 +40,11 @@ classdef MD_Data_Interface < handle
         function [I] = Separate_State_Components(this, i)
             I = 1:length(this.u_opt);
         end
+
+    end
+
+    %% Constructor and helper functions
+    methods
 
         function this = MD_Data_Interface()
 

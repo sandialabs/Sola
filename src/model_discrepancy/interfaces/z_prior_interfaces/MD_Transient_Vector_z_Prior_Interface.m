@@ -13,6 +13,7 @@ classdef MD_Transient_Vector_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
         lambda
     end
 
+    %% Implementation of base class virtual functions
     methods (Access = public)
 
         function [z_out] = Apply_E_z_Inverse(this, z_in)
@@ -47,11 +48,10 @@ classdef MD_Transient_Vector_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
             end
         end
 
-        function [] = Set_beta_t(this, beta_t_new)
-            this.beta_t = beta_t_new;
-            this.E_t = this.beta_t * this.S + this.M;
-            [this.V, this.lambda] = eig(this.E_t, this.M, 'vector');
-        end
+    end
+
+    %% Constructor and helper functions
+    methods
 
         function this = MD_Transient_Vector_z_Prior_Interface(S, M, num_controls, data_interface, z_hyperparam_interface, u_prior_interface)
             this@MD_Elliptic_z_Prior_Interface(z_hyperparam_interface.alpha_z);
@@ -71,6 +71,12 @@ classdef MD_Transient_Vector_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
                 this.determine_z_hyperparams.Determine_alpha_z(this);
             end
             this.Set_alpha_z(this.z_hyperparam_interface.alpha_z);
+        end
+
+        function [] = Set_beta_t(this, beta_t_new)
+            this.beta_t = beta_t_new;
+            this.E_t = this.beta_t * this.S + this.M;
+            [this.V, this.lambda] = eig(this.E_t, this.M, 'vector');
         end
 
     end

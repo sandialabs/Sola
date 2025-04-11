@@ -1,5 +1,7 @@
 classdef MD_Numeric_Laplacian_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
 
+    %%%%%%%%%%%%%%%%% Express covariance matrix using explicit stiffness and mass matrices %%%%%%%%%%%%%%%%%
+
     properties
         M
         S
@@ -13,47 +15,8 @@ classdef MD_Numeric_Laplacian_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
         P
     end
 
-    methods (Access = public)
-
-        function [u_out] = Apply_E_u_Inverse(this, u_in)
-            if this.is_sparse
-                tmp1 = this.R' \ (this.P' * u_in);
-                tmp2 = this.R \ tmp1;
-                u_out = this.P * tmp2;
-            else
-                tmp = this.R' \ u_in;
-                u_out = this.R \ tmp;
-            end
-        end
-
-        function [u_out] = Apply_E_u_Inverse_Transpose(this, u_in)
-            if this.is_sparse
-                tmp1 = this.R' \ (this.P' * u_in);
-                tmp2 = this.R \ tmp1;
-                u_out = this.P * tmp2;
-            else
-                tmp = this.R' \ u_in;
-                u_out = this.R \ tmp;
-            end
-        end
-
-        function [u_out] = Apply_M_u(this, u_in)
-            u_out = this.M * u_in;
-        end
-
-        function [] = Set_beta_u(this, beta_u_new)
-            this.beta_u = beta_u_new;
-            this.E_u = this.beta_u * this.S + this.M;
-            this.is_sparse = issparse(this.E_u);
-            if this.is_sparse
-                [this.R, flag, this.P] = chol(this.E_u);
-                if flag ~= 0
-                    disp('Error in Cholesky factorization of E_u');
-                end
-            else
-                this.R = chol(this.E_u);
-            end
-        end
+    %% Constructor and helper functions
+    methods
 
         function this = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface)
             this@MD_Elliptic_u_Prior_Interface(u_hyperparam_interface.alpha_u);
@@ -80,6 +43,51 @@ classdef MD_Numeric_Laplacian_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
                 end
                 this.Set_alpha_u(this.u_hyperparam_interface.alpha_u);
             end
+        end
+
+        function [] = Set_beta_u(this, beta_u_new)
+            this.beta_u = beta_u_new;
+            this.E_u = this.beta_u * this.S + this.M;
+            this.is_sparse = issparse(this.E_u);
+            if this.is_sparse
+                [this.R, flag, this.P] = chol(this.E_u);
+                if flag ~= 0
+                    disp('Error in Cholesky factorization of E_u');
+                end
+            else
+                this.R = chol(this.E_u);
+            end
+        end
+
+    end
+
+    %% Implementation of base class functions
+    methods (Access = public)
+
+        function [u_out] = Apply_E_u_Inverse(this, u_in)
+            if this.is_sparse
+                tmp1 = this.R' \ (this.P' * u_in);
+                tmp2 = this.R \ tmp1;
+                u_out = this.P * tmp2;
+            else
+                tmp = this.R' \ u_in;
+                u_out = this.R \ tmp;
+            end
+        end
+
+        function [u_out] = Apply_E_u_Inverse_Transpose(this, u_in)
+            if this.is_sparse
+                tmp1 = this.R' \ (this.P' * u_in);
+                tmp2 = this.R \ tmp1;
+                u_out = this.P * tmp2;
+            else
+                tmp = this.R' \ u_in;
+                u_out = this.R \ tmp;
+            end
+        end
+
+        function [u_out] = Apply_M_u(this, u_in)
+            u_out = this.M * u_in;
         end
 
     end

@@ -4,9 +4,8 @@ classdef MD_z_Prior_Interface < handle
 
     end
 
+    %% Pure virtual functions for user implementation
     methods (Abstract, Access = public)
-
-        %% Pure virtual functions
 
         [z_out] = Apply_M_z(this, z_in)
 
@@ -14,6 +13,7 @@ classdef MD_z_Prior_Interface < handle
 
     end
 
+    %% Virtual functions for user implementation
     methods
 
         % Compute samples from a mean zero Gaussian with covariance W_z^{-1}
@@ -28,6 +28,11 @@ classdef MD_z_Prior_Interface < handle
             z_out = [];
             disp('MD_z_Prior_Interface::Apply_W_z must be implemented to use the Hessian GEVP');
         end
+
+    end
+
+    %% Constructor
+    methods
 
         function this = MD_z_Prior_Interface()
 

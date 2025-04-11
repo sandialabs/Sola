@@ -24,11 +24,8 @@ classdef MD_u_Hyperparameter_Interface < handle
         d_pert_norm_sq
     end
 
+    %% Virtual functions for user implementation
     methods
-
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%% Functions to be overloaded %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
         function [spatial_nodes] = Load_Spatial_Node_Data(this)
             spatial_nodes = [];
@@ -40,9 +37,10 @@ classdef MD_u_Hyperparameter_Interface < handle
             disp('Load_Time_Node_Data is required for hyperparameter algorithm-based initialization');
         end
 
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%% Constructor %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    end
+
+    %% Constructor and helper functions
+    methods
 
         function this = MD_u_Hyperparameter_Interface(is_transient, center_data, adapt_time_variance, component_id)
             arguments
@@ -72,10 +70,6 @@ classdef MD_u_Hyperparameter_Interface < handle
             this.W_u_inv_spectral_gap = 1.e-4;
         end
 
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%% Functions for setting parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
         function [] = Set_alpha_u(this, alpha_u_new)
             this.alpha_u = alpha_u_new;
         end
@@ -103,4 +97,5 @@ classdef MD_u_Hyperparameter_Interface < handle
         end
 
     end
+
 end

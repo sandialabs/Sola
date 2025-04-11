@@ -7,6 +7,7 @@ classdef Hessian_GEVP < Randomized_GEVP
         normalization_coeff
     end
 
+    %% Implementation of base class virtual functions
     methods (Access = public)
 
         function [vec_out] = Apply_Operator(this, vec_in)
@@ -32,6 +33,7 @@ classdef Hessian_GEVP < Randomized_GEVP
 
     end
 
+    %% Constructor and helper functions
     methods
 
         function this = Hessian_GEVP(opt_prob_interface, z_prior_interface, z)

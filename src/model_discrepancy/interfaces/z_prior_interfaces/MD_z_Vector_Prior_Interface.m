@@ -8,6 +8,7 @@ classdef MD_z_Vector_Prior_Interface < MD_Scaled_z_Prior_Interface
         determine_z_hyperparams
     end
 
+    %% Implementation of base class virtual functions
     methods (Access = public)
 
         function [z_out] = Apply_M_z(this, z_in)
@@ -29,6 +30,7 @@ classdef MD_z_Vector_Prior_Interface < MD_Scaled_z_Prior_Interface
 
     end
 
+    %% Constructor
     methods
 
         function this = MD_z_Vector_Prior_Interface(M_z, data_interface, z_hyperparam_interface, u_prior_interface)

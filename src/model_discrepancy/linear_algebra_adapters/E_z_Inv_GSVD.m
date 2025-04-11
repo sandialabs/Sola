@@ -4,6 +4,7 @@ classdef E_z_Inv_GSVD < Randomized_GSVD
         z_prior_interface
     end
 
+    %% Implementation of base class virtual functions
     methods (Access = public)
 
         function [vec_out] = Apply_Operator(this, vec_in)
@@ -26,6 +27,7 @@ classdef E_z_Inv_GSVD < Randomized_GSVD
 
     end
 
+    %% Constructor
     methods
 
         function this = E_z_Inv_GSVD(z_prior_interface, z)

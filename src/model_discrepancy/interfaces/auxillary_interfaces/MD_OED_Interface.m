@@ -4,9 +4,8 @@ classdef MD_OED_Interface < handle
         data_interface
     end
 
+    %% Pure virtual functions for user implementation
     methods (Abstract, Access = public)
-
-        %% Pure virtual functions
 
         % Compute L*v, where Sigma = L*L^T
         [L_v] = Apply_Design_Cov_Factor(this, v)
@@ -16,6 +15,7 @@ classdef MD_OED_Interface < handle
 
     end
 
+    %% Constructor and helper functions
     methods
 
         function this = MD_OED_Interface(data_interface)

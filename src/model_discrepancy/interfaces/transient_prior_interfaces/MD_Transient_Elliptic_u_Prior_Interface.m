@@ -7,6 +7,7 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
         determine_u_hyperparams
     end
 
+    %% Constructor
     methods
 
         % spatial_prior_cov should be an object of type MD_Elliptic_u_Prior_Interface
@@ -28,6 +29,11 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             end
             this.Set_alpha_u(this.u_hyperparam_interface.alpha_u);
         end
+
+    end
+
+    %% Implementation of base class virtual functions
+    methods
 
         function [u_out] = Apply_M_u(this, u_in)
             if size(u_in, 1) == this.transient_prior_cov.n_y
@@ -76,8 +82,7 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             % end
         end
 
-        % Compute samples from a mean zero Gaussian with covariance W_u^{-1}
-        function [u_out] = Sample_with_Covariance_W_u_Inverse(this, num_samples)
+        function [u_out] = Sample_with_Covariance_W_u_Acute_Inverse(this, num_samples)
             r_s = length(this.spatial_prior_cov.sing_vals);
             r_t = length(this.transient_prior_cov.evals);
             m = size(this.spatial_prior_cov.sing_vecs_output, 1) * size(this.transient_prior_cov.evecs, 1);
@@ -86,7 +91,7 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             tmp1 = pagemtimes(this.spatial_prior_cov.sing_vecs_output * diag(this.spatial_prior_cov.sing_vals),omega);
             tmp2 = pagemtimes(this.transient_prior_cov.evecs * diag(sqrt(this.transient_prior_cov.evals)),'none',tmp1,'transpose');
             tmp3 = pagetranspose(tmp2);
-            u_out = sqrt(this.alpha_u) * reshape(tmp3,m,num_samples);
+            u_out = reshape(tmp3,m,num_samples);
 
             % This original code loops over the columns of u_out, and
             % consequently, is an easier piece of code to read.
@@ -95,16 +100,15 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             % u_out = 0.0 * zeros(m, num_samples);
             % for k = 1:size(u_out, 2)
             %     omega = diag(this.spatial_prior_cov.sing_vals) * randn(r_s, r_t) * diag(sqrt(this.transient_prior_cov.evals));
-            %     u_space = sqrt(this.alpha_u) * this.spatial_prior_cov.sing_vecs_output * omega;
+            %     u_space = this.spatial_prior_cov.sing_vecs_output * omega;
             %     u_tmp = u_space * this.transient_prior_cov.evecs';
             %     u_out(:, k) = u_tmp(:);
             % end
         end
 
-        % Compute samples from a mean zero Gaussian with covariance (W_u+scalar*M_u)^{-1}
-        function [u_out] = Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(this, num_samples, scalar)
+        function [u_out] = Sample_with_Covariance_W_u_Acute_Plus_scalar_M_u_Inverse(this, num_samples, scalar)
             aleph = (this.spatial_prior_cov.sing_vals.^2) * this.transient_prior_cov.evals';
-            aleph = aleph ./ (1 + this.alpha_u * scalar * aleph);
+            aleph = aleph ./ (1 + scalar * aleph);
 
             r_s = length(this.spatial_prior_cov.sing_vals);
             r_t = length(this.transient_prior_cov.evals);
@@ -112,7 +116,7 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             u_out = 0.0 * zeros(m, num_samples);
             for k = 1:size(u_out, 2)
                 omega = sqrt(aleph) .* randn(r_s, r_t);
-                u_space = sqrt(this.alpha_u) * this.spatial_prior_cov.sing_vecs_output * omega;
+                u_space = this.spatial_prior_cov.sing_vecs_output * omega;
                 u_tmp = u_space * this.transient_prior_cov.evecs';
                 u_out(:, k) = u_tmp(:);
             end
