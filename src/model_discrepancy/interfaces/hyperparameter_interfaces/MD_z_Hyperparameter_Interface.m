@@ -39,8 +39,8 @@ classdef MD_z_Hyperparameter_Interface < handle
 
         function this = MD_z_Hyperparameter_Interface(z_type, num_state_solves)
             arguments
-                z_type string
-                num_state_solves = 0
+                z_type {string}
+                num_state_solves {int} = 0
             end
 
             if ~(strcmp(z_type, 'spatial field') || strcmp(z_type, 'transient vector') || strcmp(z_type, 'vector'))
