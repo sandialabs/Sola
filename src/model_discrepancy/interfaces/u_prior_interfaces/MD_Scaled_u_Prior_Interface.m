@@ -38,6 +38,9 @@ classdef MD_Scaled_u_Prior_Interface < MD_u_Prior_Interface
     methods
 
         function this = MD_Scaled_u_Prior_Interface(alpha_u)
+            arguments
+                alpha_u (1,1) {mustBeNumeric}
+            end
             this.alpha_u = alpha_u;
         end
 

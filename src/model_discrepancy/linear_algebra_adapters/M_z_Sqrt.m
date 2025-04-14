@@ -17,6 +17,9 @@ classdef M_z_Sqrt < Matrix_Sqrt
     methods
 
         function this = M_z_Sqrt(z_prior_interface)
+            arguments
+                z_prior_interface MD_z_Prior_Interface
+            end
             this.z_prior_interface = z_prior_interface;
         end
 

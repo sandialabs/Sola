@@ -22,6 +22,9 @@ classdef MD_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
     methods
 
         function this = MD_Elliptic_u_Prior_Interface(alpha_u)
+            arguments
+                alpha_u (1,1) {mustBeNumeric}
+            end
             this@MD_Scaled_u_Prior_Interface(alpha_u);
         end
 

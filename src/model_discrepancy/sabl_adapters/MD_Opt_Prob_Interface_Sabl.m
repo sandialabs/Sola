@@ -49,10 +49,14 @@ classdef MD_Opt_Prob_Interface_Sabl < MD_Opt_Prob_Interface
     %% Constructor and helper function
     methods
 
-        function this = MD_Opt_Prob_Interface_Sabl(sabl_opt, md_interface_data)
+        function this = MD_Opt_Prob_Interface_Sabl(sabl_opt, md_data_interface)
+            arguments
+                sabl_opt Reduced_Space_Optimization
+                md_data_interface MD_Data_Interface
+            end
             this@MD_Opt_Prob_Interface();
             this.sabl_opt = sabl_opt;
-            this.z_current = md_interface_data.z_opt;
+            this.z_current = md_data_interface.z_opt;
             [~, ~, this.hessian_data] = this.sabl_opt.Jhat(this.z_current);
             this.m = (length(this.hessian_data) - length(this.z_current)) / 2;
             this.u_current = this.hessian_data(1:this.m);

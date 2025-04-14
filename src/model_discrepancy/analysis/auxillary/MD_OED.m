@@ -15,6 +15,14 @@ classdef MD_OED < handle
     methods
 
         function this = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface)
+            arguments
+                opt_prob_interface MD_Opt_Prob_Interface
+                data_interface MD_Data_Interface
+                u_prior_interface MD_u_Prior_Interface
+                z_prior_interface MD_z_Prior_Interface
+                md_hessian_analysis MD_Hessian_Analysis
+                oed_interface MD_OED_Interface
+            end
             this.opt_prob_interface = opt_prob_interface;
             this.data_interface = data_interface;
             this.u_prior_interface = u_prior_interface;

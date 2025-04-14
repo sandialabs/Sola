@@ -8,6 +8,9 @@ classdef MD_Prior_Visualization < handle
     methods
 
         function this = MD_Prior_Visualization(prior_sampling)
+            arguments
+                prior_sampling MD_Prior_Sampling
+            end
             this.prior_sampling = prior_sampling;
         end
 

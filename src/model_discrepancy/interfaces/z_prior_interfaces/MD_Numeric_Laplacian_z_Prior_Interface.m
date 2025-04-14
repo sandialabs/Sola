@@ -49,6 +49,13 @@ classdef MD_Numeric_Laplacian_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
     methods
 
         function this = MD_Numeric_Laplacian_z_Prior_Interface(S, M, data_interface, z_hyperparam_interface, u_prior_interface)
+            arguments
+                S (:,:) {mustBeNumeric}
+                M (:,:) {mustBeNumeric}
+                data_interface MD_Data_Interface
+                z_hyperparam_interface MD_z_Hyperparameter_Interface
+                u_prior_interface MD_u_Prior_Interface
+            end
             this@MD_Elliptic_z_Prior_Interface(z_hyperparam_interface.alpha_z);
             this.S = S;
             this.M = M;

@@ -13,6 +13,10 @@ classdef MD_Update < handle
     methods
 
         function this = MD_Update(md_post_sampling, md_hessian_analysis)
+            arguments
+                md_post_sampling MD_Posterior_Sampling
+                md_hessian_analysis MD_Hessian_Analysis
+            end
             this.md_post_sampling = md_post_sampling;
             this.md_hessian_analysis = md_hessian_analysis;
             this.opt_prob_interface = md_hessian_analysis.opt_prob_interface;

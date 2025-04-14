@@ -11,6 +11,11 @@ classdef MD_Posterior_Sampling < handle
     methods
 
         function this = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface)
+            arguments
+                data_interface MD_Data_Interface
+                u_prior_interface MD_u_Prior_Interface
+                z_prior_interface MD_z_Prior_Interface
+            end
             this.data_interface = data_interface;
             this.u_prior_interface = u_prior_interface;
             this.z_prior_interface = z_prior_interface;

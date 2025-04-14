@@ -11,6 +11,10 @@ classdef MD_Hessian_Analysis < handle
     methods
 
         function this = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface)
+            arguments
+                opt_prob_interface MD_Opt_Prob_Interface
+                z_prior_interface MD_z_Prior_Interface
+            end
             this.opt_prob_interface = opt_prob_interface;
             this.z_prior_interface = z_prior_interface;
         end

@@ -20,7 +20,7 @@ classdef MD_OED_Interface < handle
 
         function this = MD_OED_Interface(data_interface)
             arguments
-                data_interface {MD_Data_Interface}
+                data_interface MD_Data_Interface
             end
             this.data_interface = data_interface;
         end

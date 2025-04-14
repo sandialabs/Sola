@@ -10,10 +10,15 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
     %% Constructor
     methods
 
-        % spatial_prior_cov should be an object of type MD_Elliptic_u_Prior_Interface
-        % transient_prior_cov should be an object of type MD_Transient_Prior_Covariance
         function this = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_prior_cov, transient_prior_cov)
+
+            arguments
+                data_interface MD_Data_Interface
+                spatial_prior_cov MD_u_Prior_Interface
+                transient_prior_cov MD_Transient_Prior_Covariance
+            end
             this@MD_Scaled_u_Prior_Interface(transient_prior_cov.u_hyperparam_interface.alpha_u);
+            
             this.spatial_prior_cov = spatial_prior_cov;
             this.transient_prior_cov = transient_prior_cov;
             this.u_hyperparam_interface = transient_prior_cov.u_hyperparam_interface;

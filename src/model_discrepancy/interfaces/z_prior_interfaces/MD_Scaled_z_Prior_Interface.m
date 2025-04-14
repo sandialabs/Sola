@@ -34,6 +34,9 @@ classdef MD_Scaled_z_Prior_Interface < MD_z_Prior_Interface
     methods
 
         function this = MD_Scaled_z_Prior_Interface(alpha_z)
+            arguments
+                alpha_z (1,1) {mustBeNumeric}
+            end
             this.alpha_z = alpha_z;
         end
 

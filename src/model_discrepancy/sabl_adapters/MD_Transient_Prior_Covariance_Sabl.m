@@ -7,6 +7,13 @@ classdef MD_Transient_Prior_Covariance_Sabl < MD_Transient_Prior_Covariance
     methods
 
         function this = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface, T, n_t, n_y)
+            arguments
+                data_interface MD_Data_Interface
+                u_hyperparam_interface MD_u_Hyperparameter_Interface
+                T (1,1) double
+                n_t (1,1) double
+                n_y (1,1) double
+            end
             h = T / (n_t - 1);
 
             M_t = diag(4 * ones(1, n_t)) + diag(ones(1, n_t - 1), 1) + diag(ones(1, n_t - 1), -1);

@@ -34,6 +34,12 @@ classdef MD_z_Vector_Prior_Interface < MD_Scaled_z_Prior_Interface
     methods
 
         function this = MD_z_Vector_Prior_Interface(M_z, data_interface, z_hyperparam_interface, u_prior_interface)
+            arguments
+                M_z (:,:) {mustBeNumeric}
+                data_interface MD_Data_Interface
+                z_hyperparam_interface MD_z_Hyperparameter_Interface
+                u_prior_interface MD_u_Prior_Interface
+            end
             this@MD_Scaled_z_Prior_Interface(z_hyperparam_interface.alpha_z);
             this.M_z = M_z;
             this.R_z = chol(M_z);
