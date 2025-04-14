@@ -1,0 +1,10 @@
+This examples tests:
+* MD_Determine_z_Hyperparameters
+	- Determine_alpha_z
+
+* MD_z_Vector_Prior_Interface
+	- Apply_M_z
+	- Sample_with_Covariance_W_z_Acute_Inverse
+	- Apply_W_z_Acute_Inverse
+	- Apply_W_z_Acute
+

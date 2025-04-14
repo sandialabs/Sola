@@ -37,7 +37,7 @@ classdef MD_Posterior_Data < handle
 
         end
 
-        function [] = Compute_Posterior_Data(this, data_interface, u_prior_interface, z_prior_interface, alpha_d_in, z_opt, num_samples)
+        function [] = Compute_Posterior_Data(this, data_interface, u_prior_interface, z_prior_interface, alpha_d_in, num_samples)
             this.alpha_d = alpha_d_in;
             this.num_samples = num_samples;
             this.Z = data_interface.Z;
@@ -56,7 +56,7 @@ classdef MD_Posterior_Data < handle
             this.Wz_inv_Mz_Zc = this.Wz_inv_Mz_Z(:, 2:end) - this.Wz_inv_Mz_z_opt;
             this.Mz_Wz_inv_Mz_Zc = this.Mz_Wz_inv_Mz_Z(:, 2:end) - this.Mz_Wz_inv_Mz_z_opt;
             this.Zc_Mz_Wz_inv_Mz_Zc = this.Mz_Zc' * this.Wz_inv_Mz_Zc;
-            this.Zc = this.Z(:, 2:end) - z_opt;
+            this.Zc = this.Z(:, 2:end) - data_interface.z_opt;
 
             this.G = (1 + this.Wz_inv_Mz_z_opt' * this.Mz_z_opt) - this.Mz_Z' * this.Wz_inv_Mz_z_opt - this.Wz_inv_Mz_z_opt' * this.Mz_Z + this.Mz_Z' * this.Wz_inv_Mz_Z;
             if this.G == 1

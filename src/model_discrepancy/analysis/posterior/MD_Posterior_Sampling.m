@@ -24,7 +24,7 @@ classdef MD_Posterior_Sampling < handle
         end
 
         function [] = Compute_Posterior_Data(this, alpha_d, num_samples)
-            this.post_data.Compute_Posterior_Data(this.data_interface, this.u_prior_interface, this.z_prior_interface, alpha_d, this.z_opt, num_samples);
+            this.post_data.Compute_Posterior_Data(this.data_interface, this.u_prior_interface, this.z_prior_interface, alpha_d, num_samples);
         end
 
         function [delta_mean, delta_samples] = Posterior_Discrepancy_Samples(this, z)

@@ -20,7 +20,7 @@ function correlation_length = Compute_Correlation_Length_2D(x, y, u, initial_gue
     index = r_init;
 
     num_samples = 20;
-    circle_samples = sampleUnitCircle(num_samples);
+    circle_samples = Sample_Unit_Circle(num_samples);
 
     cov_r = zeros(num_samples, 1);
     for k = 1:num_samples

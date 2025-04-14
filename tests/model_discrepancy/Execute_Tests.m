@@ -1,36 +1,8 @@
-cd hyperparam_auto_2D/;
-% Missing test
+cd hyperparam_2D/;
+Driver_HDSA;
 cd ..;
 
-cd model_discrepancy_multi_state_synthetic_test/;
-Driver;
-cd ..;
-
-cd model_discrepancy_oed_unit_test/;
-Driver;
-cd ..;
-
-cd model_discrepancy_synthetic_test/;
-Driver;
-cd ..;
-
-cd model_discrepancy_synthetic_test_control_vec/;
-Driver;
-cd ..;
-
-cd model_discrepancy_synthetic_test_with_gsvd/;
-Driver;
-cd ..;
-
-cd model_discrepancy_synthetic_test_with_hessian_gevp/;
-Driver;
-cd ..;
-
-cd model_discrepancy_synthetic_test_with_hyperparam_auto_1D/;
-Driver;
-cd ..;
-
-cd model_discrepancy_transient_multi_state_synthetic_test/;
+cd oed_unit_test/;
 Driver;
 cd ..;
 
@@ -38,11 +10,39 @@ cd PDE_Test_Problem/;
 Driver_HDSA;
 cd ..;
 
-cd Transient_Hyperparameter_auto_Test_Problem/;
-% Need to look at this a bit closer
-Driver_Test;
+cd synthetic_test/;
+Driver;
 cd ..;
 
-cd Transient_Test_Problem/;
+cd synthetic_test_control_vec/;
+Driver;
+cd ..;
+
+cd synthetic_test_elliptic_prior/;
+Driver;
+cd ..;
+
+
+cd synthetic_test_hessian_gevp/;
+Driver;
+cd ..;
+
+cd synthetic_test_hyperparam_1D/;
+Driver;
+cd ..;
+
+cd synthetic_test_multi_state/;
+Driver;
+cd ..;
+
+cd transient_control_synthetic_test/;
+Driver;
+cd ..;
+
+cd transient_multi_state_synthetic_test/;
+Driver;
+cd ..;
+
+cd transient_test_problem/;
 Driver_Unit_Test_1;
 cd ..;
