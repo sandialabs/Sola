@@ -410,6 +410,7 @@ Let $\W_u\in\R^{n_u\times n_u}$ and $\W_z\in\R^{n_z\times n_z}$ be precision (in
 In the context of PDEs, these precision matrices are often {\color{royalblue}(inverse?)} elliptic operators.
 It can be shown that an appropriate precision matrix for a zero-mean prior distribution on the parameter vector $\bftheta$ is
 \begin{align}
+    \label{eq:prior-parameter-precision}
     \W_\theta
     = \left[\begin{array}{cc}
         \W_u & \W_u \otimes \tilde{\z}\trp\M_z \\
@@ -419,6 +420,7 @@ It can be shown that an appropriate precision matrix for a zero-mean prior distr
 \end{align}
 The posterior distribution for $\bftheta$ is also Gaussian, with the following mean and covariance:
 \begin{subequations}
+\label{eq:posterior-parameter-distribution}
 \begin{align}
     \bar{\bftheta}
     &= \tfrac{1}{\alpha}\bfSigma\A\trp(\I_{n_d}\otimes\M_{u})\mathbf{d},
@@ -427,11 +429,50 @@ The posterior distribution for $\bftheta$ is also Gaussian, with the following m
     &= \left(\W_{\bftheta} + \tfrac{1}{\alpha}\A\trp(\I_{n_d}\otimes \M_u)\A\right)^{-1}.
 \end{align}
 \end{subequations}
-Making appropriate choices for the prior distributions, sampling from the posterior distribution, and propagating the result through the product $\bftheta\mapsto\H^{-1}\B\bftheta$ for \cref{eq:control-update} is nontrivial
+Making appropriate choices for the prior distributions, sampling from the posterior distribution, and propagating the result through the product $\bftheta\mapsto\H^{-1}\B\bftheta$ for \cref{eq:control-update} is computationally nontrivial
 % Doing so efficiently involves advanced randomized linear algebra and matrix factorization techniques
 and is the subject of several previous works~\cite{hart2023hdsaoptimal,hart2025hdsaposterior}. % TODO: hyperparameter paper.
-For our purposes, the key observation is the minimal amount of information that must be provided by a user in order to fully specify the problem:
-\SM{TODO}
+For our purposes of designing a minimally complex user interface, observe that fully specifying a specific HDSA-MD problem --- constructing $\H$ and $\B$, sampling from the posterior distribution~\cref{eq:posterior-parameter-distribution}, and applying the control update \cref{eq:control-update} --- requires the ingredients listed in \Cref{table:hdsa-requirements}.
+The next section introduces a high-level implementation of HDSA-MD, appropriate for for small- to medium-scale problems, by exposing interfaces for these ingredients.
+
+\begin{table}[t]
+\centering
+\begin{tabular}{|rl|} %|l}
+% HDSA-MD requirement & \SABL/\HdsaLib class
+% \\ \hline
+\hline
+1. & Solution $(\tilde{\z},\s(\tilde{\z}))$ to surrogate problem \cref{eq:optimization-surrogate}
+\\
+2. & Data $(\z_{\ell},\tilde{\s}(\z_{\ell}),\s(\z_{\ell}))$ for the full and surrogate constraints, $\ell=1,\ldots,n_d$
+% & \texttt{MD\_Data\_Interface}
+\\ % \hline
+3. & Application of state mass matrix, $\v\mapsto\M_u\v$ % Apply_M_u
+\\
+4. & \SM{What to call this?}, $\v\mapsto(\W_u + \alpha\M_u)^{-1}\v$ % Apply_W_u_Plus_scalar_M_u_Inverse
+\\
+5. & Application of state covariance matrix, $\v\mapsto\W_u^{-1}\v$ % Apply_W_u_Inverse
+% Sample_with_Covariance_W_u_Inverse
+% Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse
+% & \texttt{MD\_u\_Prior\_Interface}
+\\ % \hline
+6. & Application of control covariance matrix, $\v\mapsto\W_z^{-1}\v$ % Apply_W_z_Inverse
+% Sample_with_Covariance_W_z_Inverse
+% Apply_W_z
+% & \texttt{MD\_z\_Prior\_Interface}
+\\ % \hline
+7. & Application of surrogate constraint Jacobian transpose, $\v\to\tilde{\s}_{z}(\z)\trp\v$ % Apply_Solution_Operator_z_Jacobian_Transpose
+\\
+8. & Application of surrogate reduced-space Hessian, $\v\mapsto\tilde{J}_{z,z}(\tilde{\z})\v$ % Apply_RS_Hessian
+\\
+9. & Objective state gradient, $\grad{u}J(\u,\z)$ % Misfit_Gradient
+\\
+10. & Application of objective state Hessian, $\v\mapsto\grad{u,u}J(\u,\z)\v$ % Apply_Misfit_Hessian
+% & \texttt{MD\_Opt\_Prob\_Interface}
+\\ \hline
+\end{tabular}
+\caption{Problem-specific requirements for HDSA-MD.}1
+\label{table:hdsa-requirements}
+\end{table}
 
 \begin{comment}
 \section{\HdsaLib: A template-based implementation of HDSA in \cpp}
