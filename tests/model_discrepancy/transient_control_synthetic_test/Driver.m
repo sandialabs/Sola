@@ -53,25 +53,14 @@ md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
 
-% if ~suppress_figures
-%     figure;
-%     hold on;
-%     plot(x, (1 + x) / (1.2^(1 / 3)), 'color', 'black', 'LineWidth', 3);
-%     plot(x, 1 + x, 'color', 'cyan', 'LineWidth', 3);
-%     plot(x, z_update_mean, '--', 'color', 'red', 'LineWidth', 3);
-%     for k = 1:num_post_samples
-%         plot(x, z_update_samples(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
-%     end
-%     plot(x, (1 + x) / (1.2^(1 / 3)), 'color', 'black', 'LineWidth', 3);
-%     plot(x, 1 + x, 'color', 'cyan', 'LineWidth', 3);
-%     plot(x, z_update_mean, '--', 'color', 'red', 'LineWidth', 3);
-% end
-%
-% %%
-% z_mean_ref = load('reference_solution.mat').z_update_mean;
-% z_samples_ref = load('reference_solution.mat').z_update_samples;
-% ref_diff = max(norm(z_mean_ref - z_update_mean) / norm(z_update_mean), norm(z_update_samples - z_samples_ref) / norm(z_update_samples));
-% if ref_diff > 1.e-9
-%     disp('model_discrepancy_sythetic_test difference:');
-%     disp(ref_diff);
-% end
+%%
+% save('reference_solution.mat','z_hyperparam_interface','md_hessian_analysis')
+ref = load('reference_solution.mat');
+ref_diff = norm(z_hyperparam_interface.alpha_z-ref.z_hyperparam_interface.alpha_z);
+ref_diff = min(ref_diff,norm(z_hyperparam_interface.beta_t-ref.z_hyperparam_interface.beta_t));
+ref_diff = min(ref_diff,norm(md_hessian_analysis.evals-ref.md_hessian_analysis.evals));
+
+if ref_diff > 1.e-9
+    disp('model_discrepancy_sythetic_test difference:');
+    disp(ref_diff);
+end

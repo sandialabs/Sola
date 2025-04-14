@@ -21,3 +21,13 @@ data_interface.Load_Data();
 
 u_hyperparams = MD_u_Hyperparameter_Interface_hyperparam_2D(x, y);
 u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparams);
+
+%save('reference_solution.mat','u_hyperparams')
+ref = load('reference_solution.mat');
+ref_diff = norm(u_hyperparams.alpha_u-ref.u_hyperparams.alpha_u);
+ref_diff = max(ref_diff,norm(u_hyperparams.beta_u-ref.u_hyperparams.beta_u));
+
+if ref_diff > 1.e-9
+    disp('hyperparam_2D difference:');
+    disp(ref_diff);
+end
