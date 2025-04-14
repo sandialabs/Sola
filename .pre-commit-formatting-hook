@@ -27,7 +27,7 @@ function check_result() {
 
 # Check the formatter is installed.
 if ! command -v mh_style &> /dev/null; then
-    echo "mh_style not be found, run 'make install'"
+    echo "mh_style not be found, run 'make install' from docs/"
     exit 1
 fi
 

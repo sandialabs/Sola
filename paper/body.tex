@@ -67,7 +67,7 @@ In doing so, we advocate for the following two-step software development strateg
 We demonstrate this paradigm for HDSA-MD by presenting a \MATLAB library, followed by a \cpp environment, which each implement HDSA-MD.
 The high-level library is used to validate the low-level library on small test problems, then the low-level library is used to tackle problems at scale.
 Our objectives are twofold: (1) demonstrate a principled approach to implementing complex mathematical frameworks, and (2) lower the barrier to entry for new practitioners who wish to use and/or extend HDSA-MD.
-Although this paper focuses on HDSA-MD, the high-to-low-level paradigm may be employed to approach implementations for other outer-loop algorithms.
+Although this paper focuses on HDSA-MD, the high-to-low-level paradigm may used as an effective implementation strategy for other outer-loop algorithms.
 
 \begin{purpose}
 Outline the paper.
@@ -446,28 +446,28 @@ The next section introduces a high-level implementation of HDSA-MD, appropriate 
 2. & Data $(\z_{\ell},\tilde{\s}(\z_{\ell}),\s(\z_{\ell}))$ for the full and surrogate constraints, $\ell=1,\ldots,n_d$
 % & \texttt{MD\_Data\_Interface}
 \\ % \hline
-3. & Application of state mass matrix, $\v\mapsto\M_u\v$ % Apply_M_u
+3. & Application of surrogate constraint Jacobian transpose, $\v\to\tilde{\s}_{z}(\z)\trp\v$ % Apply_Solution_Operator_z_Jacobian_Transpose
 \\
-4. & \SM{What to call this?}, $\v\mapsto(\W_u + \alpha\M_u)^{-1}\v$ % Apply_W_u_Plus_scalar_M_u_Inverse
+4. & Application of surrogate reduced-space Hessian, $\v\mapsto\tilde{J}_{z,z}(\tilde{\z})\v$ % Apply_RS_Hessian
 \\
-5. & Application of state covariance matrix, $\v\mapsto\W_u^{-1}\v$ % Apply_W_u_Inverse
+5. & Objective state gradient, $\grad{u}J(\u,\z)$ % Misfit_Gradient
+\\
+6. & Application of objective state Hessian, $\v\mapsto\grad{u,u}J(\u,\z)\v$ % Apply_Misfit_Hessian
+% & \texttt{MD\_Opt\_Prob\_Interface}
+\\ % \hline
+7. & Application of state mass matrix, $\v\mapsto\M_u\v$ % Apply_M_u
+\\
+8. & \SM{What to call this?}, $\v\mapsto(\W_u + \alpha\M_u)^{-1}\v$ % Apply_W_u_Plus_scalar_M_u_Inverse
+\\
+9. & Application of state covariance matrix, $\v\mapsto\W_u^{-1}\v$ % Apply_W_u_Inverse
 % Sample_with_Covariance_W_u_Inverse
 % Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse
 % & \texttt{MD\_u\_Prior\_Interface}
 \\ % \hline
-6. & Application of control covariance matrix, $\v\mapsto\W_z^{-1}\v$ % Apply_W_z_Inverse
+10. & Application of control covariance matrix, $\v\mapsto\W_z^{-1}\v$ % Apply_W_z_Inverse
 % Sample_with_Covariance_W_z_Inverse
 % Apply_W_z
 % & \texttt{MD\_z\_Prior\_Interface}
-\\ % \hline
-7. & Application of surrogate constraint Jacobian transpose, $\v\to\tilde{\s}_{z}(\z)\trp\v$ % Apply_Solution_Operator_z_Jacobian_Transpose
-\\
-8. & Application of surrogate reduced-space Hessian, $\v\mapsto\tilde{J}_{z,z}(\tilde{\z})\v$ % Apply_RS_Hessian
-\\
-9. & Objective state gradient, $\grad{u}J(\u,\z)$ % Misfit_Gradient
-\\
-10. & Application of objective state Hessian, $\v\mapsto\grad{u,u}J(\u,\z)\v$ % Apply_Misfit_Hessian
-% & \texttt{MD\_Opt\_Prob\_Interface}
 \\ \hline
 \end{tabular}
 \caption{Problem-specific requirements for HDSA-MD.}1
@@ -507,26 +507,43 @@ List and describe classes from \texttt{hdsalib/src/core/model\_discrepancy/inter
 \section{\SABL: Prototyping HDSA-MD in \MATLAB}
 \label{sec:sabl}
 
-Jumping straight to high-performance computing in \cpp with \HdsaLib can be challenging for new users, especially for practitioners who are accustomed to high-level languages such as \MATLAB and Python.
-Furthermore, the complexities of a full HPC environment make it difficult to assess and verify implementations of novel, complicated algorithms such as HDSA.
-To that end, this section presents \SABL: \textbf{S}andbox for \textbf{A}adjoint-\textbf{B}ased outer \textbf{L}oop analysis, a \MATLAB library that implements HDSA for model discrepancy.
-
 \begin{purpose}
-\begin{itemize}
-\item Introduce \SABL: scope, style, repository, etc.
-\item Motivate why this exists. Instead of throwing newcomers headlong into \cpp, it's better to start in a high-level language that mimics the structure of \HdsaLib.
-\item Articulate the reasons for selecting \MATLAB: intuitive/mathematical high-level syntax, backward compatibility, low barrier to entry, takes care of low-level computing tasks in the background, common/popular language in current engineering curriculum.
-\item Designed in such a way to emulate a \cpp HPC framework: object-oriented design, use \texttt{this} instead of \texttt{obj}, etc.
-\end{itemize}
+Why \SABL exists. Instead of throwing newcomers headlong into \cpp, it's better to start in a high-level language.
 \end{purpose}
 
-\subsection{Optimization implementation}
+Implementing HDSA-MD poses two major challenges.
+First, the mathematics are complicated enough that a successful first implementation necessitates careful verification of each step of the algorithm to avoid subtle errors.
+Second, the kinds of problems for which HDSA-MD is most useful are large scale, likely requiring HPC resources and distributed computing.
+These are competing and conflicting interests that influence our choice of software language: on the one hand, a high-level language --- designed for high readability and ease of use --- would enable an intuitive translation of mathematics to code and simplify the process of checking intermediate steps, but may ultimately struggle to perform at scale; on the other hand, a low-level language --- optimized for performance but not for readability --- would require substantial expertise and be difficult to verify, but a successful implementation would ultimately be able to tackle large-scale problems.
+To address the first issue, this section presents \SABL: \textbf{S}andbox for \textbf{A}adjoint-\textbf{B}ased outer \textbf{L}oop analysis, a \MATLAB library that implements PDE-constrained optimization and HDSA-MD.
+The source code is publicly available at \textbf{TODO}.
+We use \SABL as a prototype to serve as a guide for a low-level HPC-oriented implementation of HDSA-MD in \cpp, which is the topic of \Cref{sec:mrhyde}.
 
-TODO.
+% \begin{purpose}
+% Why \MATLAB: intuitive/mathematical high-level syntax, strong backward compatibility, low barrier to entry, takes care of low-level computing tasks in the background, common/popular language in current engineering curriculum.
+% Also, \SABL is Designed in such a way to emulate a \cpp HPC framework: object-oriented design, use \texttt{this} instead of \texttt{obj}, etc.
+% \end{purpose}
+
+\begin{remark}[Why \MATLAB?]
+Other popular high-level languages such as \texttt{Python} and \texttt{Julia} could also be suitable for a prototype library, but \MATLAB has a few features that make it particularly attractive for our purposes.
+It has a low barrier to entry, intuitive syntax, and is designed around linear algebra operations, which form the majority of the mathematics in HDSA-MD.
+At the same time, \MATLAB is interpreted (not compiled) and does not require imports or type declarations, all of which generally lower implementation cost compared to compiled languages.
+Furthermore, \MATLAB features an object-oriented paradigm that closely mirrors \cpp class syntax, including \texttt{private} / \texttt{public} blocks and abstract methods (virtual functions).
+Unlike open-source languages, \MATLAB also has strong backwards compatibility guarantees, leading to greater code longevity and no recurring maintenance needs.
+\end{remark}
+
+\subsection{Optimization implementation}
 
 \begin{purpose}
 List and detail \texttt{Objective} and \texttt{Constraint}, the classes used for constrained optimization.
 \end{purpose}
+
+We begin with an implementation of \Cref{alg:adjoint-gradient,alg:adjoint-hessvec} for adjoint-based optimization.
+An \texttt{Objective} class is defined for the objective $J$ (or $\tilde{J}$) and a separate \texttt{Constraint} class is defined to represent the constraint $\c$ (or $\tilde{\c}$).
+Each contains abstract (pure virtual) methods that represent the required evaluations and derivatives, as well as provided methods that compare the user-defined derivatives to finite difference estimates with varying step sizes.
+Class outlines are given in \Cref{code:sabl-optimization}.
+
+\SM{ReducedSpaceOptimization space optimization. Naming / argument conventions?}
 
 \begin{listing}[t]
 \begin{minted}{matlab}
@@ -564,16 +581,32 @@ classdef Reduced_Space_Optimization < handle
 end
 \end{minted}
 \caption{Outline of \MATLAB classes for constrained optimization in \SABL.}
+\label{code:sabl-optimization}
 \end{listing}
 
 \begin{remark}[Time-dependent problems]
-The \texttt{Objective} and \texttt{Constraint} classes are designed for problems in which the state $\u$ does not represent a time-dependent variable.
-For time-dependent problems, \SABL also provides two abstract classes \texttt{Dynamic\_Objective} and \texttt{Dynamic\_Constraint}, for implementing optimization problems that can be written as the following:
-\SM{TODO}
+The \texttt{Objective} and \texttt{Constraint} classes are not specifically designed for problems in which the state $\u$ represents a time-dependent variable.
+For time-dependent problems, \SABL also provides two abstract classes, \texttt{Dynamic\_Objective} and \texttt{Dynamic\_Constraint}, for implementing optimization problems of the form
+\begin{gather*}
+    \min_{\y(t),\z}~\int_{0}^{T} g(\y(t),t) dt + R(\z)
+    \qquad
+    \textup{where}
+    \qquad
+    \ddt\y(t) = \f(\y(t), \z, t), ~~ \y(0) = \h(\z),
+\end{gather*}
+where
+$\y : [0,T] \to \R^{n_y}$,
+$g : \R^{n_y} \times [0, T] \to \R$,
+$R : \R^{n_z} \to \R$,
+$\f : \R^{n_y} \times \R^{n_z} \times [0,T]  \to \R^m$,
+and
+$\h : \R^{n_z} \to \R^{n_y}$.
+In this case, the user provides the derivatives of $g$, $R$, $\f$, and $\h$, which are used to calculate the derivatives of the corresponding objective and constraint.
 \end{remark}
 
 \begin{remark}[Automatic differentiation]
-Alternative templates exist that use automatic differentiation via AdiGator \cite{weinstein2017adigator}
+Additional templates are available in \SABL that use automatic differentiation via the \texttt{AdiGator} library~\cite{weinstein2017adigator} instead of specifying the derivatives of the objective and constraint explicitly.
+\MATLAB does not natively support automatic differentiation, so...\SM{when it works it works, when it doesn't it's really not great.}
 \end{remark}
 
 \subsection{HDSA implementation}
@@ -614,22 +647,20 @@ end
 \caption{Outline of \MATLAB classes for HDSA in \SABL.}
 \end{listing}
 
-\subsection{Example 1: Small prototypical problem}
-\label{sec:smallexample}
 
-\begin{purpose}
-Define exemplar, something quite simple (probably advection-diffusion) that allows us to go through the details of \SABL (and later \MrHyDE).
-Walk through implementing the Objective, Constraint, and use the ReducedSpaceOptimization to solve the problem. Show some results that we can compare to a \MrHyDE experiment later.
-\end{purpose}
+\section{\HdsaLib: High-performance HDSA-MD in \cpp}
 
-\SM{It would be convenient to do something stationary so that we only need to introduce the \texttt{Objective} and \texttt{Constraint} classes instead of also introducing \texttt{Dynamic\_Objective} and \texttt{Dynamic\_Constraint}.}
-
-\section{\MrHyDE: A high-performance \cpp library for solving differential equations}
+\subsection{\MrHyDE: A high-performance \cpp library for solving differential equations}
 \label{sec:mrhyde}
+
+The complexities of a full HPC environment make it difficult to assess and verify implementations of novel, complicated algorithms such as HDSA.
+
+Jumping straight to high-performance computing in \cpp with \HdsaLib can be challenging for new users, especially for practitioners who are accustomed to high-level languages such as \MATLAB and Python.
+
 
 \SM{Note that \MrHyDE takes care of a lot of things for us, like calculating the adjoint at the element level via automatic differentiation. Transposes and handling boundary conditions are nontrivial in a parallel environment, but this is handled by Panzer in \MrHyDE.}
 
-\SM{Not convinced that \HdsaLib should come first. Maybe we should have HDSA first, then \SABL, then a section called ``\HdsaLib and \MrHyDE: implementing HDSA-MD in \cpp''.}
+% \SM{Not convinced that \HdsaLib should come first. Maybe we should have HDSA first, then \SABL, then a section called ``\HdsaLib and \MrHyDE: implementing HDSA-MD in \cpp''.}
 
 TODO.
 
@@ -638,7 +669,8 @@ TODO.
 \item Introduce \MrHyDE: scope, style, repository, etc.
 \item High-level comparison with \SABL: more dependencies, lower level, but higher power; \MrHyDE~also has robust forward solver (inner-loop) capabilities.
 \item Note again that \SABL is designed to prepare users for using \HdsaLib with \MrHyDE as the backend.
-\item Discuss how \MrHyDE addresses many of the challenges of working in an HPC environment
+\item Discuss how \MrHyDE addresses many of the challenges of working in an HPC environment.
+\item Emphasize efficient automatic differentiation tools.
 \end{itemize}
 \end{purpose}
 
@@ -646,38 +678,43 @@ TODO.
 
 TODO (Tim?).
 
-\subsection{\HdsaLib interfaces for \MrHyDE}
+\subsection{\HdsaLib interfaces}
 
 TODO
 
 \begin{listing}[t]
 \begin{minted}{cpp}
-// TODO: abbreviate this somehow.
 template <class RealT>class MD_u_Prior_Interface {
   public:
-    virtual void Apply_M_u(HDSA::Vector<RealT> & u_out, const HDSA::Vector<RealT> & u_in) const = 0;
+    virtual void Apply_M_u(
+      HDSA::Vector<RealT> & u_out,
+      const HDSA::Vector<RealT> & u_in) const = 0;
 
-    virtual void Apply_W_u_Plus_scalar_M_u_Inverse(HDSA::Vector<RealT> & u_out, const HDSA::Vector<RealT> & u_in, const RealT & scalar) const = 0;
+    virtual void Apply_W_u_Plus_scalar_M_u_Inverse(
+        HDSA::Vector<RealT> & u_out,
+        const HDSA::Vector<RealT> & u_in,
+        const RealT & scalar) const = 0;
 
-    virtual void Apply_W_u_Inverse(HDSA::Vector<RealT> & u_out, const HDSA::Vector<RealT> & u_in) const = 0;
+    virtual void Apply_W_u_Inverse(
+        HDSA::Vector<RealT> & u_out,
+        const HDSA::Vector<RealT> & u_in) const = 0;
 };
 \end{minted}
 \caption{Outline of \cpp classes for HDSA in \HdsaLib.}
 \end{listing}
 
-\subsection{Example 1 with \MrHyDE}
+\section{Example 1: Small problem, done in both \SABL and \HdsaLib}
+\label{sec:smallexample}
 
 \begin{purpose}
-Redo the experiment of \Cref{sec:smallexample} with \MrHyDE.
-This will gives us confidence that we've implemented HDSA correctly in \cpp despite the complexity of the HPC setting.
-\begin{itemize}
-    \item Demonstrate forward solver capabilities.
-    \item Emphasize efficient automatic differentiation tools.
-    \item Show that results match with \SABL experiment.
-\end{itemize}
+Define exemplar, something simple (probably advection-diffusion) that allows us to go through the details of \SABL and \HdsaLib.
+% Might walk through implementing the Objective and Constraint, and use the ReducedSpaceOptimization to solve the problem.
+Show results from each library as validation.
 \end{purpose}
 
-\section{Example 2: Big fat HPC-worthy problem}
+\SM{It would be convenient to do something stationary so that we only need to introduce the \texttt{Objective} and \texttt{Constraint} classes instead of also introducing \texttt{Dynamic\_Objective} and \texttt{Dynamic\_Constraint}.}
+
+\section{Example 2: Big fat HPC-worthy problem, \HdsaLib/\MrHyDE only}
 \label{sec:application}
 
 \begin{purpose}
