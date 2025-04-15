@@ -26,7 +26,7 @@ data_interface = MD_Data_Interface_PDE_Test_Problem();
 data_interface.Load_Data();
 
 alpha_u = 1 / (2^2);
-alpha_z = 1 / (600^2);
+alpha_z = 1 / (3^2);
 u_prior_interface = MD_Elliptic_u_Prior_Interface_PDE_Test_Problem(alpha_u, opt_lofi);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_PDE_Test_Problem(alpha_z, opt_lofi);
 

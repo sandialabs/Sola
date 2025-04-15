@@ -12,13 +12,13 @@ rng(121234);
 m = 51;
 x = linspace(0, 1, m)';
 
-data_interface = MD_Data_Interface_synthetic_test_with_gsvd(m);
+data_interface = MD_Data_Interface_synthetic_test_elliptic_prior(m);
 data_interface.Load_Data();
 
 alpha_u = 1 / (2^2);
-alpha_z = 1 / (100^2);
-u_prior_interface = MD_Elliptic_u_Prior_Interface_synthetic_test_with_gsvd(alpha_u, m);
-z_prior_interface = MD_Elliptic_z_Prior_Interface_synthetic_test_with_gsvd(alpha_z, m);
+alpha_z = 1 / (2^2);
+u_prior_interface = MD_Elliptic_u_Prior_Interface_synthetic_test_elliptic_prior(alpha_u, m);
+z_prior_interface = MD_Elliptic_z_Prior_Interface_synthetic_test_elliptic_prior(alpha_z, m);
 
 num_prior_samples = 100;
 md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
@@ -43,7 +43,7 @@ Z_test(:, 3) = 1.5 * ones(m, 1);
 [post_delta_mean, post_delta_samples] = md_post_sampling.Posterior_Discrepancy_Samples(Z_test);
 
 %%
-opt_prob_interface = MD_Opt_Prob_Interface_synthetic_test_with_gsvd(m);
+opt_prob_interface = MD_Opt_Prob_Interface_synthetic_test_elliptic_prior(m);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 [post_z_mean, post_z_samples] = md_update.Posterior_Update_Samples();

@@ -2,7 +2,7 @@
 clear;
 close all;
 clc;
-addpath(genpath('../../src'));
+addpath(genpath('../../../src'));
 load Optimization_Results.mat;
 rng(2451423);
 
