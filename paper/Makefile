@@ -5,11 +5,11 @@ all: arxiv toms
 
 
 arxiv:
-	latexmk -pdf -quiet -g --shell-escape main-arxiv.tex
+	latexmk -pdf -g --shell-escape main-arxiv.tex
 
 
 toms:
-	latexmk -pdf -quiet -g --shell-escape main-toms.tex
+	latexmk -pdf -g --shell-escape main-toms.tex
 
 
 clean:

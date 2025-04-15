@@ -539,11 +539,14 @@ List and detail \texttt{Objective} and \texttt{Constraint}, the classes used for
 \end{purpose}
 
 We begin with an implementation of \Cref{alg:adjoint-gradient,alg:adjoint-hessvec} for adjoint-based optimization.
-An \texttt{Objective} class is defined for the objective $J$ (or $\tilde{J}$) and a separate \texttt{Constraint} class is defined to represent the constraint $\c$ (or $\tilde{\c}$).
-Each contains abstract (pure virtual) methods that represent the required evaluations and derivatives, as well as provided methods that compare the user-defined derivatives to finite difference estimates with varying step sizes.
+An \texttt{Objective} template class is defined for the objective $J$ (or $\tilde{J}$) and a separate \texttt{Constraint} class is defined to represent the constraint $\c$ (or $\tilde{\c}$).
 Class outlines are given in \Cref{code:sabl-optimization}.
+Each contains abstract (pure virtual) methods that represent the required evaluations and derivatives.
 
-\SM{ReducedSpaceOptimization space optimization. Naming / argument conventions?}
+The user defines child classes that implement the abstract methods; to verify the implementation, each class is provided with methods for comparing user-defined derivatives to finite difference estimates with varying step sizes.
+Next, the user instantiates the classes and pass them to a \texttt{ReducedSpaceOptimization} class, which solves the corresponding optimization problem via \Cref{alg:adjoint-gradient} and \Cref{alg:adjoint-hessvec} and a Newton--CG method.
+
+\SM{Naming / argument conventions? What else do we talk about here?}
 
 \begin{listing}[t]
 \begin{minted}{matlab}
@@ -609,7 +612,7 @@ Additional templates are available in \SABL that use automatic differentiation v
 \MATLAB does not natively support automatic differentiation, so...\SM{when it works it works, when it doesn't it's really not great.}
 \end{remark}
 
-\subsection{HDSA implementation}
+\subsection{HDSA-MD implementation}
 
 TODO.
 
