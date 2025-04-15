@@ -1,4 +1,4 @@
-classdef MD_z_Vector_Prior_Interface < MD_Scaled_z_Prior_Interface
+classdef MD_Vector_z_Prior_Interface < MD_Scaled_z_Prior_Interface
 
     properties
         M_z
@@ -33,7 +33,7 @@ classdef MD_z_Vector_Prior_Interface < MD_Scaled_z_Prior_Interface
     %% Constructor
     methods
 
-        function this = MD_z_Vector_Prior_Interface(M_z, data_interface, z_hyperparam_interface, u_prior_interface)
+        function this = MD_Vector_z_Prior_Interface(M_z, data_interface, z_hyperparam_interface, u_prior_interface)
             arguments
                 M_z (:,:) {mustBeNumeric}
                 data_interface MD_Data_Interface

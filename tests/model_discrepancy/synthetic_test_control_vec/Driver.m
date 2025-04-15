@@ -20,7 +20,7 @@ num_state_solves = 100;
 M_z = eye(2);
 M_z(1,1) = 2;
 z_hyperparam_interface = MD_z_Hyperparameter_Interface_synthetic_test_control_vec(num_state_solves,m);
-z_prior_interface = MD_z_Vector_Prior_Interface(M_z, data_interface, z_hyperparam_interface, u_prior_interface);
+z_prior_interface = MD_Vector_z_Prior_Interface(M_z, data_interface, z_hyperparam_interface, u_prior_interface);
 
 %%
 num_prior_samples = 100;
