@@ -54,12 +54,12 @@ classdef MD_Prior_Sampling < handle
             this.delta_samples_z_opt = this.u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samps)  + this.data_interface.data_shift;
             this.Compute_Delta_z_opt_Metrics();
             if this.u_prior_interface.u_hyperparam_interface.is_transient
-                this.Compute_temporal_data();
+                this.Compute_Temporal_Data();
             end
         end
 
         function [] = Generate_Prior_Discrepancy_z_pert_Sample_Data(this)
-            this.Compute_z_pert();
+            this.Compute_z_pert_Data();
             this.Compute_Delta_z_pert_Metrics();
         end
 
@@ -88,7 +88,7 @@ classdef MD_Prior_Sampling < handle
     %% Functions to compute data for prior visualization
     methods
 
-        function [] = Compute_temporal_data(this)
+        function [] = Compute_Temporal_Data(this)
             num_components = length(this.delta_mag);
             if isempty(this.delta_z_opt_time_evol)
                 this.delta_z_opt_time_evol = cell(num_components, 1);
@@ -142,7 +142,7 @@ classdef MD_Prior_Sampling < handle
             end
         end
 
-        function [] = Compute_z_pert(this)
+        function [] = Compute_z_pert_Data(this)
 
             if strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'vector')
                 this.z_pert = eye(this.z_prior_interface.n_z);
