@@ -25,10 +25,10 @@
 
 \PYG{k}{classdef}\PYG{+w}{ }\PYG{n}{Reduced\PYGZus{}Space\PYGZus{}Optimization}\PYG{+w}{ }\PYG{o}{\PYGZlt{}}\PYG{+w}{ }\PYG{n+nb}{handle}
 \PYG{+w}{  }\PYG{k}{methods}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{Access}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{public}\PYG{p}{)}
-\PYG{+w}{    }\PYG{n}{ReducedSpaceOptimization}\PYG{p}{(}\PYG{n}{obj}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{con}\PYG{p}{)}\PYG{+w}{                }\PYG{c}{\PYGZpc{} Store objective and constraint}
-\PYG{+w}{    }\PYG{p}{[}\PYG{n}{u}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{z}\PYG{p}{]}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{Optimize}\PYG{p}{(}\PYG{n}{this}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{z0}\PYG{p}{)}\PYG{+w}{                       }\PYG{c}{\PYGZpc{} Adjoint\PYGZhy{}based optimization}
-\PYG{+w}{    }\PYG{p}{[}\PYG{n}{val}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{grad}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{hessian\PYGZus{}data}\PYG{p}{]}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{Jhat}\PYG{p}{(}\PYG{n}{this}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{z}\PYG{p}{)}\PYG{+w}{         }\PYG{c}{\PYGZpc{} $\grad{z}\hat{J}(\z)$ (Algorithm 2.1)}
-\PYG{+w}{    }\PYG{p}{[}\PYG{n}{z\PYGZus{}out}\PYG{p}{]}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{Jhat\PYGZus{}hessVec}\PYG{p}{(}\PYG{n}{this}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{hessian\PYGZus{}data}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{z\PYGZus{}in}\PYG{p}{)}\PYG{+w}{  }\PYG{c}{\PYGZpc{} $\v\mapsto\grad{z,z}\hat{J}(\z)\v$ (Algorithm 2.2)}
+\PYG{+w}{    }\PYG{n}{ReducedSpaceOptimization}\PYG{p}{(}\PYG{n}{objective}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{constraint}\PYG{p}{)}
+\PYG{+w}{    }\PYG{p}{[}\PYG{n}{u}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{z}\PYG{p}{]}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{Optimize}\PYG{p}{(}\PYG{n}{this}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{z0}\PYG{p}{)}
+\PYG{+w}{    }\PYG{p}{[}\PYG{n}{val}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{grad}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{hessian\PYGZus{}data}\PYG{p}{]}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{Jhat}\PYG{p}{(}\PYG{n}{this}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{z}\PYG{p}{)}\PYG{+w}{         }\PYG{c}{\PYGZpc{} $\hat{J}(\z)$, $\grad{z}\hat{J}(\z)$}
+\PYG{+w}{    }\PYG{p}{[}\PYG{n}{z\PYGZus{}out}\PYG{p}{]}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{Jhat\PYGZus{}hessVec}\PYG{p}{(}\PYG{n}{this}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{hessian\PYGZus{}data}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{z\PYGZus{}in}\PYG{p}{)}\PYG{+w}{  }\PYG{c}{\PYGZpc{} $\v\mapsto\grad{z,z}\hat{J}(\z)\v$}
 \PYG{+w}{  }\PYG{k}{end}
 \PYG{k}{end}
 \end{Verbatim}

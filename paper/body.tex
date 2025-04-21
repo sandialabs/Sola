@@ -1,18 +1,21 @@
 % !TEX root = main-arxiv.tex
 
-\bigskip\noindent\textbf{** Developer Notes **}
+\bigskip\noindent\textbf{** Begin Developer Notes **}
 
-\bartnote{Decided to focus the paper on HDSA with respect to model discrepancy. We can mention in the intro and/or conclusion that there are other outer-loop problems that we can use the \SABL $\to$ \MrHyDE approach for, but let the main focus be on HDSA throughout.}
-
-\shanenote{Strategy: focus first on \HdsaLib (actual implementation of HDSA, agnostic to underlying solvers). Describe \SABL as a \MATLAB implementation that preps you for \HdsaLib. Then show the power of \MrHyDE + \HdsaLib.}
+% \bartnote{Decided to focus the paper on HDSA with respect to model discrepancy. We can mention in the intro and/or conclusion that there are other outer-loop problems that we can use the \SABL $\to$ \MrHyDE approach for, but let the main focus be on HDSA throughout.}
 
 \bartnote{The big thing about \HdsaLib is that it implements the model discrepancy details, abstracts the interface and requires the user to instantiate the things that are needed. The high-level challenge is accessibility because of the complexity of the HPC environment. Need to point to the abstractions, i.e., make sure any sample code listings are tied carefully to the mathematics.}
 
-\shanenote{Explaining the full OOP structure of \HdsaLib would be too much, but showing an example of a particular piece of the algorithm in all three elements might be effective. Need to drive everything from a very high-level view.}
-
-\shanenote{Maybe have a baby 1D problem just in \SABL (everything is plottable but it doesn't take much space), then a transition problem done in both \SABL and \MrHyDE, then a monster problem done solely in \MrHyDE. Can make the case that this is one way to validate your HPC implementations as well as lower the barrier to entry for new HPC practitioners.}
+\shanenote{Explaining the full OOP structure of \HdsaLib would be too much, but showing an example of a particular piece of the algorithm in all three elements might be effective. Need to drive everything from a very high-level view. Maybe have a baby 1D problem just in \SABL (everything is plottable but it doesn't take much space), then a transition problem done in both \SABL and \MrHyDE, then a monster problem done solely in \MrHyDE. Can make the case that this is one way to validate your HPC implementations as well as lower the barrier to entry for new HPC practitioners.}
 
 \bartnote{Implementation strategy is really step by step, to the level of verifying matvecs at each stage of the algorithm. Also, \MrHyDE is a particular driver, but not the only driver for \HdsaLib. Maybe have Section~3 be \HdsaLib, Section~4 HPC simulator with \MrHyDE as an example.}
+
+\shanenote{Give the sense that this is very complicated. Don't underplay the complexity of the full-order model (finite element is already hard, it could be a time-dependent problem), solving the optimization problem (trust region methods, Newton Krylov, etc.), the HDSA-MD Bayesian inference problem (with a prior, etc.), the posterior update, sampling, etc. The high-level accessibility is still very important, we want it to be publishable but also readable.}
+
+\bartnote{Do we have to show the final product of the $\H$ and $\B$ and the huge inverse to get $\bfSigma$? Should think about if we want to show any more detail. Might want to just list the big expressions to better show what the ingredients at the expense of detailed derivation? Could be philosophical up front, then walk through the pieces. Forward modeling, Bayesian modeling and sampling, etc. \SABL could be a big section, walk through an example slowly? This paper should be \textbf{focused on the development paradigm}, not feel like a practitioner-oriented tutorial paper.}
+
+\noindent\textbf{** End Developer Notes **}
+\clearpage
 
 \section{Introduction}
 
@@ -21,13 +24,14 @@ High mathematical complexity leads to high implementation difficulty.
 This paper is about lowering the difficulty of implementing a class of highly complex problems.
 \end{purpose}
 
+\noindent
 Mathematics, algorithms, and implementation.
 These three steps, sequential but intertwined, form the general approach to problems in computational science and engineering, statistics and data science, and scientific machine learning.
 In the first step, a problem is formulated, models are proposed, and mathematical analyses lead to solution strategies; second, the components leading to a solution are grouped, ordered, and articulated as an algorithm; and finally, algorithms are implemented as executable software.
 An implementation should then be verified --- checked for correctness --- before validating the overall approach against available test data~\cite{oden2004verification,oden2002estimation}.
 Implementation difficulty increases rapidly as the complexity of the mathematical setting and the accompanying algorithms grows.
 High-performance computing (HPC) seeks to address the computational challenges that arise from high complexity, but harnessing the power of HPC tools often requires expert-level knowledge and experience.
-This paper presents a paradigm for developing algorithms and utilizing HPC tools in the highly complex setting of outer-loop analyses.
+This paper presents a paradigm for developing algorithms and utilizing HPC tools in the highly complex setting of outer-loop problems.
 
 \begin{purpose}
 Outer-loop problems go beyond forward simulation. Introduce and motivate HDSA.
@@ -38,10 +42,10 @@ In contemporary computational science and engineering, an outer-loop problem is 
 Examples include inverse problems~\cite{ghattas2021learning,stuart2010bayesianinverse}, optimal experimental design~\cite{alexanderian2021oed,aretz2024greedysensorselection,attia2018oed}, sensitivity analysis~\cite{brandes2007stabilityanalysis,buskens2006parametricsensitivity}, large-scale optimization~\cite{akcelik2006parallelpdecon,biegler2007pdeconstrainedopt,zahr2015progressive}, and uncertainty quantification~\cite{oden2004verification,biehler2014efficientuq,na2012reliability,smith2013uqbook}.
 This work focuses on hyper-differential sensitivity analysis~(HDSA) \cite{hart2023hdsaillposed,hart2023hdsaoptimal,hart2025hdsaposterior,hart2020hdsapde,stevens2022hdsaodes,sunseri2024hdsabayesian,sunseri2020hdsainverse}, a recent approach to deriving sensitivities for large-scale optimization problems with partial differential equations (PDEs) as constraints.
 In particular, we focus on HDSA in the context of model discrepancy (HDSA-MD), meaning the constraint equations used in the optimization are deficient or only approximate \cite{hart2023hdsaoptimal,hart2025hdsaposterior}.
-This is useful for cases in which (1) numerical models that fully and accurately reflect the true PDE dynamics are computationally expensive to solve --- so that performing adjoint-based optimization with such models is infeasible --- but a computationally inexpensive reduced-physics, low-fidelity, or reduced-order numerical model for the governing PDEs is available, and (2) the true system dynamics are unknown, but limited experimental data and an approximate numerical model are available.
+This is useful for cases in which (1) numerical models that fully and accurately reflect the true PDE dynamics are computationally expensive to solve --- so that performing adjoint-based optimization with such models is infeasible --- but a computationally inexpensive reduced-physics, low-fidelity, or reduced-order numerical model for the governing PDEs is available, or (2) the true system dynamics are unknown, but limited experimental data and an approximate numerical model are available.
 The main idea is to solve the optimization problem with the inexpensive-but-deficient model, derive sensitivities of the solution with respect to the model form error, and use those sensitivities to update the solution to better reflect the true dynamics.
 This procedure requires many forward and backward/adjoint solves of the inexpensive model, as well as access to a small number of forward solves from the expensive-but-accurate model.
-The HDSA-MD framework has been demonstrated to be effective for \SM{@joey, add short success story statement here?}
+The HDSA-MD framework has been demonstrated to be effective for \SM{@Joey, add short success story statement here?}
 
 \begin{purpose}
 HDSA is mathematically complicated and difficult to implement at scale within HPC frameworks.
@@ -63,25 +67,27 @@ Goal of this paper: implement HDSA-MD. Do this by writing a high-level library f
 \end{purpose}
 
 This paper addresses these challenges by presenting a software solution for HDSA-MD that, to the extent possible, abstracts the mathematical complexity and defines accessible user interfaces.
-In doing so, we advocate for the following two-step software development strategy: first, write a library in a high-level language (\MATLAB, \texttt{Python}, etc.) to express algorithms in an intuitive / mathematical form, make design choices without a high risk of technical debt, and validate the method on simple problems; second, use the high-level library as a guide to develop an HPC library in a low-level, high-performance language (\cpp, \texttt{FORTRAN}, etc.).
-We demonstrate this paradigm for HDSA-MD by presenting a \MATLAB library, followed by a \cpp environment, which each implement HDSA-MD.
-The high-level library is used to validate the low-level library on small test problems, then the low-level library is used to tackle problems at scale.
-Our objectives are twofold: (1) demonstrate a principled approach to implementing complex mathematical frameworks, and (2) lower the barrier to entry for new practitioners who wish to use and/or extend HDSA-MD.
+In doing so, we advocate for a two-step software development strategy: first, write a library in a high-level language (\MATLAB, \texttt{Python}, etc.) to express algorithms in an intuitive and mathematical form, make rapid design choices and refinements, and validate the method on simple problems; second, use the high-level library as a guide to develop an HPC library in a low-level, high-performance language (\cpp, \texttt{FORTRAN}, etc.).
+The first library can also be used to some extent to verify the second library.
+We demonstrate this paradigm by presenting \MATLAB and \cpp libraries that implement HDSA-MD.
+% The high-level library is used to validate the low-level library on small test problems, then the low-level library is used to tackle problems at scale.
+Our objectives are twofold: (1) demonstrate a principled approach to implementing complex mathematical frameworks, and (2) lower the barrier to entry for using and/or extend HDSA-MD.
 Although this paper focuses on HDSA-MD, the high-to-low-level paradigm may used as an effective implementation strategy for other outer-loop algorithms.
 
 \begin{purpose}
 Outline the paper.
 \end{purpose}
 
-The remainder of the paper is organized as follows.
-\Cref{sec:hdsa} gives a high-level mathematical overview of HDSA-MD.
+The remainder of this article is organized as follows.
+\Cref{sec:hdsa} outlines HDSA-MD mathematically.
 \Cref{sec:sabl} presents \SABL, a (high-level) \MATLAB library that implements PDE-constrained optimization and HDSA-MD.
-The library is used to solve a prototypical problem.
-\Cref{sec:mrhyde} then present the (low-level) \cpp library \HdsaLib which implements HDSA-MD with high-performance numerical tools, as well as \MrHyDE, a \cpp library with powerful forward solver capabilities.
-\Cref{sec:application} presents a large-scale HPC problem that is solved with \HdsaLib and \MrHyDE, and \Cref{sec:conclusion} offers some concluding remarks.
+% The library is used to solve a prototypical problem.
+This library is used as a prototype for the (low-level) \cpp library \HdsaLib, described in \Cref{sec:hpc}, which implements HDSA-MD with high-performance numerical tools.
+% We also show how to as well as \MrHyDE, a \cpp library with powerful forward solver capabilities.
+\Cref{sec:application} presents a large-scale HPC problem that is solved with \HdsaLib,
+% and \MrHyDE,
+and \Cref{sec:conclusion} offers some concluding remarks.
 % Two representative demonstrations: a simple problem (probably advection-diffusion) implemented in \SABL, then \MrHyDE; and a large-scale problem requiring the HPC tools available within \MrHyDE.
-
-% \SM{Not sure yet if \Cref{sec:hdsalib} is going to come before or after \SABL.}
 
 \section{Hyper-differential sensitivity analysis with respect to model discrepancy}
 \label{sec:hdsa}
@@ -92,8 +98,6 @@ The problem is modified to account for discrepancies in the model form in \Cref{
 
 \subsection{PDE-constrained optimization}
 \label{sec:optimization}
-
-\SM{Give the sense that this is very complicated. Don't underplay the complexity of the full-order model (finite element is already hard, it could be a time-dependent problem), solving the optimization problem (trust region methods, Newton Krylov, etc.), the HDSA-MD Bayesian inference problem (with a prior, etc.), the posterior update, sampling, etc. The high-level accessibility is still very important, we want it to be publishable but also readable.}
 
 Consider the following constrained minimization problem:
 \begin{align}
@@ -130,7 +134,7 @@ Applying the chain rule,
 \end{align}
 where $\s_z(\z)\in\R^{n_u\times n_z}$ is the $\z$ Jacobian of $\s$.
 Note that we are using the convention that the gradient is a column vector.\footnote{If the gradient is defined as a row vector, the mathematics are equivalent but read slightly differently. For example,~\cref{eq:gradJ-chain-rule} would be $\grad{z}\hat{J}(\z) = \grad{u}J(\s(\z),\z)\s_z(\z) + \grad{z}J(\s(\z),\z)$. The choice of convention does not affect the implementation.}
-Since $\c(\s(\z),\z) = \0$, the implicit function theorem yields the formula
+Since $\c(\s(\z),\z) = \0$, and assuming that $\c$ and $\s$ are sufficiently smooth, the implicit function theorem yields the formula
 \begin{align}
     \label{eq:Sz-implicit-function}
     \s_z(\z)
@@ -158,8 +162,8 @@ With these derivatives on hand, \cref{eq:optimization-reducedspace} can be solve
     \qquad
     \grad{z,z}\hat{J}(\z_{k})\boldsymbol{\eta}_{k} = \grad{z}\hat{J}(\z_{k}),
 \end{align}
-where $\gamma_k > 0$ is the step size, chosen to satisfy standard Wolfe or Armijo conditions~[REF].
-The linear system for the step direction $\boldsymbol{\eta}_{k}$ may be solved, for example, via the conjugate gradient method~[REF], which only requires Hessian-vector applications $\v\mapsto\grad{z,z}\hat{J}(\z_k)\v$ instead of forming $\grad{z,z}\hat{J}(\z_k)$ explicitly.
+where $\gamma_k > 0$ is the step size, chosen to satisfy standard Wolfe or Armijo conditions~\cite{armijo1966minimization,wolfe1969conditions}.
+The linear system for the step direction $\boldsymbol{\eta}_{k}$ may be solved, for example, via the conjugate gradient method~\cite{hestenes1952conjugategradient}, which only requires Hessian-vector applications $\v\mapsto\grad{z,z}\hat{J}(\z_k)\v$ instead of forming $\grad{z,z}\hat{J}(\z_k)$ explicitly.
 Note that the computational cost of this approach is typically dominated by the cost of evaluating the solver $\s(\z)$ and solving adjoint equations involving the Jacobians of $\c$.
 
 \begin{algorithm}[t]
@@ -229,7 +233,7 @@ Note that the computational cost of this approach is typically dominated by the 
 % \label{alg:gaussnewton-hessvec}
 % \end{algorithm}
 
-A software implementation for solving \cref{eq:optimization-reducedspace} with a specific $J$ and $\c$ through \cref{eq:newton-cg} via the adjoint method as in \Cref{alg:adjoint-gradient,alg:adjoint-hessvec} requires several ingredients, namely the constraint solver $\s:\z\mapsto\u$ and the derivatives of $J$ and $\c$.
+A software implementation for solving \cref{eq:optimization-reducedspace} through \cref{eq:newton-cg} with \Cref{alg:adjoint-gradient,alg:adjoint-hessvec} requires several ingredients, namely the constraint solver $\s:\z\mapsto\u$ and the derivatives of $J$ and $\c$.
 The software libraries introduced in later sections define abstract templates with methods for each ingredient, to be implemented by the user or handled with automatic differentiation when possible.
 
 \subsection{Model discrepancy sensitivities}
@@ -313,7 +317,7 @@ which is an update formula from the solution $\tilde{\z}$ of \cref{eq:optimizati
 \subsection{Hyper-differential sensitivity analysis}
 \label{sec:hdsa-algorithm}
 
-Computing $\tilde{\z}'$ with \cref{eq:control-update} requires three components:
+Computing $\z'$ with \cref{eq:control-update} requires three components:
 the surrogate problem solution $\tilde{\z}$, which can computed by applying the adjoint method to \cref{eq:optimization-surrogate};
 the Jacobian $\f_\theta$ given in \cref{eq:theta-jacobian} at $\bftheta=\0$;
 and the optimal discrepancy parameters $\bftheta'$, to be chosen so that $\tilde{\s}(\z) + \bfdelta(\z;\bftheta') \approx \s(\z)$.
@@ -375,10 +379,11 @@ This Kronecker structure of \cref{eq:affine-discrepancy} enables efficient matri
 %     % Concise summary, consider a diagram like Figure~1 from \cite{hart2023hdsaoptimal}.
 % \end{purpose}
 
-The final ingredient needed for \cref{eq:control-update} is an optimal $\bftheta'$ such that $\bfdelta(\z;\bftheta') \approx \s(\z) - \tilde{\s}(\z)$.
-Although solving~\cref{eq:optimization-reducedspace} directly is intractable due to the derivatives of the full constraint $\c$ being inaccessible or highly expensive, we assume that we can either (1) solve the constraint equation (evaluate $\s(\z)$) a limited number of times or (2) in a data-driven scenario, observe a limited number of state solutions with known controls.
+The final item needed for \cref{eq:control-update} is an optimal $\bftheta'$ such that $\bfdelta(\z;\bftheta') \approx \s(\z) - \tilde{\s}(\z)$.
+Although solving~\cref{eq:optimization-reducedspace} directly is intractable due to the derivatives of the full constraint $\c$ being inaccessible or highly expensive, we assume that we can either (1) solve the constraint equation (i.e., evaluate $\s(\z)$) a limited number of times or (2) in a data-driven scenario, observe a limited number of state solutions with known controls.
 To that end, for a linearly independent set of controls $\{\z_{\ell}\}_{\ell=1}^{n_d}$ for which we have access to $\s(\z_1),\ldots,\s(\z_{n_d})$ and $\tilde{\s}(\z_1),\ldots,\tilde{\s}(\z_{n_d})$, we consider the Bayesian linear inference problem $\A\bftheta = \mathbf{d} + \bfeta$, where
 \begin{align}
+    \label{eq:bayesian-inference}
     \A =
     \left[\begin{array}{cc}
         \I_{n_u} & \I_{n_u}\otimes\z_1\trp\M_z\\
@@ -432,8 +437,8 @@ The posterior distribution for $\bftheta$ is also Gaussian, with the following m
 Making appropriate choices for the prior distributions, sampling from the posterior distribution, and propagating the result through the product $\bftheta\mapsto\H^{-1}\B\bftheta$ for \cref{eq:control-update} is computationally nontrivial
 % Doing so efficiently involves advanced randomized linear algebra and matrix factorization techniques
 and is the subject of several previous works~\cite{hart2023hdsaoptimal,hart2025hdsaposterior}. % TODO: hyperparameter paper.
-For our purposes of designing a minimally complex user interface, observe that fully specifying a specific HDSA-MD problem --- constructing $\H$ and $\B$, sampling from the posterior distribution~\cref{eq:posterior-parameter-distribution}, and applying the control update \cref{eq:control-update} --- requires the ingredients listed in \Cref{table:hdsa-requirements}.
-The next section introduces a high-level implementation of HDSA-MD, appropriate for for small- to medium-scale problems, by exposing interfaces for these ingredients.
+We discuss some of these issues in the next section.
+% The next section introduces a high-level implementation of HDSA-MD, appropriate for for small- to medium-scale problems, by exposing interfaces for these ingredients.
 
 \begin{table}[t]
 \centering
@@ -446,7 +451,7 @@ The next section introduces a high-level implementation of HDSA-MD, appropriate 
 2. & Data $(\z_{\ell},\tilde{\s}(\z_{\ell}),\s(\z_{\ell}))$ for the full and surrogate constraints, $\ell=1,\ldots,n_d$
 % & \texttt{MD\_Data\_Interface}
 \\ % \hline
-3. & Application of surrogate constraint Jacobian transpose, $\v\to\tilde{\s}_{z}(\z)\trp\v$ % Apply_Solution_Operator_z_Jacobian_Transpose
+3. & Application of surrogate constraint Jacobian transpose, $\v\mapsto\tilde{\s}_{z}(\z)\trp\v$ % Apply_Solution_Operator_z_Jacobian_Transpose
 \\
 4. & Application of surrogate reduced-space Hessian, $\v\mapsto\tilde{J}_{z,z}(\tilde{\z})\v$ % Apply_RS_Hessian
 \\
@@ -470,7 +475,7 @@ The next section introduces a high-level implementation of HDSA-MD, appropriate 
 % & \texttt{MD\_z\_Prior\_Interface}
 \\ \hline
 \end{tabular}
-\caption{Problem-specific requirements for HDSA-MD.}1
+\caption{Problem-specific requirements for HDSA-MD, designed as matrix-free operations.}
 \label{table:hdsa-requirements}
 \end{table}
 
@@ -507,17 +512,18 @@ List and describe classes from \texttt{hdsalib/src/core/model\_discrepancy/inter
 \section{\SABL: Prototyping HDSA-MD in \MATLAB}
 \label{sec:sabl}
 
-\begin{purpose}
-Why \SABL exists. Instead of throwing newcomers headlong into \cpp, it's better to start in a high-level language.
-\end{purpose}
+% \begin{purpose}
+% Why \SABL exists. Instead of throwing newcomers headlong into \cpp, it's better to start in a high-level language.
+% \end{purpose}
 
 Implementing HDSA-MD poses two major challenges.
-First, the mathematics are complicated enough that a successful first implementation necessitates careful verification of each step of the algorithm to avoid subtle errors.
+First, the mathematics are sufficiently complicated that a successful first implementation necessitates careful verification at each step of the algorithm.
 Second, the kinds of problems for which HDSA-MD is most useful are large scale, likely requiring HPC resources and distributed computing.
-These are competing and conflicting interests that influence our choice of software language: on the one hand, a high-level language --- designed for high readability and ease of use --- would enable an intuitive translation of mathematics to code and simplify the process of checking intermediate steps, but may ultimately struggle to perform at scale; on the other hand, a low-level language --- optimized for performance but not for readability --- would require substantial expertise and be difficult to verify, but a successful implementation would ultimately be able to tackle large-scale problems.
+These are competing and conflicting interests that influence our choice of software language: on the one hand, a high-level language --- designed for high readability and ease of use --- would enable an intuitive translation of mathematics to code and simplify the process of checking intermediate steps, but may ultimately struggle to perform at scale; on the other hand, a low-level language --- optimized for performance but not for readability or implementation ease --- would require substantial expertise and be difficult to verify, but a successful implementation would ultimately be able to tackle large-scale problems.
 To address the first issue, this section presents \SABL: \textbf{S}andbox for \textbf{A}adjoint-\textbf{B}ased outer \textbf{L}oop analysis, a \MATLAB library that implements PDE-constrained optimization and HDSA-MD.
 The source code is publicly available at \textbf{TODO}.
-We use \SABL as a prototype to serve as a guide for a low-level HPC-oriented implementation of HDSA-MD in \cpp, which is the topic of \Cref{sec:mrhyde}.
+Our purpose in this discussion is not to provide detailed package documentation, but rather to shed light on the design and implementation process and their associated challenges.
+We can then use \SABL as a guide for developing a low-level HPC implementation of HDSA-MD in \cpp, which is the topic of \Cref{sec:hpc}.
 
 % \begin{purpose}
 % Why \MATLAB: intuitive/mathematical high-level syntax, strong backward compatibility, low barrier to entry, takes care of low-level computing tasks in the background, common/popular language in current engineering curriculum.
@@ -532,11 +538,30 @@ Furthermore, \MATLAB features an object-oriented paradigm that closely mirrors \
 Unlike open-source languages, \MATLAB also has strong backwards compatibility guarantees, leading to greater code longevity and no recurring maintenance needs.
 \end{remark}
 
-\subsection{Optimization implementation}
+\subsection{Abstract interface design}
 
 \begin{purpose}
-List and detail \texttt{Objective} and \texttt{Constraint}, the classes used for constrained optimization.
+Isolate the abstract information that the user must define.
+% List and detail \texttt{Objective} and \texttt{Constraint}, the classes used for constrained optimization.
 \end{purpose}
+
+\noindent
+\SABL is written with the object-oriented \MATLAB protocol, which translates easily to \cpp.
+We begin by defining template classes with abstract methods (pure virtual functions) that represent the mathematical ingredients needed for HDSA-MD.
+To solve a particular problem, the user defines child classes to implement the abstract methods, then uses pre-defined tools to put the pieces together and execute the algorithm.
+
+Our first design task is to identify the pieces of the HDSA-MD workflow that are problem dependent.
+These include derivatives of $J$, $\tilde{J}$, and $\tilde{\s}$; mass and precision matrices for the state and control spaces; and data for the Bayesian inference \cref{eq:bayesian-inference}.
+\Cref{table:hdsa-requirements} lists these ingredients, posed as matrix-vector products where possible in order to avoid large dense matrix inversions later on.
+Requirements 8--10 arise from an efficient sampling of the posterior parameter distribution, which we will discuss shortly.
+
+To enable verification on model problems, \SABL also includes for prototyping and verification, we want to do everything in-house, which means we also write our own forward solvers (constraints).
+% But, technically, to do HDSA we just need high-fidelity data and the solution to the surrogate-constrained optimization problem, which could be provided in a separate HPC workflow and imported to an HDSA-MD program later. This is the approach that \HdsaLib takes, but we also include the optimization classes here to get everything in one place.
+
+
+Sampling from the prior distribution for $\bftheta$, applying $\B$ and $\H^{-1}$, sampling from the posterior distribution~\cref{eq:posterior-parameter-distribution}, followed by the control update \cref{eq:control-update}, requires the ingredients listed in \Cref{table:hdsa-requirements}.
+
+
 
 We begin with an implementation of \Cref{alg:adjoint-gradient,alg:adjoint-hessvec} for adjoint-based optimization.
 An \texttt{Objective} template class is defined for the objective $J$ (or $\tilde{J}$) and a separate \texttt{Constraint} class is defined to represent the constraint $\c$ (or $\tilde{\c}$).
@@ -546,7 +571,7 @@ Each contains abstract (pure virtual) methods that represent the required evalua
 The user defines child classes that implement the abstract methods; to verify the implementation, each class is provided with methods for comparing user-defined derivatives to finite difference estimates with varying step sizes.
 Next, the user instantiates the classes and pass them to a \texttt{ReducedSpaceOptimization} class, which solves the corresponding optimization problem via \Cref{alg:adjoint-gradient} and \Cref{alg:adjoint-hessvec} and a Newton--CG method.
 
-\SM{Naming / argument conventions? What else do we talk about here?}
+\SM{Naming / argument conventions? What else do we talk about here? FEM verifies with method of manufactured solutions. Comparing code to code is not verification, but that's not verification because the first code might be wrong, but we have no other choice. There are things we can do to verify: check for symmetry / positive definiteness, checkpointing quantities throughour algorithmic implementation, etc. We can also try to set up inverse problems for a type of method of manufactured solutions. All of these tasks would be much harder in HPC, but \MATLAB just does it (example: \texttt{eig()} to determine positive definiteness). Maybe focus a bit on how we can verify things (gradients, positive definiteness, symmetry, proptotypical examples to demonstrated improvements in the solution.)}
 
 \begin{listing}[t]
 \begin{minted}{matlab}
@@ -576,10 +601,10 @@ end
 
 classdef Reduced_Space_Optimization < handle
   methods (Access = public)
-    ReducedSpaceOptimization(obj, con)                % Store objective and constraint
-    [u, z] = Optimize(this, z0)                       % Adjoint-based optimization
-    [val, grad, hessian_data] = Jhat(this, z)         % $\grad{z}\hat{J}(\z)$ (Algorithm 2.1)
-    [z_out] = Jhat_hessVec(this, hessian_data, z_in)  % $\v\mapsto\grad{z,z}\hat{J}(\z)\v$ (Algorithm 2.2)
+    ReducedSpaceOptimization(objective, constraint)
+    [u, z] = Optimize(this, z0)
+    [val, grad, hessian_data] = Jhat(this, z)         % $\hat{J}(\z)$, $\grad{z}\hat{J}(\z)$
+    [z_out] = Jhat_hessVec(this, hessian_data, z_in)  % $\v\mapsto\grad{z,z}\hat{J}(\z)\v$
   end
 end
 \end{minted}
@@ -612,9 +637,13 @@ Additional templates are available in \SABL that use automatic differentiation v
 \MATLAB does not natively support automatic differentiation, so...\SM{when it works it works, when it doesn't it's really not great.}
 \end{remark}
 
-\subsection{HDSA-MD implementation}
+\subsection{Backend implementation}
 
 TODO.
+
+\subsection{Verification strategies}
+
+Finite difference methods, unit tests, method of manufactured solutions (forward problem, optimization, inverse problems), etc.
 
 \begin{purpose}
 List and detail the classes used for HDSA.
@@ -640,8 +669,9 @@ end
 
 classdef MD_Opt_Prob_Interface < handle
   methods (Abstract, Access = public)
-    [z_out] = Apply_Solution_Operator_z_Jacobian_Transpose(this, u_in, z)  % $\v\mapsto\tilde{\s}_z(\z)\trp\v$
-    [z_out] = Apply_RS_Hessian(this, z_in, z)         % $\v\mapsto\grad{z,z}\tilde{J}(\z)$ (Algorithm 2.2)
+                                                      % $\v\mapsto\tilde{\s}_z(\z)\trp\v$
+    [z_out] = Apply_Solution_Operator_z_Jacobian_Transpose(this, u_in, z)
+    [z_out] = Apply_RS_Hessian(this, z_in, z)         % $\v\mapsto\grad{z,z}\tilde{J}(\z)$
     [grad_u] = Misfit_Gradient(this, u, z)            % $\grad{u}J(\u, \z)$
     [u_out] = Apply_Misfit_Hessian(this, u_in, u, z)  % $\v\mapsto\grad{u,u}J(\u, \z)\v$
   end
@@ -652,6 +682,7 @@ end
 
 
 \section{\HdsaLib: High-performance HDSA-MD in \cpp}
+\label{sec:hpc}
 
 \subsection{\MrHyDE: A high-performance \cpp library for solving differential equations}
 \label{sec:mrhyde}

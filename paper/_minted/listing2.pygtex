@@ -17,8 +17,9 @@
 
 \PYG{k}{classdef}\PYG{+w}{ }\PYG{n}{MD\PYGZus{}Opt\PYGZus{}Prob\PYGZus{}Interface}\PYG{+w}{ }\PYG{o}{\PYGZlt{}}\PYG{+w}{ }\PYG{n+nb}{handle}
 \PYG{+w}{  }\PYG{k}{methods}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{Abstract}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{Access}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{public}\PYG{p}{)}
-\PYG{+w}{    }\PYG{p}{[}\PYG{n}{z\PYGZus{}out}\PYG{p}{]}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{Apply\PYGZus{}Solution\PYGZus{}Operator\PYGZus{}z\PYGZus{}Jacobian\PYGZus{}Transpose}\PYG{p}{(}\PYG{n}{this}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{u\PYGZus{}in}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{z}\PYG{p}{)}\PYG{+w}{  }\PYG{c}{\PYGZpc{} $\v\mapsto\tilde{\s}_z(\z)\trp\v$}
-\PYG{+w}{    }\PYG{p}{[}\PYG{n}{z\PYGZus{}out}\PYG{p}{]}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{Apply\PYGZus{}RS\PYGZus{}Hessian}\PYG{p}{(}\PYG{n}{this}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{z\PYGZus{}in}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{z}\PYG{p}{)}\PYG{+w}{         }\PYG{c}{\PYGZpc{} $\v\mapsto\grad{z,z}\tilde{J}(\z)$ (Algorithm 2.2)}
+\PYG{+w}{                                                      }\PYG{c}{\PYGZpc{} $\v\mapsto\tilde{\s}_z(\z)\trp\v$}
+\PYG{+w}{    }\PYG{p}{[}\PYG{n}{z\PYGZus{}out}\PYG{p}{]}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{Apply\PYGZus{}Solution\PYGZus{}Operator\PYGZus{}z\PYGZus{}Jacobian\PYGZus{}Transpose}\PYG{p}{(}\PYG{n}{this}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{u\PYGZus{}in}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{z}\PYG{p}{)}
+\PYG{+w}{    }\PYG{p}{[}\PYG{n}{z\PYGZus{}out}\PYG{p}{]}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{Apply\PYGZus{}RS\PYGZus{}Hessian}\PYG{p}{(}\PYG{n}{this}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{z\PYGZus{}in}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{z}\PYG{p}{)}\PYG{+w}{         }\PYG{c}{\PYGZpc{} $\v\mapsto\grad{z,z}\tilde{J}(\z)$}
 \PYG{+w}{    }\PYG{p}{[}\PYG{n}{grad\PYGZus{}u}\PYG{p}{]}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{Misfit\PYGZus{}Gradient}\PYG{p}{(}\PYG{n}{this}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{u}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{z}\PYG{p}{)}\PYG{+w}{            }\PYG{c}{\PYGZpc{} $\grad{u}J(\u, \z)$}
 \PYG{+w}{    }\PYG{p}{[}\PYG{n}{u\PYGZus{}out}\PYG{p}{]}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{Apply\PYGZus{}Misfit\PYGZus{}Hessian}\PYG{p}{(}\PYG{n}{this}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{u\PYGZus{}in}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{u}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{z}\PYG{p}{)}\PYG{+w}{  }\PYG{c}{\PYGZpc{} $\v\mapsto\grad{u,u}J(\u, \z)\v$}
 \PYG{+w}{  }\PYG{k}{end}
