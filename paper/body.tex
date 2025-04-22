@@ -14,6 +14,10 @@
 
 \bartnote{Do we have to show the final product of the $\H$ and $\B$ and the huge inverse to get $\bfSigma$? Should think about if we want to show any more detail. Might want to just list the big expressions to better show what the ingredients at the expense of detailed derivation? Could be philosophical up front, then walk through the pieces. Forward modeling, Bayesian modeling and sampling, etc. \SABL could be a big section, walk through an example slowly? This paper should be \textbf{focused on the development paradigm}, not feel like a practitioner-oriented tutorial paper.}
 
+\bartnote{Diagram for under-the-hood linear algebra? Might even re-purpose the diagram from the hyperparameter sampling paper. Let's try to highlight some of the complexity but not necessarily all of it. Perhaps $\B\bar{\bftheta}$ is sufficient. We can describe in words that the sampling is analytic and based on matrix factorizations, etc. Once we get to \MrHyDE, we probably can't form matrices explicitly and have to do something special to do matrix-free computations. Might want a table that mirrors \Cref{table:hdsa-requirements} that lists math on the left, then shows the tools needed in \MrHyDE for each thing. Don't have to make too strong of a distinction between the frontend and backend pieces. Software design takes place in \SABL, but the algorithmic design happens beforehand in the math (making sure everything can be done efficiently). In \SABL, and for small problems, we don't have to worry yet about the complications of matrix-free operations, sparse data structures, etc. but later we will. That means we can validate the algorithm on small problems without worrying about HPC challenges. Need to get the high-level math to \SABL to \MrHyDE story correct, pick and choose demonstrations that support our points but don't need to be comprehensive in terms of the implementation details.}
+
+\bartnote{For the first numerical example, we want to talk about the workflow and where we switch between \SABL and \HdsaLib for comparing different algorithmic components. In \SABL, check that computations are efficient and that the algorithm works, then verify \HdsaLib/\MrHyDE intermediate steps and final results. Write the formulation, focus on the high-level parts of the story, etc.}
+
 \noindent\textbf{** End Developer Notes **}
 \clearpage
 
@@ -370,7 +374,7 @@ Because $\H$ is independent of the discrepancy term $\bfdelta$, and since $\B$ d
 \end{align}
 where $\otimes$ denotes the Kronecker product~\cite{vanloan2000kronecker} and $\M_z\in\R^{n_z\times n_z}$ is a mass matrix defining an appropriate inner product $\langle\z_1,\z_2\rangle = \sqrt{\z_1\trp\M_z\z_2}$ on $Z\subset\R^{n_z}$, the space of admissible controls (see \cite{hart2023hdsaoptimal} for more detail).
 Hence, the dimension of $\bftheta$ is $n_\theta = n_u(n_z + 1)$.
-This Kronecker structure of \cref{eq:affine-discrepancy} enables efficient matrix-vector products $\v\mapsto\B\v$ without assembling $\B$ explicitly.
+This Kronecker structure of \cref{eq:affine-discrepancy} enables efficient matrix-vector products $\v\mapsto\B\v$ without assembling $\B$ explicitly, which we will discuss shortly.
 
 % \begin{purpose}
 %     Calibrating $\bftheta$ from data.
@@ -421,7 +425,7 @@ It can be shown that an appropriate precision matrix for a zero-mean prior distr
         \W_u & \W_u \otimes \tilde{\z}\trp\M_z \\
         \W_u\otimes\M_z\tilde{\z} & \W_u\otimes\M_z(\W_z + \tilde{\z}\tilde{\z}\trp\M_z)
     \end{array}\right]
-    \in\R^{p\times p}.
+    \in\R^{n_\theta \times n_\theta}.
 \end{align}
 The posterior distribution for $\bftheta$ is also Gaussian, with the following mean and covariance:
 \begin{subequations}
@@ -430,76 +434,86 @@ The posterior distribution for $\bftheta$ is also Gaussian, with the following m
     \bar{\bftheta}
     &= \tfrac{1}{\alpha}\bfSigma\A\trp(\I_{n_d}\otimes\M_{u})\mathbf{d},
     \\
-    \bfSigma
-    &= \left(\W_{\bftheta} + \tfrac{1}{\alpha}\A\trp(\I_{n_d}\otimes \M_u)\A\right)^{-1}.
+    \bfSigma_\theta
+    &= \left(\W_{\theta} + \tfrac{1}{\alpha}\A\trp(\I_{n_d}\otimes \M_u)\A\right)^{-1}.
 \end{align}
 \end{subequations}
-Making appropriate choices for the prior distributions, sampling from the posterior distribution, and propagating the result through the product $\bftheta\mapsto\H^{-1}\B\bftheta$ for \cref{eq:control-update} is computationally nontrivial
+
+Making appropriate choices for the prior distributions, sampling from the posterior distribution \cref{eq:posterior-parameter-distribution}, and propagating the result through the product $\bftheta\mapsto\H^{-1}\B\bftheta$ for \cref{eq:control-update} is nontrivial
 % Doing so efficiently involves advanced randomized linear algebra and matrix factorization techniques
 and is the subject of several previous works~\cite{hart2023hdsaoptimal,hart2025hdsaposterior}. % TODO: hyperparameter paper.
-We discuss some of these issues in the next section.
-% The next section introduces a high-level implementation of HDSA-MD, appropriate for for small- to medium-scale problems, by exposing interfaces for these ingredients.
-
-\begin{comment}
-\section{\HdsaLib: A template-based implementation of HDSA in \cpp}
-\label{sec:hdsalib}
-
-TODO.
-
-\begin{purpose}
-\begin{itemize}
-\item Introduce \HdsaLib: scope, style, repository, etc.
-\item Connect the mathematical objects defined in \Cref{sec:hdsa} to software classes
-\end{itemize}
-\end{purpose}
-
-\subsection{Analysis classes}
-
-TODO.
-
-\begin{purpose}
-List and describe classes from \texttt{hdsalib/src/core/model\_discrepancy/analysis}?
-\end{purpose}
-
-\subsection{Interface classes}
-
-TODO.
-
-\begin{purpose}
-List and describe classes from \texttt{hdsalib/src/core/model\_discrepancy/interfaces}?
-\end{purpose}
-\end{comment}
-
-\section{\SABL: Prototyping HDSA-MD in \MATLAB}
-\label{sec:sabl}
-
-% \begin{purpose}
-% Why \SABL exists. Instead of throwing newcomers headlong into \cpp, it's better to start in a high-level language.
-% \end{purpose}
-
-Implementing HDSA-MD poses two major challenges.
-First, the mathematics are sufficiently complicated that a successful implementation necessitates careful verification at each step of the algorithm.
-Second, the kinds of problems for which HDSA-MD is most useful are large scale, likely requiring HPC resources and distributed computing.
-These are competing and conflicting interests that influence our choice of software language: on the one hand, a high-level language --- designed for high readability and ease of use --- would enable an intuitive translation of mathematics to code and simplify the process of checking intermediate steps, but may ultimately struggle to perform at scale; on the other hand, a low-level language --- optimized for performance but not for readability or implementation ease --- would require substantial expertise and be difficult to verify, but a successful implementation would ultimately be able to tackle large-scale problems.
-To address the first issue, this section presents \SABL: \textbf{S}andbox for \textbf{A}adjoint-\textbf{B}ased outer \textbf{L}oop analysis, a \MATLAB library that implements PDE-constrained optimization and HDSA-MD.
-The source code is publicly available at \textbf{TODO}.
-Our purpose in this discussion is not to provide detailed package documentation, but rather to shed light on the design and implementation process and their associated challenges.
-We then use \SABL as a guide for developing a low-level HPC implementation of HDSA-MD in \cpp, which is the topic of \Cref{sec:hpc}.
-
-% \begin{purpose}
-% Why \MATLAB: intuitive/mathematical high-level syntax, strong backward compatibility, low barrier to entry, takes care of low-level computing tasks in the background, common/popular language in current engineering curriculum.
-% Also, \SABL is Designed in such a way to emulate a \cpp HPC framework: object-oriented design, use \texttt{this} instead of \texttt{obj}, etc.
-% \end{purpose}
-
-\begin{remark}[Why \MATLAB?]
-Other popular high-level languages such as \texttt{Python} and \texttt{Julia} could also be suitable for a prototype library, but \MATLAB has a few features that make it particularly attractive for our purposes.
-It has a low barrier to entry, intuitive syntax, and is designed around linear algebra operations, which form the majority of the mathematics in HDSA-MD.
-% At the same time, \MATLAB is interpreted (not compiled) and does not require imports or type declarations, all of which generally lower implementation cost compared to compiled languages.
-Furthermore, \MATLAB features an object-oriented paradigm that closely mirrors \cpp class syntax, including \texttt{private} / \texttt{public} blocks and abstract methods (virtual functions).
-Unlike open-source languages, \MATLAB also has strong backwards compatibility guarantees, leading to greater code longevity and no recurring maintenance needs.
-\end{remark}
-
-\subsection{Abstract interface design}
+Computations in the high-dimensional state, control, or parameter spaces can be mitigated by taking advantage of the structure of $\B$ in \cref{eq:B-matrix}.
+To make this precise, define
+\begin{subequations}
+\begin{align}
+    \G &= \1\1\trp + (\Z - \tilde{\z}\1\trp)\trp\W_z^{-1}(\Z - \tilde{\z}\1\trp)\in\R^{n_d \times n_d},
+    \\
+    \Z &= [~\z_1~~\cdots~~\z_{n_d}~]\in\R^{n_z\times n_d},
+\end{align}
+where $\1\in\R^{n_d}$ is a vector of ones.
+Let $(\mu_i,\g_i)$ be the $n_d$ eigenpairs of $\G$, and define
+\begin{align}
+    \y_i
+    &= \Z\g_i - (\1\trp\g_i)\tilde{\z}
+    \in\R^{n_z},
+    % \\
+    % s_i
+    % &= (\1\trp\g_i) - \y_i\trp\W_{z}^{-1}\tilde{\z}
+    % \in\R,
+    \\
+    \alpha_{\ell}
+    &= 1 - \tilde{\z}\trp\W_{z}^{-1}(\z_\ell - \tilde{\z})
+    \in\R,
+    \\
+    b_{i,\ell}
+    &= (\z_\ell - \tilde{\z})\trp\W_{z}^{-1}\Z\g_i + (\1\trp\g_i)\alpha_\ell
+    \in \R,
+    \\
+    \u_{\ell}
+    &= \W_u^{-1}\M_u(\s(\z_\ell) - \tilde{\s}(\z_\ell))
+    \in\R^{n_u},
+    \\
+    \u_{\ell,i}
+    &= (\alpha \W_u + \mu_i\M_u)^{-1}\M_u \u_\ell
+    \in\R^{n_u}
+\end{align}
+for $i,\ell = 1,\ldots, n_d$.
+\end{subequations}
+Using the structure of $\B$ in \cref{eq:B-matrix} and of $\bfdelta$ in \cref{eq:affine-discrepancy}, it can be shown \cite{hart2025hdsaposterior} that
+% \begin{subequations}
+% \begin{align}
+%     \label{eq:theta-decomposition}
+%     \mathbb{E}[\bftheta]
+%     = \overline{\bftheta} + \hat{\bftheta} + \breve{\bftheta}
+% \end{align}
+% such that
+\begin{align}
+    \label{eq:theta-propagation}
+    \begin{aligned}
+    \B\bar{\bftheta}
+    &= \frac{1}{\alpha}\tilde{\s}_{z}(\tilde{\z})\trp\grad{u,u}J(\tilde{\u},\tilde{\z})\left(
+        \sum_{\ell=1}^{n_d}\left(
+            \s(\z_{\ell}) - \sum_{i=1}^{n_d} b_{i,\ell}(\1\trp\g_i)\u_{i,\ell}
+        \right)
+    \right)
+    \\ &\qquad
+    + \frac{1}{\alpha}\sum_{\ell=1}^{n_d}
+        (\grad{u}J(\tilde{\u},\tilde{\z})\trp\u_{\ell})\W_{z}^{-1}(\z_\ell - \tilde{\z})
+    % \\ &\qquad
+    + \frac{1}{\alpha}\sum_{\ell=1}^{n_d}\sum_{i=1}^{n_d}b_{i,\ell}(\grad{u}J(\tilde{\u},\tilde{\z})\trp\u_{i,\ell})\W_{z}^{-1}\y_i.
+    \end{aligned}
+    % \\
+    % \B\hat{\bftheta}
+    % &= \sqrt{\alpha}\nabla_{z}\tilde{\s}_{z}(\tilde{\z})\trp\grad{u,u}J(\tilde{\u},\tilde{\z})\left(\sum_{i=1}^{n_d}\frac{\1\trp\g_i}{\sqrt{\mu_i}}\hat{\u}_i\right)
+    % + \sqrt{\alpha}\sum_{i=1}^{n_d}\frac{\grad{u}J(\tilde{\u},\tilde{\z})\trp\hat{\u}_{i}}{\sqrt{\mu_i}}\W_{z}^{-1}\y_i,
+    % \\
+    % \B\breve{\bftheta}
+    % &= \sum_{k=1}^{n_z - n_d + 1}(\grad{u}J(\tilde{\u},\tilde{\z})\trp\breve{\u}_{k})\W_z^{-1/2}\breve{\z}_k
+    % \\
+\end{align}
+% \end{subequations}
+Similar calculations expose structure to enable drawing samples (not just the mean) efficiently from the parameter distribution \cref{eq:posterior-parameter-distribution}.
+\SM{Something about how this approach is scalable, no computations in high dimensions, if we didn't take advantage of structure we would be hard pressed to compute anything?}
 
 \begin{table}[t]
 \centering
@@ -525,7 +539,7 @@ Unlike open-source languages, \MATLAB also has strong backwards compatibility gu
     \\
     8. & Application of state covariance matrix, $\v\mapsto\W_u^{-1}\v$ % Apply_W_u_Inverse
     \\
-    9. & \SM{What to call this?}, $\v\mapsto(\W_u + \alpha\M_u)^{-1}\v$ % Apply_W_u_Plus_scalar_M_u_Inverse
+    9. & Application of inverse for $\u_{\ell,i}$, $\v\mapsto(\W_u + \alpha\M_u)^{-1}\v$ % Apply_W_u_Plus_scalar_M_u_Inverse
     % Sample_with_Covariance_W_u_Inverse
     % Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse
     % & \texttt{MD\_u\_Prior\_Interface}
@@ -541,6 +555,42 @@ Unlike open-source languages, \MATLAB also has strong backwards compatibility gu
 \caption{Problem-specific requirements for HDSA-MD, designed as matrix-free operations.}
 \label{table:hdsa-requirements}
 \end{table}
+
+A diagram of HDSA-MD is provided in Figure~TODO.
+Fully specifying an HDSA-MD problem requires the solution to the surrogate optimization problem \cref{eq:optimization-surrogate}; data for the Bayesian inference~\cref{eq:bayesian-inference}; derivatives of $J$, $\tilde{J}$, and $\tilde{\s}$; mass and precision matrices for the state and control spaces; and an inverse of the form $(\alpha\W_u + \mu_i\M_u)^{-1}$ for constructing $\u_{\ell,i}$.
+These requirements are listed in \Cref{table:hdsa-requirements}.
+Our goal now is to design a software framework for implementing this complex procedure.
+
+\section{\SABL: Prototyping HDSA-MD in \MATLAB}
+\label{sec:sabl}
+
+% \begin{purpose}
+% Why \SABL exists. Instead of throwing newcomers headlong into \cpp, it's better to start in a high-level language.
+% \end{purpose}
+
+Implementing HDSA-MD poses two major challenges.
+First, the mathematics are sufficiently complicated that a successful implementation necessitates careful verification at each step of the algorithm.
+Second, the kinds of problems for which HDSA-MD is most useful are large scale, likely requiring HPC resources and distributed computing.
+These are competing and conflicting interests that influence our choice of software language: on the one hand, a high-level language --- designed for high readability and ease of use --- would enable an intuitive translation of mathematics to code and simplify the process of checking intermediate steps, but may ultimately struggle to perform at scale; on the other hand, a low-level language --- optimized for performance but not for readability or implementation ease --- would require substantial expertise and be difficult to verify, but a successful implementation would ultimately be able to tackle large-scale problems.
+To address the first issue, this section presents \SABL: \textbf{S}andbox for \textbf{A}adjoint-\textbf{B}ased outer \textbf{L}oop analysis, a \MATLAB library that implements PDE-constrained optimization and HDSA-MD.
+The source code is publicly available at \textbf{TODO}.
+Our purpose in this discussion is not to provide detailed package documentation, but rather to shed light on the design and implementation process and the associated challenges.
+We then use \SABL as a guide for developing a low-level HPC implementation of HDSA-MD in \cpp, which is the topic of \Cref{sec:hpc}.
+
+% \begin{purpose}
+% Why \MATLAB: intuitive/mathematical high-level syntax, strong backward compatibility, low barrier to entry, takes care of low-level computing tasks in the background, common/popular language in current engineering curriculum.
+% Also, \SABL is Designed in such a way to emulate a \cpp HPC framework: object-oriented design, use \texttt{this} instead of \texttt{obj}, etc.
+% \end{purpose}
+
+\begin{remark}[Why \MATLAB?]
+Other popular high-level languages such as \texttt{Python} and \texttt{Julia} could also be suitable for a prototype library, but \MATLAB has a few features that make it particularly attractive for our purposes.
+It has a low barrier to entry, intuitive syntax, and is designed around linear algebra operations, which form the majority of the mathematics in HDSA-MD.
+% At the same time, \MATLAB is interpreted (not compiled) and does not require imports or type declarations, all of which generally lower implementation cost compared to compiled languages.
+Furthermore, \MATLAB features an object-oriented paradigm that closely mirrors \cpp class syntax, including \texttt{private} / \texttt{public} blocks and abstract methods (virtual functions).
+Unlike open-source languages, \MATLAB also has strong backwards compatibility guarantees, leading to greater code longevity and no recurring maintenance needs.
+\end{remark}
+
+\subsection{Abstract interface design}
 
 % \begin{purpose}
 % Isolate the abstract information that the user must define.
@@ -648,25 +698,11 @@ In this case, the user must implement the derivatives of $g$, $R$, $\f$, and $\h
 \begin{listing}[t]
 \begin{minted}{matlab}
 classdef MD_u_Prior_Interface < handle
-
-  methods (Abstract, Access = public)  % Methods for the posterior mean.
+  methods (Abstract, Access = public)
     [u_out] = Apply_M_u(this, u_in)          % $\v\mapsto\M_u\v$
     [u_out] = Apply_W_u_Inverse(this, u_in)  % $\v\mapsto\W_u^{-1}\v$
     [u_out] = Apply_W_u_Plus_scalar_M_u_Inverse(this, u_in, scalar)
   end                                        % $(\v,\alpha)\mapsto(\W_u + \alpha\M_u)^{-1}\v$
-
-  methods (Access = public)            % Methods for other posterior samples.
-    function u_out = Sample_with_Covariance_W_u_Inverse(
-      this, num_samples
-    )  % Sample from $\mathcal{N}(\0,\W_u^{-1})$
-      error('this method is required for sampling algorithms');
-    end
-    function u_out = Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(
-      this, num_samples, scalar
-    )  % Sample from $\mathcal{N}(\0,(\W_u + \alpha\M_u)^{-1})$
-      error('this method is required for sampling algorithms');
-    end
-  end
 end
 \end{minted}
 \caption{Outline of the \MATLAB class for the state prior in \SABL.}
@@ -675,13 +711,26 @@ end
 
 
 % % Potential additional listings, but probably overkill.
+% methods (Access = public)            % Methods for other posterior samples.
+% function u_out = Sample_with_Covariance_W_u_Inverse(
+%   this, num_samples
+% )  % Sample from $\mathcal{N}(\0,\W_u^{-1})$
+%   error('this method is required for sampling algorithms');
+% end
+% function u_out = Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(
+%   this, num_samples, scalar
+% )  % Sample from $\mathcal{N}(\0,(\W_u + \alpha\M_u)^{-1})$
+%   error('this method is required for sampling algorithms');
+% end
+% end
+%
 % classdef MD_z_Prior_Interface < handle
 %   methods (Abstract, Access = public)
 %     [z_out] = Apply_M_z(this, z_in)           % $\v\mapsto\M_z\v$
 %     [z_out] = Apply_W_z_Inverse(this, z_in)   % $\v\mapsto\W_z^{-1}\v$
 %   end
 % end
-
+%
 % classdef MD_Opt_Prob_Interface < handle
 %   methods (Abstract, Access = public)                 % $\v\mapsto\tilde{\s}_z(\z)\trp\v$
 %     [z_out] = Apply_Solution_Operator_z_Jacobian_Transpose(this, u_in, z)
@@ -700,84 +749,6 @@ In an HPC context, this separation means that one code can be responsible for ge
 
 % To enable verification on model problems, \SABL also includes for prototyping and verification, we want to do everything in-house, which means we also write our own forward solvers (constraints).
 % But, technically, to do HDSA we just need high-fidelity data and the solution to the surrogate-constrained optimization problem, which could be provided in a separate HPC workflow and imported to an HDSA-MD program later. This is the approach that \HdsaLib takes, but we also include the optimization classes here to get everything in one place.
-
-\subsection{Backend computations}
-
-Sampling from the posterior distribution~\cref{eq:posterior-parameter-distribution} for $\bftheta$ and applying $\B$ and $\H^{-1}$ to perform the control update~\cref{eq:control-update} is computationally nontrivial and requires attention to the problem structure.
-To set the stage, define
-\begin{subequations}
-\begin{align}
-    \G &= \1\1\trp + (\Z - \tilde{\z}\1\trp)\trp\W_z^{-1}(\Z - \tilde{\z}\1\trp)\in\R^{n_d \times n_d},
-    \\
-    \Z &= [~\z_1~~\cdots~~\z_{n_d}~]\in\R^{n_z\times n_d},
-\end{align}
-where $\1\in\R^{n_d}$ is a vector of ones.
-Let $(\mu_i,\g_i)$ be the $n_d$ eigenpairs of $\G$, and define
-\begin{align}
-    \y_i
-    &= \Z\g_i - (\1\trp\g_i)\tilde{\z}
-    \in\R^{n_z},
-    % \\
-    % s_i
-    % &= (\1\trp\g_i) - \y_i\trp\W_{z}^{-1}\tilde{\z}
-    % \in\R,
-    \\
-    \alpha_{\ell}
-    &= 1 - \tilde{\z}\trp\W_{z}^{-1}(\z_\ell - \tilde{\z})
-    \in\R,
-    \\
-    b_{i,\ell}
-    &= (\z_\ell - \tilde{\z})\trp\W_{z}^{-1}\Z\g_i + (\1\trp\g_i)\alpha_\ell
-    \in \R,
-    \\
-    \u_{\ell}
-    &= \W_u^{-1}\M_u(\s(\z_\ell) - \tilde{\s}(\z_\ell))
-    \in\R^{n_u},
-    \\
-    \u_{\ell,i}
-    &= (\alpha \W_u + \mu_i\M_u)^{-1}\M_u \u_\ell
-    \in\R^{n_u}
-\end{align}
-for $i,\ell = 1,\ldots, n_d$.
-\end{subequations}
-It can be shown \cite{hart2025hdsaposterior} that the posterior parameter mean $\bar{\bftheta}$ in \cref{eq:posterior-parameter-distribution} is such that
-% \begin{subequations}
-% \begin{align}
-%     \label{eq:theta-decomposition}
-%     \mathbb{E}[\bftheta]
-%     = \overline{\bftheta} + \hat{\bftheta} + \breve{\bftheta}
-% \end{align}
-% such that
-\begin{align}
-    \label{seq:theta-definitions}
-    \begin{aligned}
-    \B\bar{\bftheta}
-    &= \frac{1}{\alpha}\tilde{\s}_{z}(\tilde{\z})\trp\grad{u,u}J(\tilde{\u},\tilde{\z})\left(
-        \sum_{\ell=1}^{n_d}\left(
-            \s(\z_{\ell}) - \sum_{i=1}^{n_d} b_{i,\ell}(\1\trp\g_i)\u_{i,\ell}
-        \right)
-    \right)
-    \\ \nonumber
-    &\qquad + \frac{1}{\alpha}\sum_{\ell=1}^{n_d}
-        (\grad{u}J(\tilde{\u},\tilde{\z})\trp\u_{\ell})\W_{z}^{-1}(\z_\ell - \tilde{\z})
-    \\
-    &\qquad + \frac{1}{\alpha}\sum_{\ell=1}^{n_d}\sum_{i=1}^{n_d}b_{i,\ell}(\grad{u}J(\tilde{\u},\tilde{\z})\trp\u_{i,\ell})\W_{z}^{-1}\y_i.
-    \end{aligned}
-    % \\
-    % \B\hat{\bftheta}
-    % &= \sqrt{\alpha}\nabla_{z}\tilde{\s}_{z}(\tilde{\z})\trp\grad{u,u}J(\tilde{\u},\tilde{\z})\left(\sum_{i=1}^{n_d}\frac{\1\trp\g_i}{\sqrt{\mu_i}}\hat{\u}_i\right)
-    % + \sqrt{\alpha}\sum_{i=1}^{n_d}\frac{\grad{u}J(\tilde{\u},\tilde{\z})\trp\hat{\u}_{i}}{\sqrt{\mu_i}}\W_{z}^{-1}\y_i,
-    % \\
-    % \B\breve{\bftheta}
-    % &= \sum_{k=1}^{n_z - n_d + 1}(\grad{u}J(\tilde{\u},\tilde{\z})\trp\breve{\u}_{k})\W_z^{-1/2}\breve{\z}_k
-    % \\
-\end{align}
-% \end{subequations}
-This justifies requirements 7--11 in \Cref{table:hdsa-requirements}.
-\SM{Something about how this approach is scalable, no computations in high dimensions.
-This is just the mean, sampling requires additional computation and a lot more notation.
-What are the computational challenges here? May need Joey to help write some of this.
-}
 
 \subsection{Verification with manufactured solutions}
 
@@ -826,23 +797,26 @@ namespace HDSA {
           const HDSA::Vector<RealT> & u_in,
           const RealT & scalar
       ) const = 0;  // $\v\mapsto(\W_u + \alpha\M_u)^{-1}\v$
-
-      virtual void Sample_with_Covariance_W_u_Inverse(
-        HDSA::MultiVector<RealT> & samples
-      ) const {}    // Sample from $\mathcal{N}(\0,\W_u^{-1})$
-
-      virtual void Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(
-        HDSA::MultiVector<RealT> & samples,
-        const RealT & scalar
-      ) const {}    // Sample from $\mathcal{N}(\0, (\W_u + \alpha\M_u)^{-1})$
   };
 }
 \end{minted}
 \caption{Outline of the \cpp class for the prior state distribution in \HdsaLib.}
 \end{listing}
 
+% Potential additional listings, probably overkill.
+% virtual void Sample_with_Covariance_W_u_Inverse(
+%     HDSA::MultiVector<RealT> & samples
+%   ) const {}    // Sample from $\mathcal{N}(\0,\W_u^{-1})$
+
+%   virtual void Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(
+%     HDSA::MultiVector<RealT> & samples,
+%     const RealT & scalar
+%   ) const {}    // Sample from $\mathcal{N}(\0, (\W_u + \alpha\M_u)^{-1})$
+
 \subsection{\MrHyDE: A high-performance \cpp library for solving differential equations}
 \label{sec:mrhyde}
+
+\bartnote{What are the things you need to do for HPC? Derivatives, matrix-vector computations, forward solver, parallelism, etc. In this paper, we're going to use a library that does a lot of things.}
 
 \SM{Note that \MrHyDE takes care of a lot of things for us, like calculating the adjoint at the element level via automatic differentiation. Transposes and handling boundary conditions are nontrivial in a parallel environment, but this is handled by Panzer in \MrHyDE.}
 
