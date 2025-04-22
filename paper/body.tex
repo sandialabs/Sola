@@ -440,45 +440,6 @@ and is the subject of several previous works~\cite{hart2023hdsaoptimal,hart2025h
 We discuss some of these issues in the next section.
 % The next section introduces a high-level implementation of HDSA-MD, appropriate for for small- to medium-scale problems, by exposing interfaces for these ingredients.
 
-\begin{table}[t]
-\centering
-\begin{tabular}{|rl|} %|l}
-% HDSA-MD requirement & \SABL/\HdsaLib class
-% \\ \hline
-\hline
-1. & Solution $(\tilde{\z},\s(\tilde{\z}))$ to surrogate problem \cref{eq:optimization-surrogate}
-\\
-2. & Data $(\z_{\ell},\tilde{\s}(\z_{\ell}),\s(\z_{\ell}))$ for the full and surrogate constraints, $\ell=1,\ldots,n_d$
-% & \texttt{MD\_Data\_Interface}
-\\ % \hline
-3. & Application of surrogate constraint Jacobian transpose, $\v\mapsto\tilde{\s}_{z}(\z)\trp\v$ % Apply_Solution_Operator_z_Jacobian_Transpose
-\\
-4. & Application of surrogate reduced-space Hessian, $\v\mapsto\tilde{J}_{z,z}(\tilde{\z})\v$ % Apply_RS_Hessian
-\\
-5. & Objective state gradient, $\grad{u}J(\u,\z)$ % Misfit_Gradient
-\\
-6. & Application of objective state Hessian, $\v\mapsto\grad{u,u}J(\u,\z)\v$ % Apply_Misfit_Hessian
-% & \texttt{MD\_Opt\_Prob\_Interface}
-\\ % \hline
-7. & Application of state mass matrix, $\v\mapsto\M_u\v$ % Apply_M_u
-\\
-8. & \SM{What to call this?}, $\v\mapsto(\W_u + \alpha\M_u)^{-1}\v$ % Apply_W_u_Plus_scalar_M_u_Inverse
-\\
-9. & Application of state covariance matrix, $\v\mapsto\W_u^{-1}\v$ % Apply_W_u_Inverse
-% Sample_with_Covariance_W_u_Inverse
-% Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse
-% & \texttt{MD\_u\_Prior\_Interface}
-\\ % \hline
-10. & Application of control covariance matrix, $\v\mapsto\W_z^{-1}\v$ % Apply_W_z_Inverse
-% Sample_with_Covariance_W_z_Inverse
-% Apply_W_z
-% & \texttt{MD\_z\_Prior\_Interface}
-\\ \hline
-\end{tabular}
-\caption{Problem-specific requirements for HDSA-MD, designed as matrix-free operations.}
-\label{table:hdsa-requirements}
-\end{table}
-
 \begin{comment}
 \section{\HdsaLib: A template-based implementation of HDSA in \cpp}
 \label{sec:hdsalib}
@@ -523,7 +484,7 @@ These are competing and conflicting interests that influence our choice of softw
 To address the first issue, this section presents \SABL: \textbf{S}andbox for \textbf{A}adjoint-\textbf{B}ased outer \textbf{L}oop analysis, a \MATLAB library that implements PDE-constrained optimization and HDSA-MD.
 The source code is publicly available at \textbf{TODO}.
 Our purpose in this discussion is not to provide detailed package documentation, but rather to shed light on the design and implementation process and their associated challenges.
-We can then use \SABL as a guide for developing a low-level HPC implementation of HDSA-MD in \cpp, which is the topic of \Cref{sec:hpc}.
+We then use \SABL as a guide for developing a low-level HPC implementation of HDSA-MD in \cpp, which is the topic of \Cref{sec:hpc}.
 
 % \begin{purpose}
 % Why \MATLAB: intuitive/mathematical high-level syntax, strong backward compatibility, low barrier to entry, takes care of low-level computing tasks in the background, common/popular language in current engineering curriculum.
@@ -540,38 +501,56 @@ Unlike open-source languages, \MATLAB also has strong backwards compatibility gu
 
 \subsection{Abstract interface design}
 
+\begin{table}[t]
+\centering
+\begin{tabular}{|rl|} %|l}
+    % HDSA-MD requirement & \SABL/\HdsaLib class
+    % \\ \hline
+    \hline
+    1. & Solution $(\tilde{\z},\tilde{\s}(\tilde{\z}))$ to surrogate problem \cref{eq:optimization-surrogate}
+    \\
+    2. & Data $(\z_{\ell},\tilde{\s}(\z_{\ell}),\s(\z_{\ell}))$ for the full and surrogate constraints, $\ell=1,\ldots,n_d$
+    % & \texttt{MD\_Data\_Interface}
+    \\ % \hline
+    3. & Application of surrogate constraint Jacobian transpose, $\v\mapsto\tilde{\s}_{z}(\z)\trp\v$ % Apply_Solution_Operator_z_Jacobian_Transpose
+    \\
+    4. & Application of surrogate reduced-space Hessian, $\v\mapsto\tilde{J}_{z,z}(\tilde{\z})\v$ % Apply_RS_Hessian
+    \\
+    5. & Objective state gradient, $\grad{u}J(\u,\z)$ % Misfit_Gradient
+    \\
+    6. & Application of objective state Hessian, $\v\mapsto\grad{u,u}J(\u,\z)\v$ % Apply_Misfit_Hessian
+    % & \texttt{MD\_Opt\_Prob\_Interface}
+    \\ % \hline
+    7. & Application of state mass matrix, $\v\mapsto\M_u\v$ % Apply_M_u
+    \\
+    8. & Application of state covariance matrix, $\v\mapsto\W_u^{-1}\v$ % Apply_W_u_Inverse
+    \\
+    9. & \SM{What to call this?}, $\v\mapsto(\W_u + \alpha\M_u)^{-1}\v$ % Apply_W_u_Plus_scalar_M_u_Inverse
+    % Sample_with_Covariance_W_u_Inverse
+    % Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse
+    % & \texttt{MD\_u\_Prior\_Interface}
+    \\ % \hline
+    10. & Application of control mass matrix, $\v\mapsto\M_z\v$ % Apply_M_z
+    \\
+    11. & Application of control covariance matrix, $\v\mapsto\W_z^{-1}\v$ % Apply_W_z_Inverse
+    % Sample_with_Covariance_W_z_Inverse
+    % Apply_W_z
+    % & \texttt{MD\_z\_Prior\_Interface}
+    \\ \hline
+\end{tabular}
+\caption{Problem-specific requirements for HDSA-MD, designed as matrix-free operations.}
+\label{table:hdsa-requirements}
+\end{table}
+
 \begin{purpose}
 Isolate the abstract information that the user must define.
 % List and detail \texttt{Objective} and \texttt{Constraint}, the classes used for constrained optimization.
 \end{purpose}
 
 \noindent
-\SABL is written with the object-oriented \MATLAB protocol, which translates easily to \cpp.
+\SABL is written with the object-oriented \MATLAB protocol, which translates relatively easily to \cpp.
 We begin by defining template classes with abstract methods (pure virtual functions) that represent the mathematical ingredients needed for HDSA-MD.
-To solve a particular problem, the user defines child classes to implement the abstract methods, then uses pre-defined tools to put the pieces together and execute the algorithm.
-
-Our first design task is to identify the pieces of the HDSA-MD workflow that are problem dependent.
-These include derivatives of $J$, $\tilde{J}$, and $\tilde{\s}$; mass and precision matrices for the state and control spaces; and data for the Bayesian inference \cref{eq:bayesian-inference}.
-\Cref{table:hdsa-requirements} lists these ingredients, posed as matrix-vector products where possible in order to avoid large dense matrix inversions later on.
-Requirements 8--10 arise from an efficient sampling of the posterior parameter distribution, which we will discuss shortly.
-
-To enable verification on model problems, \SABL also includes for prototyping and verification, we want to do everything in-house, which means we also write our own forward solvers (constraints).
-% But, technically, to do HDSA we just need high-fidelity data and the solution to the surrogate-constrained optimization problem, which could be provided in a separate HPC workflow and imported to an HDSA-MD program later. This is the approach that \HdsaLib takes, but we also include the optimization classes here to get everything in one place.
-
-
-Sampling from the prior distribution for $\bftheta$, applying $\B$ and $\H^{-1}$, sampling from the posterior distribution~\cref{eq:posterior-parameter-distribution}, followed by the control update \cref{eq:control-update}, requires the ingredients listed in \Cref{table:hdsa-requirements}.
-
-
-
-We begin with an implementation of \Cref{alg:adjoint-gradient,alg:adjoint-hessvec} for adjoint-based optimization.
-An \texttt{Objective} template class is defined for the objective $J$ (or $\tilde{J}$) and a separate \texttt{Constraint} class is defined to represent the constraint $\c$ (or $\tilde{\c}$).
-Class outlines are given in \Cref{code:sabl-optimization}.
-Each contains abstract (pure virtual) methods that represent the required evaluations and derivatives.
-
-The user defines child classes that implement the abstract methods; to verify the implementation, each class is provided with methods for comparing user-defined derivatives to finite difference estimates with varying step sizes.
-Next, the user instantiates the classes and pass them to a \texttt{ReducedSpaceOptimization} class, which solves the corresponding optimization problem via \Cref{alg:adjoint-gradient} and \Cref{alg:adjoint-hessvec} and a Newton--CG method.
-
-\SM{Naming / argument conventions? What else do we talk about here? FEM verifies with method of manufactured solutions. Comparing code to code is not verification, but that's not verification because the first code might be wrong, but we have no other choice. There are things we can do to verify: check for symmetry / positive definiteness, checkpointing quantities throughour algorithmic implementation, etc. We can also try to set up inverse problems for a type of method of manufactured solutions. All of these tasks would be much harder in HPC, but \MATLAB just does it (example: \texttt{eig()} to determine positive definiteness). Maybe focus a bit on how we can verify things (gradients, positive definiteness, symmetry, proptotypical examples to demonstrated improvements in the solution.)}
+To solve a particular problem, the user defines child classes to implement the abstract methods, then uses additional library tools to combine the pieces and execute the algorithm.
 
 \begin{listing}[t]
 \begin{minted}{matlab}
@@ -612,9 +591,24 @@ end
 \label{code:sabl-optimization}
 \end{listing}
 
-\begin{remark}[Time-dependent problems]
-The \texttt{Objective} and \texttt{Constraint} classes are not specifically designed for problems in which the state $\u$ represents a time-dependent variable.
-For time-dependent problems, \SABL also provides two abstract classes, \texttt{Dynamic\_Objective} and \texttt{Dynamic\_Constraint}, for implementing optimization problems of the form
+% Our first design task is to identify the pieces of the HDSA-MD workflow that are problem dependent.
+We begin with an implementation of \Cref{alg:adjoint-gradient,alg:adjoint-hessvec} for adjoint-based optimization.
+An \texttt{Objective} template class is defined for the objective $J$ (or $\tilde{J}$) and a separate \texttt{Constraint} class is defined to represent the constraint $\c$ (or $\tilde{\c}$).
+Class outlines with the associated abstract methods are given in \Cref{code:sabl-optimization}.
+To verify the implementation of the derivatives of $J$ and $\c$, we include finite difference checks that compare, for example, finite differences of evaluations of $J$ with its state gradient,
+\begin{align}
+    \frac{1}{\delta}(J(\u + \delta \e_i, \z) - J(\u))
+    \approx \e_i\trp \grad{u}J(\u, \z) = (\grad{u}J(\u,\z))_{i},
+\end{align}
+where $\e_i$ is the $i$-th canonical basis vector, which is checked for various small $\delta$.
+We also define a separate \texttt{Reduced\_Space\_Optimization} class that is initialized with \texttt{Objective} and \texttt{Constraint} instances and which use \Cref{alg:adjoint-gradient,alg:adjoint-hessvec} to solve the associated constrained optimization problem via a trust region or Newton--CG iteration.
+Using these classes to implement the surrogate-constrained optimization \cref{eq:optimization-surrogate} yields the pair $(\tilde{\z}, \tilde{\s}(\tilde{\z}))$, which is the starting place for HDSA-MD.
+
+% The user defines child classes that implement the abstract methods; to verify the implementation, each class is provided with methods for comparing user-defined derivatives to finite difference estimates with varying step sizes. Next, the user instantiates the classes and pass them to a \texttt{ReducedSpaceOptimization} class, which solves the corresponding optimization problem via \Cref{alg:adjoint-gradient} and \Cref{alg:adjoint-hessvec} and a Newton--CG method.
+
+\begin{remark}[Interface specialization]
+One advantage of an abstract user interface is that it can be specialized to express algorithmic requirements in terms of mathematical objects that the user is likely to have access to.
+For example, the \texttt{Dynamic\_Objective} and \texttt{Dynamic\_Constraint} classes extend \texttt{Objective} and \texttt{Constraint}, respectively, to represent problems in which the state $\u$ represents a time-dependent variable and where the objective and constraints are given by
 \begin{gather*}
     \min_{\y(t),\z}~\int_{0}^{T} g(\y(t),t) dt + R(\z)
     \qquad
@@ -629,31 +623,20 @@ $R : \R^{n_z} \to \R$,
 $\f : \R^{n_y} \times \R^{n_z} \times [0,T]  \to \R^m$,
 and
 $\h : \R^{n_z} \to \R^{n_y}$.
-In this case, the user provides the derivatives of $g$, $R$, $\f$, and $\h$, which are used to calculate the derivatives of the corresponding objective and constraint.
+In this case, the user provides the derivatives of $g$, $R$, $\f$, and $\h$, which are used to assemble the derivatives of the corresponding objective and constraint instead of requiring the user to write $\c$, which involves a time-stepping method, explictly.
+Similarly, we define \SM{Elliptic priors?}
 \end{remark}
 
-\begin{remark}[Automatic differentiation]
-Additional templates are available in \SABL that use automatic differentiation via the \texttt{AdiGator} library~\cite{weinstein2017adigator} instead of specifying the derivatives of the objective and constraint explicitly.
-\MATLAB does not natively support automatic differentiation, so...\SM{when it works it works, when it doesn't it's really not great.}
-\end{remark}
+% \begin{remark}[Automatic differentiation]
+% Additional templates are available in \SABL that use automatic differentiation via the \texttt{AdiGator} library~\cite{weinstein2017adigator} instead of specifying the derivatives of the objective and constraint explicitly.
+% \MATLAB does not natively support automatic differentiation, so...\SM{when it works it works, when it doesn't it's really not great.}
+% \end{remark}
 
-\subsection{Backend implementation}
-
-TODO.
-
-\subsection{Verification strategies}
-
-Finite difference methods, unit tests, method of manufactured solutions (forward problem, optimization, inverse problems), etc.
-
-\begin{purpose}
-List and detail the classes used for HDSA.
-\end{purpose}
 
 \begin{listing}[t]
 \begin{minted}{matlab}
 classdef MD_u_Prior_Interface < handle
-  methods (Abstract, Access = public)
-    % $(\v,\alpha)\mapsto(\W_u + \alpha\M_u)^{-1}\v$
+  methods (Abstract, Access = public)        % $(\v,\alpha)\mapsto(\W_u + \alpha\M_u)^{-1}\v$
     [u_out] = Apply_W_u_Plus_scalar_M_u_Inverse(this, u_in, scalar)
     [u_out] = Apply_M_u(this, u_in)          % $\v\mapsto\M_u\v$
     [u_out] = Apply_W_u_Inverse(this, u_in)  % $\v\mapsto\W_u^{-1}\v$
@@ -668,8 +651,7 @@ classdef MD_z_Prior_Interface < handle
 end
 
 classdef MD_Opt_Prob_Interface < handle
-  methods (Abstract, Access = public)
-                                                      % $\v\mapsto\tilde{\s}_z(\z)\trp\v$
+  methods (Abstract, Access = public)                 % $\v\mapsto\tilde{\s}_z(\z)\trp\v$
     [z_out] = Apply_Solution_Operator_z_Jacobian_Transpose(this, u_in, z)
     [z_out] = Apply_RS_Hessian(this, z_in, z)         % $\v\mapsto\grad{z,z}\tilde{J}(\z)$
     [grad_u] = Misfit_Gradient(this, u, z)            % $\grad{u}J(\u, \z)$
@@ -680,6 +662,99 @@ end
 \caption{Outline of \MATLAB classes for HDSA in \SABL.}
 \end{listing}
 
+
+Additional problem-specific operations needed to define an HDSA-MD problem include derivatives of $J$, $\tilde{J}$, and $\tilde{\s}$; mass and precision matrices for the state and control spaces; and data for the Bayesian inference~\cref{eq:bayesian-inference}.
+\Cref{table:hdsa-requirements} lists these ingredients, posed as matrix-vector products where possible in order to avoid large dense matrix inversions later on.
+Requirements 8--11 arise from an efficient sampling of the posterior parameter distribution, which we will discuss shortly.
+Similar to the optimization classes, we define template classes with abstract methods for each ingredient: the \texttt{MD\_Opt\_Prob\_Interface} class for reqiurements 3--6, the \texttt{MD\_u\_Prior\_Interface} class for requirements 7--9, and the \texttt{MD\_z\_Prior\_Interface} class for requirements 10--11.
+We also include a \texttt{MD\_Data\_Interface} class for loading the surrogate solution and data in requirements 1--2, which separates solving for $\tilde{\s}$ from the rest of the HDSA-MD procedure.
+In an HPC context, this separation means that one code can be responsible for generating data through forward PDE solves and the HDSA-MD update can be computed after the fact.
+
+% To enable verification on model problems, \SABL also includes for prototyping and verification, we want to do everything in-house, which means we also write our own forward solvers (constraints).
+% But, technically, to do HDSA we just need high-fidelity data and the solution to the surrogate-constrained optimization problem, which could be provided in a separate HPC workflow and imported to an HDSA-MD program later. This is the approach that \HdsaLib takes, but we also include the optimization classes here to get everything in one place.
+
+\subsection{Backend computations}
+
+Sampling from the posterior distribution~\cref{eq:posterior-parameter-distribution} for $\bftheta$ and applying $\B$ and $\H^{-1}$ to perform the control update~\cref{eq:control-update} is computationally nontrivial and requires attention to the problem structure.
+To set the stage, define
+\begin{subequations}
+\begin{align}
+    \G &= \1\1\trp + (\Z - \tilde{\z}\1\trp)\trp\W_z^{-1}(\Z - \tilde{\z}\1\trp)\in\R^{n_d \times n_d},
+    \\
+    \Z &= [~\z_1~~\cdots~~\z_{n_d}~]\in\R^{n_z\times n_d},
+\end{align}
+where $\1\in\R^{n_d}$ is a vector of ones.
+Let $(\mu_i,\g_i)$ be the $n_d$ eigenpairs of $\G$, and define
+\begin{align}
+    \y_i
+    &= \Z\g_i - (\1\trp\g_i)\tilde{\z}
+    \in\R^{n_z},
+    % \\
+    % s_i
+    % &= (\1\trp\g_i) - \y_i\trp\W_{z}^{-1}\tilde{\z}
+    % \in\R,
+    \\
+    \alpha_{\ell}
+    &= 1 - \tilde{\z}\trp\W_{z}^{-1}(\z_\ell - \tilde{\z})
+    \in\R,
+    \\
+    b_{i,\ell}
+    &= (\z_\ell - \tilde{\z})\trp\W_{z}^{-1}\Z\g_i + (\1\trp\g_i)\alpha_\ell
+    \in \R,
+    \\
+    \u_{\ell}
+    &= \W_u^{-1}\M_u(\s(\z_\ell) - \tilde{\s}(\z_\ell))
+    \in\R^{n_u},
+    \\
+    \u_{\ell,i}
+    &= (\alpha \W_u + \mu_i\M_u)^{-1}\M_u \u_\ell
+    \in\R^{n_u}
+\end{align}
+for $i,\ell = 1,\ldots, n_d$.
+\end{subequations}
+It can be shown \cite{hart2025hdsaposterior} that the posterior parameter mean $\bar{\bftheta}$ in \cref{eq:posterior-parameter-distribution} is such that
+% \begin{subequations}
+% \begin{align}
+%     \label{eq:theta-decomposition}
+%     \mathbb{E}[\bftheta]
+%     = \overline{\bftheta} + \hat{\bftheta} + \breve{\bftheta}
+% \end{align}
+% such that
+\begin{align}
+    \label{seq:theta-definitions}
+    \begin{aligned}
+    \B\bar{\bftheta}
+    &= \frac{1}{\alpha}\tilde{\s}_{z}(\tilde{\z})\trp\grad{u,u}J(\tilde{\u},\tilde{\z})\left(
+        \sum_{\ell=1}^{n_d}\left(
+            \s(\z_{\ell}) - \sum_{i=1}^{n_d} b_{i,\ell}(\1\trp\g_i)\u_{i,\ell}
+        \right)
+    \right)
+    \\ \nonumber
+    &\qquad + \frac{1}{\alpha}\sum_{\ell=1}^{n_d}
+        (\grad{u}J(\tilde{\u},\tilde{\z})\trp\u_{\ell})\W_{z}^{-1}(\z_\ell - \tilde{\z})
+    \\
+    &\qquad + \frac{1}{\alpha}\sum_{\ell=1}^{n_d}\sum_{i=1}^{n_d}b_{i,\ell}(\grad{u}J(\tilde{\u},\tilde{\z})\trp\u_{i,\ell})\W_{z}^{-1}\y_i.
+    \end{aligned}
+    % \\
+    % \B\hat{\bftheta}
+    % &= \sqrt{\alpha}\nabla_{z}\tilde{\s}_{z}(\tilde{\z})\trp\grad{u,u}J(\tilde{\u},\tilde{\z})\left(\sum_{i=1}^{n_d}\frac{\1\trp\g_i}{\sqrt{\mu_i}}\hat{\u}_i\right)
+    % + \sqrt{\alpha}\sum_{i=1}^{n_d}\frac{\grad{u}J(\tilde{\u},\tilde{\z})\trp\hat{\u}_{i}}{\sqrt{\mu_i}}\W_{z}^{-1}\y_i,
+    % \\
+    % \B\breve{\bftheta}
+    % &= \sum_{k=1}^{n_z - n_d + 1}(\grad{u}J(\tilde{\u},\tilde{\z})\trp\breve{\u}_{k})\W_z^{-1/2}\breve{\z}_k
+    % \\
+\end{align}
+% \end{subequations}
+This justifies requirements 7--11 in \Cref{table:hdsa-requirements}.
+\SM{Something about how this approach is scalable, no computations in high dimensions.
+This is just the mean, sampling requires additional computation and a lot more notation.
+What are the computational challenges here? May need Joey to help write some of this.
+}
+
+\subsection{Verification with manufactured solutions}
+
+\SM{FEM verifies with method of manufactured solutions. Comparing code to code is not verification because the first code might be wrong, but we have no other choice. There are a few small things we can do to verify certain things: check for symmetry / positive definiteness, checkpointing quantities throughour algorithmic implementation, etc. We can also try to set up inverse problems for a type of method of manufactured solutions. All of these tasks would be much harder in HPC, but \MATLAB just does it (example: \texttt{eig()} to determine positive definiteness). Maybe focus a bit on how we can verify things (gradients, positive definiteness, symmetry, proptotypical examples to demonstrated improvements in the solution.)
+}
 
 \section{\HdsaLib: High-performance HDSA-MD in \cpp}
 \label{sec:hpc}
@@ -734,7 +809,7 @@ template <class RealT>class MD_u_Prior_Interface {
         const HDSA::Vector<RealT> & u_in) const = 0;
 };
 \end{minted}
-\caption{Outline of \cpp classes for HDSA in \HdsaLib.}
+\caption{Outline of the \cpp class for the prior state distribution in \HdsaLib.}
 \end{listing}
 
 \section{Example 1: Small problem, done in both \SABL and \HdsaLib}
