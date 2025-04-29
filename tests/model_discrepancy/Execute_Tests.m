@@ -22,7 +22,6 @@ cd synthetic_test_elliptic_prior/;
 Driver;
 cd ..;
 
-
 cd synthetic_test_hessian_gevp/;
 Driver;
 cd ..;
@@ -32,6 +31,10 @@ Driver;
 cd ..;
 
 cd synthetic_test_multi_state/;
+Driver;
+cd ..;
+
+cd synthetic_test_transient/;
 Driver;
 cd ..;
 
