@@ -18,6 +18,8 @@
 
 \bartnote{For the first numerical example, we want to talk about the workflow and where we switch between \SABL and \HdsaLib for comparing different algorithmic components. In \SABL, check that computations are efficient and that the algorithm works, then verify \HdsaLib/\MrHyDE intermediate steps and final results. Write the formulation, focus on the high-level parts of the story, etc.}
 
+\bartnote{Diagram might be best to set the stage at the beginning of Section~2.1, probably before we start to talk about the actual. Parts of SABL that need to be verified: positive definiteness and symmetry trivial, finite difference checks, verify forward problem, optimization, etc. Message can be pretty high level: standard verification is easy in MATLAB. One HDSA verification could be a case where we actually know the solution to the high-fidelity optimization problem (small enough problems where we can actually solve the high-fidelity optimization problem) and see if the update gets us close to the true solution. Maybe diffusion/reaction or convection/diffusion in 1D, something steady-state (Steady\_State\_Adv\_Diff folder?). This example can probably go before we get to Section~4. For HPC, we want to check each component of the algorithm and compare it to what happened in SABL. Big example will probably be time dependent.}
+
 \noindent\textbf{** End Developer Notes **}
 \clearpage
 
