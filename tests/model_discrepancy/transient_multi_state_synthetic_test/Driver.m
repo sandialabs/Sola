@@ -46,36 +46,6 @@ Z_test(:, 1:2) = md_post_sampling.post_data.Z;
 Z_test(:, 3) = 1.5 * ones(n_y, 1);
 [delta_mean, delta_samples] = md_post_sampling.Posterior_Discrepancy_Samples(Z_test);
 
-if ~suppress_figures
-    figure;
-    hold on;
-    plot(x, md_post_sampling.post_data.D(:, 1), 'color', 'black', 'LineWidth', 3);
-    plot(x, delta_mean{1}, '--', 'color', 'red', 'LineWidth', 3);
-    for k = 1:num_post_samples
-        plot(x, delta_samples{1}(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
-    end
-    plot(x, md_post_sampling.post_data.D(:, 1), 'color', 'black', 'LineWidth', 3);
-    plot(x, delta_mean{1}, '--', 'color', 'red', 'LineWidth', 3);
-
-    figure;
-    hold on;
-    plot(x, md_post_sampling.post_data.D(:, 2), 'color', 'black', 'LineWidth', 3);
-    plot(x, delta_mean{2}, '--', 'color', 'red', 'LineWidth', 3);
-    for k = 1:num_post_samples
-        plot(x, delta_samples{2}(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
-    end
-    plot(x, md_post_sampling.post_data.D(:, 2), 'color', 'black', 'LineWidth', 3);
-    plot(x, delta_mean{2}, '--', 'color', 'red', 'LineWidth', 3);
-
-    figure;
-    hold on;
-    plot(x, delta_mean{3}, '--', 'color', 'red', 'LineWidth', 3);
-    for k = 1:num_post_samples
-        plot(x, delta_samples{3}(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
-    end
-    plot(x, delta_mean{3}, '--', 'color', 'red', 'LineWidth', 3);
-
-end
 %%
 opt_prob_interface = MD_Opt_Prob_Interface_transient_multi_state_synthetic_test(n_y, n_t, x, M, c_low);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
@@ -99,6 +69,6 @@ z_mean_ref = load('reference_solution.mat').z_update_mean;
 z_samples_ref = load('reference_solution.mat').z_update_samples;
 ref_diff = max(norm(z_mean_ref - z_update_mean) / norm(z_update_mean), norm(z_update_samples - z_samples_ref) / norm(z_update_samples));
 if ref_diff > 1.e-9
-    disp('model_discrepancy_sythetic_test difference:');
+    disp('model_discrepancy_transient_multi_state_sythetic_test difference:');
     disp(ref_diff);
 end
