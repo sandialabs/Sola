@@ -53,7 +53,7 @@ classdef MD_Transient_Prior_Covariance < handle
             A = diag(sqrt(this.alpha_t)) * this.E_t * diag(sqrt(this.alpha_t));
             [V,Lambda] = eig(A,this.M_t,'vector');
             n = sqrt(diag(V' * this.M_t * V));
-            this.evecs = V * diag(1 ./ n);
+            this.evecs = V * diag(1 ./ n) * diag(sign(V(1,:)));
             this.evals = 1./Lambda;
         end
 
