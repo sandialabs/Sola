@@ -50,6 +50,7 @@ z(:, 1) = x;
 z(:, 2) = x.^2 + 1;
 z(:, 3) = sin(2 * pi * x);
 prior_delta = md_prior_sampling.Prior_Discrepancy_Samples(z, num_prior_samples);
+
 %%
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 num_post_samples = 100;

@@ -48,6 +48,21 @@ Z_test(:, 1:2) = md_post_sampling.post_data.Z;
 Z_test(:, 3) = 1.5 * ones(n_y, 1);
 [delta_mean, delta_samples] = md_post_sampling.Posterior_Discrepancy_Samples(Z_test);
 
+if ~suppress_figures
+    k = 2;
+    ts = 8;
+
+    d_mean = reshape(delta_mean{k},n_y,n_t);
+    d_samples = reshape(delta_samples{k},n_y,n_t,num_post_samples);
+    d_data = reshape(data_interface.D(:,k),n_y,n_t);
+    
+    figure;
+    hold on;
+    plot(x,reshape(d_samples(:,ts,:),n_y,num_post_samples), 'color', [.9, .9, .9], 'LineWidth', 3);
+    plot(x,d_data(:,ts),'color','black','LineWidth',3)
+    plot(x,d_mean(:,ts),'--','Color','red','LineWidth',3);
+end
+
 %%
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 num_evals = 20;
