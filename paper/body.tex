@@ -98,18 +98,20 @@ and \Cref{sec:conclusion} offers some concluding remarks.
 \section{Hyper-differential sensitivity analysis with respect to model discrepancy}
 \label{sec:hdsa}
 
-This section gives a mathematical description of HDSA-MD, which leverages post-optimality sensitivities in the presence of model form insufficiencies to solve PDE-constrained optimization problems with expensive or inaccessible constraint models.
-
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{figures/hdsa-diagram.pdf}
-    \caption{The HDSA-MD framework. The discrepancy between an optimization problem and a surrogate thereof is calibrated with available data, leading to an update formula for the solution to the surrogate-constrained optimization problem.}
+    \caption{The HDSA-MD framework. The discrepancy between a large-scale optimization problem and an inexpensive surrogate problem is calibrated with available data, leading to an update formula from the solution of the surrogate problem to the solution of the large-scale problem.
+    }
     \label{fig:diagram}
 \end{figure}
 
-\SM{Instead of this roadmap, give the overall picture and refer to \Cref{fig:diagram}.}
-\Cref{sec:optimization} establishes the setting of large-scale constrained optimization problems with adjoint-based solution strategies.
-The problem is modified to account for discrepancies in the model form in \Cref{sec:model-discrepancy}, and \Cref{sec:hdsa-algorithm} outlines a strategy for using limited high-fidelity data to improve the quality of the solution despite model inaccuracies.
+This section gives a mathematical description of HDSA-MD, which leverages post-optimality sensitivities in the presence of model form insufficiencies to solve PDE-constrained optimization problems with expensive or inaccessible constraint models.
+The main idea of HDSA-MD is to first solve an optimization problem where the constraints are given by a computationally efficient surrogate model, then update the problem solution based on limited data samples from the original large-scale optimization constraints.
+The discrepancy between the large-scale and surrogate models is parameterized, calibrated, and used to transfer uncertainties in the input spaces to the updated solution.
+\Cref{sec:optimization} establishes the setting of constrained optimization and adjoint-based solvers.
+The problem is modified to account for discrepancies in the model form in \Cref{sec:model-discrepancy}, and \Cref{sec:hdsa-algorithm} outlines the strategy for using limited data to improve the quality of the solution despite model inaccuracies.
+The overall procedure is summarized in \Cref{fig:diagram}.
 
 \subsection{PDE-constrained optimization}
 \label{sec:optimization}
@@ -567,7 +569,6 @@ Similar calculations expose structure to enable drawing samples (not just the me
 \label{table:hdsa-requirements}
 \end{table}
 
-A diagram of HDSA-MD is provided in Figure~TODO.
 Fully specifying an HDSA-MD problem requires the solution to the surrogate optimization problem \cref{eq:optimization-surrogate}; data for the Bayesian inference~\cref{eq:bayesian-inference}; derivatives of $J$, $\tilde{J}$, and $\tilde{\s}$; mass and precision matrices for the state and control spaces; and an inverse of the form $(\alpha\W_u + \mu_i\M_u)^{-1}$ for constructing $\u_{\ell,i}$.
 These requirements are listed in \Cref{table:hdsa-requirements}.
 Our goal now is to design a software framework for implementing this complex procedure.
@@ -585,8 +586,10 @@ Second, the kinds of problems for which HDSA-MD is most useful are large scale, 
 These are competing and conflicting interests that influence our choice of software language: on the one hand, a high-level language --- designed for high readability and ease of use --- would enable an intuitive translation of mathematics to code and simplify the process of checking intermediate steps, but may ultimately struggle to perform at scale; on the other hand, a low-level language --- optimized for performance but not for readability or implementation ease --- would require substantial expertise and be difficult to verify, but a successful implementation would ultimately be able to tackle large-scale problems.
 To address the first issue, this section presents \SABL: \textbf{S}andbox for \textbf{A}adjoint-\textbf{B}ased outer \textbf{L}oop analysis, a \MATLAB library that implements PDE-constrained optimization and HDSA-MD.
 The source code is publicly available at \textbf{TODO}.
+\SM{We need to discuss making a version of \SABL public (GitHub/SandiaLabs, need to make a software release request. I did this recently but it can take a while, so it's best to get the process started soon.)}
 Our purpose in this discussion is not to provide detailed package documentation, but rather to shed light on the design and implementation process and the associated challenges.
-We then use \SABL as a guide for developing a low-level HPC implementation of HDSA-MD in \cpp, which is the topic of \Cref{sec:hpc}.
+Writing a high-level library allows us to make design decisions with relatively little technical debt and enables rapid verification of intermediate parts of the procedure.
+Once designed and tested, \SABL can be used a guide for developing a low-level HPC implementation of HDSA-MD in \cpp, which is the topic of \Cref{sec:hpc}.
 
 % \begin{purpose}
 % Why \MATLAB: intuitive/mathematical high-level syntax, strong backward compatibility, low barrier to entry, takes care of low-level computing tasks in the background, common/popular language in current engineering curriculum.
@@ -713,7 +716,6 @@ end
 \label{code:sabl-hdsa}
 \end{listing}
 
-
 % % Potential additional listings, but probably overkill.
 % methods (Access = public)            % Methods for other posterior samples.
 % function u_out = Sample_with_Covariance_W_u_Inverse(
@@ -745,18 +747,21 @@ end
 % end
 
 The additional problem-specific operations needed to fully specify an HDSA-MD problem listed in \Cref{table:hdsa-requirements} include derivatives of $J$, $\tilde{J}$, and $\tilde{\s}$; mass and precision matrices for the state and control spaces; and data for the Bayesian inference~\cref{eq:bayesian-inference}.
-% \Cref{table:hdsa-requirements} lists these ingredients, posed as matrix-vector products where possible in order to avoid large dense matrix inversions later on.
 Similar to the optimization classes, we define template classes with abstract methods for each ingredient, grouped by the surrogate optimization problem (requirements 3--6), the state prior (requirements 7--9), and the control prior (requirements 10--11).
 We also include a class for loading the surrogate solution and data (requirements 1--2), which separates solving for $\tilde{\z}$ from the rest of the HDSA-MD procedure.
-In an HPC context, this separation means that one code can be responsible for generating data through forward PDE solves and the HDSA-MD update can be computed in a distinct computing environment.
+In an HPC context, this separation means that one code can be responsible for generating data through forward PDE solves, and the HDSA-MD update can be computed in a distinct computing environment.
 
-% To enable verification on model problems, \SABL also includes for prototyping and verification, we want to do everything in-house, which means we also write our own forward solvers (constraints).
+% To enable verification on model problems, \SABL also includes tests for prototyping and verification, we want to do everything in-house, which means we also write our own forward solvers (constraints).
 % But, technically, to do HDSA we just need high-fidelity data and the solution to the surrogate-constrained optimization problem, which could be provided in a separate HPC workflow and imported to an HDSA-MD program later. This is the approach that \HdsaLib takes, but we also include the optimization classes here to get everything in one place.
 
-\subsection{Verification with manufactured solutions}
+\subsection{Verification strategies}
+
+One of the main purposes of
 
 \SM{FEM verifies with method of manufactured solutions. Comparing code to code is not verification because the first code might be wrong, but we have no other choice. There are a few small things we can do to verify certain things: check for symmetry / positive definiteness, checkpointing quantities throughour algorithmic implementation, etc. We can also try to set up inverse problems for a type of method of manufactured solutions. All of these tasks would be much harder in HPC, but \MATLAB just does it (example: \texttt{eig()} to determine positive definiteness). Maybe focus a bit on how we can verify things (gradients, positive definiteness, symmetry, prototypical examples to demonstrated improvements in the solution.)
 }
+
+\bartnote{Parts of SABL that need to be verified: positive definiteness and symmetry trivial, finite difference checks, verify forward problem, optimization, etc. Message can be pretty high level: standard verification is easy in MATLAB. One HDSA verification could be a case where we actually know the solution to the high-fidelity optimization problem (small enough problems where we can actually solve the high-fidelity optimization problem) and see if the update gets us close to the true solution.}
 
 To verify the implementation of the derivatives of $J$ and $\c$, we include finite difference checks that compare, for example, finite differences of evaluations of $J$ with its state gradient,
 \begin{align}
