@@ -457,7 +457,7 @@ Making appropriate choices for the prior distributions, sampling from the poster
 and is the subject of several previous works~\cite{hart2023hdsaoptimal,hart2025hdsaposterior}. % TODO: hyperparameter paper.
 Computations in the high-dimensional state, control, or parameter spaces can be mitigated by taking advantage of the structure of $\B$ in \cref{eq:B-matrix}.
 To make this precise, define
-\begin{subequations}
+\begin{subequations}\label{eq:intermediate-quantitites}
 \begin{align}
     \G &= \1\1\trp + (\Z - \tilde{\z}\1\trp)\trp\W_z^{-1}(\Z - \tilde{\z}\1\trp)\in\R^{n_d \times n_d},
     \\
@@ -756,22 +756,89 @@ In an HPC context, this separation means that one code can be responsible for ge
 
 \subsection{Verification strategies}
 
-One of the main purposes of
-
-\SM{FEM verifies with method of manufactured solutions. Comparing code to code is not verification because the first code might be wrong, but we have no other choice. There are a few small things we can do to verify certain things: check for symmetry / positive definiteness, checkpointing quantities throughour algorithmic implementation, etc. We can also try to set up inverse problems for a type of method of manufactured solutions. All of these tasks would be much harder in HPC, but \MATLAB just does it (example: \texttt{eig()} to determine positive definiteness). Maybe focus a bit on how we can verify things (gradients, positive definiteness, symmetry, prototypical examples to demonstrated improvements in the solution.)
-}
-
-\bartnote{Parts of SABL that need to be verified: positive definiteness and symmetry trivial, finite difference checks, verify forward problem, optimization, etc. Message can be pretty high level: standard verification is easy in MATLAB. One HDSA verification could be a case where we actually know the solution to the high-fidelity optimization problem (small enough problems where we can actually solve the high-fidelity optimization problem) and see if the update gets us close to the true solution.}
-
-To verify the implementation of the derivatives of $J$ and $\c$, we include finite difference checks that compare, for example, finite differences of evaluations of $J$ with its state gradient,
+Because the \MATLAB language is designed to resemble linear algebra, implementing many of the operations needed to compute the updated control $\z'$ is somewhat straightforward.
+However, verifying the implementation and identifying coding errors can still pose a significant challenge due to the mathematical complexity of the framework, especially because many of the intermediate quantities (such as those in \cref{eq:intermediate-quantitites}) are not physically interpretable.
+On the other hand, a few intermediate parts of the procedure can be checked directly.
+% Vector and matrix shapes?
+First, the implementation of the derivatives of $J$ and $\c$ (or $\tilde{J}$ and $\tilde{\c}$) can be compared to finite difference estimates.
+For example,
 \begin{align}
     \frac{1}{\delta}(J(\u + \delta \e_i, \z) - J(\u))
     \approx \e_i\trp \grad{u}J(\u, \z) = (\grad{u}J(\u,\z))_{i},
 \end{align}
-where $\e_i$ is the $i$-th canonical basis vector, which is checked for various small $\delta$.
+where $\e_i$ is the $i$-th canonical basis vector.
+The left-hand side can can be evaluated for various small $\delta$ using the method for $J(\u,\z)$ and compared against the method for computing $\grad{u}J(\u,\z)$.
+This check is included in \Cref{code:sabl-optimization} and made available to the user because it depends on the specific problem being solved.
+Second, we expect every Hessian matrix to be symmetric positive definite.
+\Cref{alg:adjoint-hessvec} and \Cref{table:hdsa-requirements} are written with Hessian-vector products only, but if the problem dimensions are not large, the Hessian matrix can be constructed explicitly and examined.
+For example, \Cref{alg:adjoint-hessvec} can be partially verified by constructing
+\begin{align}
+    \grad{z,z}\hat{J}(\z)
+    = \left[\begin{array}{c|c|c}
+        \grad{z,z}\hat{J}(\z)\e_1
+        & \cdots &
+        \grad{z,z}\hat{J}(\z)\e_{n_z}
+    \end{array}\right]
+\end{align}
+and performing an eigendecomposition to check that all eigenvalues are real and positive.
+These ``sanity checks'' are easy to do with a high-level language but can be surprisingly nontrivial in an HPC context.
 
-\subsection{Example 1: Small problem demonstrating verification strategy}
+We employ additional important verification strategies akin to the method of manufactured solutions (MMS).
+In the numerical PDE literature (in particular the finite element method), MMS tests a numerical PDE solver by setting up a problem whose solution is known and which can be written analytically.
+The results of the numerical scheme (with varying mesh sizes, etc.) are compared to the analytical solution.
+In a similar manner, we design optimization and HDSA-MD problems with known or computable solutions that we can compare our numerical results to.
+For example, consider the following constrained optimization problem.
+Let $n_{u} = 3$, $n_{z} = 2$, and denote the state and control by $\u = (u_{1},u_{2},u_{3})\trp$ and $\z = (z_{1},z_{2})\trp$, respectively.
+Define the objective function
+\begin{align}
+    \begin{aligned}
+    J(\u, \z)
+    &= (u_{1} - \alpha_{1})^{2} + (u_{2} - \alpha_{2})^{2} + (u_{3} - \alpha_{3})^{2} \\
+    &\quad+ (z_{1} - \alpha_{4})^{2} + (z_{2} - \alpha_{5})^{2} + (u_{1}z_{1} - \alpha_{1}\alpha_{4})^{2},
+    \end{aligned}
+\end{align}
+where $\alpha_{1},\alpha_{2},\alpha_{3},\alpha_{4},\alpha_{5}\in\R$, and consider the constraint function
+\begin{align}
+    \begin{aligned}
+    \c(\u, \z)
+    &= \left[\begin{array}{c}
+        u_1 + u_2 - z_1 \\
+        z_1u_2 - z_2 \\
+        u_3^3 - z_2^2
+    \end{array}\right].
+    \end{aligned}
+\end{align}
+Note that $J(\u^*,\z^*) = 0$ for $\u^{*} = (\alpha_{1},\alpha_{2},\alpha_{3})\trp$ and $\z^{*} = (\alpha_{4},\alpha_{5})\trp$.
+% Depending on $\alpha_1,\ldots,\alpha_5$, this solution may not satisfy the constraints $\c(\u,\z) = \0$.
+For any choice of $\alpha_1$ and $\alpha_2$, setting
+\begin{align}
+    \begin{aligned}
+    \alpha_4 &= \alpha_1 + \alpha_2,
+    &
+    \alpha_5 &= \alpha_2 \alpha_4,
+    &
+    \alpha_3 &= (\alpha_2 + \alpha_4)^{2/3}
+    \end{aligned}
+\end{align}
+also guarantees that $\c(\u^{*},\z^{*}) = \0$.
+
+
+% One of the main advantages of using a high-level language like \MATLAB is the linear-algebraic representation of mathematical objects which makes operations such as transposition trivial.
+% ``Of course transposition is easy!'' you exclaim. Alas, dear reader, even tasks as simple as transposition are nontrivial in many HPC environments.
+
+
+One HDSA verification could be a case where we actually know the solution to the high-fidelity optimization problem (small enough problems where we can actually solve the high-fidelity optimization problem).
+and see if the update gets us close to the true solution.
+
+% \SM{FEM verifies with method of manufactured solutions. Comparing code to code is not verification because the first code might be wrong, but we have no other choice. There are a few small things we can do to verify certain things: check for symmetry / positive definiteness, checkpointing quantities throughour algorithmic implementation, etc. We can also try to set up inverse problems for a type of method of manufactured solutions. All of these tasks would be much harder in HPC, but \MATLAB just does it (example: \texttt{eig()} to determine positive definiteness). Maybe focus a bit on how we can verify things (gradients, positive definiteness, symmetry, prototypical examples to demonstrated improvements in the solution.)
+% }
+
+% \bartnote{Parts of SABL that need to be verified: positive definiteness and symmetry trivial, finite difference checks, verify forward problem, optimization, etc. Message can be pretty high level: standard verification is easy in MATLAB. One HDSA verification could be a case where we actually know the solution to the high-fidelity optimization problem (small enough problems where we can actually solve the high-fidelity optimization problem) and see if the update gets us close to the true solution.}
+
+\subsection{A simple test problem}
 \label{sec:smallexample}
+
+
 
 \section{\HdsaLib: High-performance HDSA-MD in \cpp}
 \label{sec:hpc}
