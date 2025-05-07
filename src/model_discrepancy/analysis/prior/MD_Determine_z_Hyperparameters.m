@@ -34,10 +34,10 @@ classdef MD_Determine_z_Hyperparameters < handle
 
             e = this.Compute_Eigenvalues(z_prior_interface);
             evals = sort(1 ./ e, 'descend');
-            I = find(evals < 1.e-2);
+            I = find(evals < 1.e-3);
             rank = length(evals);
             if ~isempty(I)
-                rank = I(1);
+                rank = I(1)-1;
             end
             evals = evals(1:rank);
             samples = 1000;
