@@ -8,9 +8,6 @@ classdef MD_z_Hyperparameter_Interface < handle
         alpha_z
         beta_z
         beta_t
-
-        z1_norm_sq
-        z_pert_norm_sq
     end
 
     %% Virtual functions for user implementation

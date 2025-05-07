@@ -20,8 +20,6 @@ classdef MD_u_Hyperparameter_Interface < handle
         data_noise_percent
         W_u_inv_spectral_gap
 
-        d1_norm_sq
-        d_pert_norm_sq
     end
 
     %% Virtual functions for user implementation

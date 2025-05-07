@@ -37,16 +37,7 @@ classdef MD_Determine_u_Hyperparameters < handle
         function [] = Determine_alpha_u(this, u_prior_interface)
             I = this.data_interface.Separate_State_Components(this.component_id);
             delta1 = this.data_interface.D(I, 1);
-            this.u_hyperparam_interface.d1_norm_sq = delta1' * u_prior_interface.Apply_M_u(delta1);
-
-            N = size(this.data_interface.D, 2);
-            if N > 1
-                this.u_hyperparam_interface.d_pert_norm_sq = zeros(N - 1, 1);
-                for k = 2:N
-                    v = this.data_interface.D(I, k) - delta1;
-                    this.u_hyperparam_interface.d_pert_norm_sq(k - 1) = v' * u_prior_interface.Apply_M_u(v);
-                end
-            end
+            d1_norm_sq = delta1' * u_prior_interface.Apply_M_u(delta1);
 
             if this.is_transient
                 u_op_trace = sum(u_prior_interface.spatial_prior_cov.sing_vals.^2) * sum(u_prior_interface.transient_prior_cov.evals);
@@ -54,7 +45,7 @@ classdef MD_Determine_u_Hyperparameters < handle
                 u_op_trace = sum(u_prior_interface.sing_vals.^2);
             end
 
-            alpha_u_new = this.u_hyperparam_interface.d1_norm_sq / u_op_trace;
+            alpha_u_new = d1_norm_sq / u_op_trace;
             this.u_hyperparam_interface.Set_alpha_u(alpha_u_new);
         end
 

@@ -41,7 +41,8 @@ classdef MD_Determine_z_Hyperparameters < handle
             end
             evals = evals(1:rank);
             samples = 1000;
-            nu = randn(samples, rank).^2;
+            nu = randn(rank,samples)';
+            nu = nu.^2;
             tmp = mean((nu * evals.^4) ./ (nu * evals.^2));
 
             if this.z_hypeparam_interface.discrepancy_percent_z_variation == 1
@@ -59,22 +60,20 @@ classdef MD_Determine_z_Hyperparameters < handle
                 else
                     N = size(this.data_interface.Z, 2);
                     if N > 1
-                        this.z_hypeparam_interface.z1_norm_sq = this.data_interface.Z(:, 1)' * z_prior_interface.Apply_M_z(this.data_interface.Z(:, 1));
-                        this.z_hypeparam_interface.z_pert_norm_sq = zeros(N - 1, 1);
+                        z1_norm_sq = this.data_interface.Z(:, 1)' * z_prior_interface.Apply_M_z(this.data_interface.Z(:, 1));
+                        z_pert_norm_sq = zeros(N - 1, 1);
                         for k = 2:N
                             v = this.data_interface.Z(:, k) - this.data_interface.Z(:, 1);
-                            this.z_hypeparam_interface.z_pert_norm_sq(k - 1) = v' * z_prior_interface.Apply_M_z(v);
+                            z_pert_norm_sq(k - 1) = v' * z_prior_interface.Apply_M_z(v);
                         end
-                        if this.z_hypeparam_interface.discrepancy_percent_z_variation == 1
-                            d1 = this.data_interface.D(:, 1);
-                            d1_norm_sq = d1' * this.u_prior_interface.Apply_M_u(d1);
-                            d_pert_norm_sq = zeros(N - 1, 1);
-                            for k = 2:N
-                                d = this.data_interface.D(:, k) - d1;
-                                d_pert_norm_sq(k - 1) = d' * this.u_prior_interface.Apply_M_u(d);
-                            end
-                            this.z_hypeparam_interface.discrepancy_percent_z_variation = mean(sqrt((d_pert_norm_sq / d1_norm_sq) ./ (this.z_hypeparam_interface.z_pert_norm_sq / this.z_hypeparam_interface.z1_norm_sq)));
+                        d1 = this.data_interface.D(:, 1);
+                        d1_norm_sq = d1' * this.u_prior_interface.Apply_M_u(d1);
+                        d_pert_norm_sq = zeros(N - 1, 1);
+                        for k = 2:N
+                            d = this.data_interface.D(:, k) - d1;
+                            d_pert_norm_sq(k - 1) = d' * this.u_prior_interface.Apply_M_u(d);
                         end
+                        this.z_hypeparam_interface.discrepancy_percent_z_variation = mean(sqrt((d_pert_norm_sq / d1_norm_sq) ./ (z_pert_norm_sq / z1_norm_sq)));
                     end
                 end
             end
