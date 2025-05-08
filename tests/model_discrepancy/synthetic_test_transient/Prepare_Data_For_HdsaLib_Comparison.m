@@ -22,7 +22,7 @@ x = linspace(0, 1, n_y)';
 data_interface = MD_Data_Interface_synthetic_test_transient(n_y,n_t,T,c_low,c_high);
 
 u_hyperparam_interface = MD_u_Hyperparameter_Interface_synthetic_test_transient(n_y,n_t,T);
-u_hyperparam_interface.alpha_u = 0.009875147499015;
+%u_hyperparam_interface.alpha_u = 0.009875147499015;
 u_hyperparam_interface.beta_u = 0.007702351792463;
 u_hyperparam_interface.beta_t = 0.027523820219143;
 
@@ -31,7 +31,7 @@ transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyper
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_u_prior_interface, transient_prior_cov);
 
 z_hyperparam_interface = MD_z_Hyperparameter_Interface_synthetic_test_transient(n_y);
-z_hyperparam_interface.alpha_z = 0.944162068377329;
+%z_hyperparam_interface.alpha_z = 0.944162068377329;
 z_hyperparam_interface.beta_z = 0.009305846653704;
 
 z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S, M, data_interface, z_hyperparam_interface, u_prior_interface);

@@ -4,7 +4,7 @@ close all;
 addpath(genpath('../../../src'));
 rng(121234);
 
-random_numbers = randn(10^5, 1);
+random_numbers = randn(10^6, 1);
 writematrix(random_numbers, 'random_numbers.txt');
 
 rng(121234);
@@ -23,18 +23,18 @@ u_prior_interface_cell = cell(2, 1);
 
 u_hyperparam_interface_cell{1} = MD_u_Hyperparameter_Interface_multi_state_synthetic_test(1, m);
 u_prior_interface_cell{1} = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface_cell{1});
-u_prior_interface_cell{1}.alpha_u = 0.054435561764315;
+%u_prior_interface_cell{1}.alpha_u = 0.054435561764315;
 u_prior_interface_cell{1}.beta_u = 0.007702351792463;
 
 u_hyperparam_interface_cell{2} = MD_u_Hyperparameter_Interface_multi_state_synthetic_test(2, m);
 u_prior_interface_cell{2} = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface_cell{2});
-u_prior_interface_cell{2}.alpha_u = 0.240060827380627;
+%u_prior_interface_cell{2}.alpha_u = 0.240060827380627;
 u_prior_interface_cell{2}.beta_u = 0.007702351792463;
 
 u_prior_interface = MD_Multi_State_u_Prior_Interface(data_interface, u_prior_interface_cell, u_hyperparam_interface_cell);
 
 z_hyperparam_interface = MD_z_Hyperparameter_Interface_multi_state_synthetic_test(m);
-z_hyperparam_interface.alpha_z = 0.941322661669014;
+%z_hyperparam_interface.alpha_z = 0.941322661669014;
 z_hyperparam_interface.beta_z = 0.009305846653704;
 z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S, M, data_interface, z_hyperparam_interface, u_prior_interface);
 
