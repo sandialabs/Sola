@@ -4,13 +4,13 @@ close all;
 addpath(genpath('../../../src'));
 rng(121234);
 
-suppress_figures = true;
+suppress_figures = false; %true;
 
 n_y = 50;
 n_t = 10;
 [M, S, x] = Assemble_Mass_and_Stiffness(n_y);
 c_low = 0.95;
-c_high = 0.92;
+c_high = 0.93;
 
 data_interface = MD_Data_Interface_transient_multi_state_synthetic(n_y, n_t, c_low, c_high);
 
