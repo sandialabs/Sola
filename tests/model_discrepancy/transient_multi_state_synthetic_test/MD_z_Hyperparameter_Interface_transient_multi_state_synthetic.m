@@ -18,7 +18,7 @@ classdef MD_z_Hyperparameter_Interface_transient_multi_state_synthetic < MD_z_Hy
             for k = 1:p
                 u1 = kron(this.data_interface.c_low.^(0:(this.n_t - 1))', z(:, k).^3);
                 u2 = this.data_interface.c_low * u1;
-                u_tmp = [u1, u2];
+                u_tmp = [reshape(u1, 50, 10); reshape(u2, 50, 10)];
                 u(:, k) = u_tmp(:);
             end
         end
