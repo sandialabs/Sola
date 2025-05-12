@@ -46,7 +46,7 @@ Outer-loop problems go beyond forward simulation. Introduce and motivate HDSA.
 
 In contemporary computational science and engineering, an outer-loop problem is a procedure which requires many expensive ``forward'' simulations of a physical process to enable discovery, control, or decision making.
 Examples include inverse problems~\cite{ghattas2021learning,stuart2010bayesianinverse}, optimal experimental design~\cite{alexanderian2021oed,aretz2024greedysensorselection,attia2018oed}, sensitivity analysis~\cite{brandes2007stabilityanalysis,buskens2006parametricsensitivity}, large-scale optimization~\cite{akcelik2006parallelpdecon,biegler2007pdeconstrainedopt,zahr2015progressive}, and uncertainty quantification~\cite{oden2004verification,biehler2014efficientuq,na2012reliability,smith2013uqbook}.
-This work focuses on hyper-differential sensitivity analysis~(HDSA) \cite{hart2023hdsaillposed,hart2023hdsaoptimal,hart2025hdsaposterior,hart2020hdsapde,stevens2022hdsaodes,sunseri2024hdsabayesian,sunseri2020hdsainverse}, a recent approach to deriving sensitivities for large-scale optimization problems with partial differential equations (PDEs) as constraints.
+This work focuses on hyper-differential sensitivity analysis~(HDSA) \cite{hart2023hdsaillposed,hart2023hdsaoptimal,hart2025hdsaposterior,hart2020hdsapde,hart2025hdsaprior,stevens2022hdsaodes,sunseri2024hdsabayesian,sunseri2020hdsainverse}, a recent approach to deriving sensitivities for large-scale optimization problems with partial differential equations (PDEs) as constraints.
 In particular, we focus on HDSA in the context of model discrepancy (HDSA-MD), meaning the constraint equations used in the optimization are deficient or only approximate \cite{hart2023hdsaoptimal,hart2025hdsaposterior}.
 This is useful for cases in which (1) numerical models that fully and accurately reflect the true PDE dynamics are computationally expensive to solve --- so that performing adjoint-based optimization with such models is infeasible --- but a computationally inexpensive reduced-physics, low-fidelity, or reduced-order numerical model for the governing PDEs is available, or (2) the true system dynamics are unknown, but limited experimental data and an approximate numerical model are available.
 The main idea is to solve the optimization problem with the inexpensive-but-deficient model, derive sensitivities of the solution with respect to the model form error, and use those sensitivities to update the solution to better reflect the true dynamics.
@@ -452,10 +452,8 @@ The posterior distribution for $\bftheta$ is also Gaussian, with the following m
 \end{align}
 \end{subequations}
 
-Making appropriate choices for the prior distributions, sampling from the posterior distribution \cref{eq:posterior-parameter-distribution}, and propagating the result through the product $\bftheta\mapsto\H^{-1}\B\bftheta$ for \cref{eq:control-update} is nontrivial
-% Doing so efficiently involves advanced randomized linear algebra and matrix factorization techniques
-and is the subject of several previous works~\cite{hart2023hdsaoptimal,hart2025hdsaposterior}. % TODO: hyperparameter paper.
-Computations in the high-dimensional state, control, or parameter spaces can be mitigated by taking advantage of the structure of $\B$ in \cref{eq:B-matrix}.
+Making appropriate choices for the prior distributions, sampling from the posterior distribution \cref{eq:posterior-parameter-distribution}, and propagating the result through the product $\bftheta\mapsto\H^{-1}\B\bftheta$ for \cref{eq:control-update} is nontrivial and is the subject of several previous works~\cite{hart2023hdsaoptimal,hart2025hdsaposterior,hart2025hdsaprior}.
+One key result from these works is that computations in the high-dimensional state, control, or parameter spaces can be mitigated by taking advantage of the structure of $\B$ in \cref{eq:B-matrix}.
 To make this precise, define
 \begin{subequations}\label{eq:intermediate-quantitites}
 \begin{align}
@@ -586,7 +584,7 @@ Second, the kinds of problems for which HDSA-MD is most useful are large scale, 
 These are competing and conflicting interests that influence our choice of software language: on the one hand, a high-level language --- designed for high readability and ease of use --- would enable an intuitive translation of mathematics to code and simplify the process of checking intermediate steps, but may ultimately struggle to perform at scale; on the other hand, a low-level language --- optimized for performance but not for readability or implementation ease --- would require substantial expertise and be difficult to verify, but a successful implementation would ultimately be able to tackle large-scale problems.
 To address the first issue, this section presents \SABL: \textbf{S}andbox for \textbf{A}adjoint-\textbf{B}ased outer \textbf{L}oop analysis, a \MATLAB library that implements PDE-constrained optimization and HDSA-MD.
 The source code is publicly available at \textbf{TODO}.
-\SM{We need to discuss making a version of \SABL public (GitHub/SandiaLabs, need to make a software release request. I did this recently but it can take a while, so it's best to get the process started soon.)}
+\SM{We need to discuss making a version of \SABL and \HdsaLib public (\texttt{GitHub/SandiaLabs/<SABL,HdsaLib>}?), which requires making a software release request. I did this recently but it can take a while, so it's best to get the process started sooner rather than later.)}
 Our purpose in this discussion is not to provide detailed package documentation, but rather to shed light on the design and implementation process and the associated challenges.
 Writing a high-level library allows us to make design decisions with relatively little technical debt and enables rapid verification of intermediate parts of the procedure.
 Once designed and tested, \SABL can be used a guide for developing a low-level HPC implementation of HDSA-MD in \cpp, which is the topic of \Cref{sec:hpc}.
@@ -759,6 +757,9 @@ In an HPC context, this separation means that one code can be responsible for ge
 Because the \MATLAB language is designed to resemble linear algebra, implementing many of the operations needed to compute the updated control $\z'$ is somewhat straightforward.
 However, verifying the implementation and identifying coding errors can still pose a significant challenge due to the mathematical complexity of the framework, especially because many of the intermediate quantities (such as those in \cref{eq:intermediate-quantitites}) are not physically interpretable.
 On the other hand, a few intermediate parts of the procedure can be checked directly.
+We discuss two short examples here. \shanenote{other examples?}
+These fine-grained ``sanity checks'' are easy to perform with a high-level language but can be surprisingly nontrivial in an HPC context.
+
 % Vector and matrix shapes?
 First, the implementation of the derivatives of $J$ and $\c$ (or $\tilde{J}$ and $\tilde{\c}$) can be compared to finite difference estimates.
 For example,
@@ -768,7 +769,7 @@ For example,
 \end{align}
 where $\e_i$ is the $i$-th canonical basis vector.
 The left-hand side can can be evaluated for various small $\delta$ using the method for $J(\u,\z)$ and compared against the method for computing $\grad{u}J(\u,\z)$.
-This check is included in \Cref{code:sabl-optimization} and made available to the user because it depends on the specific problem being solved.
+This check is included in \Cref{code:sabl-optimization} and made available to the user because the derivatives of $J$ and $\c$ are implemented by the user.
 Second, we expect every Hessian matrix to be symmetric positive definite.
 \Cref{alg:adjoint-hessvec} and \Cref{table:hdsa-requirements} are written with Hessian-vector products only, but if the problem dimensions are not large, the Hessian matrix can be constructed explicitly and examined.
 For example, \Cref{alg:adjoint-hessvec} can be partially verified by constructing
@@ -781,56 +782,23 @@ For example, \Cref{alg:adjoint-hessvec} can be partially verified by constructin
     \end{array}\right]
 \end{align}
 and performing an eigendecomposition to check that all eigenvalues are real and positive.
-These ``sanity checks'' are easy to do with a high-level language but can be surprisingly nontrivial in an HPC context.
 
-We employ additional important verification strategies akin to the method of manufactured solutions (MMS).
-In the numerical PDE literature (in particular the finite element method), MMS tests a numerical PDE solver by setting up a problem whose solution is known and which can be written analytically.
-The results of the numerical scheme (with varying mesh sizes, etc.) are compared to the analytical solution.
-In a similar manner, we design optimization and HDSA-MD problems with known or computable solutions that we can compare our numerical results to.
-For example, consider the following constrained optimization problem.
-Let $n_{u} = 3$, $n_{z} = 2$, and denote the state and control by $\u = (u_{1},u_{2},u_{3})\trp$ and $\z = (z_{1},z_{2})\trp$, respectively.
-Define the objective function
-\begin{align}
-    \begin{aligned}
-    J(\u, \z)
-    &= (u_{1} - \alpha_{1})^{2} + (u_{2} - \alpha_{2})^{2} + (u_{3} - \alpha_{3})^{2} \\
-    &\quad+ (z_{1} - \alpha_{4})^{2} + (z_{2} - \alpha_{5})^{2} + (u_{1}z_{1} - \alpha_{1}\alpha_{4})^{2},
-    \end{aligned}
-\end{align}
-where $\alpha_{1},\alpha_{2},\alpha_{3},\alpha_{4},\alpha_{5}\in\R$, and consider the constraint function
-\begin{align}
-    \begin{aligned}
-    \c(\u, \z)
-    &= \left[\begin{array}{c}
-        u_1 + u_2 - z_1 \\
-        z_1u_2 - z_2 \\
-        u_3^3 - z_2^2
-    \end{array}\right].
-    \end{aligned}
-\end{align}
-Note that $J(\u^*,\z^*) = 0$ for $\u^{*} = (\alpha_{1},\alpha_{2},\alpha_{3})\trp$ and $\z^{*} = (\alpha_{4},\alpha_{5})\trp$.
-% Depending on $\alpha_1,\ldots,\alpha_5$, this solution may not satisfy the constraints $\c(\u,\z) = \0$.
-For any choice of $\alpha_1$ and $\alpha_2$, setting
-\begin{align}
-    \begin{aligned}
-    \alpha_4 &= \alpha_1 + \alpha_2,
-    &
-    \alpha_5 &= \alpha_2 \alpha_4,
-    &
-    \alpha_3 &= (\alpha_2 + \alpha_4)^{2/3}
-    \end{aligned}
-\end{align}
-also guarantees that $\c(\u^{*},\z^{*}) = \0$.
+% \bartnote{Let's not do MMS for the forward or optimization (inverse) problem, instead go straight to the HDSA-MD setting, that's the focus.}
 
+In addition to fine-grained (unit) tests, it is important to probe the correctness and performance of the overall framework with end-to-end (regression) tests.
+However, as with many outer-loop procedures, there is no obvious strategy for formally verifying HDSA-MD as a whole.
+This is in contrast to numerical PDE solvers, for which end-to-end tests are often conducted via the method of manufactured solutions~\cite{roache2001manufacturedsolutions}.
+For example, a solver for the problem $\mathcal{L}(u) = f$ can be verified by first choosing an analytical function $u$, applying the differential operator $\mathcal{L}$ by hand to determine $f$, then using the numerical solver with that choice of $f$ (for varying mesh sizes, etc.) to recover $u$.
+% Similar strategies exist for inverse problems: select the solution first, determine observations, apply an algorithm to the observations, and compare the results with the truth.
+This approach does not readily extend to HDSA-MD, which consists not only of forward PDE solves (applying $\s$ and $\tilde{\s}$), but also optimization problems (computing $\tilde{\z}$) and a sensitivity analysis (updating $\tilde{\z} \to \z'$) involving the specification and interaction of several probability distributions.
+Our best alternative for end-to-end verification is to construct a problem~\cref{eq:optimization-constrained} that is simple and low-dimensional enough to be solved directly with \Cref{alg:adjoint-gradient,alg:adjoint-hessvec}, resulting in a true control solution $\z^{*}$.
+An artificial surrogate problem \cref{eq:optimization-surrogate} can then be constructed, and HDSA-MD applied, to produce an updated control $\z'$ that can be compared to $\z^{*}$.
+We provide one such simple example in the next section.
 
 % One of the main advantages of using a high-level language like \MATLAB is the linear-algebraic representation of mathematical objects which makes operations such as transposition trivial.
 % ``Of course transposition is easy!'' you exclaim. Alas, dear reader, even tasks as simple as transposition are nontrivial in many HPC environments.
 
-
-One HDSA verification could be a case where we actually know the solution to the high-fidelity optimization problem (small enough problems where we can actually solve the high-fidelity optimization problem).
-and see if the update gets us close to the true solution.
-
-% \SM{FEM verifies with method of manufactured solutions. Comparing code to code is not verification because the first code might be wrong, but we have no other choice. There are a few small things we can do to verify certain things: check for symmetry / positive definiteness, checkpointing quantities throughour algorithmic implementation, etc. We can also try to set up inverse problems for a type of method of manufactured solutions. All of these tasks would be much harder in HPC, but \MATLAB just does it (example: \texttt{eig()} to determine positive definiteness). Maybe focus a bit on how we can verify things (gradients, positive definiteness, symmetry, prototypical examples to demonstrated improvements in the solution.)
+% \SM{FEM verifies with method of manufactured solutions. Comparing code to code is not verification because the first code might be wrong, but we have no other choice. There are a few small things we can do to verify certain things: check for symmetry / positive definiteness, checkpointing quantities throughout algorithmic implementation, etc. We can also try to set up inverse problems for a type of method of manufactured solutions. All of these tasks would be much harder in HPC, but \MATLAB just does it (example: \texttt{eig()} to determine positive definiteness). Maybe focus a bit on how we can verify things (gradients, positive definiteness, symmetry, prototypical examples to demonstrated improvements in the solution.)
 % }
 
 % \bartnote{Parts of SABL that need to be verified: positive definiteness and symmetry trivial, finite difference checks, verify forward problem, optimization, etc. Message can be pretty high level: standard verification is easy in MATLAB. One HDSA verification could be a case where we actually know the solution to the high-fidelity optimization problem (small enough problems where we can actually solve the high-fidelity optimization problem) and see if the update gets us close to the true solution.}
@@ -838,6 +806,15 @@ and see if the update gets us close to the true solution.
 \subsection{A simple test problem}
 \label{sec:smallexample}
 
+% \texttt{SABL/examples/Steady\_State\_Adv\_Diff/}
+
+One-dimensional spatial domain
+
+\begin{align}
+\Delta u + R(u) = z
+\end{align}
+
+$R(u) = v\cdot u$ high-fidelity, $R(u) = 0$ low fidelity.
 
 
 \section{\HdsaLib: High-performance HDSA-MD in \cpp}

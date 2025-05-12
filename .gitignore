@@ -33,6 +33,7 @@ rw3dm/
 *.cb
 *.cb2
 .*.lb
+*.pyg
 
 ## Intermediate documents:
 *.dvi
