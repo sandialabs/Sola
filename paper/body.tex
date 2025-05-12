@@ -710,7 +710,7 @@ classdef MD_u_Prior_Interface < handle
   end                                        % $(\v,\alpha)\mapsto(\W_u + \alpha\M_u)^{-1}\v$
 end
 \end{minted}
-\caption{Outline of the \MATLAB class for the state prior in \SABL.}
+\caption{Outline of the \MATLAB class for the state prior distribution in \SABL.}
 \label{code:sabl-hdsa}
 \end{listing}
 
@@ -787,18 +787,18 @@ and performing an eigendecomposition to check that all eigenvalues are real and 
 
 In addition to fine-grained (unit) tests, it is important to probe the correctness and performance of the overall framework with end-to-end (regression) tests.
 However, as with many outer-loop procedures, there is no obvious strategy for formally verifying HDSA-MD as a whole.
-This is in contrast to numerical PDE solvers, for which end-to-end tests are often conducted via the method of manufactured solutions~\cite{roache2001manufacturedsolutions}.
+This is in contrast to numerical PDE solvers, for which end-to-end tests are often conducted via the method of manufactured solutions~(MMS)~\cite{roache2001manufacturedsolutions}.
 For example, a solver for the problem $\mathcal{L}(u) = f$ can be verified by first choosing an analytical function $u$, applying the differential operator $\mathcal{L}$ by hand to determine $f$, then using the numerical solver with that choice of $f$ (for varying mesh sizes, etc.) to recover $u$.
 % Similar strategies exist for inverse problems: select the solution first, determine observations, apply an algorithm to the observations, and compare the results with the truth.
 This approach does not readily extend to HDSA-MD, which consists not only of forward PDE solves (applying $\s$ and $\tilde{\s}$), but also optimization problems (computing $\tilde{\z}$) and a sensitivity analysis (updating $\tilde{\z} \to \z'$) involving the specification and interaction of several probability distributions.
 Our best alternative for end-to-end verification is to construct a problem~\cref{eq:optimization-constrained} that is simple and low-dimensional enough to be solved directly with \Cref{alg:adjoint-gradient,alg:adjoint-hessvec}, resulting in a true control solution $\z^{*}$.
 An artificial surrogate problem \cref{eq:optimization-surrogate} can then be constructed, and HDSA-MD applied, to produce an updated control $\z'$ that can be compared to $\z^{*}$.
-We provide one such simple example in the next section.
+We provide one such simple example now.
 
 % One of the main advantages of using a high-level language like \MATLAB is the linear-algebraic representation of mathematical objects which makes operations such as transposition trivial.
 % ``Of course transposition is easy!'' you exclaim. Alas, dear reader, even tasks as simple as transposition are nontrivial in many HPC environments.
 
-% \SM{FEM verifies with method of manufactured solutions. Comparing code to code is not verification because the first code might be wrong, but we have no other choice. There are a few small things we can do to verify certain things: check for symmetry / positive definiteness, checkpointing quantities throughout algorithmic implementation, etc. We can also try to set up inverse problems for a type of method of manufactured solutions. All of these tasks would be much harder in HPC, but \MATLAB just does it (example: \texttt{eig()} to determine positive definiteness). Maybe focus a bit on how we can verify things (gradients, positive definiteness, symmetry, prototypical examples to demonstrated improvements in the solution.)
+% \SM{FEM verifies with MMS. Comparing code to code is not verification because the first code might be wrong, but we have no other choice. There are a few small things we can do to verify certain things: check for symmetry / positive definiteness, checkpointing quantities throughout algorithmic implementation, etc. We can also try to set up inverse problems for a type of MMS. All of these tasks would be much harder in HPC, but \MATLAB just does it (example: \texttt{eig()} to determine positive definiteness). Maybe focus a bit on how we can verify things (gradients, positive definiteness, symmetry, prototypical examples to demonstrated improvements in the solution.)
 % }
 
 % \bartnote{Parts of SABL that need to be verified: positive definiteness and symmetry trivial, finite difference checks, verify forward problem, optimization, etc. Message can be pretty high level: standard verification is easy in MATLAB. One HDSA verification could be a case where we actually know the solution to the high-fidelity optimization problem (small enough problems where we can actually solve the high-fidelity optimization problem) and see if the update gets us close to the true solution.}
@@ -808,14 +808,105 @@ We provide one such simple example in the next section.
 
 % \texttt{SABL/examples/Steady\_State\_Adv\_Diff/}
 
-One-dimensional spatial domain
-
+Consider a one-dimensional advection-diffusion equation with Robin boundary conditions,
+\begin{subequations}\label{eq:advection-diffusion}
+\begin{gather}
+\label{eq:advection-diffusion-dynamics}
+-\kappa u''(x) + v u'(x) = z(x),
+\quad x\in(0, 1),
+\\
+\label{eq:advection-diffusion-boundaries}
+\kappa u'(x=0) = h u(x=0),
+\qquad
+-\kappa u'(x=1) = h u(x=1),
+\end{gather}
+\end{subequations}
+where $u,z:[0,1]\to\R$ and $\kappa, v, h$ are constants.
+We consider the minimization problem
 \begin{align}
-\Delta u + R(u) = z
+    \label{eq:advection-diffusion-continuous-objective}
+    \min_{z} \frac{1}{2}\int_{0}^{1}\big(
+        s(x;z) - \phi(x)
+    \big)^2\,dx
+    + \frac{\beta}{2}\int_{0}^{1}z(x)^2\,dx,
 \end{align}
+where $s(x;z)$ is the solution to \cref{eq:advection-diffusion} with the forcing function $z$.
+The goal is to select an appropriate $z$ such that the state $u$ matches the given target function $\phi:[0,1]\to\R$.
+This problem was used previously in~\cite{hart2025hdsaposterior}; different from that work, the goal of the discussion here is to discuss the verification process.
 
-$R(u) = v\cdot u$ high-fidelity, $R(u) = 0$ low fidelity.
+A first-order uniform finite element discretization of $[0,1]$ with standard linear finite elements and $n_u$ degrees of freedom approximates \cref{eq:advection-diffusion} with the linear system
+\begin{align}
+    \label{eq:advection-diffusion-discrete}
+    (\kappa\S + v\V + h\B)\u = 10^2\M\z,
+\end{align}
+where $\u\in\R^{n_u}$ is the discretized state, $\z\in\R^{n_z}$ is the discretized control with $n_z = n_u$, and the matrices $\S,\V,\B,\M\in\R^{n_u\times n_u}$ model the diffusion, advection, boundary conditions, and the spatial inner product, respectively.
+The discrete constraint function is therefore given by $\c(\u,\z) = \A\u - 10^{2}\M\z$, with associated solution operator $\s(\z) = 10^{2}\A^{-1}\M\z$, where $\A = \kappa\S + v\V + h\B$.
+Applying the spatial discretization to~\cref{eq:advection-diffusion-continuous-objective} results in the objective function
+\begin{align}
+    \label{eq:advection-diffusion-discrete-objective}
+    J(\u, \z)
+    = \frac{1}{2}(\u - \bfphi)\trp\M(\u - \bfphi)
+    + \frac{\beta}{2}\z\trp(\M + 10^{-3}\S)\z,
+\end{align}
+in which $\bfphi\in\R^{n_u}$ discretizes the target function $\phi(x)$.
+For moderate $n_u$, \cref{eq:advection-diffusion-discrete}--\cref{eq:advection-diffusion-discrete-objective} constitutes a tractable PDE-constrained optimization problem of the form \cref{eq:optimization-constrained}.
 
+\noindent
+\shanenote{Not sure where the $10^2$ or $10^{-3}$ come from, just reading off the code. Too much detail?}
+
+For verification, we begin by checking the discretized dynamics \cref{eq:advection-diffusion-discrete} through MMS.
+We then implement the derivatives of $J$ and $\c$, comparing them to finite differences and testing for symmetry or positive definiteness when appropriate.
+% , which are given by
+% \begin{align}
+%     \grad{u}J(\u,\z) &= \M(\u - \bfphi),
+%     &
+%     \c_u(\u,\z) &= \A,
+%     \\
+%     \grad{z}J(\u,\z) &= \beta(\M + 10^{-3}\S)\z,
+%     &
+%     \c_z(\u,\z) &= -10^{2}\M,
+%     \\
+%     \grad{u,u}J(\u,\z) &= \M,
+%     &
+%     \c_{u,u} &= \c_{u,z} = \0,
+%     \\
+%     \grad{z,z}J(\u,\z) &= \beta(\M + 10^{-3}\S),
+%     &
+%     \c_{z,z} &= \c_{z,u} = \0,
+%     \\
+%     \grad{u,z}J &= \grad{z,u}J = \0,
+% \end{align}
+% and which can be compared to finite differences.
+The implementation of the adjoint method derivatives $\grad{z}\hat{J}(\z)$ and $\grad{z,z}\hat{J}(\z)\v$ from \Cref{alg:adjoint-gradient,alg:adjoint-hessvec} can then be checked through finite differences of the reduced-space objective $\hat{J}(\z) = J(\s(\z),\z)$.
+Next, an MMS-type approach can verify the optimization procedure by (1) choosing an analytical $u^{*}$ satisfying the boundary conditions \cref{eq:advection-diffusion-boundaries}, (2) determining $z^{*}$ from the dynamics \cref{eq:advection-diffusion-dynamics}, (3) defining $\phi = u^{*}$ and $\beta = 0$ (so that the objective function can attain a minimal value of zero), and (4) solving the optimization problem, which should yield $z^{*}$ as the minimizer.
+
+With the numerical PDE solver and optimization method verified, we proceed by considering a simplified physics model as a substitute for \cref{eq:advection-diffusion}:
+\begin{subequations}\label{eq:just-diffusion}
+\begin{gather}
+\label{eq:just-diffusion-dynamics}
+-\kappa u''(x) = z(x),
+\quad x\in(0, 1),
+\\
+\label{eq:just-diffusion-boundaries}
+\kappa u'(x=0) = h u(x=0),
+\qquad
+-\kappa u'(x=1) = h u(x=1).
+\end{gather}
+\end{subequations}
+This diffusion equation is \cref{eq:advection-diffusion} with $v = 0$, i.e., no advection, which may be a physically relevant approximation for \cref{eq:advection-diffusion} when the advection constant $v$ is unknown.
+The discretized dynamics are given by
+\begin{align}
+    \label{eq:diffusion-discrete}
+    (\kappa\S + h\B)\u = 10^2\M\z,
+\end{align}
+which gives rise to the surrogate constraint $\tilde{\c}(\u,\z) = \A_\textrm{d}\u - 10^{2}\M\z$, with solution operator $\tilde{\s}(\z) = 10^{2}\A_\textrm{d}^{-1}\M\z$, for $\A_\text{d} = \kappa\S + h\B$.
+An MMS can again be applied to verify \cref{eq:diffusion-discrete} and the optimization of $\tilde{J}(\z) = J(\tilde{\s}(\z),\z)$ to produce $\tilde{\z}$.
+Figure TODO shows the difference between the surrogate optimizer $\tilde{\z}$ and the true optimizer $\tilde{\z}^{*}$ for a target function $\phi$ which can be approximated well by the original model~\cref{eq:advection-diffusion} but not by the surrogate~\cref{eq:just-diffusion}.
+
+\noindent
+\shanenote{We could tweak this example by having true (but unknown) $\kappa$ and $v$ and a surrogate with different fixed $\kappa$ and $v$ used as guesses. In that case we don't have a reduced-physics model (but this problem is about the verification process, not getting cost savings), and we don't end up actually learn the true values for $\kappa$ and $v$, but it would be different from the previous paper and compactify the explanation a bit. Thoughts?}
+
+\shanenote{TODO: a little about unit-type tests for the HDSA part? Summarize details about the experiment, such as the mass and control matrices for the prior distributions. Show the HDSA-MD control update and resulting state solution. Conclude with something like ``now we've verified HDSA-MD as much as we are able, but now we have to crank everything up to 11 and implement this procedure in \cpp in order to tackle really large problems.''}
 
 \section{\HdsaLib: High-performance HDSA-MD in \cpp}
 \label{sec:hpc}
@@ -823,20 +914,20 @@ $R(u) = v\cdot u$ high-fidelity, $R(u) = 0$ low fidelity.
 \begin{purpose}
 \begin{itemize}
 \item Introduce \HdsaLib, scope, repository, etc.
-\item High-level comparison with \SABL: more dependencies, lower level, but higher power; defines its own data structures; relies on interfaces to other high-performance codes for the forward solves and differentiation, which we were explicit about in \SABL.
+\item High-level comparison with \SABL: on the one hand, more difficult because of more dependencies, low-level memory control (pointers), and lots of boiler plate (including data structures); on the other hand, excellent performance, parallelization, and can interface with state-of-the-art PDE solvers such as those we might want to work with at Sandia.
+\item By design, \HdsaLib relies on interfaces to other high-performance codes for the forward solves and differentiation, which we were explicit about in \SABL.
 \item Note again that \SABL is designed to prepare users for using \HdsaLib.
 \end{itemize}
 \end{purpose}
 
-\noindent
-Jumping straight to high-performance computing in \cpp with \HdsaLib can be challenging for new users, especially for practitioners who are accustomed to high-level languages such as \MATLAB and Python.
-
 \subsection{Object-oriented design following \SABL}
 
 \begin{purpose}
-We've already made design choices, which were easy to quickly change on the fly, while developing \SABL.
-Now we simply port it over.
-We still have to deal with the low-level nature of \cpp, but we don't have to think so much about the overall algorithmic structure because we've done that part.
+\begin{itemize}
+    \item We've already made design choices, which were easy to quickly change on the fly, while developing \SABL. Now we simply port it over.
+    \item We still have to deal with the low-level nature of \cpp, but we don't have to think so much about the overall algorithmic structure because we've done that part.
+    \item Refer to \Cref{code:hdsalib-hdsa}, compare it to \Cref{code:sabl-hdsa}.
+\end{itemize}
 \end{purpose}
 
 \begin{listing}[t]
@@ -862,7 +953,8 @@ namespace HDSA {
   };
 }
 \end{minted}
-\caption{Outline of the \cpp class for the prior state distribution in \HdsaLib.}
+\caption{Outline of the \cpp class for the state prior distribution in \HdsaLib. Compare with~\Cref{code:sabl-hdsa}.}
+\label{code:hdsalib-hdsa}
 \end{listing}
 
 % Potential additional listings, probably overkill.
@@ -878,34 +970,29 @@ namespace HDSA {
 \subsection{\MrHyDE: A high-performance \cpp library for solving differential equations}
 \label{sec:mrhyde}
 
-\bartnote{What are the things you need to do for HPC? Derivatives, matrix-vector computations, forward solver, parallelism, etc. In this paper, we're going to use a library that does a lot of things.}
-
-\SM{Note that \MrHyDE takes care of a lot of things for us, like calculating the adjoint at the element level via automatic differentiation. Transposes and handling boundary conditions are nontrivial in a parallel environment, but this is handled by Panzer in \MrHyDE.}
-
-\MrHyDE~also has robust forward solver (inner-loop) capabilities.
-
-% \SM{Not convinced that \HdsaLib should come first. Maybe we should have HDSA first, then \SABL, then a section called ``\HdsaLib and \MrHyDE: implementing HDSA-MD in \cpp''.}
-
-TODO.
-
 \begin{purpose}
 \begin{itemize}
+\item What are the things you need to do for HPC? Derivatives, matrix-vector computations, forward solver, parallelism, etc. In this paper, we're going to use a library that does a lot of things.
 \item Introduce \MrHyDE: scope, style, repository, etc.
 \item Forward solver capabilities of \MrHyDE.
-\item Discuss how \MrHyDE addresses many of the challenges of working in an HPC environment.
+\item Discuss how \MrHyDE addresses many of the challenges of working in an HPC environment, for example calculating the adjoint at the element level via automatic differentiation. Transposes and handling boundary conditions are nontrivial in a parallel environment, but this is handled by Panzer in \MrHyDE.
 \item Emphasize efficient automatic differentiation tools.
 \end{itemize}
 \end{purpose}
 
-TODO (Tim?).
-
 \subsection{Using \MrHyDE as a driver for \HdsaLib}
 
-TODO
+\shanenote{Does we need this as a separate section?}
 
 \subsection{Verification by comparison with \SABL}
 
-The complexities of a full HPC environment make it difficult to assess and verify implementations of novel, complicated algorithms such as HDSA-MD.
+\begin{purpose}
+\begin{itemize}
+\item Reiterate that the complexities of a full HPC environment make it difficult to assess and verify implementations of novel, complicated algorithms such as HDSA-MD.
+\item Compared to \MATLAB, it's also not always easy to do very small tests like check for positive definiteness.
+\item We used \SABL to develop the library design, but we also use it for verification. For example, we can re-implement the example in \Cref{sec:smallexample} and use the \SABL results to debug the \HdsaLib results. Both libraries should give the same solution. Now that we've done this for a small problem, we have more confidence diving into a huge problem that \SABL wouldn't be able to handle.
+\end{itemize}
+\end{purpose}
 
 \section{Example 2: Big fat HPC-worthy problem, \HdsaLib/\MrHyDE only}
 \label{sec:application}
