@@ -12,7 +12,7 @@ classdef MD_u_Hyperparameter_Interface_synthetic_test_with_hyperparam < MD_u_Hyp
         end
 
         function this = MD_u_Hyperparameter_Interface_synthetic_test_with_hyperparam(m)
-            this@MD_u_Hyperparameter_Interface(false,true);
+            this@MD_u_Hyperparameter_Interface(false, true);
             this.x = linspace(0, 1, m)';
         end
 

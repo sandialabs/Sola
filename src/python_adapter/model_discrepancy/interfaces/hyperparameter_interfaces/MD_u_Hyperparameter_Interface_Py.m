@@ -27,7 +27,7 @@ classdef MD_u_Hyperparameter_Interface_Py < MD_u_Hyperparameter_Interface
 
         function this = MD_u_Hyperparameter_Interface_Py(u_hyperparam_interface_py, is_transient, center_data, adapt_time_variance, component_id)
             arguments
-                u_hyperparam_interface_py 
+                u_hyperparam_interface_py
                 is_transient {boolean}
                 center_data = false
                 adapt_time_variance = false
@@ -36,5 +36,6 @@ classdef MD_u_Hyperparameter_Interface_Py < MD_u_Hyperparameter_Interface
             this@MD_u_Hyperparameter_Interface(is_transient, center_data, adapt_time_variance, component_id);
             this.u_hyperparam_interface_py = u_hyperparam_interface_py;
         end
+
     end
 end

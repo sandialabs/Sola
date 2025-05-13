@@ -13,7 +13,6 @@ classdef MD_z_Hyperparameter_Interface < handle
     %% Virtual functions for user implementation
     methods
 
-
         function [spatial_nodes] = Load_Spatial_Node_Data(this)
             spatial_nodes = [];
             disp('Load_Spatial_Node_Data is required for hyperparameter algorithm-based initialization');
@@ -37,7 +36,7 @@ classdef MD_z_Hyperparameter_Interface < handle
         function this = MD_z_Hyperparameter_Interface(z_type, num_state_solves)
             arguments
                 z_type {string}
-                num_state_solves (1,1) {mustBeNumeric} = 0
+                num_state_solves (1, 1) {mustBeNumeric} = 0
             end
 
             if ~(strcmp(z_type, 'spatial field') || strcmp(z_type, 'transient vector') || strcmp(z_type, 'vector'))

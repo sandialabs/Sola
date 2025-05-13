@@ -16,10 +16,10 @@ classdef MD_u_Hyperparameter_Interface_synthetic_test_transient < MD_u_Hyperpara
             nodes = this.t;
         end
 
-        function this = MD_u_Hyperparameter_Interface_synthetic_test_transient(n_y,n_t,T)
+        function this = MD_u_Hyperparameter_Interface_synthetic_test_transient(n_y, n_t, T)
             this@MD_u_Hyperparameter_Interface(true);
             this.x = linspace(0, 1, n_y)';
-            this.t = linspace(0,T,n_t)';
+            this.t = linspace(0, T, n_t)';
         end
 
     end

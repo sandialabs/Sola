@@ -109,10 +109,10 @@ classdef MD_Prior_Sampling < handle
                     for component_id = 1:num_components
                         J = this.u_prior_interface.I{component_id};
                         J = J(1:this.u_prior_interface.u_prior_interface_cell{component_id}.transient_prior_cov.n_y);
-                        this.delta_z_opt_time_evol{component_id}(i,:) = sqrt(diag(di(J,:)'*tmp(J,:)));
+                        this.delta_z_opt_time_evol{component_id}(i, :) = sqrt(diag(di(J, :)' * tmp(J, :)));
                     end
                 else
-                    this.delta_z_opt_time_evol{1}(i,:) = sqrt(diag(di' * tmp));
+                    this.delta_z_opt_time_evol{1}(i, :) = sqrt(diag(di' * tmp));
                 end
             end
 
@@ -123,14 +123,14 @@ classdef MD_Prior_Sampling < handle
                 for component_id = 1:num_components
                     J = this.u_prior_interface.I{component_id};
                     J = J(1:this.u_prior_interface.u_prior_interface_cell{component_id}.transient_prior_cov.n_y);
-                    this.data_time_evol{component_id} = sqrt(diag(d(J,:)' * tmp(J,:)));
+                    this.data_time_evol{component_id} = sqrt(diag(d(J, :)' * tmp(J, :)));
                 end
             else
                 this.data_time_evol{1} = sqrt(diag(d' * tmp));
             end
 
-            this.temporal_mag = cell(num_components,1);
-            this.temporal_corr_len = cell(num_components,1);
+            this.temporal_mag = cell(num_components, 1);
+            this.temporal_corr_len = cell(num_components, 1);
             for component_id = 1:num_components
                 this.temporal_corr_len{component_id} = zeros(num_samps, 1);
                 initial_guess = 0;
@@ -146,7 +146,7 @@ classdef MD_Prior_Sampling < handle
 
             if strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'vector')
                 this.z_pert = eye(this.z_prior_interface.n_z);
-                this.z_pert_evals = ones(this.z_prior_interface.n_z,1);
+                this.z_pert_evals = ones(this.z_prior_interface.n_z, 1);
             else
                 e = this.z_prior_interface.determine_z_hyperparams.Compute_Eigenvalues(this.z_prior_interface);
                 num_perts_init = length(find(1 ./ e > .1));
@@ -165,7 +165,7 @@ classdef MD_Prior_Sampling < handle
             end
 
             I = find(this.z_pert_evals > .1);
-            I = round(linspace(I(1),I(end),round(length(I)/this.z_pert_subsample_factor)));
+            I = round(linspace(I(1), I(end), round(length(I) / this.z_pert_subsample_factor)));
             this.z_pert = this.z_pert(:, I);
             this.z_pert_evals = this.z_pert_evals(I);
             scaling = .3 * sqrt(this.z_opt' * this.z_prior_interface.Apply_M_z(this.z_opt));
@@ -193,7 +193,7 @@ classdef MD_Prior_Sampling < handle
 
                 num_samps = size(this.delta_samples_z_opt(I, :), 2);
                 this.delta_mag{k} = max(abs(this.delta_samples_z_opt(I, :)))';
-                this.d1_mag{k} = max(abs(this.data_interface.D(I,1)+this.data_interface.data_shift(I)));
+                this.d1_mag{k} = max(abs(this.data_interface.D(I, 1) + this.data_interface.data_shift(I)));
 
                 initial_guess = 0;
                 correlation_lengths = zeros(num_samps, 1);
@@ -204,12 +204,12 @@ classdef MD_Prior_Sampling < handle
                 end
 
                 for i = 1:num_samps
-                    di = mean(reshape(this.delta_samples_z_opt(I, i), n_y, n_t),2);
+                    di = mean(reshape(this.delta_samples_z_opt(I, i), n_y, n_t), 2);
                     correlation_lengths(i) = corr_len_fun(nodes{k}, di, initial_guess);
                     initial_guess = correlation_lengths(i);
                 end
                 this.delta_corr{k} = correlation_lengths;
-                d = mean(reshape(this.data_interface.D(I, 1)+this.data_interface.data_shift(I), n_y, n_t),2);
+                d = mean(reshape(this.data_interface.D(I, 1) + this.data_interface.data_shift(I), n_y, n_t), 2);
                 this.d1_corr{k} = corr_len_fun(nodes{k}, d, mean(correlation_lengths));
             end
         end
@@ -217,7 +217,7 @@ classdef MD_Prior_Sampling < handle
         function Compute_Delta_z_pert_Metrics(this)
             num_components = length(this.delta_mag);
             num_perts = size(this.z_pert, 2);
-            
+
             this.delta_pert_mag = cell(num_components, num_perts);
             for k = 1:num_components
                 I = this.data_interface.Separate_State_Components(k);
@@ -237,37 +237,37 @@ classdef MD_Prior_Sampling < handle
                     end
                 elseif strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'transient vector')
                     nodes = this.z_prior_interface.z_hyperparam_interface.Load_Time_Node_Data();
-                    corr_len_fun = @(t,z,initial_guess) Compute_Correlation_Length_Transient_Vector(t,z,initial_guess);
+                    corr_len_fun = @(t, z, initial_guess) Compute_Correlation_Length_Transient_Vector(t, z, initial_guess);
                 end
-                this.z_pert_corr = zeros(num_perts,1);
+                this.z_pert_corr = zeros(num_perts, 1);
                 initial_guess = 0;
                 for j = 1:num_perts
-                    this.z_pert_corr(j) = corr_len_fun(nodes,this.z_pert(:,j),initial_guess);
+                    this.z_pert_corr(j) = corr_len_fun(nodes, this.z_pert(:, j), initial_guess);
                     initial_guess = this.z_pert_corr(j);
                 end
 
                 bin_width = 0.05;
-                bin_centers = (min(this.z_pert_corr)-bin_width/2):bin_width:(max(this.z_pert_corr)+bin_width/2);
+                bin_centers = (min(this.z_pert_corr) - bin_width / 2):bin_width:(max(this.z_pert_corr) + bin_width / 2);
                 num_bins = length(bin_centers);
-                this.z_pert_corr_binned = cell(num_bins,1);
+                this.z_pert_corr_binned = cell(num_bins, 1);
                 this.delta_pert_mag_binned = cell(num_components, num_bins);
                 for i = 1:num_bins
                     this.z_pert_corr_binned{i} = [];
                     for k = 1:num_components
-                        this.delta_pert_mag_binned{k,i} = [];
+                        this.delta_pert_mag_binned{k, i} = [];
                     end
                 end
                 for j = 1:num_perts
-                    [~,i] = min(abs(bin_centers-this.z_pert_corr(j)));
-                    this.z_pert_corr_binned{i} = [this.z_pert_corr_binned{i};this.z_pert_corr(j)];
+                    [~, i] = min(abs(bin_centers - this.z_pert_corr(j)));
+                    this.z_pert_corr_binned{i} = [this.z_pert_corr_binned{i}; this.z_pert_corr(j)];
                     for k = 1:num_components
-                        this.delta_pert_mag_binned{k,i} = [this.delta_pert_mag_binned{k,i};this.delta_pert_mag{k,j}];
+                        this.delta_pert_mag_binned{k, i} = [this.delta_pert_mag_binned{k, i}; this.delta_pert_mag{k, j}];
                     end
                 end
                 J = ~cellfun('isempty', this.z_pert_corr_binned);
                 this.z_pert_corr_binned = this.z_pert_corr_binned(J);
                 this.z_pert_corr_bin_means = cellfun(@(x)mean(x), this.z_pert_corr_binned);
-                this.delta_pert_mag_binned = this.delta_pert_mag_binned(:,J);
+                this.delta_pert_mag_binned = this.delta_pert_mag_binned(:, J);
             end
         end
 

@@ -89,7 +89,7 @@ opt_prob_interface = MD_Opt_Prob_Interface_synthetic_test_with_hyperparam(m);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 num_evals = 20;
 oversampling = 10;
-md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt,num_evals,oversampling);
+md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
 md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();

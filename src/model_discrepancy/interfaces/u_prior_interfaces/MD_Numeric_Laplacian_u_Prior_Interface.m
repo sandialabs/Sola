@@ -20,8 +20,8 @@ classdef MD_Numeric_Laplacian_u_Prior_Interface < MD_Elliptic_u_Prior_Interface
 
         function this = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface)
             arguments
-                S (:,:) {mustBeNumeric}
-                M (:,:) {mustBeNumeric}
+                S (:, :) {mustBeNumeric}
+                M (:, :) {mustBeNumeric}
                 data_interface MD_Data_Interface
                 u_hyperparam_interface MD_u_Hyperparameter_Interface
             end

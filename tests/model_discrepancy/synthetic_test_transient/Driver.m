@@ -15,9 +15,9 @@ x = linspace(0, 1, n_y)';
 
 [M, S] = Assemble_Mass_and_Stiffness(n_y);
 
-data_interface = MD_Data_Interface_synthetic_test_transient(n_y,n_t,T,c_low,c_high);
+data_interface = MD_Data_Interface_synthetic_test_transient(n_y, n_t, T, c_low, c_high);
 
-u_hyperparam_interface = MD_u_Hyperparameter_Interface_synthetic_test_transient(n_y,n_t,T);
+u_hyperparam_interface = MD_u_Hyperparameter_Interface_synthetic_test_transient(n_y, n_t, T);
 spatial_u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface);
 transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface, T, n_t, n_y);
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_u_prior_interface, transient_prior_cov);
@@ -25,7 +25,7 @@ u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spat
 z_hyperparam_interface = MD_z_Hyperparameter_Interface_synthetic_test_transient(n_y);
 z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S, M, data_interface, z_hyperparam_interface, u_prior_interface);
 
-opt_prob_interface = MD_Opt_Prob_Interface_synthetic_test_transient(n_y,n_t,T,c_low);
+opt_prob_interface = MD_Opt_Prob_Interface_synthetic_test_transient(n_y, n_t, T, c_low);
 
 %%
 num_prior_samples = 100;
@@ -52,22 +52,22 @@ if ~suppress_figures
     k = 2;
     ts = 8;
 
-    d_mean = reshape(delta_mean{k},n_y,n_t);
-    d_samples = reshape(delta_samples{k},n_y,n_t,num_post_samples);
-    d_data = reshape(data_interface.D(:,k),n_y,n_t);
-    
+    d_mean = reshape(delta_mean{k}, n_y, n_t);
+    d_samples = reshape(delta_samples{k}, n_y, n_t, num_post_samples);
+    d_data = reshape(data_interface.D(:, k), n_y, n_t);
+
     figure;
     hold on;
-    plot(x,reshape(d_samples(:,ts,:),n_y,num_post_samples), 'color', [.9, .9, .9], 'LineWidth', 3);
-    plot(x,d_data(:,ts),'color','black','LineWidth',3)
-    plot(x,d_mean(:,ts),'--','Color','red','LineWidth',3);
+    plot(x, reshape(d_samples(:, ts, :), n_y, num_post_samples), 'color', [.9, .9, .9], 'LineWidth', 3);
+    plot(x, d_data(:, ts), 'color', 'black', 'LineWidth', 3);
+    plot(x, d_mean(:, ts), '--', 'Color', 'red', 'LineWidth', 3);
 end
 
 %%
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 num_evals = 20;
 oversampling = 10;
-md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt,num_evals,oversampling);
+md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
 md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
@@ -75,13 +75,13 @@ md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 if ~suppress_figures
     figure;
     hold on;
-    plot(x, (c_low/c_high)^((n_t-1)/3) * (1 + x), 'color', 'black', 'LineWidth', 3);
+    plot(x, (c_low / c_high)^((n_t - 1) / 3) * (1 + x), 'color', 'black', 'LineWidth', 3);
     plot(x, 1 + x, 'color', 'cyan', 'LineWidth', 3);
     plot(x, z_update_mean, '--', 'color', 'red', 'LineWidth', 3);
     for k = 1:num_post_samples
         plot(x, z_update_samples(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
-    plot(x, (c_low/c_high)^((n_t-1)/3) * (1 + x), 'color', 'black', 'LineWidth', 3);
+    plot(x, (c_low / c_high)^((n_t - 1) / 3) * (1 + x), 'color', 'black', 'LineWidth', 3);
     plot(x, 1 + x, 'color', 'cyan', 'LineWidth', 3);
     plot(x, z_update_mean, '--', 'color', 'red', 'LineWidth', 3);
 end

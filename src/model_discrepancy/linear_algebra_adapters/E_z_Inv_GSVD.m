@@ -33,7 +33,7 @@ classdef E_z_Inv_GSVD < Randomized_GSVD
         function this = E_z_Inv_GSVD(z_prior_interface, z)
             arguments
                 z_prior_interface MD_z_Prior_Interface
-                z (:,1) double
+                z (:, 1) double
             end
             this@Randomized_GSVD(z, z);
             this.z_prior_interface = z_prior_interface;

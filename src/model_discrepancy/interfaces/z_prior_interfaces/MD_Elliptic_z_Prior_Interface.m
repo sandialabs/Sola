@@ -46,11 +46,10 @@ classdef MD_Elliptic_z_Prior_Interface < MD_Scaled_z_Prior_Interface
 
         function this = MD_Elliptic_z_Prior_Interface(alpha_z)
             arguments
-                alpha_z (1,1) {mustBeNumeric}
+                alpha_z (1, 1) {mustBeNumeric}
             end
             this@MD_Scaled_z_Prior_Interface(alpha_z);
         end
-
 
         function [] = Update_alpha_z(this, alpha_z_new)
             this.alpha_z = alpha_z_new;

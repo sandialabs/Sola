@@ -21,7 +21,7 @@ classdef MD_Prior_Visualization < handle
 
         function [] = Visualization_for_Prior_Discrepancy_at_z_pert(this, component_id)
 
-            if ~strcmp(this.prior_sampling.z_prior_interface.z_hyperparam_interface.z_type,'vector')
+            if ~strcmp(this.prior_sampling.z_prior_interface.z_hyperparam_interface.z_type, 'vector')
 
                 I = this.prior_sampling.data_interface.Separate_State_Components(component_id);
                 num_perts = length(this.prior_sampling.delta_samples_z_pert);
@@ -63,12 +63,12 @@ classdef MD_Prior_Visualization < handle
                 generate_z_plot(nodes, t_z, this.prior_sampling.data_interface.Z(:, 1), z_range, '$z_1$');
 
                 delta_fig = figure;
-                c_range = [min(this.prior_sampling.data_interface.D(I, 1) + this.prior_sampling.data_interface.data_shift(I)),max(this.prior_sampling.data_interface.D(I, 1) + this.prior_sampling.data_interface.data_shift(I))];
+                c_range = [min(this.prior_sampling.data_interface.D(I, 1) + this.prior_sampling.data_interface.data_shift(I)), max(this.prior_sampling.data_interface.D(I, 1) + this.prior_sampling.data_interface.data_shift(I))];
                 generate_delta_plot(nodes, t, this.prior_sampling.data_interface.D(I, 1) + this.prior_sampling.data_interface.data_shift(I), c_range, '$d_1$');
 
-                margin = max(this.prior_sampling.z_pert_corr)*.05;
-                xmin = min(this.prior_sampling.z_pert_corr)-margin;
-                xmax = max(this.prior_sampling.z_pert_corr)+margin;
+                margin = max(this.prior_sampling.z_pert_corr) * .05;
+                xmin = min(this.prior_sampling.z_pert_corr) - margin;
+                xmax = max(this.prior_sampling.z_pert_corr) + margin;
                 yrange = [0, 0];
                 for k = 1:num_perts
                     yrange(1) = min(yrange(1), min(this.prior_sampling.delta_pert_mag{component_id, k}));
@@ -80,11 +80,11 @@ classdef MD_Prior_Visualization < handle
                 scatter_fig = figure;
                 hold on;
                 for k = 1:length(this.prior_sampling.z_pert_corr_binned)
-                    violinplot(this.prior_sampling.z_pert_corr_bin_means(k),this.prior_sampling.delta_pert_mag_binned{component_id, k},'DensityDirection','positive','DensityWidth',.05,'DensityScale','width','FaceColor','black')
-                    plot(this.prior_sampling.z_pert_corr_bin_means(k), this.prior_sampling.delta_pert_mag_binned{component_id, k}, 'o','Color',colors(k,:),'MarkerSize',8);
+                    violinplot(this.prior_sampling.z_pert_corr_bin_means(k), this.prior_sampling.delta_pert_mag_binned{component_id, k}, 'DensityDirection', 'positive', 'DensityWidth', .05, 'DensityScale', 'width', 'FaceColor', 'black');
+                    plot(this.prior_sampling.z_pert_corr_bin_means(k), this.prior_sampling.delta_pert_mag_binned{component_id, k}, 'o', 'Color', colors(k, :), 'MarkerSize', 8);
                 end
-                xlabel('$\Delta z$ Correlation Length','Interpreter','latex');
-                ylabel('$\delta(\Delta z)$ Magnitude','Interpreter','latex');
+                xlabel('$\Delta z$ Correlation Length', 'Interpreter', 'latex');
+                ylabel('$\delta(\Delta z)$ Magnitude', 'Interpreter', 'latex');
                 xlim([xmin, xmax]);
                 ylim([ymin, ymax]);
                 set(gca, 'fontsize', 24);
@@ -103,14 +103,14 @@ classdef MD_Prior_Visualization < handle
                     else
 
                         bin = find(abs(this.prior_sampling.z_pert_corr_bin_means - x) < .01);
-                        J = find(this.prior_sampling.z_pert_corr==this.prior_sampling.z_pert_corr_binned{bin}(1));
+                        J = find(this.prior_sampling.z_pert_corr == this.prior_sampling.z_pert_corr_binned{bin}(1));
                         for k = 2:length(this.prior_sampling.z_pert_corr_binned{bin})
-                            J = [J;find(this.prior_sampling.z_pert_corr==this.prior_sampling.z_pert_corr_binned{bin}(k))];
+                            J = [J; find(this.prior_sampling.z_pert_corr == this.prior_sampling.z_pert_corr_binned{bin}(k))];
                         end
                         i = J(1);
-                        [val, j] = min(abs(this.prior_sampling.delta_pert_mag{component_id,i} - y));
+                        [val, j] = min(abs(this.prior_sampling.delta_pert_mag{component_id, i} - y));
                         for k = 2:length(J)
-                            [valk, jk] = min(abs(this.prior_sampling.delta_pert_mag{component_id,J(k)} - y));
+                            [valk, jk] = min(abs(this.prior_sampling.delta_pert_mag{component_id, J(k)} - y));
                             if valk < val
                                 val = valk;
                                 j = jk;
@@ -122,13 +122,13 @@ classdef MD_Prior_Visualization < handle
                         if length(scatter_fig.Children(1).Children) > num_perts
                             delete(scatter_fig.Children(1).Children(1));
                         end
-                        plot(this.prior_sampling.z_pert_corr_bin_means(bin), this.prior_sampling.delta_pert_mag{component_id,i}(j), 'x', 'MarkerSize', 20, 'color', 'black');
+                        plot(this.prior_sampling.z_pert_corr_bin_means(bin), this.prior_sampling.delta_pert_mag{component_id, i}(j), 'x', 'MarkerSize', 20, 'color', 'black');
 
                         figure(z_fig);
-                        generate_z_plot(nodes, t_z, this.prior_sampling.z_pert(:, i), z_range,'$\Delta z_k$');
+                        generate_z_plot(nodes, t_z, this.prior_sampling.z_pert(:, i), z_range, '$\Delta z_k$');
 
                         figure(delta_fig);
-                        c_range = [min(this.prior_sampling.delta_samples_z_pert{i}(I, j)),max(this.prior_sampling.delta_samples_z_pert{i}(I, j))];
+                        c_range = [min(this.prior_sampling.delta_samples_z_pert{i}(I, j)), max(this.prior_sampling.delta_samples_z_pert{i}(I, j))];
                         generate_delta_plot(nodes, t, this.prior_sampling.delta_samples_z_pert{i}(I, j), c_range, '$\delta(\Delta z_k,\theta_i)$');
 
                         figure(delta_fig);
@@ -180,7 +180,7 @@ classdef MD_Prior_Visualization < handle
                 end
 
                 delta_fig = figure;
-                c_range = [min(this.prior_sampling.data_interface.D(I, 1) + this.prior_sampling.data_interface.data_shift(I)),max(this.prior_sampling.data_interface.D(I, 1) + this.prior_sampling.data_interface.data_shift(I))];
+                c_range = [min(this.prior_sampling.data_interface.D(I, 1) + this.prior_sampling.data_interface.data_shift(I)), max(this.prior_sampling.data_interface.D(I, 1) + this.prior_sampling.data_interface.data_shift(I))];
                 generate_delta_plot(nodes, t, this.prior_sampling.data_interface.D(I, 1) + this.prior_sampling.data_interface.data_shift(I), c_range, '$d_1$');
 
                 xmin = 0;
@@ -196,11 +196,11 @@ classdef MD_Prior_Visualization < handle
                 scatter_fig = figure;
                 hold on;
                 for k = 1:this.prior_sampling.z_prior_interface.n_z
-                    violinplot(k,this.prior_sampling.delta_pert_mag{component_id, k},'DensityDirection','positive','DensityWidth',.05,'DensityScale','width','FaceColor','black')
-                    plot(k, this.prior_sampling.delta_pert_mag{component_id, k}, 'o','Color',colors(k,:),'MarkerSize',8);
+                    violinplot(k, this.prior_sampling.delta_pert_mag{component_id, k}, 'DensityDirection', 'positive', 'DensityWidth', .05, 'DensityScale', 'width', 'FaceColor', 'black');
+                    plot(k, this.prior_sampling.delta_pert_mag{component_id, k}, 'o', 'Color', colors(k, :), 'MarkerSize', 8);
                 end
-                xlabel('$z$ Component','Interpreter','latex');
-                ylabel('$\delta(\Delta z)$ Magnitude','Interpreter','latex');
+                xlabel('$z$ Component', 'Interpreter', 'latex');
+                ylabel('$\delta(\Delta z)$ Magnitude', 'Interpreter', 'latex');
                 xlim([xmin, xmax]);
                 ylim([ymin, ymax]);
                 set(gca, 'fontsize', 24);
@@ -219,19 +219,19 @@ classdef MD_Prior_Visualization < handle
                     else
 
                         i = find(abs((1:this.prior_sampling.z_prior_interface.n_z)' - x) < .1);
-                        [~, j] = min(abs(this.prior_sampling.delta_pert_mag{component_id,i} - y));
+                        [~, j] = min(abs(this.prior_sampling.delta_pert_mag{component_id, i} - y));
 
                         figure(scatter_fig);
                         if length(scatter_fig.Children(1).Children) > num_perts
                             delete(scatter_fig.Children(1).Children(1));
                         end
-                        plot(i, this.prior_sampling.delta_pert_mag{component_id,i}(j), 'x', 'MarkerSize', 20, 'color', 'black');
+                        plot(i, this.prior_sampling.delta_pert_mag{component_id, i}(j), 'x', 'MarkerSize', 20, 'color', 'black');
 
                         figure(z_fig);
-                        generate_z_plot(nodes, t_z, this.prior_sampling.z_pert(:, i), z_range,'$\Delta z_k$');
+                        generate_z_plot(nodes, t_z, this.prior_sampling.z_pert(:, i), z_range, '$\Delta z_k$');
 
                         figure(delta_fig);
-                        c_range = [min(this.prior_sampling.delta_samples_z_pert{i}(I, j)),max(this.prior_sampling.delta_samples_z_pert{i}(I, j))];
+                        c_range = [min(this.prior_sampling.delta_samples_z_pert{i}(I, j)), max(this.prior_sampling.delta_samples_z_pert{i}(I, j))];
                         generate_delta_plot(nodes, t, this.prior_sampling.delta_samples_z_pert{i}(I, j), c_range, '$\delta(\Delta z_k,\theta_i)$');
 
                         figure(delta_fig);
@@ -257,7 +257,7 @@ classdef MD_Prior_Visualization < handle
             else
                 t = [];
             end
-            range = [min(min(this.prior_sampling.delta_samples_z_opt(I,:))), max(max(this.prior_sampling.delta_samples_z_opt(I,:)))];
+            range = [min(min(this.prior_sampling.delta_samples_z_opt(I, :))), max(max(this.prior_sampling.delta_samples_z_opt(I, :)))];
 
             if is_transient && (spatial_dim == 1)
                 generate_plot = @(nodes, t, u, name) this.Plot_Transient_1D(nodes, t, u, range, name);
@@ -275,17 +275,17 @@ classdef MD_Prior_Visualization < handle
             sample_fig = figure;
             generate_plot(nodes, t, this.prior_sampling.data_interface.D(I, 1) + this.prior_sampling.data_interface.data_shift(I), '$d_1$');
 
-            xmin = min([this.prior_sampling.d1_corr{component_id};this.prior_sampling.delta_corr{component_id}]) * .9;
-            xmax = max([this.prior_sampling.d1_corr{component_id};this.prior_sampling.delta_corr{component_id}]) * 1.1;
-            ymin = min([this.prior_sampling.d1_mag{component_id};this.prior_sampling.delta_mag{component_id}]) * .9;
-            ymax = max([this.prior_sampling.d1_mag{component_id};this.prior_sampling.delta_mag{component_id}]) * 1.1;
+            xmin = min([this.prior_sampling.d1_corr{component_id}; this.prior_sampling.delta_corr{component_id}]) * .9;
+            xmax = max([this.prior_sampling.d1_corr{component_id}; this.prior_sampling.delta_corr{component_id}]) * 1.1;
+            ymin = min([this.prior_sampling.d1_mag{component_id}; this.prior_sampling.delta_mag{component_id}]) * .9;
+            ymax = max([this.prior_sampling.d1_mag{component_id}; this.prior_sampling.delta_mag{component_id}]) * 1.1;
             scatter_fig = figure;
             hold on;
             plot(this.prior_sampling.delta_corr{component_id}, this.prior_sampling.delta_mag{component_id}, 'o');
-            plot(this.prior_sampling.d1_corr{component_id},this.prior_sampling.d1_mag{component_id},'*');
+            plot(this.prior_sampling.d1_corr{component_id}, this.prior_sampling.d1_mag{component_id}, '*');
             xlabel('Correlation Length');
             ylabel('Magnitude');
-            legend({'Prior Samples','Discrepancy Data'})
+            legend({'Prior Samples', 'Discrepancy Data'});
             xlim([xmin, xmax]);
             ylim([ymin, ymax]);
             set(gca, 'fontsize', 24);
@@ -310,8 +310,8 @@ classdef MD_Prior_Visualization < handle
                     if length(scatter_fig.Children(1).Children) > 1
                         delete(scatter_fig.Children(1).Children(1));
                     end
-                    plot(this.prior_sampling.delta_corr{component_id}(i),this.prior_sampling.delta_mag{component_id}(i), 'x', 'MarkerSize', 20, 'color', 'black');
-                    legend({'Prior Samples','Discrepancy Data'})
+                    plot(this.prior_sampling.delta_corr{component_id}(i), this.prior_sampling.delta_mag{component_id}(i), 'x', 'MarkerSize', 20, 'color', 'black');
+                    legend({'Prior Samples', 'Discrepancy Data'});
 
                     figure(sample_fig);
                     figure(data_fig);
@@ -324,8 +324,8 @@ classdef MD_Prior_Visualization < handle
 
         function [] = Visualization_for_Prior_Time_Evolution(this, component_id, interactive_viz)
 
-            delta_min = .95 * min([this.prior_sampling.delta_z_opt_time_evol{component_id}(:);this.prior_sampling.data_time_evol{component_id}]);
-            delta_max = 1.05 * max([this.prior_sampling.delta_z_opt_time_evol{component_id}(:);this.prior_sampling.data_time_evol{component_id}]);
+            delta_min = .95 * min([this.prior_sampling.delta_z_opt_time_evol{component_id}(:); this.prior_sampling.data_time_evol{component_id}]);
+            delta_max = 1.05 * max([this.prior_sampling.delta_z_opt_time_evol{component_id}(:); this.prior_sampling.data_time_evol{component_id}]);
             t = this.prior_sampling.u_prior_interface.u_hyperparam_interface.Load_Time_Node_Data();
 
             sample_fig = figure;
@@ -400,50 +400,50 @@ classdef MD_Prior_Visualization < handle
 
             subplot(3, 1, 1);
             plot(nodes, u(:, 1), 'LineWidth', 3);
-            xlabel('$x$','Interpreter','latex');
-            ylabel(name,'Interpreter','latex');
+            xlabel('$x$', 'Interpreter', 'latex');
+            ylabel(name, 'Interpreter', 'latex');
             ylim(range);
             title(['Time t = ', num2str(t(1))]);
             set(gca, 'fontsize', 24);
 
             subplot(3, 1, 2);
             plot(nodes, u(:, m), 'LineWidth', 3);
-            xlabel('$x$','Interpreter','latex');
-            ylabel(name,'Interpreter','latex');
+            xlabel('$x$', 'Interpreter', 'latex');
+            ylabel(name, 'Interpreter', 'latex');
             ylim(range);
             title(['Time t = ', num2str(t(m))]);
             set(gca, 'fontsize', 24);
 
             subplot(3, 1, 3);
             plot(nodes, u(:, end), 'LineWidth', 3);
-            xlabel('$x$','Interpreter','latex');
-            ylabel(name,'Interpreter','latex');
+            xlabel('$x$', 'Interpreter', 'latex');
+            ylabel(name, 'Interpreter', 'latex');
             ylim(range);
             title(['Time t = ', num2str(t(end))]);
             set(gca, 'fontsize', 24);
         end
 
         function [] = Plot_Transient_2D(this, nodes, t, u, range, name)
-            n_y = size(nodes,1);
+            n_y = size(nodes, 1);
             n_t = length(t);
-            m = round(sqrt(n_y)*1.25);
-            xl = linspace(min(nodes(:,1)), max(nodes(:,1)), m)';
-            yl = linspace(min(nodes(:,2)), max(nodes(:,2)), m)';
+            m = round(sqrt(n_y) * 1.25);
+            xl = linspace(min(nodes(:, 1)), max(nodes(:, 1)), m)';
+            yl = linspace(min(nodes(:, 2)), max(nodes(:, 2)), m)';
             [X, Y] = meshgrid(xl, yl);
-            u = reshape(u,n_y,n_t);
+            u = reshape(u, n_y, n_t);
             count = 1;
-            for k = round(linspace(1,n_t,3))
+            for k = round(linspace(1, n_t, 3))
                 subplot(3, 1, count);
-                F = scatteredInterpolant(nodes(:,1), nodes(:,2), u(:,k));
+                F = scatteredInterpolant(nodes(:, 1), nodes(:, 2), u(:, k));
                 f = F(X, Y);
                 surf(X, Y, f);
-                xlabel('$x$','Interpreter','latex')
-                ylabel('$y$','Interpreter','latex')
+                xlabel('$x$', 'Interpreter', 'latex');
+                ylabel('$y$', 'Interpreter', 'latex');
                 view(2);
                 shading interp;
                 clim(range);
                 colorbar();
-                title([name,' at time ',num2str(t(k))],'Interpreter','latex');
+                title([name, ' at time ', num2str(t(k))], 'Interpreter', 'latex');
                 set(gca, 'fontsize', 24);
                 count = count + 1;
             end
@@ -451,30 +451,30 @@ classdef MD_Prior_Visualization < handle
         end
 
         function [] = Plot_Stationary_1D(this, nodes, t, u, range, name)
-            plot(nodes,u)
-            xlabel('$x$','Interpreter','latex')
-            ylabel(name,'Interpreter','latex')
+            plot(nodes, u);
+            xlabel('$x$', 'Interpreter', 'latex');
+            ylabel(name, 'Interpreter', 'latex');
             view(2);
             ylim(range);
             set(gca, 'fontsize', 24);
         end
 
         function [] = Plot_Stationary_2D(this, nodes, t, u, range, name)
-            m = round(sqrt(size(nodes,1))*1.25);
-            xl = linspace(min(nodes(:,1)), max(nodes(:,1)), m)';
-            yl = linspace(min(nodes(:,2)), max(nodes(:,2)), m)';
+            m = round(sqrt(size(nodes, 1)) * 1.25);
+            xl = linspace(min(nodes(:, 1)), max(nodes(:, 1)), m)';
+            yl = linspace(min(nodes(:, 2)), max(nodes(:, 2)), m)';
             [X, Y] = meshgrid(xl, yl);
-            F = scatteredInterpolant(nodes(:,1), nodes(:,2), u);
+            F = scatteredInterpolant(nodes(:, 1), nodes(:, 2), u);
             f = F(X, Y);
             clf;
             surf(X, Y, f);
-            xlabel('$x$','Interpreter','latex')
-            ylabel('$y$','Interpreter','latex')
+            xlabel('$x$', 'Interpreter', 'latex');
+            ylabel('$y$', 'Interpreter', 'latex');
             view(2);
             shading interp;
             clim(range);
             colorbar();
-            title(name,'Interpreter','latex');
+            title(name, 'Interpreter', 'latex');
             set(gca, 'fontsize', 24);
 
         end
@@ -487,19 +487,19 @@ classdef MD_Prior_Visualization < handle
                 plot(t, z(k, :), 'LineWidth', 3);
             end
             xlabel('Time');
-            ylabel(name,'Interpreter','latex');
+            ylabel(name, 'Interpreter', 'latex');
             ylim(range);
             set(gca, 'fontsize', 24);
         end
 
         function [] = Plot_Vector(this, u, range, name)
             clf;
-            plot(1:length(u), u, 'o', 'MarkerSize',10);
+            plot(1:length(u), u, 'o', 'MarkerSize', 10);
             xlabel('Component');
-            ylabel(name,'Interpreter','latex');
-            xlim([0,length(u)+1])
-            range(1) = min(range(1),min(u) - .05*abs(min(u)));
-            range(2) = max(range(2),max(u) + .05*abs(max(u)));
+            ylabel(name, 'Interpreter', 'latex');
+            xlim([0, length(u) + 1]);
+            range(1) = min(range(1), min(u) - .05 * abs(min(u)));
+            range(2) = max(range(2), max(u) + .05 * abs(max(u)));
             ylim(range);
             set(gca, 'fontsize', 24);
         end

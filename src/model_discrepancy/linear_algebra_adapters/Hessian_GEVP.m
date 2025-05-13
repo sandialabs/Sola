@@ -40,7 +40,7 @@ classdef Hessian_GEVP < Randomized_GEVP
             arguments
                 opt_prob_interface MD_Opt_Prob_Interface
                 z_prior_interface MD_z_Prior_Interface
-                z (:,1) double
+                z (:, 1) double
             end
             this@Randomized_GEVP(z);
             this.z = z;

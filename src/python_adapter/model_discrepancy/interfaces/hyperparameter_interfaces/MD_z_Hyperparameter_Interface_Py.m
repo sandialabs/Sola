@@ -23,7 +23,7 @@ classdef MD_z_Hyperparameter_Interface_Py < MD_z_Hyperparameter_Interface
         end
 
         function [u] = State_Solve(this, z)
-            m = size(z,2);
+            m = size(z, 2);
             u = this.z_hyperparam_interface_py.State_Solve(z);
             u = double(u);
             if size(u, 1) == m
@@ -33,12 +33,13 @@ classdef MD_z_Hyperparameter_Interface_Py < MD_z_Hyperparameter_Interface
 
         function this = MD_z_Hyperparameter_Interface_Py(z_hyperparam_interface_py, z_type, num_state_solves)
             arguments
-                z_hyperparam_interface_py 
+                z_hyperparam_interface_py
                 z_type string
                 num_state_solves = 0
             end
             this@MD_z_Hyperparameter_Interface(z_type, num_state_solves);
             this.z_hyperparam_interface_py = z_hyperparam_interface_py;
         end
+
     end
 end

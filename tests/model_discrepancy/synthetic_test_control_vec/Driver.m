@@ -18,8 +18,8 @@ u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface,
 
 num_state_solves = 100;
 M_z = eye(2);
-M_z(1,1) = 2;
-z_hyperparam_interface = MD_z_Hyperparameter_Interface_synthetic_test_control_vec(num_state_solves,m);
+M_z(1, 1) = 2;
+z_hyperparam_interface = MD_z_Hyperparameter_Interface_synthetic_test_control_vec(num_state_solves, m);
 z_prior_interface = MD_Vector_z_Prior_Interface(M_z, data_interface, z_hyperparam_interface, u_prior_interface);
 
 %%
@@ -40,20 +40,20 @@ md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 
 %%
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
-md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt,2,0);
+md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, 2, 0);
 md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
 
 if ~suppress_figures
-    z_hifi = [1-2*data_interface.epsilon ; 1-data_interface.epsilon];
-    figure,
+    z_hifi = [1 - 2 * data_interface.epsilon; 1 - data_interface.epsilon];
+    figure;
     for k = 1:2
-        subplot(2,1,k)
-        hold on
-        plot(z_update_samples(k,:),ones(num_post_samples,1),'o','Color',[.9,.9,.9],'MarkerSize',10)
-        plot(z_update_mean(k),1,'o','color','blue','MarkerSize',10)
-        plot(z_hifi(k),1,'*','color','red','MarkerSize',10)
+        subplot(2, 1, k);
+        hold on;
+        plot(z_update_samples(k, :), ones(num_post_samples, 1), 'o', 'Color', [.9, .9, .9], 'MarkerSize', 10);
+        plot(z_update_mean(k), 1, 'o', 'color', 'blue', 'MarkerSize', 10);
+        plot(z_hifi(k), 1, '*', 'color', 'red', 'MarkerSize', 10);
     end
 end
 

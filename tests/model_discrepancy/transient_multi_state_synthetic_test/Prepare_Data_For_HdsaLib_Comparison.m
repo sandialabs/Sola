@@ -23,7 +23,7 @@ transient_prior_cov = cell(2, 1);
 u_prior_interface_cell = cell(2, 1);
 
 u_hyperparam_interface_cell{1} = MD_u_Hyperparameter_Interface_transient_multi_state_synthetic(n_y, n_t, 1);
-%u_hyperparam_interface_cell{1}.alpha_u = 0.001688110759857;
+% u_hyperparam_interface_cell{1}.alpha_u = 0.001688110759857;
 u_hyperparam_interface_cell{1}.beta_u = 0.009166435191031;
 u_hyperparam_interface_cell{1}.beta_t = 0.027499305573092;
 u_spatial_prior_interface_cell{1} = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface_cell{1});
@@ -31,7 +31,7 @@ transient_prior_cov{1} = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hy
 u_prior_interface_cell{1} = MD_Transient_Elliptic_u_Prior_Interface(data_interface, u_spatial_prior_interface_cell{1}, transient_prior_cov{1});
 
 u_hyperparam_interface_cell{2} = MD_u_Hyperparameter_Interface_transient_multi_state_synthetic(n_y, n_t, 2);
-%u_hyperparam_interface_cell{2}.alpha_u = 0.006235002943316;
+% u_hyperparam_interface_cell{2}.alpha_u = 0.006235002943316;
 u_hyperparam_interface_cell{2}.beta_u = 0.009166435191031;
 u_hyperparam_interface_cell{2}.beta_t = 0.027499305573092;
 u_spatial_prior_interface_cell{2} = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface_cell{2});
@@ -42,7 +42,7 @@ u_prior_interface = MD_Multi_State_u_Prior_Interface(data_interface, u_prior_int
 
 num_state_solves = 100;
 z_hyperparam_interface = MD_z_Hyperparameter_Interface_transient_multi_state_synthetic(data_interface, num_state_solves, n_y, n_t);
-%z_hyperparam_interface.alpha_z = 1.076021648025798e+03;
+% z_hyperparam_interface.alpha_z = 1.076021648025798e+03;
 z_hyperparam_interface.beta_z = 0.009305846653704;
 z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S, M, data_interface, z_hyperparam_interface, u_prior_interface);
 

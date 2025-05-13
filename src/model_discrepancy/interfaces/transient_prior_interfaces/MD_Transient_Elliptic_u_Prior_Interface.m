@@ -18,7 +18,7 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
                 transient_prior_cov MD_Transient_Prior_Covariance
             end
             this@MD_Scaled_u_Prior_Interface(transient_prior_cov.u_hyperparam_interface.alpha_u);
-            
+
             this.spatial_prior_cov = spatial_prior_cov;
             this.transient_prior_cov = transient_prior_cov;
             this.u_hyperparam_interface = transient_prior_cov.u_hyperparam_interface;
@@ -68,11 +68,11 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
         end
 
         function [u_out] = Apply_W_u_Acute_Inverse(this, u_in)
-            u_tmp = reshape(u_in, this.transient_prior_cov.n_y, this.transient_prior_cov.n_t, size(u_in,2));
-            tmp1 = pagemtimes(this.spatial_prior_cov.sing_vecs_output * diag(this.spatial_prior_cov.sing_vals.^2) * this.spatial_prior_cov.sing_vecs_output',u_tmp);
-            tmp2 = pagemtimes(this.transient_prior_cov.evecs * diag(this.transient_prior_cov.evals) * this.transient_prior_cov.evecs','transpose',tmp1,'transpose');
+            u_tmp = reshape(u_in, this.transient_prior_cov.n_y, this.transient_prior_cov.n_t, size(u_in, 2));
+            tmp1 = pagemtimes(this.spatial_prior_cov.sing_vecs_output * diag(this.spatial_prior_cov.sing_vals.^2) * this.spatial_prior_cov.sing_vecs_output', u_tmp);
+            tmp2 = pagemtimes(this.transient_prior_cov.evecs * diag(this.transient_prior_cov.evals) * this.transient_prior_cov.evecs', 'transpose', tmp1, 'transpose');
             tmp3 = pagetranspose(tmp2);
-            u_out = reshape(tmp3,size(u_in,1),size(u_in,2));
+            u_out = reshape(tmp3, size(u_in, 1), size(u_in, 2));
 
             % This original code loops over the columns of u_in, and
             % consequently, is an easier piece of code to read.
@@ -93,10 +93,10 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             m = size(this.spatial_prior_cov.sing_vecs_output, 1) * size(this.transient_prior_cov.evecs, 1);
 
             omega = randn(r_s, r_t, num_samples);
-            tmp1 = pagemtimes(this.spatial_prior_cov.sing_vecs_output * diag(this.spatial_prior_cov.sing_vals),omega);
-            tmp2 = pagemtimes(this.transient_prior_cov.evecs * diag(sqrt(this.transient_prior_cov.evals)),'none',tmp1,'transpose');
+            tmp1 = pagemtimes(this.spatial_prior_cov.sing_vecs_output * diag(this.spatial_prior_cov.sing_vals), omega);
+            tmp2 = pagemtimes(this.transient_prior_cov.evecs * diag(sqrt(this.transient_prior_cov.evals)), 'none', tmp1, 'transpose');
             tmp3 = pagetranspose(tmp2);
-            u_out = reshape(tmp3,m,num_samples);
+            u_out = reshape(tmp3, m, num_samples);
 
             % This original code loops over the columns of u_out, and
             % consequently, is an easier piece of code to read.

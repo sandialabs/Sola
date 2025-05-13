@@ -79,5 +79,5 @@ function correlation_length = Compute_Correlation_Length_2D(x, y, u, initial_gue
     end
 
     correlation_length = r_range(index);
-    
+
 end

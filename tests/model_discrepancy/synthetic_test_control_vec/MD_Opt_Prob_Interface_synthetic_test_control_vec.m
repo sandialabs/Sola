@@ -9,16 +9,16 @@ classdef MD_Opt_Prob_Interface_synthetic_test_control_vec < MD_Opt_Prob_Interfac
     methods (Access = public)
 
         function [z_out] = Apply_Solution_Operator_z_Jacobian_Transpose(this, u_in, z)
-            J = ones(this.m,2);
-            J(:,2) = this.x;
+            J = ones(this.m, 2);
+            J(:, 2) = this.x;
             z_out = J' * u_in;
         end
 
         % This implementation assumes that it is evaluated at the optimal z so that
         % the adjoint=0, a more general impl a term multiplied by the adjoint variable
         function [z_out] = Apply_RS_Hessian(this, z_in, z)
-            J = ones(this.m,2);
-            J(:,2) = this.x;
+            J = ones(this.m, 2);
+            J(:, 2) = this.x;
             z_out = J' * this.M * J * z_in;
         end
 

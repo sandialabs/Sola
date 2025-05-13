@@ -36,7 +36,7 @@ classdef MD_Multi_State_u_Prior_Interface < MD_u_Prior_Interface
         function [u_out] = Apply_M_u(this, u_in)
             u_out = 0 * u_in;
             for i = 1:this.n_c
-                if size(u_in,1) == this.total_dofs
+                if size(u_in, 1) == this.total_dofs
                     J = this.I{i};
                 else
                     J = this.I{i}(1:this.u_prior_interface_cell{i}.transient_prior_cov.n_y);

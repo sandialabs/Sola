@@ -20,9 +20,9 @@ classdef MD_Transient_Prior_Covariance < handle
         function this = MD_Transient_Prior_Covariance(M_t, S_t, n_y, data_interface, u_hyperparam_interface)
 
             arguments
-                M_t (:,:) {mustBeNumeric}
-                S_t (:,:) {mustBeNumeric} 
-                n_y (1,1) {mustBeNumeric}
+                M_t (:, :) {mustBeNumeric}
+                S_t (:, :) {mustBeNumeric}
+                n_y (1, 1) {mustBeNumeric}
                 data_interface MD_Data_Interface
                 u_hyperparam_interface MD_u_Hyperparameter_Interface
             end
@@ -51,13 +51,13 @@ classdef MD_Transient_Prior_Covariance < handle
 
         function [] = Compute_Time_Covariance_GEVP(this)
             A = diag(sqrt(this.alpha_t)) * this.E_t * diag(sqrt(this.alpha_t));
-            [V,Lambda] = eig(A,this.M_t, 'vector');
-            [~,I] = sort(Lambda,'ascend');
+            [V, Lambda] = eig(A, this.M_t, 'vector');
+            [~, I] = sort(Lambda, 'ascend');
             Lambda = Lambda(I);
-            V = V(:,I);
+            V = V(:, I);
             n = sqrt(diag(V' * this.M_t * V));
-            this.evecs = V * diag(1 ./ n) * diag(sign(V(1,:)));
-            this.evals = 1./Lambda;
+            this.evecs = V * diag(1 ./ n) * diag(sign(V(1, :)));
+            this.evals = 1 ./ Lambda;
         end
 
     end

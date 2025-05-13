@@ -34,5 +34,5 @@ function correlation_length = Compute_Correlation_Length_1D(x, u, initial_guess)
     end
 
     correlation_length = xl(index + 1) - xl(1);
-    
+
 end

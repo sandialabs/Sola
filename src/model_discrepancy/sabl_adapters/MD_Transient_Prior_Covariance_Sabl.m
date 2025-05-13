@@ -10,9 +10,9 @@ classdef MD_Transient_Prior_Covariance_Sabl < MD_Transient_Prior_Covariance
             arguments
                 data_interface MD_Data_Interface
                 u_hyperparam_interface MD_u_Hyperparameter_Interface
-                T (1,1) double
-                n_t (1,1) double
-                n_y (1,1) double
+                T (1, 1) double
+                n_t (1, 1) double
+                n_y (1, 1) double
             end
             h = T / (n_t - 1);
 

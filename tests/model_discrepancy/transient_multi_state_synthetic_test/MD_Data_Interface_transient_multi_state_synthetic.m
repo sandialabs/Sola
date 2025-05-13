@@ -32,12 +32,12 @@ classdef MD_Data_Interface_transient_multi_state_synthetic < MD_Data_Interface
 
             D = zeros(2 * this.n_y * this.n_t, 2);
             for k = 1:2
-                u1 = kron(this.c_low.^(0:(this.n_t - 1))', (Z(:,k)).^3);
+                u1 = kron(this.c_low.^(0:(this.n_t - 1))', (Z(:, k)).^3);
                 u2 = this.c_low * u1;
                 u_tmp = [reshape(u1, 50, 10); reshape(u2, 50, 10)];
                 u_lofi = u_tmp(:);
 
-                u1 = kron(this.c_high.^(0:(this.n_t - 1))', (Z(:,k)).^3);
+                u1 = kron(this.c_high.^(0:(this.n_t - 1))', (Z(:, k)).^3);
                 u2 = this.c_high * u1;
                 u_tmp = [reshape(u1, 50, 10); reshape(u2, 50, 10)];
                 u_hifi = u_tmp(:);

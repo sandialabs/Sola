@@ -4,7 +4,7 @@ addpath(genpath('../../../src'));
 rng(132253);
 
 n_y = 100;
-n_t = 51;
+n_t = 31;
 T = 1;
 n_z = n_y;
 obj = Adv_Diff_Objective(n_y, n_z, T, n_t);

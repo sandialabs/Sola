@@ -37,11 +37,11 @@ classdef MD_Determine_z_Hyperparameters < handle
             I = find(evals < 1.e-3);
             rank = length(evals);
             if ~isempty(I)
-                rank = I(1)-1;
+                rank = I(1) - 1;
             end
             evals = evals(1:rank);
             samples = 1000;
-            nu = randn(rank,samples)';
+            nu = randn(rank, samples)';
             nu = nu.^2;
             tmp = mean((nu * evals.^4) ./ (nu * evals.^2));
 
@@ -110,7 +110,7 @@ classdef MD_Determine_z_Hyperparameters < handle
             end
 
             if strcmp(this.z_type, 'vector')
-                e = ones(length(this.data_interface.z_opt),1);
+                e = ones(length(this.data_interface.z_opt), 1);
             end
         end
 

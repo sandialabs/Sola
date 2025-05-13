@@ -3,7 +3,7 @@ clear;
 close all;
 clc;
 run('../../src/Set_Paths');
-rng(13424)
+rng(13424);
 
 suppress_figures = false;
 
@@ -40,9 +40,9 @@ u_prior_interface = MD_Multi_State_u_Prior_Interface(data_interface, u_prior_int
 
 %%
 num_state_solves = 50;
-z_hyperparam_interface = MD_z_Hyperparameter_Interface_Transient_ADR_2D(num_state_solves,opt,basis1,basis2);
+z_hyperparam_interface = MD_z_Hyperparameter_Interface_Transient_ADR_2D(num_state_solves, opt, basis1, basis2);
 
-h = t(2)-t(1);
+h = t(2) - t(1);
 m = n_t - 1;
 M_t = diag(4 * ones(1, m)) + diag(ones(1, m - 1), 1) + diag(ones(1, m - 1), -1);
 M_t(1, 1) = .5 * M_t(1, 1);
@@ -56,31 +56,31 @@ z_prior_interface = MD_Transient_Vector_z_Prior_Interface(S_t, M_t, n_q, data_in
 
 %%
 % Hyper-parameter adjustments
-u_prior_interface.u_prior_interface_cell{2}.u_hyperparam_interface.Set_beta_u(25*u_prior_interface.u_prior_interface_cell{2}.u_hyperparam_interface.beta_u);
-z_prior_interface.z_hyperparam_interface.Set_beta_t(16*z_prior_interface.z_hyperparam_interface.beta_t);
+u_prior_interface.u_prior_interface_cell{2}.u_hyperparam_interface.Set_beta_u(25 * u_prior_interface.u_prior_interface_cell{2}.u_hyperparam_interface.beta_u);
+z_prior_interface.z_hyperparam_interface.Set_beta_t(16 * z_prior_interface.z_hyperparam_interface.beta_t);
 
 %%
 % Uncomment the code below to test hyper-parameter values
-%num_prior_samples = 50;
-%md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
+% num_prior_samples = 50;
+% md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 
 %%
-%md_prior_sampling.Generate_Prior_Discrepancy_z_opt_Sample_Data(num_prior_samples);
-%md_prior_vis = MD_Prior_Visualization(md_prior_sampling);
-%md_prior_vis.Visualization_for_Prior_Time_Evolution(1,false);
-%md_prior_vis.Visualization_for_Prior_Time_Evolution(2,false);
-%md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_opt(1);
-%md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_opt(2);
+% md_prior_sampling.Generate_Prior_Discrepancy_z_opt_Sample_Data(num_prior_samples);
+% md_prior_vis = MD_Prior_Visualization(md_prior_sampling);
+% md_prior_vis.Visualization_for_Prior_Time_Evolution(1,false);
+% md_prior_vis.Visualization_for_Prior_Time_Evolution(2,false);
+% md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_opt(1);
+% md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_opt(2);
 
-%md_prior_vis.md_prior_sampling.z_pert_subsample_factor = 20;
-%md_prior_vis.md_prior_sampling.Generate_Prior_Discrepancy_z_pert_Sample_Data(num_prior_samples);
-%md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_pert(1);
-%md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_pert(2);
+% md_prior_vis.md_prior_sampling.z_pert_subsample_factor = 20;
+% md_prior_vis.md_prior_sampling.Generate_Prior_Discrepancy_z_pert_Sample_Data(num_prior_samples);
+% md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_pert(1);
+% md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_pert(2);
 
 %%
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 
-alpha_d = mean([u_prior_interface.u_prior_interface_cell{1}.u_hyperparam_interface.alpha_d,u_prior_interface.u_prior_interface_cell{2}.u_hyperparam_interface.alpha_d]);
+alpha_d = mean([u_prior_interface.u_prior_interface_cell{1}.u_hyperparam_interface.alpha_d, u_prior_interface.u_prior_interface_cell{2}.u_hyperparam_interface.alpha_d]);
 alpha_d = (1.e-1) * alpha_d;
 num_post_samples = 50;
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
@@ -145,4 +145,4 @@ u_update_mean = utmp(:);
 obj_update_mean = obj_hifi.J(u_update_mean, z_update_mean);
 
 %%
-%save('MD_Results.mat', 'z_lofi', 'z_update_mean', 'z_update_samples', 'Y_lofi', 'Y_update_mean');
+% save('MD_Results.mat', 'z_lofi', 'z_update_mean', 'z_update_samples', 'Y_lofi', 'Y_update_mean');

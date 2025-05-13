@@ -24,7 +24,7 @@ classdef MD_Multi_State_u_Hyperparameter_Interface < MD_u_Hyperparameter_Interfa
             arguments
                 u_hyperparam_interface_cell {cell, Must_Be_Cell_of_MD_u_Hyperparameter_Interface}
             end
-            this@MD_u_Hyperparameter_Interface(u_hyperparam_interface_cell{1}.is_transient, u_hyperparam_interface_cell{1}.center_data, u_hyperparam_interface_cell{1}.adapt_time_variance, 0)
+            this@MD_u_Hyperparameter_Interface(u_hyperparam_interface_cell{1}.is_transient, u_hyperparam_interface_cell{1}.center_data, u_hyperparam_interface_cell{1}.adapt_time_variance, 0);
             this.u_hyperparam_interface_cell = u_hyperparam_interface_cell;
         end
 

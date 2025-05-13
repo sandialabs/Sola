@@ -32,10 +32,10 @@ num_prior_samples = 100;
 md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 md_prior_sampling.Generate_Prior_Discrepancy_Sample_Data(num_prior_samples);
 
-%md_prior_vis = MD_Prior_Visualization(md_prior_sampling);
-%md_prior_vis.Visualization_for_Prior_Time_Evolution(1, true);
-%md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_opt(1);
-%md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_pert(1);
+% md_prior_vis = MD_Prior_Visualization(md_prior_sampling);
+% md_prior_vis.Visualization_for_Prior_Time_Evolution(1, true);
+% md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_opt(1);
+% md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_pert(1);
 
 %%
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
@@ -47,7 +47,7 @@ md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 num_evals = 30;
 oversampling = 9;
-md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt,num_evals,oversampling);
+md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
 md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
@@ -55,9 +55,9 @@ md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 %%
 % save('reference_solution.mat','z_hyperparam_interface','md_hessian_analysis')
 ref = load('reference_solution.mat');
-ref_diff = norm(z_hyperparam_interface.alpha_z-ref.z_hyperparam_interface.alpha_z);
-ref_diff = min(ref_diff,norm(z_hyperparam_interface.beta_t-ref.z_hyperparam_interface.beta_t));
-ref_diff = min(ref_diff,norm(md_hessian_analysis.evals-ref.md_hessian_analysis.evals));
+ref_diff = norm(z_hyperparam_interface.alpha_z - ref.z_hyperparam_interface.alpha_z);
+ref_diff = min(ref_diff, norm(z_hyperparam_interface.beta_t - ref.z_hyperparam_interface.beta_t));
+ref_diff = min(ref_diff, norm(md_hessian_analysis.evals - ref.md_hessian_analysis.evals));
 
 if ref_diff > 1.e-9
     disp('model_discrepancy_sythetic_test difference:');

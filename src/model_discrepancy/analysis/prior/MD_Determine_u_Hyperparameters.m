@@ -70,7 +70,7 @@ classdef MD_Determine_u_Hyperparameters < handle
 
             correlation_lengths = zeros(N, 1);
             for i = 1:N
-                di = mean(reshape(this.data_interface.D(I, i), n_y, n_t),2);
+                di = mean(reshape(this.data_interface.D(I, i), n_y, n_t), 2);
                 correlation_lengths(i) = corr_len_fun(nodes, di, initial_guess);
                 initial_guess = correlation_lengths(i);
             end

@@ -11,7 +11,7 @@ if update_python
     update_python = true;
 end
 
-suppress_figures = false; %true;
+suppress_figures = false; % true;
 
 m = 51;
 x = linspace(0, 1, m)';
@@ -43,14 +43,14 @@ if update_python
     py.importlib.reload(mod);
 end
 u_hyperparam_interface_python = mod.MD_u_Hyperparameter_Interface_Python_synthetic_test(m);
-u_hyperparam_interface  = MD_u_Hyperparameter_Interface_Py(u_hyperparam_interface_python,false);
+u_hyperparam_interface  = MD_u_Hyperparameter_Interface_Py(u_hyperparam_interface_python, false);
 
 mod = py.importlib.import_module('MD_z_Hyperparameter_Interface_Python_synthetic_test');
 if update_python
     py.importlib.reload(mod);
 end
 z_hyperparam_interface_python = mod.MD_z_Hyperparameter_Interface_Python_synthetic_test(m);
-z_hyperparam_interface  = MD_z_Hyperparameter_Interface_Py(z_hyperparam_interface_python,'spatial field',100);
+z_hyperparam_interface  = MD_z_Hyperparameter_Interface_Py(z_hyperparam_interface_python, 'spatial field', 100);
 
 u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface);
 z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S, M, data_interface, z_hyperparam_interface, u_prior_interface);

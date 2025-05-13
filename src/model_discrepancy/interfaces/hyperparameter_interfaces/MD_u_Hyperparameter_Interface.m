@@ -45,7 +45,7 @@ classdef MD_u_Hyperparameter_Interface < handle
                 is_transient {boolean}
                 center_data {boolean} = false
                 adapt_time_variance {boolean} = false
-                component_id (1,1) {mustBeNumeric} = 1
+                component_id (1, 1) {mustBeNumeric} = 1
             end
 
             this.is_transient = is_transient;

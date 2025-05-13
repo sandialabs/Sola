@@ -1,4 +1,4 @@
-classdef MD_z_Hyperparameter_Interface_synthetic_test_control_vec < MD_z_Hyperparameter_Interface 
+classdef MD_z_Hyperparameter_Interface_synthetic_test_control_vec < MD_z_Hyperparameter_Interface
 
     properties
         x
@@ -10,7 +10,7 @@ classdef MD_z_Hyperparameter_Interface_synthetic_test_control_vec < MD_z_Hyperpa
             u = z(1) + z(2) * this.x;
         end
 
-        function this = MD_z_Hyperparameter_Interface_synthetic_test_control_vec(num_state_solves,m)
+        function this = MD_z_Hyperparameter_Interface_synthetic_test_control_vec(num_state_solves, m)
             this@MD_z_Hyperparameter_Interface('vector', num_state_solves);
             this.x = linspace(0, 1, m)';
         end

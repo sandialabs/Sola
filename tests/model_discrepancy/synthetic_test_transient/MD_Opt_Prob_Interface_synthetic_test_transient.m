@@ -21,26 +21,26 @@ classdef MD_Opt_Prob_Interface_synthetic_test_transient < MD_Opt_Prob_Interface
         end
 
         function [z_out] = Apply_RS_Hessian(this, z_in, z)
-            tmp1 = (this.c_low^(this.n_t-1)) * 3 * diag(z.^2) * z_in;
+            tmp1 = (this.c_low^(this.n_t - 1)) * 3 * diag(z.^2) * z_in;
             tmp2 = this.M * tmp1;
-            z_out = (this.c_low^(this.n_t-1)) * 3 * diag(z.^2) * tmp2;
+            z_out = (this.c_low^(this.n_t - 1)) * 3 * diag(z.^2) * tmp2;
         end
 
         function [grad_u] = Misfit_Gradient(this, u, z)
             grad_u = 0 * u;
-            grad_u(((this.n_t-1)*this.n_y+1):end) = this.M * (u(((this.n_t-1)*this.n_y+1):end) - (this.c_low^(this.n_t-1))*(1 + this.x).^3);
+            grad_u(((this.n_t - 1) * this.n_y + 1):end) = this.M * (u(((this.n_t - 1) * this.n_y + 1):end) - (this.c_low^(this.n_t - 1)) * (1 + this.x).^3);
         end
 
         function [u_out] = Apply_Misfit_Hessian(this, u_in, u, z)
             u_out = 0 * u_in;
-            u_out(((this.n_t-1)*this.n_y+1):end,:) = this.M * u_in(((this.n_t-1)*this.n_y+1):end,:);
+            u_out(((this.n_t - 1) * this.n_y + 1):end, :) = this.M * u_in(((this.n_t - 1) * this.n_y + 1):end, :);
         end
 
     end
 
     methods
 
-        function this = MD_Opt_Prob_Interface_synthetic_test_transient(n_y,n_t,T,c_low)
+        function this = MD_Opt_Prob_Interface_synthetic_test_transient(n_y, n_t, T, c_low)
             this.n_y = n_y;
             this.n_t = n_t;
             this.c_low = c_low;

@@ -55,9 +55,9 @@ classdef MD_Transient_Vector_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
 
         function this = MD_Transient_Vector_z_Prior_Interface(S, M, num_controls, data_interface, z_hyperparam_interface, u_prior_interface)
             arguments
-                S (:,:) {mustBeNumeric}
-                M (:,:) {mustBeNumeric}
-                num_controls (1,1) {mustBeNumeric}
+                S (:, :) {mustBeNumeric}
+                M (:, :) {mustBeNumeric}
+                num_controls (1, 1) {mustBeNumeric}
                 data_interface MD_Data_Interface
                 z_hyperparam_interface MD_z_Hyperparameter_Interface
                 u_prior_interface MD_u_Prior_Interface
