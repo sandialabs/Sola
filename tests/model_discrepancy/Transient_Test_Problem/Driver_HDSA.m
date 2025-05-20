@@ -3,6 +3,11 @@ close all;
 addpath(genpath('../../../src'));
 rng(132253);
 
+random_numbers = randn(10^6, 1);
+writematrix(random_numbers, 'random_numbers.txt');
+
+rng(132253);
+
 n_y = 50;
 n_t = 11;
 T = 1;
@@ -21,11 +26,17 @@ data_interface = MD_Data_Interface_Transient_Test_Problem();
 data_interface.Load_Data();
 opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
 
-u_hyperparam_interface = MD_u_Hyperparameter_Interface_Transient_Test_Problem(x, t);
+writematrix(data_interface.u_opt, 'u_opt.txt');
+writematrix(data_interface.z_opt, 'z_opt.txt');
+writematrix(data_interface.D, 'D.txt');
+writematrix(data_interface.Z, 'Z.txt');
+
+adapt_time_variance = true;
+u_hyperparam_interface = MD_u_Hyperparameter_Interface_Transient_Test_Problem(x, t, adapt_time_variance);
 u_hyperparam_interface.alpha_u = 1;
-% u_hyperparam_interface.beta_u = .006;
-% u_hyperparam_interface.beta_t = .027;
-% u_hyperparam_interface.alpha_d = 1e-9;
+u_hyperparam_interface.beta_u = .009;
+u_hyperparam_interface.beta_t = .026;
+u_hyperparam_interface.alpha_d = 2e-6;
 u_hyperparam_interface.gsvd_num_sing_vals = 50;
 u_hyperparam_interface.gsvd_oversampling = 0;
 u_hyperparam_interface.gsvd_num_subspace_iter = 1;
@@ -35,14 +46,19 @@ transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyper
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_u_prior_interface, transient_prior_cov);
 
 z_hyperparam_interface = MD_z_Hyperparameter_Interface_Transient_Test_Problem(x, con);
-z_hyperparam_interface.alpha_z = .1;
-% z_hyperparam_interface.beta_z = .006;
+z_hyperparam_interface.alpha_z = .7;
+z_hyperparam_interface.beta_z = .004;
 z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(con.S, con.M, data_interface, z_hyperparam_interface, u_prior_interface);
 
 %%
 num_prior_samples = 100;
 md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
-delta_prior_samples_zopt = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
+md_prior_viz = MD_Prior_Visualization(md_prior_sampling);
+md_prior_sampling.Generate_Prior_Discrepancy_z_opt_Sample_Data(num_prior_samples);
+md_prior_sampling.Generate_Prior_Discrepancy_z_pert_Sample_Data();
+%md_prior_viz.Visualization_for_Prior_Time_Evolution(1,false);
+%md_prior_viz.Visualization_for_Prior_Discrepancy_at_z_opt(1);
+%md_prior_viz.Visualization_for_Prior_Discrepancy_at_z_pert(1);
 
 %%
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
