@@ -3,8 +3,8 @@ close all;
 addpath(genpath('../../../src'));
 rng(132253);
 
-n_y = 100;
-n_t = 31;
+n_y = 50;
+n_t = 11;
 T = 1;
 n_z = n_y;
 obj = Adv_Diff_Objective(n_y, n_z, T, n_t);
@@ -22,7 +22,7 @@ u_hyperparam_interface.beta_t = 11;
 transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface, T, n_t, n_y);
 opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
 u_hyperparam_interface.alpha_u = 1.e-2;
-num_sing_vals = 100;
+num_sing_vals = 50;
 spatial_u_prior_interface = MD_Elliptic_u_Prior_Interface_Transient_Test_Problem(u_hyperparam_interface.alpha_u, opt, num_sing_vals);
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_u_prior_interface, transient_prior_cov);
 

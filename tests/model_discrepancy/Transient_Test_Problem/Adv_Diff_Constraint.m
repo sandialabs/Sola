@@ -10,9 +10,9 @@ classdef Adv_Diff_Constraint < Dynamic_Constraint
 
         function [f, f_y, f_z] = f(this, y, z, t)
             % Evaluate the RHS and its derivatives.
-            f = linsolve(this.M, -this.A * y + this.M * z);
+            f = linsolve(this.M, -this.A * y + (1.e2) * this.M * z);
             f_y = linsolve(this.M, -this.A);
-            f_z = eye(this.n_y);
+            f_z = (1.e2) * eye(this.n_y);
         end
 
         function [h, h_z] = h(this, z)

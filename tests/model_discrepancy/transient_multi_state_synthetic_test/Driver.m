@@ -4,7 +4,7 @@ close all;
 addpath(genpath('../../../src'));
 rng(121234);
 
-suppress_figures = false; % true;
+suppress_figures = true;
 
 n_y = 50;
 n_t = 10;
