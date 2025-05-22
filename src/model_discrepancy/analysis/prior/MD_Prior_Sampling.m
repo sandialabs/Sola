@@ -45,22 +45,37 @@ classdef MD_Prior_Sampling < handle
             this.z_pert_subsample_factor = 1;
         end
 
-        function [] = Generate_Prior_Discrepancy_Sample_Data(this, num_samps)
-            this.Generate_Prior_Discrepancy_z_opt_Sample_Data(num_samps);
-            this.Generate_Prior_Discrepancy_z_pert_Sample_Data();
+        function [] = Generate_Prior_Discrepancy_Sample_Data(this, num_samps, econ)
+            if nargin < 3
+                econ = false;
+            end
+            this.Generate_Prior_Discrepancy_z_opt_Sample_Data(num_samps, econ);
+            this.Generate_Prior_Discrepancy_z_pert_Sample_Data(econ);
         end
 
-        function [] = Generate_Prior_Discrepancy_z_opt_Sample_Data(this, num_samps)
+        function [] = Generate_Prior_Discrepancy_z_opt_Sample_Data(this, num_samps, econ)
+            if nargin < 3
+                econ = false;
+            end
+
             this.delta_samples_z_opt = this.u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samps)  + this.data_interface.data_shift;
-            this.Compute_Delta_z_opt_Metrics();
+            if ~econ
+                this.Compute_Delta_z_opt_Metrics();
+            end
             if this.u_prior_interface.u_hyperparam_interface.is_transient
-                this.Compute_Temporal_Data();
+                this.Compute_Temporal_Data(econ);
             end
         end
 
-        function [] = Generate_Prior_Discrepancy_z_pert_Sample_Data(this)
-            this.Compute_z_pert_Data();
-            this.Compute_Delta_z_pert_Metrics();
+        function [] = Generate_Prior_Discrepancy_z_pert_Sample_Data(this,econ)
+            if nargin < 2
+                econ = false;
+            end
+
+            this.Compute_z_pert_Data(econ);
+            if ~econ
+                this.Compute_Delta_z_pert_Metrics();
+            end
         end
 
         function [delta_samples] = Prior_Discrepancy_Samples_at_z_opt(this, num_samps)
@@ -88,7 +103,11 @@ classdef MD_Prior_Sampling < handle
     %% Functions to compute data for prior visualization
     methods
 
-        function [] = Compute_Temporal_Data(this)
+        function [] = Compute_Temporal_Data(this,econ)
+            if nargin < 2
+                econ = false;
+            end
+
             num_components = length(this.delta_mag);
             if isempty(this.delta_z_opt_time_evol)
                 this.delta_z_opt_time_evol = cell(num_components, 1);
@@ -129,54 +148,110 @@ classdef MD_Prior_Sampling < handle
                 this.data_time_evol{1} = sqrt(diag(d' * tmp));
             end
 
-            this.temporal_mag = cell(num_components, 1);
-            this.temporal_corr_len = cell(num_components, 1);
-            for component_id = 1:num_components
-                this.temporal_corr_len{component_id} = zeros(num_samps, 1);
-                initial_guess = 0;
-                for i = 1:num_samps
-                    this.temporal_corr_len{component_id}(i) = Compute_Correlation_Length_1D(t, this.delta_z_opt_time_evol{component_id}(i, :), initial_guess);
-                    initial_guess = this.temporal_corr_len{component_id}(i);
+            if ~econ
+                this.temporal_mag = cell(num_components, 1);
+                this.temporal_corr_len = cell(num_components, 1);
+                for component_id = 1:num_components
+                    this.temporal_corr_len{component_id} = zeros(num_samps, 1);
+                    initial_guess = 0;
+                    for i = 1:num_samps
+                        this.temporal_corr_len{component_id}(i) = Compute_Correlation_Length_1D(t, this.delta_z_opt_time_evol{component_id}(i, :), initial_guess);
+                        initial_guess = this.temporal_corr_len{component_id}(i);
+                    end
+                    this.temporal_mag{component_id} = max(abs(this.delta_z_opt_time_evol{component_id}), [], 2);
                 end
-                this.temporal_mag{component_id} = max(abs(this.delta_z_opt_time_evol{component_id}), [], 2);
             end
         end
 
-        function [] = Compute_z_pert_Data(this)
+        function [] = Compute_z_pert_Data(this,econ)
 
-            if strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'vector')
-                this.z_pert = eye(this.z_prior_interface.n_z);
-                this.z_pert_evals = ones(this.z_prior_interface.n_z, 1);
-            else
-                e = this.z_prior_interface.determine_z_hyperparams.Compute_Eigenvalues(this.z_prior_interface);
-                num_perts_init = length(find(1 ./ e > .1));
-                if strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'transient vector')
-                    num_perts_init = this.z_prior_interface.num_controls * num_perts_init;
-                end
-                oversampling = min(10, length(this.data_interface.z_opt) - num_perts_init);
-                num_subspace_iters = 10;
-                E_z_inv_gsvd = E_z_Inv_GSVD(this.z_prior_interface, this.z_opt);
-                [this.z_pert, ~, this.z_pert_evals] = E_z_inv_gsvd.Compute_GSVD(num_perts_init, oversampling, num_subspace_iters);
-                while this.z_pert_evals(end) > .1
-                    num_perts_init = 2 * num_perts_init;
+            if nargin < 2
+                econ = false;
+            end
+
+            if ~econ
+
+                if strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'vector')
+                    this.z_pert = eye(this.z_prior_interface.n_z);
+                    this.z_pert_evals = ones(this.z_prior_interface.n_z, 1);
+                else
+                    e = this.z_prior_interface.determine_z_hyperparams.Compute_Eigenvalues(this.z_prior_interface);
+                    num_perts_init = length(find(1 ./ e > .1));
+                    if strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'transient vector')
+                        num_perts_init = this.z_prior_interface.num_controls * num_perts_init;
+                    end
                     oversampling = min(10, length(this.data_interface.z_opt) - num_perts_init);
+                    num_subspace_iters = 10;
+                    E_z_inv_gsvd = E_z_Inv_GSVD(this.z_prior_interface, this.z_opt);
                     [this.z_pert, ~, this.z_pert_evals] = E_z_inv_gsvd.Compute_GSVD(num_perts_init, oversampling, num_subspace_iters);
+                    while this.z_pert_evals(end) > .1
+                        num_perts_init = 2 * num_perts_init;
+                        oversampling = min(10, length(this.data_interface.z_opt) - num_perts_init);
+                        [this.z_pert, ~, this.z_pert_evals] = E_z_inv_gsvd.Compute_GSVD(num_perts_init, oversampling, num_subspace_iters);
+                    end
                 end
+
+                I = find(this.z_pert_evals > .1);
+                I = round(linspace(I(1), I(end), round(length(I) / this.z_pert_subsample_factor)));
+                this.z_pert = this.z_pert(:, I);
+                this.z_pert_evals = this.z_pert_evals(I);
+                scaling = .3 * sqrt(this.z_opt' * this.z_prior_interface.Apply_M_z(this.z_opt));
+                this.z_pert = scaling * this.z_pert;
+
+                num_perts = length(this.z_pert_evals);
+                num_samps = size(this.delta_samples_z_opt, 2);
+                this.delta_samples_z_pert = cell(num_perts, 1);
+                for k = 1:num_perts
+                    this.delta_samples_z_pert{k} = scaling * sqrt(this.z_prior_interface.alpha_z) * this.z_pert_evals(k) * this.u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samps);
+                end
+
+            else
+                if strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'spatial field')
+                    this.z_pert = zeros(length(this.z_opt),2);
+                    this.z_pert_evals = zeros(2,1);
+                    scaling = .3 * sqrt(this.z_opt' * this.z_prior_interface.Apply_M_z(this.z_opt));
+
+                    v = 0*this.z_opt + 1;
+                    tmp = sqrt(v' * this.z_prior_interface.Apply_M_z(v));
+                    this.z_pert(:,1) = (scaling/tmp) * v;
+                    this.z_pert_evals(1) = 1;
+
+                    x = this.z_prior_interface.z_hyperparam_interface.x;
+                    n = size(x,2);
+                    L = zeros(n,1);
+                    for k = 1:n
+                        x0 = min(x(:,k));
+                        x1 = max(x(:,k));
+                        L(k) = x1-x0;
+                        x(:,k) = 2*pi*(x(:,k)-x0)/(x1-x0);
+                    end
+
+                    if n == 1
+                        omega = round( (3/(2*pi)) * (L(1)/sqrt(this.z_prior_interface.beta_z)) );
+                        v = cos(omega * x);
+                    elseif n == 2
+                        omega = round( (3/(2*pi)) * (1/sqrt(this.z_prior_interface.beta_z)) / sqrt(1/L(1)^2 + 1/L(2)^2) );
+                        v = cos(omega*x(:,1)).*cos(omega*x(:,2));
+                    elseif n == 3
+                        omega = round( (3/(2*pi)) * (1/sqrt(this.z_prior_interface.beta_z)) / sqrt(1/L(1)^2 + 1/L(2)^2 + 1/L(3)^2) );
+                        v = cos(omega*x(:,1)).*cos(omega*x(:,2)).*cos(omega*x(:,3));
+                    end
+                    tmp = sqrt(v' * this.z_prior_interface.Apply_M_z(v));
+                    v = v/tmp;
+                    this.z_pert(:,2) = scaling * v;
+                    this.z_pert_evals(2) = 1/(v'*this.z_prior_interface.Apply_E_z(v));
+
+                    num_samps = size(this.delta_samples_z_opt, 2);
+                    this.delta_samples_z_pert = cell(2, 1);
+                    for k = 1:2
+                        this.delta_samples_z_pert{k} = scaling * sqrt(this.z_prior_interface.alpha_z) * this.z_pert_evals(k) * this.u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samps);
+                    end
+                else
+                    disp('Need to implement econ mode for z_type = "vector"')
+                end
+
             end
 
-            I = find(this.z_pert_evals > .1);
-            I = round(linspace(I(1), I(end), round(length(I) / this.z_pert_subsample_factor)));
-            this.z_pert = this.z_pert(:, I);
-            this.z_pert_evals = this.z_pert_evals(I);
-            scaling = .3 * sqrt(this.z_opt' * this.z_prior_interface.Apply_M_z(this.z_opt));
-            this.z_pert = scaling * this.z_pert;
-
-            num_perts = length(this.z_pert_evals);
-            num_samps = size(this.delta_samples_z_opt, 2);
-            this.delta_samples_z_pert = cell(num_perts, 1);
-            for k = 1:num_perts
-                this.delta_samples_z_pert{k} = scaling * sqrt(this.z_prior_interface.alpha_z) * this.z_pert_evals(k) * this.u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samps);
-            end
         end
 
         function [] = Compute_Delta_z_opt_Metrics(this)
@@ -215,6 +290,7 @@ classdef MD_Prior_Sampling < handle
         end
 
         function Compute_Delta_z_pert_Metrics(this)
+
             num_components = length(this.delta_mag);
             num_perts = size(this.z_pert, 2);
 
