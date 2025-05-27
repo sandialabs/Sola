@@ -48,7 +48,7 @@ md_oed = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_i
 md_oed.Offline_Computation();
 
 % Set Parameters for OED
-N = 100;
+N = 5;
 rng(0);
 beta_0 = randn(num_evals * (N - 1), 1);
 alpha_d = 1.e-4;
@@ -83,6 +83,13 @@ fprintf("\n\n");
 fprintf("\nError of Lo-Fi Control: \t" + oed_z_error_fn(z_lofi));
 fprintf("\nError of Updated Control: \t" + oed_z_error_fn(z_update_mean));
 
+% % Additional
+% fprintf("\nAdditional (at Lo-Fi objective)...")
+% fprintf("\nObjective Value of Hi-Fi Control: \t" + opt_lofi.Jhat(z_hifi));
+% fprintf("\nObjective Value of Lo-Fi Control: \t" + opt_lofi.Jhat(z_lofi));
+% fprintf("\nComparison S(z_lofi): " + abs(opt_hifi.Jhat(z_lofi)/opt_hifi.Jhat(z_hifi)-1))
+% fprintf("\nComparison S_tilde(z_hifi): " + abs(opt_lofi.Jhat(z_hifi)/opt_lofi.Jhat(z_lofi)-1))
+
 % Comparison of Lo-Fi and Hi-Fi Control Solutions
 % figure;
 % hold on;
@@ -97,20 +104,20 @@ fprintf("\nError of Updated Control: \t" + oed_z_error_fn(z_update_mean));
 % % figure;
 % % plot(x, z_prior_samples)
 % Comparison of Lo-Fi and Hi-Fi State Solutions
-figure;
-hold on;
-plot(x, con_hifi.State_Solve(z_lofi), "r-", "DisplayName", "Lo-Fi Sol.");
-plot(x, con_hifi.State_Solve(z_hifi), "k--", "DisplayName", "Hi-Fi Sol.");
-plot(x, con_hifi.State_Solve(z_update_mean), "b-", "DisplayName", "Updated Sol.");
-% plot(x, obj.T, "DisplayName", "Target");
-title("States for Lo-Fi & Hi-Fi Controls");
-legend("Location", "best");
+% figure;
+% hold on;
+% plot(x, con_hifi.State_Solve(z_lofi), "r-", "DisplayName", "Lo-Fi Sol.");
+% plot(x, con_hifi.State_Solve(z_hifi), "k--", "DisplayName", "Hi-Fi Sol.");
+% plot(x, con_hifi.State_Solve(z_update_mean), "b-", "DisplayName", "Updated Sol.");
+% % plot(x, obj.T, "DisplayName", "Target");
+% title("States for Lo-Fi & Hi-Fi Controls");
+% legend("Location", "best");
 
-figure;
-hold on;
-plot(x, z_lofi, "r-", "DisplayName", "Lo-Fi Sol.");
-plot(x, z_hifi, "k--", "DisplayName", "Hi-Fi Sol.");
-plot(x, z_update_mean, "b-", "DisplayName", "Updated Sol.");
-% plot(x, obj.T, "DisplayName", "Target");
-title("Lo-Fi & Hi-Fi Controls");
-legend("Location", "best");
+% figure;
+% hold on;
+% plot(x, z_lofi, "r-", "DisplayName", "Lo-Fi Sol.");
+% plot(x, z_hifi, "k--", "DisplayName", "Hi-Fi Sol.");
+% plot(x, z_update_mean, "b-", "DisplayName", "Updated Sol.");
+% % plot(x, obj.T, "DisplayName", "Target");
+% title("Lo-Fi & Hi-Fi Controls");
+% legend("Location", "best");

@@ -7,8 +7,8 @@ set(0, "DefaultAxesFontSize", 20);
 set(0, "DefaultLineLineWidth", 3);
 set(0, "DefaultLineMarkerSize", 20);
 
-show_figures = true;
-save_figures = true;
+show_figures = false;
+save_figures = false;
 
 % Retrieve Model Parameters (D, Z, diff/reg/react_coeff, m, u_lofi, z_hifi/lofi; remove Z and D though)
 load Optimization_Results.mat;
@@ -23,7 +23,7 @@ opt_hifi = Reduced_Space_Optimization(obj, con_hifi);
 x = con_lofi.x;
 
 % Show initial objective
-fprintf("\nStep 0:\n-------------");
+fprintf("\nStep 0:\n-------------\n");
 Jhat_lofi = opt_hifi.Jhat(z_lofi);
 Jhat_hifi = opt_hifi.Jhat(z_hifi);
 fprintf('Objective of z_lofi: \t%.3f\n', Jhat_lofi);
@@ -75,7 +75,7 @@ if show_figures
 end
 
 %% Iterate for each data point
-N = 5;
+N = 10;
 Jhat_oed = zeros(N, 1);
 oed_z_error = zeros(N, 1);
 Z = [];
@@ -108,10 +108,10 @@ for p = 1:N
     D = [D D_p];
     data_interface.Set_Z_and_D(Z, D);
 
-    % New Idea: revert z_opt (prior term) to spafffffn of Z
-    z_h = project_to_Z(Z, z_bar);
+    % New Idea: revert z_opt (prior term) to span of Z
+    % z_h = project_to_Z(Z, z_bar);
     % disp(norm(z_bar - z_h))
-    data_interface.Update_z_opt(z_h);
+    data_interface.Update_z_opt(z_bar);
 
     % Perform Posterior Sampling (TODO: Avoid recomputing computed data points)
     md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
@@ -165,7 +165,7 @@ if show_figures
     xlim([0 N]);
     yline(Jhat_hifi, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
     yline(Jhat_lofi, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
-    plot(0:N, [Jhat_lofi; old_oed(1:N)], ".-", "Color", "#1F618D", "DisplayName", "Ensemble");
+    % plot(0:N, [Jhat_lofi; old_oed(1:N)], ".-", "Color", "#1F618D", "DisplayName", "Ensemble");
     plot(0:N, [Jhat_lofi; Jhat_oed], ".-", "Color", "#00C83A", "DisplayName", "Sequential");
     xlabel("Evaluations ($N$)", "Interpreter", "latex");
     ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");

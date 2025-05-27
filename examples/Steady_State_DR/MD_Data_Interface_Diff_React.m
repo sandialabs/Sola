@@ -54,6 +54,7 @@ classdef MD_Data_Interface_Diff_React < MD_Data_Interface
 
             if isempty(this.z_opt)
                 this.z_opt = this.z_init;
+                this.u_opt = this.u_init;
             end
         end
 
