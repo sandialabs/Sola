@@ -10,7 +10,7 @@ set(0, "DefaultAxesFontSize", 20);
 set(0, "DefaultLineLineWidth", 3);
 set(0, "DefaultLineMarkerSize", 20);
 
-show_figures = true;
+show_figures = false;
 save_figures = false;
 
 % Retrieve Model Parameters (D, Z, diff/reg/react_coeff, m, u_lofi, z_hifi/lofi; remove Z and D though)
@@ -26,7 +26,7 @@ opt_lofi = Reduced_Space_Optimization(obj, con_lofi);
 x = con_lofi.x;
 
 % Show initial objective
-fprintf("\nStep 0:\n-------------");
+fprintf("\nStep 0:\n-------------\n");
 Jhat_lofi = opt_hifi.Jhat(z_lofi);
 Jhat_hifi = opt_hifi.Jhat(z_hifi);
 fprintf('Objective of z_lofi: \t%.3f\n', Jhat_lofi);
@@ -152,13 +152,20 @@ for p = 1:N
 end
 
 % Plot Objective Function over N
+show_figures = true;
 if show_figures
     figure;
     hold on;
     xlim([0 N]);
     yline(Jhat_hifi, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
     yline(Jhat_lofi, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
-    % plot(0:N, [Jhat_lofi; old_oed(1:N)], ".-", "Color", "#1F618D", "DisplayName", "Standard OED")
+    try
+        plot(0:N, [Jhat_lofi; old_oed(1:N)], ".-", "Color", "#1F618D", "DisplayName", "Standard OED");
+    catch ME
+        if ~strcmp(ME.identifier, 'MATLAB:UndefinedFunction')
+            rethrow(ME);
+        end
+    end
     plot(0:N, [Jhat_lofi; Jhat_oed], ".-", "Color", "#00C83A", "DisplayName", "Sequential OED");
     xlabel("Evaluations ($N$)", "Interpreter", "latex");
     ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");

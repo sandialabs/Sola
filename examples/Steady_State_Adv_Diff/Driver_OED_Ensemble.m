@@ -24,8 +24,8 @@ z_prior_interface = MD_Elliptic_z_Prior_Interface_Diff(alpha_z, opt_lofi);
 %% Hessian analysis
 opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
-num_evals = 20;
-oversampling = 10;
+num_evals = 4;
+oversampling = 20;
 md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
 
 %% OED
@@ -36,7 +36,7 @@ md_oed = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_i
 md_oed.Offline_Computation();
 
 samps_per_N = 5;
-N_range = (2:4)';
+N_range = (2:6)';
 p = length(N_range);
 
 oed_beta_samps = cell(p, samps_per_N);
