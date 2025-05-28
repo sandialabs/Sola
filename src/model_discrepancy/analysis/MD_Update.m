@@ -80,6 +80,32 @@ classdef MD_Update < handle
             z_update_mean = this.z_init + z_pert;
         end
 
+        function [post_mean_theta] = Posterior_Theta_Mean_Temp(this)
+
+            N = this.md_post_sampling.post_data.N;
+            Z = this.md_post_sampling.post_data.Z;
+            z_opt = this.md_post_sampling.post_data.z_opt;
+
+            % Compute posterior mean theta
+            m = length(this.u_init);
+            n = length(this.z_init);
+            post_mean_theta = zeros(m * (n + 1), 1);
+            for ell = 1:N
+                a_ell = this.md_post_sampling.post_data.a_ell(ell);
+                u_ell = this.md_post_sampling.post_data.u_ell(:, ell);
+                post_mean_theta = post_mean_theta + [a_ell * u_ell; kron(u_ell, this.md_post_sampling.z_prior_interface.Apply_M_z_Inverse(this.md_post_sampling.z_prior_interface.Apply_W_z_Inverse(Z(:, ell) - z_opt)))];
+                for i = 1:N
+                    u_i_ell = this.md_post_sampling.post_data.u_i_ell{i}(:, ell);
+                    b_i_ell = this.md_post_sampling.post_data.b_i_ell(i, ell);
+                    W_z_inv_y_i = this.md_post_sampling.post_data.W_z_inv_Z * this.md_post_sampling.post_data.g_vecs(:, i) - sum(this.md_post_sampling.post_data.g_vecs(:, i)) * this.md_post_sampling.post_data.W_z_inv_z_opt;
+                    s_i = sum(this.md_post_sampling.post_data.g_vecs(:, i)) - W_z_inv_y_i' * z_opt;
+                    post_mean_theta = post_mean_theta - b_i_ell * [s_i * u_i_ell; kron(u_i_ell, this.md_post_sampling.z_prior_interface.Apply_M_z_Inverse(W_z_inv_y_i))];
+                end
+            end
+
+            post_mean_theta = (1 / this.md_post_sampling.post_data.alpha_d) * post_mean_theta;
+        end
+
     end
 
 end

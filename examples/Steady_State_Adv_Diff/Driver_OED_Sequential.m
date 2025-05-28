@@ -38,7 +38,7 @@ data_interface = MD_Data_Interface_Diff(u_lofi, z_lofi);
 % Generate Priors for u and z
 alpha_u = (1 / 2)^2;
 alpha_z = (1 / 100)^2;
-alpha_d = 1.e-3;
+alpha_d = 1.e-2;
 u_prior_interface = MD_Elliptic_u_Prior_Interface_Diff(alpha_u, opt_lofi);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Diff(alpha_z, opt_lofi);
 
@@ -159,6 +159,7 @@ if show_figures
     xlim([0 N]);
     yline(Jhat_hifi, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
     yline(Jhat_lofi, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
+    yline(19.9269, "b--", "DisplayName", "Best-HDSA", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
     try
         plot(0:N, [Jhat_lofi; old_oed(1:N)], ".-", "Color", "#1F618D", "DisplayName", "Standard OED");
     catch ME
