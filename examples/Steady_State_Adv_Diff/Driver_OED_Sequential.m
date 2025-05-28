@@ -159,8 +159,8 @@ if show_figures
     xlim([0 N]);
     yline(Jhat_hifi, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
     yline(Jhat_lofi, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
-    yline(19.9269, "b--", "DisplayName", "Best-HDSA", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
     try
+        yline(Jhat_HDSA, "b--", "DisplayName", "Best-HDSA", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
         plot(0:N, [Jhat_lofi; old_oed(1:N)], ".-", "Color", "#1F618D", "DisplayName", "Standard OED");
     catch ME
         if ~strcmp(ME.identifier, 'MATLAB:UndefinedFunction')

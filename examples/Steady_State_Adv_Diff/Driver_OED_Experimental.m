@@ -148,6 +148,7 @@ best_theta = [zeros(m, 1); reshape(discrep_mat', m * n, 1)];
 % disp(norm(discrep_zero-discrep_est)/norm(discrep_zero))
 
 z_best_HDSA = z_lofi - PHinvB(best_theta);
+Jhat_HDSA = opt_hifi.Jhat(z_best_HDSA);
 fprintf("\n");
 fprintf("\nError of Best-HDSA Control: \t" + oed_z_error_fn(z_best_HDSA)); % 0.14764
-fprintf("\nObjective Value of Best-HDSA Control: \t" + opt_hifi.Jhat(z_best_HDSA)); % 19.9269
+fprintf("\nObjective Value of Best-HDSA Control: \t" + Jhat_HDSA); % 19.9269
