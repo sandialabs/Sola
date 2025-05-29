@@ -34,6 +34,14 @@ z_update_mean = md_update.Posterior_Update_Mean();
 Jhat_oed(1) = opt_hifi.Jhat(z_update_mean);
 oed_z_error(1) = oed_z_error_fn(z_update_mean);
 
+tmp = Extract_mean_theta(z_prior_interface,md_post_sampling.post_data);
+std_oed_mean_theta = zeros(length(tmp),p+1);
+std_oed_mean_theta(:,1) = tmp;
+std_oed_mean_z = zeros(length(z_update_mean),p+1);
+std_oed_mean_z(:,1) = z_update_mean;
+std_oed_Z = cell(p+1,1);
+std_oed_Z{1} = z_lofi;
+
 fprintf('Objective of z_bar: \t%.3f\n', Jhat_oed(k));
 % fprintf('Rel. Err of z_bar: \t%.2f%%\n', 100 * oed_z_error(k));
 % fprintf('Diff. w/ z_hifi obj.: \t%.2f%%\n', 100 * (Jhat_oed(k) - Jhat_hifi) / (Jhat_hifi));
@@ -50,6 +58,10 @@ for k = 2:p + 1
     z_update_mean = md_update.Posterior_Update_Mean();
     Jhat_oed(k) = opt_hifi.Jhat(z_update_mean);
     oed_z_error(k) = oed_z_error_fn(z_update_mean);
+
+    std_oed_mean_theta(:,k) = Extract_mean_theta(z_prior_interface,md_post_sampling.post_data);
+    std_oed_mean_z(:,k) = z_update_mean;
+    std_oed_Z{k} = data_interface.Z;
 
     % Display Stats
     fprintf('Objective of z_bar: \t%.3f\n', Jhat_oed(k));
@@ -98,3 +110,5 @@ title("Optimization Objective over Evals");
 if save_figures
     saveas(gcf, "Std_OED_Obj.svg");
 end
+
+save('Std_OED_Results.mat','std_oed_mean_theta','std_oed_mean_z','std_oed_Z')

@@ -74,13 +74,18 @@ if show_figures
 end
 
 %% Iterate for each data point
-N = 5;
+N = 6;
 Jhat_oed = zeros(N, 1);
 oed_z_error = zeros(N, 1);
 Z = [];
 D = [];
 betas = [];
 z_bar = z_lofi;
+
+m = length(z_lofi);
+seq_oed_mean_theta = zeros(m*(m+1),N);
+seq_oed_mean_z = zeros(m,N);
+seq_oed_Z = cell(N,1);
 
 for p = 1:N
     % Update Data Interface (with prior center)
@@ -105,6 +110,7 @@ for p = 1:N
     D_p = Evaluate_Discrepancy(con_hifi, con_lofi, z_p);
     D = [D D_p];
     data_interface.Set_Z_and_D(Z, D);
+    seq_oed_Z{p} = Z;
 
     % Perform Posterior Sampling (TODO: Reuse data)
     md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
@@ -149,6 +155,9 @@ for p = 1:N
         % legend("Location", "best");
     end
 
+    seq_oed_mean_theta(:,p) = Extract_mean_theta(z_prior_interface,md_post_sampling.post_data);
+    seq_oed_mean_z(:,p) = z_bar;
+
 end
 
 % Plot Objective Function over N
@@ -176,3 +185,5 @@ if show_figures
         saveas(gcf, "SeqOED_Objs.png");
     end
 end
+
+save('Seq_OED_Results.mat','seq_oed_mean_theta','seq_oed_mean_z','seq_oed_Z')
