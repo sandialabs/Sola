@@ -1,10 +1,10 @@
-clear
-close all
-clc
+clear;
+close all;
+clc;
 
-load Truth_Results.mat
-load Std_OED_Results.mat
-load Seq_OED_Results.mat
+load Truth_Results.mat;
+load Std_OED_Results.mat;
+load Seq_OED_Results.mat;
 
 % Set Hi-Fi and Lo-Fi Objectives and Constraints
 m = 200;
@@ -22,13 +22,13 @@ x = con.x;
 M = con.M;
 
 A = con.diff_coeff * con.S + con.robin_coeff * con.robin_bc;
-AinvM = (1.e2) * linsolve(A,M);
+AinvM = (1.e2) * linsolve(A, M);
 delta_int = @(theta) theta(1:m);
-delta_jac = @(theta)  reshape(theta((m+1):end),m,m)' * M;
+delta_jac = @(theta)  reshape(theta((m + 1):end), m, m)' * M;
 T = opt_prob_interface.sabl_opt.obj.T;
 reg_mat = opt_prob_interface.sabl_opt.obj.reg_mat;
 
-opt_sol_map = @(theta) linsolve( (AinvM + delta_jac(theta))'*M*(AinvM + delta_jac(theta)) + reg_coeff * reg_mat , (AinvM + delta_jac(theta))'*M*(T-delta_int(theta)));
+opt_sol_map = @(theta) linsolve((AinvM + delta_jac(theta))' * M * (AinvM + delta_jac(theta)) + reg_coeff * reg_mat, (AinvM + delta_jac(theta))' * M * (T - delta_int(theta)));
 
 u_lofi = opt_prob_interface.State_Solve(z_lofi);
 Im = eye(m);
@@ -38,16 +38,16 @@ B = @(x) B1(x) + B2(x);
 PHinvB = @(x) md_hessian_analysis.Apply_Projected_RS_Hessian_Inverse(B(x));
 opt_sol_lin_map = @(theta) z_lofi - PHinvB(theta);
 
-% Compare [Im kron(Im, z_lofi' * M)] * seq_oed_mean_theta(:,k) with 
+% Compare [Im kron(Im, z_lofi' * M)] * seq_oed_mean_theta(:,k) with
 % (1 / this.md_post_sampling.post_data.alpha_d) * u in Line 66 of
 % MD_Update.m
 
-figure,
-plot(x,seq_oed_mean_z(:,end),x,opt_sol_lin_map(seq_oed_mean_theta(:,end)))
+figure;
+plot(x, seq_oed_mean_z(:, end), x, opt_sol_lin_map(seq_oed_mean_theta(:, end)));
 
-seq_oed_hifi_obj = zeros(6,1);
+seq_oed_hifi_obj = zeros(6, 1);
 for k = 1:6
-    seq_oed_hifi_obj(k) = opt_hifi.Jhat(opt_sol_lin_map(seq_oed_mean_theta(:,k)));
+    seq_oed_hifi_obj(k) = opt_hifi.Jhat(opt_sol_lin_map(seq_oed_mean_theta(:, k)));
 end
 
 % L = 100;
@@ -78,7 +78,7 @@ end
 %     opt_sol_lin_mag(k) = sqrt(opt_sol_lin(:,k)'*M*opt_sol_lin(:,k));
 %     opt_sol_lin_obj(k) = opt_hifi.Jhat(opt_sol_lin(:,k));
 % end
-% 
+%
 % seq_oed_hifi_obj = opt_hifi.Jhat(opt_sol_lin_map(seq_oed_mean_theta(:,6)));
 % std_oed_hifi_obj = opt_hifi.Jhat(opt_sol_lin_map(std_oed_mean_theta(:,6)));
 % best_theta_hifi_obj = opt_hifi.Jhat(opt_sol_lin_map(best_theta));

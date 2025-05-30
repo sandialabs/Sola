@@ -1,5 +1,5 @@
 % Clear Workspace and Add Interfaces to Path
-clear;
+% clear;
 close all;
 % clc;
 addpath(genpath('../../src'));
@@ -154,4 +154,4 @@ fprintf("\nError of Best-HDSA Control: \t" + oed_z_error_fn(z_best_HDSA)); % 0.1
 fprintf("\nObjective Value of Best-HDSA Control: \t" + Jhat_HDSA); % 19.9269
 
 best_z = z_best_HDSA;
-save('Truth_Results.mat','best_theta','best_z','z_hifi','z_lofi','u_prior_interface','z_prior_interface','opt_prob_interface','md_hessian_analysis')
+save('Truth_Results.mat', 'best_theta', 'best_z', 'z_hifi', 'z_lofi', 'u_prior_interface', 'z_prior_interface', 'opt_prob_interface', 'md_hessian_analysis');

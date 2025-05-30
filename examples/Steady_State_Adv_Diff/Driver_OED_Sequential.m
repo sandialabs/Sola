@@ -53,6 +53,12 @@ oversampling = 20;
 md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_init, num_evals, oversampling);
 
 % Perform Offline OED Computations - This is used to generate many random designs (to avoid OED in next steps)
+Im = eye(m);
+Mz = z_prior_interface.M;
+B1 = @(x) opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(opt_prob_interface.Apply_Misfit_Hessian([Im kron(Im, z_lofi' * Mz)] * x, u_lofi, z_lofi), z_lofi);
+B2 = @(x) [zeros(m, m) kron(opt_prob_interface.Misfit_Gradient(u_lofi, z_lofi)', Mz)] * x;
+B = @(x) B1(x) + B2(x);
+PHinvB = @(x) md_hessian_analysis.Apply_Projected_RS_Hessian_Inverse(B(x));
 
 reg_coeff = 1.e-6;
 beta_0 = randn(num_evals, 1);
@@ -83,9 +89,9 @@ betas = [];
 z_bar = z_lofi;
 
 m = length(z_lofi);
-seq_oed_mean_theta = zeros(m*(m+1),N);
-seq_oed_mean_z = zeros(m,N);
-seq_oed_Z = cell(N,1);
+seq_oed_mean_theta = zeros(m * (m + 1), N);
+seq_oed_mean_z = zeros(m, N);
+seq_oed_Z = cell(N, 1);
 
 for p = 1:N
     % Update Data Interface (with prior center)
@@ -118,7 +124,10 @@ for p = 1:N
 
     % Obtain Optimal Solution Update
     md_update = MD_Update(md_post_sampling, md_hessian_analysis);
-    z_bar = md_update.Posterior_Update_Mean();
+    % z_bar = md_update.Posterior_Update_Mean();
+    % NOTE! BUG WITH NABLA_THETA DELTA IN ABOVE FUNCTION
+    theta_post = md_update.Posterior_Theta_Mean_Temp();
+    z_bar = z_lofi - PHinvB(theta_post);
 
     % Display Stats
     Jhat_oed(p) = opt_hifi.Jhat(z_bar);
@@ -155,8 +164,8 @@ for p = 1:N
         % legend("Location", "best");
     end
 
-    seq_oed_mean_theta(:,p) = Extract_mean_theta(z_prior_interface,md_post_sampling.post_data);
-    seq_oed_mean_z(:,p) = z_bar;
+    seq_oed_mean_theta(:, p) = Extract_mean_theta(z_prior_interface, md_post_sampling.post_data);
+    seq_oed_mean_z(:, p) = z_bar;
 
 end
 
@@ -186,4 +195,4 @@ if show_figures
     end
 end
 
-save('Seq_OED_Results.mat','seq_oed_mean_theta','seq_oed_mean_z','seq_oed_Z')
+save('Seq_OED_Results.mat', 'seq_oed_mean_theta', 'seq_oed_mean_z', 'seq_oed_Z');
