@@ -176,7 +176,7 @@ close;
 n_t = length(t);
 n_q = length(z_update_mean) / (n_t - 1);
 Q_update_mean = reshape(z_update_mean, n_q, n_t - 1);
-[~,I] = sort(vecnorm((abs(Q_update_mean)-abs(Q_rom))'),'descend');
+[~, I] = sort(vecnorm((abs(Q_update_mean) - abs(Q_rom))'), 'descend');
 fig = figure;
 ax = subplot(1, 1, 1);
 hold on;
@@ -202,7 +202,7 @@ close(fig);
 % plot(ax, t(2:end), abs(Q_update_mean(i, :)), '--', 'Color', colors(i, :), 'LineWidth', 1.5);
 % plot(ax, t(2:end), abs(Q_rom(i, :)), 'Color', colors(i, :), 'LineWidth', 1.5);
 % for k = 1:num_post_samples
-%    plot(ax,t(2:end),abs(Q_update_samples(i,:,k)),'Color',[.9,.9,.9],'LineWidth',1.5); 
+%    plot(ax,t(2:end),abs(Q_update_samples(i,:,k)),'Color',[.9,.9,.9],'LineWidth',1.5);
 % end
 % plot(ax, t(2:end), abs(Q_update_mean(i, :)), '--', 'Color', colors(i, :), 'LineWidth', 1.5);
 % plot(ax, t(2:end), abs(Q_rom(i, :)), 'Color', colors(i, :), 'LineWidth', 1.5);
@@ -250,7 +250,7 @@ plot(ax, t, val_hifi, 'Color', colors(1, :), 'LineWidth', 1.5);
 plot(ax, t, val_update, '--', 'Color', colors(2, :), 'LineWidth', 1.5);
 xlabel(ax, '$t$', 'Interpreter', 'latex');
 ylabel(ax, '$\| \mathbf{u}_1(t)*\mathbf{p} \|_{\mathbf{M}}^2$', 'Interpreter', 'latex');
-legend({'ROMCO Controls', 'Posterior Mean Controls'},'Location','northwest');
+legend({'ROMCO Controls', 'Posterior Mean Controls'}, 'Location', 'northwest');
 set(fig, 'Position', [175, 300, 560, 330]);
 print(fig, 'figures/contaminant_mass.pdf', '-dpdf', '-r300', '-loose');
 close(fig);
@@ -258,13 +258,13 @@ close(fig);
 %%
 fig = figure;
 ax = subplot(1, 1, 1);
-hold on
-histogram(ax,obj_update_samples,10,'Normalization','probability');
-h1 = plot(ax,[obj_lofi,obj_lofi],[0,ax.YLim(2)],'LineWidth',3);
-h2 = plot(ax,[obj_update_mean,obj_update_mean],[0,ax.YLim(2)],'LineWidth',3);
-xlabel(ax,'High-fidelity objective value','Interpreter','latex');
-ylabel(ax,'Probability','Interpreter','latex');
-legend([h1, h2],{'ROMCO Controls','Posterior Mean Controls'});
+hold on;
+histogram(ax, obj_update_samples, 10, 'Normalization', 'probability');
+h1 = plot(ax, [obj_lofi, obj_lofi], [0, ax.YLim(2)], 'LineWidth', 3);
+h2 = plot(ax, [obj_update_mean, obj_update_mean], [0, ax.YLim(2)], 'LineWidth', 3);
+xlabel(ax, 'High-fidelity objective value', 'Interpreter', 'latex');
+ylabel(ax, 'Probability', 'Interpreter', 'latex');
+legend([h1, h2], {'ROMCO Controls', 'Posterior Mean Controls'});
 print(fig, 'figures/hifi_obj_dist.pdf', '-dpdf', '-r300', '-loose');
 close(fig);
 

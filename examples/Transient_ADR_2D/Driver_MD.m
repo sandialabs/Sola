@@ -38,7 +38,6 @@ u_spatial_prior_interface_cell{k} = MD_Numeric_Laplacian_u_Prior_Interface(S, M,
 u_transient_prior_cov{k} = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface_cell{k}, T, n_t, n_y / 2);
 u_prior_interface_cell{k} = MD_Transient_Elliptic_u_Prior_Interface(data_interface, u_spatial_prior_interface_cell{k}, u_transient_prior_cov{k});
 
-
 k = 2;
 u_hyperparam_interface_cell{k} = MD_u_Hyperparameter_Interface_Transient_ADR_2D(true, false, true, k, solver, t);
 u_hyperparam_interface_cell{k}.gsvd_num_sing_vals = 1000;
@@ -70,19 +69,19 @@ z_prior_interface = MD_Transient_Vector_z_Prior_Interface(S_t, M_t, n_q, data_in
 
 %%
 % Uncomment the code below to test hyper-parameter values
-%num_prior_samples = 50;
-%md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
+% num_prior_samples = 50;
+% md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 
 %%
-%md_prior_sampling.Generate_Prior_Discrepancy_z_opt_Sample_Data(num_prior_samples);
-%md_prior_vis = MD_Prior_Visualization(md_prior_sampling);
+% md_prior_sampling.Generate_Prior_Discrepancy_z_opt_Sample_Data(num_prior_samples);
+% md_prior_vis = MD_Prior_Visualization(md_prior_sampling);
 % md_prior_vis.Visualization_for_Prior_Time_Evolution(1,false);
 % md_prior_vis.Visualization_for_Prior_Time_Evolution(2,false);
 % md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_opt(1);
 % md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_opt(2);
 
-%md_prior_vis.prior_sampling.z_pert_subsample_factor = 20;
-%md_prior_vis.prior_sampling.Generate_Prior_Discrepancy_z_pert_Sample_Data();
+% md_prior_vis.prior_sampling.z_pert_subsample_factor = 20;
+% md_prior_vis.prior_sampling.Generate_Prior_Discrepancy_z_pert_Sample_Data();
 % md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_pert(1);
 % md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_pert(2);
 
@@ -152,10 +151,10 @@ utmp = [u_tmp1; u_tmp2];
 u_update_mean = utmp(:);
 obj_update_mean = obj_hifi.J(u_update_mean, z_update_mean);
 
-obj_update_samples = zeros(num_post_samples,1);
+obj_update_samples = zeros(num_post_samples, 1);
 for k = 1:num_post_samples
-    disp(['Computer posterior sample ',num2str(k)])
-    Q_update_sample = reshape(z_update_samples(:,k), n_q, n_t - 1);
+    disp(['Computer posterior sample ', num2str(k)]);
+    Q_update_sample = reshape(z_update_samples(:, k), n_q, n_t - 1);
     pp = pchip(t, [Q_update_sample(:, 1), Q_update_sample].^2);
     controller = @(tt) ppval(pp, tt);
     Y_update_sample = solver.State_Solve(controller, t).NodalSolution;
@@ -163,7 +162,7 @@ for k = 1:num_post_samples
     u_tmp2 = reshape(Y_update_sample(:, 2, :), [], n_t);
     utmp = [u_tmp1; u_tmp2];
     u_update_sample = utmp(:);
-    obj_update_samples(k) = obj_hifi.J(u_update_sample, z_update_samples(:,k));
+    obj_update_samples(k) = obj_hifi.J(u_update_sample, z_update_samples(:, k));
 end
 
 %%
