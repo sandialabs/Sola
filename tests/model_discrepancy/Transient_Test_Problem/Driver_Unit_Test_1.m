@@ -16,7 +16,8 @@ t = linspace(0, T, n_t)';
 
 data_interface = MD_Data_Interface_Transient_Test_Problem();
 
-u_hyperparam_interface = MD_u_Hyperparameter_Interface_Transient_Test_Problem(x, t);
+adapt_time_variance = false;
+u_hyperparam_interface = MD_u_Hyperparameter_Interface_Transient_Test_Problem(x, t, adapt_time_variance );
 u_hyperparam_interface.beta_t = 11;
 
 transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface, T, n_t, n_y);

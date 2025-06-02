@@ -387,7 +387,7 @@ Because $\H$ is independent of the discrepancy term $\bfdelta$, and since $\B$ d
 \end{align}
 where $\otimes$ denotes the Kronecker product~\cite{vanloan2000kronecker} and $\M_z\in\R^{n_z\times n_z}$ is a mass matrix defining an appropriate inner product $\langle\z_1,\z_2\rangle = \sqrt{\z_1\trp\M_z\z_2}$ on $Z\subset\R^{n_z}$, the space of admissible controls (see \cite{hart2023hdsaoptimal} for more detail).
 Hence, the dimension of $\bftheta$ is $n_\theta = n_u(n_z + 1)$.
-This Kronecker structure of \cref{eq:affine-discrepancy} enables efficient matrix-vector products $\v\mapsto\B\v$ without assembling $\B$ explicitly, which we will discuss shortly.
+The Kronecker structure of \cref{eq:affine-discrepancy} enables efficient matrix-vector products $\v\mapsto\B\v$ without assembling $\B$ explicitly, which we will discuss shortly.
 
 % \begin{purpose}
 %     Calibrating $\bftheta$ from data.
@@ -582,7 +582,7 @@ Implementing HDSA-MD poses two major challenges.
 First, the mathematics are sufficiently complicated that a successful implementation necessitates careful verification at each step of the algorithm.
 Second, the kinds of problems for which HDSA-MD is most useful are large scale, likely requiring HPC resources and distributed computing.
 These are competing and conflicting interests that influence our choice of software language: on the one hand, a high-level language --- designed for high readability and ease of use --- would enable an intuitive translation of mathematics to code and simplify the process of checking intermediate steps, but may ultimately struggle to perform at scale; on the other hand, a low-level language --- optimized for performance but not for readability or implementation ease --- would require substantial expertise and be difficult to verify, but a successful implementation would ultimately be able to tackle large-scale problems.
-To address the first issue, this section presents \SABL: \textbf{S}andbox for \textbf{A}adjoint-\textbf{B}ased outer \textbf{L}oop analysis, a \MATLAB library that implements PDE-constrained optimization and HDSA-MD.
+To address the first issue, this section presents \SABL: \textbf{S}andbox for \textbf{A}djoint-\textbf{B}ased outer \textbf{L}oop analysis, a \MATLAB library that implements PDE-constrained optimization and HDSA-MD.
 The source code is publicly available at \textbf{TODO}.
 \SM{We need to discuss making a version of \SABL and \HdsaLib public (\texttt{GitHub/SandiaLabs/<SABL,HdsaLib>}?), which requires making a software release request. I did this recently but it can take a while, so it's best to get the process started sooner rather than later.)}
 Our purpose in this discussion is not to provide detailed package documentation, but rather to shed light on the design and implementation process and the associated challenges.
@@ -808,7 +808,15 @@ We provide one such simple example now.
 
 % \texttt{SABL/examples/Steady\_State\_Adv\_Diff/}
 
-Consider a one-dimensional advection-diffusion equation with Robin boundary conditions,
+Consider the minimization problem
+\begin{align}
+    \label{eq:advection-diffusion-continuous-objective}
+    \min_{z} \frac{1}{2}\int_{0}^{1}\big(
+        s(x;z) - \phi(x)
+    \big)^2\,dx
+    + \frac{\beta}{2}\int_{0}^{1}z(x)^2\,dx,
+\end{align}
+where $s(x;z)$ solves the one-dimensional advection-diffusion equation with Robin boundary conditions,
 \begin{subequations}\label{eq:advection-diffusion}
 \begin{gather}
 \label{eq:advection-diffusion-dynamics}
@@ -821,17 +829,8 @@ Consider a one-dimensional advection-diffusion equation with Robin boundary cond
 -\kappa u'(x=1) = h u(x=1),
 \end{gather}
 \end{subequations}
-where $u,z:[0,1]\to\R$ and $\kappa, v, h$ are constants.
-We consider the minimization problem
-\begin{align}
-    \label{eq:advection-diffusion-continuous-objective}
-    \min_{z} \frac{1}{2}\int_{0}^{1}\big(
-        s(x;z) - \phi(x)
-    \big)^2\,dx
-    + \frac{\beta}{2}\int_{0}^{1}z(x)^2\,dx,
-\end{align}
-where $s(x;z)$ is the solution to \cref{eq:advection-diffusion} with the forcing function $z$.
-The goal is to select an appropriate $z$ such that the state $u$ matches the given target function $\phi:[0,1]\to\R$.
+in which $u,z,\phi:[0,1]\to\R$ and $\kappa, v, h$ are constants.
+The goal is to select an appropriate forcing function $z$ such that the state $u$ matches the given target function.
 This problem was used previously in~\cite{hart2025hdsaposterior}; different from that work, the goal of the discussion here is to discuss the verification process.
 
 A first-order uniform finite element discretization of $[0,1]$ with standard linear finite elements and $n_u$ degrees of freedom approximates \cref{eq:advection-diffusion} with the linear system
@@ -911,24 +910,30 @@ Figure TODO shows the difference between the surrogate optimizer $\tilde{\z}$ an
 \section{\HdsaLib: High-performance HDSA-MD in \cpp}
 \label{sec:hpc}
 
-\begin{purpose}
-\begin{itemize}
-\item Introduce \HdsaLib, scope, repository, etc.
-\item High-level comparison with \SABL: on the one hand, more difficult because of more dependencies, low-level memory control (pointers), and lots of boiler plate (including data structures); on the other hand, excellent performance, parallelization, and can interface with state-of-the-art PDE solvers such as those we might want to work with at Sandia.
-\item By design, \HdsaLib relies on interfaces to other high-performance codes for the forward solves and differentiation, which we were explicit about in \SABL.
-\item Note again that \SABL is designed to prepare users for using \HdsaLib.
-\end{itemize}
-\end{purpose}
+Although \MATLAB enables rapid prototyping and intuitive mathematical syntax, large scale HDSA-MD problems --- for example those arising from PDEs defined in three spatial dimensions so that the state dimension $n_u$ is very large --- necessitate an implementation that can interact with HPC tools.
+This section introduces \HdsaLib, a \cpp library that implements HDSA-MD using the same design structure as \SABL.
+Working in \cpp requires low-level memory management (pointers), custom data structures, and in general more boiler-plate code than is required in \MATLAB.
+On the other hand, these features enable parallelization and state-of-the-art compute performance.
+Whereas \SABL includes its own forward solver and optimization routines, \HdsaLib relies on interfaces to other high-performance \cpp codes for these tasks.
+In this work, we show how to implement \HdsaLib requirements using \MrHyDE, a software library for the solution of \textbf{M}ulti-\textbf{r}esolution \textbf{H}ybridized \textbf{D}ifferential \textbf{E}quations.
+The section concludes with a discussion on verification strategies.
+
+% \begin{purpose}
+% \begin{itemize}
+% \item Introduce \HdsaLib, scope, repository, etc.
+% \item High-level comparison with \SABL: on the one hand, more difficult because of more dependencies, low-level memory control (pointers), and lots of boiler plate (including data structures); on the other hand, excellent performance, parallelization, and can interface with state-of-the-art PDE solvers such as those we might want to work with at Sandia.
+% \item By design, \HdsaLib relies on interfaces to other high-performance codes for the forward solves and differentiation, which we were explicit about in \SABL.
+% \item Note again that \SABL is designed to prepare users for using \HdsaLib.
+% \end{itemize}
+% \end{purpose}
+
 
 \subsection{Object-oriented design following \SABL}
 
-\begin{purpose}
-\begin{itemize}
-    \item We've already made design choices, which were easy to quickly change on the fly, while developing \SABL. Now we simply port it over.
-    \item We still have to deal with the low-level nature of \cpp, but we don't have to think so much about the overall algorithmic structure because we've done that part.
-    \item Refer to \Cref{code:hdsalib-hdsa}, compare it to \Cref{code:sabl-hdsa}.
-\end{itemize}
-\end{purpose}
+\HdsaLib uses the same object-oriented abstract interface paradigm as \SABL.
+One of the main reasons for creating \SABL before attempting a \cpp implementation is the ease of making and adjusting design choices in \MATLAB; using the code architecture and conventions established in \SABL as a guide for \HdsaLib significantly eases the intellectual implementation burden and allows the developer to focus on the technical aspects of \cpp rather than the algorithmic approach to HDSA-MD.
+\SM{Custom data structures needed, etc.}
+\Cref{code:hdsalib-hdsa} shows a \cpp class in \HdsaLib that follows the design of the \MATLAB class in \SABL included in \Cref{code:sabl-hdsa}.
 
 \begin{listing}[t]
 \begin{minted}{cpp}
@@ -966,6 +971,14 @@ namespace HDSA {
 %     HDSA::MultiVector<RealT> & samples,
 %     const RealT & scalar
 %   ) const {}    // Sample from $\mathcal{N}(\0, (\W_u + \alpha\M_u)^{-1})$
+
+% \begin{purpose}
+% \begin{itemize}
+%     \item We've already made design choices, which were easy to quickly change on the fly, while developing \SABL. Now we simply port it over.
+%     \item We still have to deal with the low-level nature of \cpp, but we don't have to think so much about the overall algorithmic structure because we've done that part.
+%     \item Refer to \Cref{code:hdsalib-hdsa}, compare it to \Cref{code:sabl-hdsa}.
+% \end{itemize}
+% \end{purpose}
 
 \subsection{\MrHyDE: A high-performance \cpp library for solving differential equations}
 \label{sec:mrhyde}
