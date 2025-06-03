@@ -67,7 +67,7 @@ classdef MD_Prior_Sampling < handle
             end
         end
 
-        function [] = Generate_Prior_Discrepancy_z_pert_Sample_Data(this,econ)
+        function [] = Generate_Prior_Discrepancy_z_pert_Sample_Data(this, econ)
             if nargin < 2
                 econ = false;
             end
@@ -103,7 +103,7 @@ classdef MD_Prior_Sampling < handle
     %% Functions to compute data for prior visualization
     methods
 
-        function [] = Compute_Temporal_Data(this,econ)
+        function [] = Compute_Temporal_Data(this, econ)
             if nargin < 2
                 econ = false;
             end
@@ -163,7 +163,7 @@ classdef MD_Prior_Sampling < handle
             end
         end
 
-        function [] = Compute_z_pert_Data(this,econ)
+        function [] = Compute_z_pert_Data(this, econ)
 
             if nargin < 2
                 econ = false;
@@ -207,39 +207,39 @@ classdef MD_Prior_Sampling < handle
 
             else
                 if strcmp(this.z_prior_interface.z_hyperparam_interface.z_type, 'spatial field')
-                    this.z_pert = zeros(length(this.z_opt),2);
-                    this.z_pert_evals = zeros(2,1);
+                    this.z_pert = zeros(length(this.z_opt), 2);
+                    this.z_pert_evals = zeros(2, 1);
                     scaling = .3 * sqrt(this.z_opt' * this.z_prior_interface.Apply_M_z(this.z_opt));
 
-                    v = 0*this.z_opt + 1;
+                    v = 0 * this.z_opt + 1;
                     tmp = sqrt(v' * this.z_prior_interface.Apply_M_z(v));
-                    this.z_pert(:,1) = (scaling/tmp) * v;
+                    this.z_pert(:, 1) = (scaling / tmp) * v;
                     this.z_pert_evals(1) = 1;
 
                     x = this.z_prior_interface.z_hyperparam_interface.x;
-                    n = size(x,2);
-                    L = zeros(n,1);
+                    n = size(x, 2);
+                    L = zeros(n, 1);
                     for k = 1:n
-                        x0 = min(x(:,k));
-                        x1 = max(x(:,k));
-                        L(k) = x1-x0;
-                        x(:,k) = 2*pi*(x(:,k)-x0)/(x1-x0);
+                        x0 = min(x(:, k));
+                        x1 = max(x(:, k));
+                        L(k) = x1 - x0;
+                        x(:, k) = 2 * pi * (x(:, k) - x0) / (x1 - x0);
                     end
 
                     if n == 1
-                        omega = round( (3/(2*pi)) * (L(1)/sqrt(this.z_prior_interface.beta_z)) );
+                        omega = round((3 / (2 * pi)) * (L(1) / sqrt(this.z_prior_interface.beta_z)));
                         v = cos(omega * x);
                     elseif n == 2
-                        omega = round( (3/(2*pi)) * (1/sqrt(this.z_prior_interface.beta_z)) / sqrt(1/L(1)^2 + 1/L(2)^2) );
-                        v = cos(omega*x(:,1)).*cos(omega*x(:,2));
+                        omega = round((3 / (2 * pi)) * (1 / sqrt(this.z_prior_interface.beta_z)) / sqrt(1 / L(1)^2 + 1 / L(2)^2));
+                        v = cos(omega * x(:, 1)) .* cos(omega * x(:, 2));
                     elseif n == 3
-                        omega = round( (3/(2*pi)) * (1/sqrt(this.z_prior_interface.beta_z)) / sqrt(1/L(1)^2 + 1/L(2)^2 + 1/L(3)^2) );
-                        v = cos(omega*x(:,1)).*cos(omega*x(:,2)).*cos(omega*x(:,3));
+                        omega = round((3 / (2 * pi)) * (1 / sqrt(this.z_prior_interface.beta_z)) / sqrt(1 / L(1)^2 + 1 / L(2)^2 + 1 / L(3)^2));
+                        v = cos(omega * x(:, 1)) .* cos(omega * x(:, 2)) .* cos(omega * x(:, 3));
                     end
                     tmp = sqrt(v' * this.z_prior_interface.Apply_M_z(v));
-                    v = v/tmp;
-                    this.z_pert(:,2) = scaling * v;
-                    this.z_pert_evals(2) = 1/(v'*this.z_prior_interface.Apply_E_z(v));
+                    v = v / tmp;
+                    this.z_pert(:, 2) = scaling * v;
+                    this.z_pert_evals(2) = 1 / (v' * this.z_prior_interface.Apply_E_z(v));
 
                     num_samps = size(this.delta_samples_z_opt, 2);
                     this.delta_samples_z_pert = cell(2, 1);
@@ -247,7 +247,7 @@ classdef MD_Prior_Sampling < handle
                         this.delta_samples_z_pert{k} = scaling * sqrt(this.z_prior_interface.alpha_z) * this.z_pert_evals(k) * this.u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samps);
                     end
                 else
-                    disp('Need to implement econ mode for z_type = "vector"')
+                    disp('Need to implement econ mode for z_type = "vector"');
                 end
 
             end

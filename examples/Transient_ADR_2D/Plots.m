@@ -176,10 +176,11 @@ close;
 n_t = length(t);
 n_q = length(z_update_mean) / (n_t - 1);
 Q_update_mean = reshape(z_update_mean, n_q, n_t - 1);
+[~, I] = sort(vecnorm((abs(Q_update_mean) - abs(Q_rom))'), 'descend');
 fig = figure;
 ax = subplot(1, 1, 1);
 hold on;
-for i = 1:nlines
+for i = I(1:3)
     plot(ax, t(2:end), abs(Q_update_mean(i, :)), '--', 'Color', colors(i, :), 'LineWidth', 1.5);
     plot(ax, t(2:end), abs(Q_rom(i, :)), 'Color', colors(i, :), 'LineWidth', 1.5);
 end
@@ -188,6 +189,25 @@ ylabel(ax, '$q_i^{(\ell)}(t)$', 'Interpreter', 'latex');
 set(fig, 'Position', [175, 300, 560, 330]);
 print(fig, 'figures/adr_updatedoptcontrols.pdf', '-dpdf', '-r300', '-loose');
 close(fig);
+
+% i = 11;
+% num_post_samples = size(z_update_samples,2);
+% Q_update_samples = zeros(n_q,n_t-1,num_post_samples);
+% for k = 1:num_post_samples
+%     Q_update_samples(:,:,k) = reshape(z_update_samples(:,k), n_q, n_t - 1);
+% end
+% fig = figure;
+% ax = subplot(1, 1, 1);
+% hold on;
+% plot(ax, t(2:end), abs(Q_update_mean(i, :)), '--', 'Color', colors(i, :), 'LineWidth', 1.5);
+% plot(ax, t(2:end), abs(Q_rom(i, :)), 'Color', colors(i, :), 'LineWidth', 1.5);
+% for k = 1:num_post_samples
+%    plot(ax,t(2:end),abs(Q_update_samples(i,:,k)),'Color',[.9,.9,.9],'LineWidth',1.5);
+% end
+% plot(ax, t(2:end), abs(Q_update_mean(i, :)), '--', 'Color', colors(i, :), 'LineWidth', 1.5);
+% plot(ax, t(2:end), abs(Q_rom(i, :)), 'Color', colors(i, :), 'LineWidth', 1.5);
+% xlabel(ax, '$t$', 'Interpreter', 'latex');
+% ylabel(ax, '$q_{11}^{(\ell)}(t)$', 'Interpreter', 'latex');
 
 %% FOM solution with MD updated controls as a function of time (including init).
 nsnaps = 5;
@@ -219,8 +239,8 @@ val_update = zeros(n_t, 1);
 u_hifi = Y_hifi(:, 1, :);
 u_update = Y_update_mean(:, 1, :);
 for k = 1:n_t
-    val_hifi(k) = opt.obj.g(u_hifi(:, k), t(k));
-    val_update(k) = opt.obj.g(u_update(:, k), t(k));
+    val_hifi(k) = opt.obj.fullobj.g(u_hifi(:, k), t(k));
+    val_update(k) = opt.obj.fullobj.g(u_update(:, k), t(k));
 end
 
 fig = figure;
@@ -230,9 +250,22 @@ plot(ax, t, val_hifi, 'Color', colors(1, :), 'LineWidth', 1.5);
 plot(ax, t, val_update, '--', 'Color', colors(2, :), 'LineWidth', 1.5);
 xlabel(ax, '$t$', 'Interpreter', 'latex');
 ylabel(ax, '$\| \mathbf{u}_1(t)*\mathbf{p} \|_{\mathbf{M}}^2$', 'Interpreter', 'latex');
-legend({'ROMCO Controls', 'Posterior Mean Controls'});
+legend({'ROMCO Controls', 'Posterior Mean Controls'}, 'Location', 'northwest');
 set(fig, 'Position', [175, 300, 560, 330]);
 print(fig, 'figures/contaminant_mass.pdf', '-dpdf', '-r300', '-loose');
+close(fig);
+
+%%
+fig = figure;
+ax = subplot(1, 1, 1);
+hold on;
+histogram(ax, obj_update_samples, 10, 'Normalization', 'probability');
+h1 = plot(ax, [obj_lofi, obj_lofi], [0, ax.YLim(2)], 'LineWidth', 3);
+h2 = plot(ax, [obj_update_mean, obj_update_mean], [0, ax.YLim(2)], 'LineWidth', 3);
+xlabel(ax, 'High-fidelity objective value', 'Interpreter', 'latex');
+ylabel(ax, 'Probability', 'Interpreter', 'latex');
+legend([h1, h2], {'ROMCO Controls', 'Posterior Mean Controls'});
+print(fig, 'figures/hifi_obj_dist.pdf', '-dpdf', '-r300', '-loose');
 close(fig);
 
 %% Postprocess saved figures.
@@ -242,7 +275,7 @@ if strcmp(os, 'MACA64') || strcmp(os, 'MACI64')
     %  - Download TeX from https://www.tug.org/mactex/mactex-download.html
     %  - Install brew from https://brew.sh/
     %  - Check `which pdfcrop` and `which magick` give the paths below.
-    setenv('PATH', [getenv('PATH') ':/Library/TeX/texbin' ':/opt/homebrew/bin' ':/usr/local/opt/ghostscript/bin']);
+    setenv('PATH', [getenv('PATH') ':/Library/TeX/texbin' ':/opt/homebrew/bin' ':/usr/local/opt/ghostscript/bin' ':/usr/local/Cellar/imagemagick/7.1.1-39/bin/']);
     !for fname in figures/*.pdf; do pdfcrop --margin "1" "${fname}" "${fname}"; done
     !for fname in figures/*.png; do magick "${fname}" -trim +repage -bordercolor White -border 10x20 "${fname}"; done
     combinepngs('basis');

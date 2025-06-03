@@ -27,20 +27,33 @@ u_hyperparam_interface_cell = cell(2, 1);
 u_spatial_prior_interface_cell = cell(2, 1);
 u_transient_prior_cov = cell(2, 1);
 u_prior_interface_cell = cell(2, 1);
-for k = 1:2
-    u_hyperparam_interface_cell{k} = MD_u_Hyperparameter_Interface_Transient_ADR_2D(true, false, true, k, solver, t);
-    u_hyperparam_interface_cell{k}.gsvd_num_sing_vals = 1000;
-    u_hyperparam_interface_cell{k}.gsvd_oversampling = 20;
-    u_hyperparam_interface_cell{k}.time_variance_inflation = .05;
-    u_spatial_prior_interface_cell{k} = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface_cell{k});
-    u_transient_prior_cov{k} = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface_cell{k}, T, n_t, n_y / 2);
-    u_prior_interface_cell{k} = MD_Transient_Elliptic_u_Prior_Interface(data_interface, u_spatial_prior_interface_cell{k}, u_transient_prior_cov{k});
-end
+
+k = 1;
+u_hyperparam_interface_cell{k} = MD_u_Hyperparameter_Interface_Transient_ADR_2D(true, false, true, k, solver, t);
+u_hyperparam_interface_cell{k}.gsvd_num_sing_vals = 1000;
+u_hyperparam_interface_cell{k}.gsvd_oversampling = 20;
+u_hyperparam_interface_cell{k}.time_variance_inflation = .05;
+u_hyperparam_interface_cell{k}.beta_u = .1;
+u_spatial_prior_interface_cell{k} = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface_cell{k});
+u_transient_prior_cov{k} = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface_cell{k}, T, n_t, n_y / 2);
+u_prior_interface_cell{k} = MD_Transient_Elliptic_u_Prior_Interface(data_interface, u_spatial_prior_interface_cell{k}, u_transient_prior_cov{k});
+
+k = 2;
+u_hyperparam_interface_cell{k} = MD_u_Hyperparameter_Interface_Transient_ADR_2D(true, false, true, k, solver, t);
+u_hyperparam_interface_cell{k}.gsvd_num_sing_vals = 1000;
+u_hyperparam_interface_cell{k}.gsvd_oversampling = 20;
+u_hyperparam_interface_cell{k}.time_variance_inflation = .2;
+u_hyperparam_interface_cell{k}.beta_u = .2;
+u_spatial_prior_interface_cell{k} = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface_cell{k});
+u_transient_prior_cov{k} = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface_cell{k}, T, n_t, n_y / 2);
+u_prior_interface_cell{k} = MD_Transient_Elliptic_u_Prior_Interface(data_interface, u_spatial_prior_interface_cell{k}, u_transient_prior_cov{k});
+
 u_prior_interface = MD_Multi_State_u_Prior_Interface(data_interface, u_prior_interface_cell, u_hyperparam_interface_cell);
 
 %%
 num_state_solves = 50;
 z_hyperparam_interface = MD_z_Hyperparameter_Interface_Transient_ADR_2D(num_state_solves, opt, basis1, basis2);
+z_hyperparam_interface.alpha_z = .009;
 
 h = t(2) - t(1);
 m = n_t - 1;
@@ -55,11 +68,6 @@ S_t = (1 / h) * S_t;
 z_prior_interface = MD_Transient_Vector_z_Prior_Interface(S_t, M_t, n_q, data_interface, z_hyperparam_interface, u_prior_interface);
 
 %%
-% Hyper-parameter adjustments
-u_prior_interface.u_prior_interface_cell{2}.u_hyperparam_interface.Set_beta_u(25 * u_prior_interface.u_prior_interface_cell{2}.u_hyperparam_interface.beta_u);
-z_prior_interface.z_hyperparam_interface.Set_beta_t(16 * z_prior_interface.z_hyperparam_interface.beta_t);
-
-%%
 % Uncomment the code below to test hyper-parameter values
 % num_prior_samples = 50;
 % md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
@@ -72,16 +80,15 @@ z_prior_interface.z_hyperparam_interface.Set_beta_t(16 * z_prior_interface.z_hyp
 % md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_opt(1);
 % md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_opt(2);
 
-% md_prior_vis.md_prior_sampling.z_pert_subsample_factor = 20;
-% md_prior_vis.md_prior_sampling.Generate_Prior_Discrepancy_z_pert_Sample_Data(num_prior_samples);
+% md_prior_vis.prior_sampling.z_pert_subsample_factor = 20;
+% md_prior_vis.prior_sampling.Generate_Prior_Discrepancy_z_pert_Sample_Data();
 % md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_pert(1);
 % md_prior_vis.Visualization_for_Prior_Discrepancy_at_z_pert(2);
 
 %%
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 
-alpha_d = mean([u_prior_interface.u_prior_interface_cell{1}.u_hyperparam_interface.alpha_d, u_prior_interface.u_prior_interface_cell{2}.u_hyperparam_interface.alpha_d]);
-alpha_d = (1.e-1) * alpha_d;
+alpha_d = (1.e-2) * mean([u_prior_interface.u_prior_interface_cell{1}.u_hyperparam_interface.alpha_d, u_prior_interface.u_prior_interface_cell{2}.u_hyperparam_interface.alpha_d]);
 num_post_samples = 50;
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 
@@ -144,5 +151,19 @@ utmp = [u_tmp1; u_tmp2];
 u_update_mean = utmp(:);
 obj_update_mean = obj_hifi.J(u_update_mean, z_update_mean);
 
+obj_update_samples = zeros(num_post_samples, 1);
+for k = 1:num_post_samples
+    disp(['Computer posterior sample ', num2str(k)]);
+    Q_update_sample = reshape(z_update_samples(:, k), n_q, n_t - 1);
+    pp = pchip(t, [Q_update_sample(:, 1), Q_update_sample].^2);
+    controller = @(tt) ppval(pp, tt);
+    Y_update_sample = solver.State_Solve(controller, t).NodalSolution;
+    u_tmp1 = reshape(Y_update_sample(:, 1, :), [], n_t);
+    u_tmp2 = reshape(Y_update_sample(:, 2, :), [], n_t);
+    utmp = [u_tmp1; u_tmp2];
+    u_update_sample = utmp(:);
+    obj_update_samples(k) = obj_hifi.J(u_update_sample, z_update_samples(:, k));
+end
+
 %%
-% save('MD_Results.mat', 'z_lofi', 'z_update_mean', 'z_update_samples', 'Y_lofi', 'Y_update_mean');
+% save('MD_Results.mat', 'z_lofi', 'z_update_mean', 'z_update_samples', 'Y_lofi', 'Y_update_mean','obj_update_samples','obj_update_mean','obj_lofi');

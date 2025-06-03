@@ -56,9 +56,9 @@ md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior
 md_prior_viz = MD_Prior_Visualization(md_prior_sampling);
 md_prior_sampling.Generate_Prior_Discrepancy_z_opt_Sample_Data(num_prior_samples);
 md_prior_sampling.Generate_Prior_Discrepancy_z_pert_Sample_Data();
-%md_prior_viz.Visualization_for_Prior_Time_Evolution(1,false);
-%md_prior_viz.Visualization_for_Prior_Discrepancy_at_z_opt(1);
-%md_prior_viz.Visualization_for_Prior_Discrepancy_at_z_pert(1);
+% md_prior_viz.Visualization_for_Prior_Time_Evolution(1,false);
+% md_prior_viz.Visualization_for_Prior_Discrepancy_at_z_opt(1);
+% md_prior_viz.Visualization_for_Prior_Discrepancy_at_z_pert(1);
 
 %%
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);

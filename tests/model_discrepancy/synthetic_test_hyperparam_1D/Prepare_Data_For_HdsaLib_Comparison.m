@@ -35,12 +35,12 @@ num_prior_samples = 100;
 md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 
 %%
-md_prior_sampling.Generate_Prior_Discrepancy_Sample_Data(num_prior_samples,true);
+md_prior_sampling.Generate_Prior_Discrepancy_Sample_Data(num_prior_samples, true);
 prior_delta_z_opt = md_prior_sampling.delta_samples_z_opt;
 prior_delta_z_pert_1 = md_prior_sampling.delta_samples_z_pert{1};
 prior_delta_z_pert_2 = md_prior_sampling.delta_samples_z_pert{2};
-prior_z_pert_1 = md_prior_sampling.z_pert(:,1);
-prior_z_pert_2 = md_prior_sampling.z_pert(:,2);
+prior_z_pert_1 = md_prior_sampling.z_pert(:, 1);
+prior_z_pert_2 = md_prior_sampling.z_pert(:, 2);
 
 %%
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
@@ -63,4 +63,4 @@ md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 
 %%
 post_delta_mean = reshape(cell2mat(post_delta_mean), 51, 3);
-save('Sabl_Output.mat', 'prior_delta_z_opt','prior_delta_z_pert_1','prior_delta_z_pert_2','prior_z_pert_1','prior_z_pert_2', 'post_delta_mean', 'post_delta_samples', 'post_z_mean', 'post_z_samples');
+save('Sabl_Output.mat', 'prior_delta_z_opt', 'prior_delta_z_pert_1', 'prior_delta_z_pert_2', 'prior_z_pert_1', 'prior_z_pert_2', 'post_delta_mean', 'post_delta_samples', 'post_z_mean', 'post_z_samples');
