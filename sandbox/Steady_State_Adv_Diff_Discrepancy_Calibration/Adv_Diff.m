@@ -73,11 +73,11 @@ classdef Adv_Diff < Constraint
 
     methods (Access = public)
 
-        function this = Adv_Diff(m, diff_coeff, vel_coeff, xi)
+        function this = Adv_Diff(m, vel_coeff, xi)
             this = this@Constraint();
             this.m = m;
             this.xi = xi;
-            this.diff_coeff = diff_coeff;
+            this.diff_coeff = xi;
             this.vel_coeff = vel_coeff;
             this.x = linspace(0, 1, m)';
             this.T = 50 - 60 * (this.x - 0.5).^2;
@@ -102,16 +102,16 @@ classdef Adv_Diff < Constraint
             this.V = V;
 
             A = this.diff_coeff * this.S + this.vel_coeff * this.V;
-            A(1,:) = 0;
-            A(1,1) = 1;
+            A(1, :) = 0;
+            A(1, 1) = 1;
             this.A = A;
 
             B = (10^2) * this.M;
-            B(1,:) = 0;
+            B(1, :) = 0;
             this.B = B;
 
-            c = zeros(this.m,1);
-            c(1) = this.xi;
+            c = zeros(this.m, 1);
+            c(1) = 1;
             this.c = c;
         end
 

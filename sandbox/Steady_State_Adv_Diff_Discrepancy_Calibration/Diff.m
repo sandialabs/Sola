@@ -84,16 +84,16 @@ classdef Diff < Constraint
             this.S = adv_diff.S;
 
             A = this.diff_coeff * this.S;
-            A(1,:) = 0;
-            A(1,1) = 1;
+            A(1, :) = 0;
+            A(1, 1) = 1;
             this.A = A;
 
             B = (10^2) * this.M;
-            B(1,:) = 0;
+            B(1, :) = 0;
             this.B = B;
 
-            c = zeros(this.m,1);
-            c(1) = this.xi;
+            c = zeros(this.m, 1);
+            c(1) = 1;
             this.c = c;
         end
 
