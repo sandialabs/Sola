@@ -58,9 +58,6 @@ ylim([min([u_lofi; u_hifi; u; T]), 1.1 * max([u_lofi; u_hifi; u; T])]);
 legend({'$s(z^{*})$', '$\tilde{s}(\tilde{z})$', '$s(\tilde{z})$', '$\phi$'}, ...
        'Location', 'southeast', 'Interpreter', 'latex');
 
-% Export data for plotting externally.
-save('optimization_plot_data.mat', 'x', 'z_hifi', 'z_lofi', 'u_hifi', 'u_lofi', 'u', 'T');
-
 %% Save data for later.
 % Discrepancy data: surrogate control and constant control.
 num_samples = 2;

@@ -62,4 +62,4 @@ legend({'True model solution', 'Surrogate model solution', ...
         'True model with surrogate control', 'True model with updated control'});
 
 % Export data for plotting externally.
-save('hdsa_plot_data.mat', 'x', 'z_hifi', 'z_lofi', 'z_update_mean', 'u_hifi', 'u_lofi', 'u_before', 'u_after', 'T');
+save('plot_data.mat', 'x', 'z_hifi', 'z_lofi', 'z_update_mean', 'u_hifi', 'u_lofi', 'u_before', 'u_after', 'T');
