@@ -25,6 +25,17 @@ x = con_hifi.x;
 data_interface = MD_Data_Interface_PDE_Test_Problem();
 data_interface.Load_Data();
 
+u_lofi = con_lofi.State_Solve(data_interface.Z);
+
+writematrix(data_interface.u_opt, 'u_opt.txt');
+writematrix(data_interface.z_opt, 'z_opt.txt');
+writematrix(data_interface.D(:,1)+u_lofi(:,1), 'U_Hifi_1.txt');
+writematrix(u_lofi(:,1), 'U_Lofi_1.txt');
+writematrix(data_interface.Z(:,1), 'Z_1.txt');
+writematrix(data_interface.D(:,2)+u_lofi(:,2), 'U_Hifi_2.txt');
+writematrix(u_lofi(:,2), 'U_Lofi_2.txt');
+writematrix(data_interface.Z(:,2), 'Z_2.txt');
+
 alpha_u = 1 / (2^2);
 alpha_z = 1 / (3^2);
 u_prior_interface = MD_Elliptic_u_Prior_Interface_PDE_Test_Problem(alpha_u, opt_lofi);

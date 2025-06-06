@@ -26,7 +26,9 @@ classdef MD_Determine_u_Hyperparameters < handle
             if this.u_hyperparam_interface.center_data
                 this.Determine_Data_Centering();
             end
-            this.Determine_alpha_d();
+            if this.u_hyperparam_interface.alpha_d == 0
+                this.Determine_alpha_d();
+            end
         end
 
     end

@@ -52,7 +52,7 @@ classdef Adv_Diff_Constraint < Dynamic_Constraint
         function this = Adv_Diff_Constraint(m, n, T, N)
             this = this@Dynamic_Constraint(m, n, T, N);
 
-            Pe = 1; % Peclet number
+            Pe = 5; % Peclet number
 
             % Spatial domain
             this.x = linspace(0, 1, m)';
