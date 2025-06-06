@@ -1,24 +1,24 @@
-classdef Adv_Diff < Constraint
+classdef Adv_Diff_Constraint < Constraint
+    % Advection-diffusion system, discretized with finite elements and
+    % integrated with implicit Euler time stepping.
 
     properties
         m
-        T
-        diff_coeff
-        vel_coeff
-        xi
-        x
-        M
-        S
-        V
-        A
-        B
-        c
+        diff_coeff  % Diffusion constant :math:`\kappa`
+        vel_coeff  % Advection / velocity constant :math:`v`
+        robin_coeff  % Robin boundary condition constant :math:`h`
+        x  % Spatial domain
+        M  % Mass matrix
+        S  % Stiffness matrix
+        V  % Velocity matrix
+        robin_bc  % Boundary condition matrix
+        A  % Au = 10^2 M z.
     end
 
     methods (Access = public)
 
         function [u] = State_Solve(this, z)
-            u = linsolve(this.A, this.B * z + this.c);
+            u = linsolve(this.A, (10^2) * this.M * z);
         end
 
         function [Mv] = c_u_Transpose_Inverse_Apply(this, v, u, z)
@@ -26,7 +26,7 @@ classdef Adv_Diff < Constraint
         end
 
         function [Mv] = c_z_Transpose_Apply(this, v, u, z)
-            Mv = -this.B' * v;
+            Mv = -(10^2) * this.M' * v;
         end
 
         function [Mv] = c_u_Inverse_Apply(this, v, u, z)
@@ -34,7 +34,7 @@ classdef Adv_Diff < Constraint
         end
 
         function [Mv] = c_z_Apply(this, v, u, z)
-            Mv = -this.B * v;
+            Mv = -(10^2) * this.M * v;
         end
 
         function [Mv] = c_uu_Apply(this, v, u, z, lambda)
@@ -53,34 +53,17 @@ classdef Adv_Diff < Constraint
             Mv = zeros(this.m, 1);
         end
 
-        function [Mv] = Objective_uu_Apply(this, v, u, z)
-            Mv = this.M * v;
-        end
-
-        function [Mv] = Objective_uz_Apply(this, v, u, z)
-            Mv = zeros(this.m, 1);
-        end
-
-        function [Mv] = Objective_zu_Apply(this, v, u, z)
-            Mv = zeros(this.m, 1);
-        end
-
-        function [Mv] = Objective_zz_Apply(this, v, u, z)
-            Mv = this.reg_coeff * this.reg_mat * v;
-        end
-
     end
 
     methods (Access = public)
 
-        function this = Adv_Diff(m, vel_coeff, xi)
+        function this = Adv_Diff_Constraint(m, diff_coeff, vel_coeff, robin_coeff)
             this = this@Constraint();
             this.m = m;
-            this.xi = xi;
-            this.diff_coeff = xi;
+            this.diff_coeff = diff_coeff;
             this.vel_coeff = vel_coeff;
+            this.robin_coeff = robin_coeff;
             this.x = linspace(0, 1, m)';
-            this.T = 50 - 60 * (this.x - 0.5).^2;
 
             h = this.x(2) - this.x(1);
 
@@ -101,18 +84,12 @@ classdef Adv_Diff < Constraint
             V(end, end) = 1 / 2;
             this.V = V;
 
-            A = this.diff_coeff * this.S + this.vel_coeff * this.V;
-            A(1, :) = 0;
-            A(1, 1) = 1;
-            this.A = A;
+            robin_bc = zeros(m, m);
+            robin_bc(1, 1) = 1;
+            robin_bc(end, end) = 1;
+            this.robin_bc = robin_bc;
 
-            B = (10^2) * this.M;
-            B(1, :) = 0;
-            this.B = B;
-
-            c = zeros(this.m, 1);
-            c(1) = 1;
-            this.c = c;
+            this.A = this.diff_coeff * this.S + this.vel_coeff * this.V + this.robin_coeff * this.robin_bc;
         end
 
     end

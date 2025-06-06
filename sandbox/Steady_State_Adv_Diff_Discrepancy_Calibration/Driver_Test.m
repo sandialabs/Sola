@@ -23,7 +23,7 @@ finite_diff_check = true;
 
 if mms_check
     y = cos(2 * pi * x);
-    z = (10^-2) * (4*pi^2) * cos(2 * pi * x);
+    z = (10^-2) * (4 * pi^2) * cos(2 * pi * x);
     u = con_lofi.State_Solve(z);
 
     figure;
@@ -31,7 +31,7 @@ if mms_check
     plot(x, u, 'LineWidth', 3);
     plot(x, y, '--', 'LineWidth', 3);
 
-    z = (10^-2) * ( (4*pi^2) * cos(2 * pi * x) - (2*pi) * sin(2*pi*x) * vel_coeff );
+    z = (10^-2) * ((4 * pi^2) * cos(2 * pi * x) - (2 * pi) * sin(2 * pi * x) * vel_coeff);
     u = con_hifi.State_Solve(z);
 
     figure;
@@ -48,7 +48,7 @@ if grid_refinement_check
         con_k = Adv_Diff(m_mesh(k), diff_coeff, vel_coeff, xi);
         x = con_k.x;
         y = cos(2 * pi * x);
-        z = (10^-2) * ( (4*pi^2) * cos(2 * pi * x) - (2*pi) * sin(2*pi*x) * vel_coeff );
+        z = (10^-2) * ((4 * pi^2) * cos(2 * pi * x) - (2 * pi) * sin(2 * pi * x) * vel_coeff);
         u = con_k.State_Solve(z);
         error(k) = sqrt((y - u)' * con_k.M * (y - u));
     end
