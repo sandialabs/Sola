@@ -52,8 +52,6 @@ classdef Adv_Diff_Objective < Objective
             end
 
             if ~isequal(size(target), size(x))
-                size(target)
-                size(x)
                 error('target and x not aligned');
             end
             this.T = target;

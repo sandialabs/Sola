@@ -44,77 +44,46 @@ plot(x, z_hifi, 'LineStyle', '--', 'LineWidth', 1.5);
 hold on;
 plot(x, z_lofi, 'LineStyle', '-.', 'LineWidth', 1.5);
 title('Controls', 'FontSize', 14, 'Interpreter', 'latex');
-ylim([0, 1.1 * max([z_hifi; z_lofi]);]);
+ylim([min([z_hifi; z_lofi]), 1.1 * max([z_hifi; z_lofi])]);
 legend({'$z^*$', '$\tilde{z}$'}, 'Interpreter', 'latex');
 
 subplot(1, 2, 2);
 plot(x, u_hifi, 'LineStyle', '--', 'LineWidth', 1.5);
 hold on;
 plot(x, u_lofi, 'LineStyle', '-.', 'LineWidth', 1.5);
-plot(x, u, 'LineStyle', ':', 'LineWidth', 1.5)
+plot(x, u, 'LineStyle', ':', 'LineWidth', 1.5);
 plot(x, T, 'Color', 'k', 'LineStyle', '-', 'LineWidth', 1.5);
 title('States', 'Fontsize', 14, 'Interpreter', 'latex');
-ylim([0, 1.1 * max([u_lofi; u_hifi; u; T]);]);
+ylim([min([u_lofi; u_hifi; u; T]), 1.1 * max([u_lofi; u_hifi; u; T])]);
 legend({'$s(z^{*})$', '$\tilde{s}(\tilde{z})$', '$s(\tilde{z})$', '$\phi$'}, ...
-    'Location', 'southeast', 'Interpreter', 'latex');
+       'Location', 'southeast', 'Interpreter', 'latex');
 
-%% AI CODE
-% Define Matplotlib default colors
-C0 = [0.1216, 0.4667, 0.7059]; % Blue
-C1 = [1.0000, 0.4980, 0.0549]; % Orange
-C2 = [0.1725, 0.6275, 0.1725]; % Green
-
-% Create the figure
-figure;
-set(gcf, 'Position', [100, 100, 600, 150]); % Set figure size
-
-% Use tiledlayout for better control over subplot spacing
-tiledlayout(1, 2, 'Padding', 'compact', 'TileSpacing', 'compact');
-
-% First subplot: Controls
-nexttile;
-plot(x, z_hifi, 'LineStyle', '--', 'LineWidth', 1.5, 'Color', C0); % High-fidelity control
-hold on;
-plot(x, z_lofi, 'LineStyle', '-.', 'LineWidth', 1.5, 'Color', C1); % Low-fidelity control
-title('Controls', 'FontSize', 14, 'Interpreter', 'latex');
-xlabel('$x$', 'FontSize', 12, 'Interpreter', 'latex'); % Add x-axis label with LaTeX
-ylabel('$z(x)$', 'FontSize', 12, 'Interpreter', 'latex'); % Add y-axis label with LaTeX
-ylim([0, 1.1 * max([z_hifi; z_lofi])]);
-legend({'$z^*$', '$\tilde{z}$'}, 'Interpreter', 'latex', 'Box', 'off'); % Remove legend outline
-
-% Second subplot: States
-nexttile;
-plot(x, T, 'Color', 'k', 'LineStyle', '-', 'LineWidth', 1.5); % Plot T first
-hold on;
-plot(x, u_hifi, 'LineStyle', '--', 'LineWidth', 1.5, 'Color', C0); % High-fidelity state
-plot(x, u_lofi, 'LineStyle', '-.', 'LineWidth', 1.5, 'Color', C1); % Low-fidelity state
-
-% Plot u with solid line and markers every 50 steps
-markerIndices = 25:50:length(x); % Indices for markers every 50 steps
-plot(x, u, 'LineStyle', '-', 'LineWidth', 1.5, 'Color', C2); % Solid line
-plot(x(markerIndices), u(markerIndices), 'o', 'Color', C2, 'MarkerFaceColor', C2); % Markers
-
-title('States', 'FontSize', 14, 'Interpreter', 'latex');
-xlabel('$x$', 'FontSize', 12, 'Interpreter', 'latex'); % Add x-axis label with LaTeX
-ylabel('$u(x)$', 'FontSize', 12, 'Interpreter', 'latex'); % Add y-axis label with LaTeX
-ylim([0, 1.1 * max([u_lofi; u_hifi; u; T])]);
-legend({'$\phi$', '$s(z^{*})$', '$\tilde{s}(\tilde{z})$', '$s(\tilde{z})$'}, ...
-    'Location', 'southeast', 'Interpreter', 'latex', 'Box', 'off'); % Remove legend outline
-
-% Export data for plotting in Python.
+% Export data for plotting externally.
 save('optimization_plot_data.mat', 'x', 'z_hifi', 'z_lofi', 'u_hifi', 'u_lofi', 'u', 'T');
-
 
 %% Save data for later.
 % Discrepancy data: surrogate control and constant control.
+num_samples = 2;
 Z = zeros(m, 2);
 Z(:, 1) = z_lofi;
 Z(:, 2) = ones(m, 1);
+for j = 3:num_samples
+    Z(:, j) = randomControl(x, .5, 2);
+end
 
 % Discrepancy data s(z_k) - tilde{s}(z_k).
-D = zeros(m, 2);
+D = zeros(m, size(Z, 2));
 for k = 1:size(D, 2)
     D(:, k) = con_hifi.State_Solve(Z(:, k)) - con_lofi.State_Solve(Z(:, k));
 end
 
 save('Optimization_Results.mat', 'm', 'diff_coeff', 'vel_coeff', 'robin_coeff', 'reg_coeff', 'z_lofi', 'z_hifi', 'u_lofi', 'Z', 'D');
+
+function z = randomControl(x, lowerBound, upperBound)
+    % Generate random control points within the bounds
+    controlX = linspace(min(x), max(x), 5);
+    controlY = lowerBound + (upperBound - lowerBound) * rand(1, 5);
+
+    % Interpolate using cubic splines
+    z = spline(controlX, controlY, x);
+end
