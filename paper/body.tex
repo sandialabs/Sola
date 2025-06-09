@@ -837,22 +837,20 @@ This problem was used previously in~\cite{hart2025hdsaposterior}; different from
 A first-order uniform finite element discretization of $[0,1]$ with standard linear finite elements and $n_u$ degrees of freedom approximates \cref{eq:advection-diffusion} with the linear system
 \begin{align}
     \label{eq:advection-diffusion-discrete}
-    (\kappa\S + v\V + h\B)\u = 10^2\M\z,
+    (\kappa\S + v\V + h\B)\u = \M\z,
 \end{align}
 where $\u\in\R^{n_u}$ is the discretized state, $\z\in\R^{n_z}$ is the discretized control with $n_z = n_u$, and the matrices $\S,\V,\B,\M\in\R^{n_u\times n_u}$ model the diffusion, advection, boundary conditions, and the spatial inner product, respectively.
-The discrete constraint function is therefore given by $\c(\u,\z) = \A\u - 10^{2}\M\z$, with associated solution operator $\s(\z) = 10^{2}\A^{-1}\M\z$, where $\A = \kappa\S + v\V + h\B$.
+The discrete constraint function is therefore given by $\c(\u,\z) = \A\u - \M\z$, with associated solution operator $\s(\z) = \A^{-1}\M\z$, where $\A = \kappa\S + v\V + h\B$.
 Applying the spatial discretization to~\cref{eq:advection-diffusion-continuous-objective} results in the objective function
 \begin{align}
     \label{eq:advection-diffusion-discrete-objective}
     J(\u, \z)
     = \frac{1}{2}(\u - \bfphi)\trp\M(\u - \bfphi)
-    + \frac{\beta}{2}\z\trp(\M + 10^{-3}\S)\z,
+    + \frac{\beta}{2}\z\trp\M\z,
 \end{align}
 in which $\bfphi\in\R^{n_u}$ discretizes the target function $\phi(x)$.
 For moderate $n_u$, \cref{eq:advection-diffusion-discrete}--\cref{eq:advection-diffusion-discrete-objective} constitutes a tractable PDE-constrained optimization problem of the form \cref{eq:optimization-constrained}.
-
-\noindent
-\shanenote{Not sure where the $10^2$ or $10^{-3}$ come from, just reading off the code. Too much detail?}
+We set $\beta = 10^{-3}$ in this experiment.
 
 For verification, we begin by checking the discretized dynamics \cref{eq:advection-diffusion-discrete} through MMS.
 We then implement the derivatives of $J$ and $\c$, comparing them to finite differences and testing for symmetry or positive definiteness when appropriate.
@@ -897,14 +895,14 @@ This diffusion equation is \cref{eq:advection-diffusion} with $v = 0$, i.e., no 
 The discretized dynamics are given by
 \begin{align}
     \label{eq:diffusion-discrete}
-    (\kappa\S + h\B)\u = 10^2\M\z,
+    (\kappa\S + h\B)\u = \M\z,
 \end{align}
-which gives rise to the surrogate constraint $\tilde{\c}(\u,\z) = \A_\textrm{d}\u - 10^{2}\M\z$, with solution operator $\tilde{\s}(\z) = 10^{2}\A_\textrm{d}^{-1}\M\z$, where $\A_\text{d} = \kappa\S + h\B$.
-An MMS check can again be applied to verify \cref{eq:diffusion-discrete} and the optimization of $\tilde{J}(\z) = J(\tilde{\s}(\z),\z)$ to produce $\tilde{\z}$.
+which gives rise to the surrogate constraint $\tilde{\c}(\u,\z) = \A_\textrm{d}\u - \M\z$, with solution operator $\tilde{\s}(\z) = \A_\textrm{d}^{-1}\M\z$, where $\A_\text{d} = \kappa\S + h\B$.
+An MMS-type check can again be applied to verify \cref{eq:diffusion-discrete} and the optimization of $\tilde{J}(\z) = J(\tilde{\s}(\z),\z)$ to produce $\tilde{\z}$.
 % For these experiments, we use $n_u = 200$ grid points.
 
 In this simple test problem, we can minimize $J(\s(\z),\z)$ directly to obtain the true optimizer $\z^{*}$, see \Cref{fig:simple-hdsa}.
-Note that the target function $\phi$ can be well approximated by both the original model~\cref{eq:advection-diffusion} and the surrogate model~\cref{eq:just-diffusion}, that is, the objective functions $J(\s(\z),\z)$ and $J(\tilde{\s}(\z),\z)$ can both be driven to near zero; the issue is that using the surrogate control $\tilde{\z}$ in the original model \cref{eq:advection-diffusion} results in a state $\s(\tilde{\z})$ which does not approximate the target well, i.e., $J(\s(\tilde{\z}), \tilde{\z})$ is large even though $J(\tilde{\s}(\tilde{\z}), \tilde{\z})$ is small.
+The target function $\phi$ can be well approximated by both the original model~\cref{eq:advection-diffusion} and the surrogate model~\cref{eq:just-diffusion}, that is, the objective functions $J(\s(\z),\z)$ and $J(\tilde{\s}(\z),\z)$ can both be driven to near zero; the issue is that using the surrogate control $\tilde{\z}$ in the original model \cref{eq:advection-diffusion} results in a state $\s(\tilde{\z})$ which does not approximate the target well, i.e., $J(\s(\tilde{\z}), \tilde{\z})$ is large even though $J(\tilde{\s}(\tilde{\z}), \tilde{\z})$ is small.
 Hence, \cref{eq:just-diffusion} is not a good surrogate for \cref{eq:advection-diffusion} for the purpose of optimization unless we account for the discrepancy between the two models.
 Applying HDSA-MD with $n_d = 2$ data samples, using $\z_1 = \tilde{\z}$ and $\z_2$ a vector of all ones, produces an updated control $\z'$.
 The update does not perfectly recover the true solution $\z^*$, but it decreases the relative $L^2$ error appreciatively in the state space:
@@ -916,12 +914,12 @@ The update does not perfectly recover the true solution $\z^*$, but it decreases
     % \approx 34.55\%,
     % \qquad
     \frac{\|\s(\tilde{\z}) - \s(\z^{*})\|_{2}}{\|\s(\z^{*})\|_{2}}
-    \approx 28.28\%,
+    \approx 28.31\%,
     \qquad
     \frac{\|\s(\z') - \s(\z^{*})\|_{2}}{\|\s(\z^{*})\|_{2}}
-    \approx 6.80\%.
+    \approx 7.44\%.
 \end{align}
-An MMS approach is not possible for HDSA-MD, but this experiment constitutes a basic regression test for the implementation of the algorithm.
+An MMS-type approach is not possible for HDSA-MD, but this experiment constitutes a basic regression test for the implementation of the algorithm.
 
 \begin{figure}
     \centering
@@ -933,7 +931,7 @@ An MMS approach is not possible for HDSA-MD, but this experiment constitutes a b
 % We've verified HDSA-MD as much as we are able to, so now we have to crank everything up to 11 and implement this procedure in \cpp in order to tackle really large problems.
 
 % \shanenote{We could tweak this example by having true (but unknown) $\kappa$ and $v$ and a surrogate with different fixed $\kappa$ and $v$ used as guesses. In that case we don't have a reduced-physics model (but this problem is about the verification process, not getting cost savings), and we don't end up actually learn the true values for $\kappa$ and $v$, but it would be different from the previous paper and compactify the explanation a bit. Thoughts?}
-\shanenote{Anything to add about unit-type tests for the HDSA part?}
+\shanenote{Anything to add about unit-type tests for the HDSA part? Also didn't state anything about specifying the prior distributions, etc.}
 
 \section{\HdsaLib: High-performance HDSA-MD in \cpp}
 \label{sec:hpc}

@@ -10,7 +10,7 @@ classdef Diff_Constraint < Constraint
     methods (Access = public)
 
         function [u] = State_Solve(this, z)
-            u = linsolve(this.A, (10^2) * this.M * z);
+            u = linsolve(this.A, this.M * z);
         end
 
         function [Mv] = c_u_Transpose_Inverse_Apply(this, v, u, z)
@@ -18,7 +18,7 @@ classdef Diff_Constraint < Constraint
         end
 
         function [Mv] = c_z_Transpose_Apply(this, v, u, z)
-            Mv = -(10^2) * this.M' * v;
+            Mv = -this.M' * v;
         end
 
         function [Mv] = c_u_Inverse_Apply(this, v, u, z)
@@ -26,7 +26,7 @@ classdef Diff_Constraint < Constraint
         end
 
         function [Mv] = c_z_Apply(this, v, u, z)
-            Mv = -(10^2) * this.M * v;
+            Mv = -this.M * v;
         end
 
         function [Mv] = c_uu_Apply(this, v, u, z, lambda)

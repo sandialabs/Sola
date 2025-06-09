@@ -7,7 +7,7 @@ run('../../src/Set_Paths');
 %% Define the optimization objective and the high-fidelity constraint.
 
 m = 200;
-reg_coeff = 10;
+reg_coeff = 1e-3;
 
 % Initialize the optimization objective.
 obj = Adv_Diff_Objective(m, reg_coeff);
