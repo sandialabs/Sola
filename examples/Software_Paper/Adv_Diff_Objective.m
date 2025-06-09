@@ -4,7 +4,6 @@ classdef Adv_Diff_Objective < Objective
     properties
         m  % State dimension, number of spatial points.
         reg_coeff  % Regularization constant :math:`\beta`.
-        reg_mat  % Regularization matrix M + 10^{-3} S
         T  % Target function T(x) = 50 - 60(x - 1/2)^2
         M  % Mass matrix
     end
@@ -13,7 +12,7 @@ classdef Adv_Diff_Objective < Objective
 
         function [val, grad_u, grad_z] = J(this, u, z)
             grad_u = this.M * (u - this.T);
-            grad_z = (this.reg_coeff) * this.reg_mat * z;
+            grad_z = (this.reg_coeff) * this.M * z;
             val = (1 / 2) * (u - this.T)' * grad_u + (1 / 2) * z' * grad_z;
         end
 
@@ -30,7 +29,7 @@ classdef Adv_Diff_Objective < Objective
         end
 
         function [Mv] = J_zz_Apply(this, v, u, z)
-            Mv = this.reg_coeff * this.reg_mat * v;
+            Mv = this.reg_coeff * this.M * v;
         end
 
     end
@@ -63,13 +62,6 @@ classdef Adv_Diff_Objective < Objective
             M(end, end) = .5 * M(end, end);
             M = (1 / 6) * h * M;
             this.M = M;
-
-            S = diag(2 * ones(1, m)) + (-1) * diag(ones(1, m - 1), 1) + (-1) * diag(ones(1, m - 1), -1);
-            S(1, 1) = .5 * S(1, 1);
-            S(end, end) = .5 * S(end, end);
-            S = (1 / h) * S;
-
-            this.reg_mat = M + (10^-3) * S;
         end
 
     end

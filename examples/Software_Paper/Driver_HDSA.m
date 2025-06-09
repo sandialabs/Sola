@@ -13,7 +13,7 @@ con_hifi = Adv_Diff_Constraint(m, diff_coeff, vel_coeff, robin_coeff);
 con_lofi = Diff_Constraint(con_hifi);
 opt_hifi = Reduced_Space_Optimization(obj, con_hifi);
 opt_lofi = Reduced_Space_Optimization(obj, con_lofi);
-x = con_lofi.x;
+x = con_hifi.x;
 
 % Set up data and prior interfaces.
 data_interface = MD_Data_Interface_Diff();
