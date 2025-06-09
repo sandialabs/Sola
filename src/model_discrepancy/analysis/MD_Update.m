@@ -56,11 +56,16 @@ classdef MD_Update < handle
         function [z_update_mean] = Posterior_Update_Mean(this)
 
             N = this.md_post_sampling.post_data.N;
+            diff_z_opt = this.z_init - this.md_post_sampling.data_interface.z_opt; % set to zero to reproduce initial bug
+            % diff_z_opt = 0*diff_z_opt; % to reproduce initial bug
             u = 0 * this.u_init;
             for ell = 1:N
-                u = u + this.md_post_sampling.post_data.u_ell(:, ell);
+                coeff = 1 + diff_z_opt' * (this.md_post_sampling.post_data.W_z_inv_Z(:, ell) - this.md_post_sampling.post_data.W_z_inv_z_opt);
+                u = u + coeff * this.md_post_sampling.post_data.u_ell(:, ell);
                 for i = 1:N
-                    u = u - this.md_post_sampling.post_data.b_i_ell(i, ell) * sum(this.md_post_sampling.post_data.g_vecs(:, i)) * this.md_post_sampling.post_data.u_i_ell{i}(:, ell);
+                    W_z_inv_y_i = this.md_post_sampling.post_data.W_z_inv_Z * this.md_post_sampling.post_data.g_vecs(:, i) - sum(this.md_post_sampling.post_data.g_vecs(:, i)) * this.md_post_sampling.post_data.W_z_inv_z_opt;
+                    coeff = sum(this.md_post_sampling.post_data.g_vecs(:, i)) + diff_z_opt' * W_z_inv_y_i;
+                    u = u - coeff * this.md_post_sampling.post_data.b_i_ell(i, ell) * this.md_post_sampling.post_data.u_i_ell{i}(:, ell);
                 end
             end
             tmp1 = this.opt_prob_interface.Apply_Misfit_Hessian(u, this.u_init, this.z_init);

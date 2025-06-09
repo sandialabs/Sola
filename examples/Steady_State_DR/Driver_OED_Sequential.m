@@ -75,7 +75,7 @@ if show_figures
 end
 
 %% Iterate for each data point
-N = 10;
+N = 5;
 Jhat_oed = zeros(N, 1);
 oed_z_error = zeros(N, 1);
 Z = [];
@@ -159,7 +159,7 @@ for p = 1:N
 end
 
 % Plot Objective Function over N
-if show_figures
+if true
     figure;
     hold on;
     xlim([0 N]);
