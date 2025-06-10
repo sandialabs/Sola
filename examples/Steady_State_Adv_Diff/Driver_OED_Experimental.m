@@ -151,7 +151,7 @@ z_best_HDSA = z_lofi - PHinvB(best_theta);
 Jhat_HDSA = opt_hifi.Jhat(z_best_HDSA);
 fprintf("\n");
 fprintf("\nError of Best-HDSA Control: \t" + oed_z_error_fn(z_best_HDSA)); % 0.14764
-fprintf("\nObjective Value of Best-HDSA Control: \t" + Jhat_HDSA); % 19.9269
+fprintf("\nObjective of Best-HDSA Control: \t" + Jhat_HDSA); % 19.9269
 
 best_z = z_best_HDSA;
 save('Truth_Results.mat', 'best_theta', 'best_z', 'z_hifi', 'z_lofi', 'u_prior_interface', 'z_prior_interface', 'opt_prob_interface', 'md_hessian_analysis');

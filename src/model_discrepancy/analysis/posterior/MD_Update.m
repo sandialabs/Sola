@@ -64,16 +64,16 @@ classdef MD_Update < handle
             % diff_z_opt = 0*diff_z_opt; % to reproduce initial bug
             u = 0 * this.u_init;
             for ell = 1:N
-                coeff = 1 + diff_z_opt' * (this.md_post_sampling.post_data.W_z_inv_Z(:, ell) - this.md_post_sampling.post_data.W_z_inv_z_opt);
+                coeff = 1 + diff_z_opt' * (this.md_post_sampling.post_data.Mz_Wz_inv_Mz_Z(:, ell) - this.md_post_sampling.post_data.Mz_Wz_inv_Mz_z_opt);
                 u = u + coeff * this.md_post_sampling.post_data.u_ell(:, ell);
                 for i = 1:N
-                    W_z_inv_y_i = this.md_post_sampling.post_data.W_z_inv_Z * this.md_post_sampling.post_data.g_vecs(:, i) - sum(this.md_post_sampling.post_data.g_vecs(:, i)) * this.md_post_sampling.post_data.W_z_inv_z_opt;
-                    coeff = sum(this.md_post_sampling.post_data.g_vecs(:, i)) + diff_z_opt' * W_z_inv_y_i;
+                    vec = this.md_post_sampling.post_data.Mz_Wz_inv_Mz_Z * this.md_post_sampling.post_data.g_vecs(:, i) - sum(this.md_post_sampling.post_data.g_vecs(:, i)) * this.md_post_sampling.post_data.Mz_Wz_inv_Mz_z_opt;
+                    coeff = sum(this.md_post_sampling.post_data.g_vecs(:, i)) + diff_z_opt' * vec;
                     u = u - coeff * this.md_post_sampling.post_data.b_i_ell(i, ell) * this.md_post_sampling.post_data.u_i_ell{i}(:, ell);
                 end
             end
 
-            u = u  + this.md_post_sampling.post_data.alpha_d * this.md_post_sampling.data_interface.data_shift;
+            u = u + this.md_post_sampling.post_data.alpha_d * this.md_post_sampling.data_interface.data_shift;
             tmp1 = this.opt_prob_interface.Apply_Misfit_Hessian(u, this.u_init, this.z_init);
             z_tmp = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(tmp1, this.z_init);
 
@@ -89,32 +89,6 @@ classdef MD_Update < handle
             z_tmp = (1 / this.md_post_sampling.post_data.alpha_d) * z_tmp;
             z_pert = -this.md_hessian_analysis.Apply_RS_Hessian_Inverse(z_tmp, this.z_init);
             z_update_mean = this.z_init + z_pert;
-        end
-
-        function [post_mean_theta] = Posterior_Theta_Mean_Temp(this)
-
-            N = this.md_post_sampling.post_data.N;
-            Z = this.md_post_sampling.post_data.Z;
-            z_opt = this.md_post_sampling.post_data.z_opt;
-
-            % Compute posterior mean theta
-            m = length(this.u_init);
-            n = length(this.z_init);
-            post_mean_theta = zeros(m * (n + 1), 1);
-            for ell = 1:N
-                a_ell = this.md_post_sampling.post_data.a_ell(ell);
-                u_ell = this.md_post_sampling.post_data.u_ell(:, ell);
-                post_mean_theta = post_mean_theta + [a_ell * u_ell; kron(u_ell, this.md_post_sampling.z_prior_interface.Apply_M_z_Inverse(this.md_post_sampling.z_prior_interface.Apply_W_z_Inverse(Z(:, ell) - z_opt)))];
-                for i = 1:N
-                    u_i_ell = this.md_post_sampling.post_data.u_i_ell{i}(:, ell);
-                    b_i_ell = this.md_post_sampling.post_data.b_i_ell(i, ell);
-                    W_z_inv_y_i = this.md_post_sampling.post_data.W_z_inv_Z * this.md_post_sampling.post_data.g_vecs(:, i) - sum(this.md_post_sampling.post_data.g_vecs(:, i)) * this.md_post_sampling.post_data.W_z_inv_z_opt;
-                    s_i = sum(this.md_post_sampling.post_data.g_vecs(:, i)) - W_z_inv_y_i' * z_opt;
-                    post_mean_theta = post_mean_theta - b_i_ell * [s_i * u_i_ell; kron(u_i_ell, this.md_post_sampling.z_prior_interface.Apply_M_z_Inverse(W_z_inv_y_i))];
-                end
-            end
-
-            post_mean_theta = (1 / this.md_post_sampling.post_data.alpha_d) * post_mean_theta;
         end
 
     end

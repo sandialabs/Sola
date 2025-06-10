@@ -34,7 +34,7 @@ z_update_mean = md_update.Posterior_Update_Mean();
 Jhat_oed(1) = opt_hifi.Jhat(z_update_mean);
 oed_z_error(1) = oed_z_error_fn(z_update_mean);
 
-tmp = Extract_mean_theta(z_prior_interface, md_post_sampling.post_data);
+tmp = Extract_mean_theta(md_post_sampling.post_data);
 std_oed_mean_theta = zeros(length(tmp), p + 1);
 std_oed_mean_theta(:, 1) = tmp;
 std_oed_mean_z = zeros(length(z_update_mean), p + 1);
@@ -59,7 +59,7 @@ for k = 2:p + 1
     Jhat_oed(k) = opt_hifi.Jhat(z_update_mean);
     oed_z_error(k) = oed_z_error_fn(z_update_mean);
 
-    std_oed_mean_theta(:, k) = Extract_mean_theta(z_prior_interface, md_post_sampling.post_data);
+    std_oed_mean_theta(:, k) = Extract_mean_theta(md_post_sampling.post_data);
     std_oed_mean_z(:, k) = z_update_mean;
     std_oed_Z{k} = data_interface.Z;
 

@@ -6,6 +6,7 @@ classdef MD_Posterior_Data < handle
         Z
         D
         Mz_Z
+        z_opt
         Mz_z_opt
         Wz_inv_Mz_Z
         Wz_inv_Mz_z_opt

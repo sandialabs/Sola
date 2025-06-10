@@ -93,14 +93,14 @@ seq_oed_mean_theta = zeros(m * (m + 1), N);
 seq_oed_mean_z = zeros(m, N);
 seq_oed_Z = cell(N, 1);
 
+% Sequential OED
+md_oed = MD_OED_Seq(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
+md_oed.Offline_Computation();
+
 for p = 1:N
     % Update Data Interface (with prior center)
     fprintf('\nStep %d:\n-------------\n', p);
     data_interface.Update_z_opt(z_bar);
-
-    % Sequential OED
-    md_oed = MD_OED_Seq(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
-    md_oed.Offline_Computation();
 
     % Set Parameters for OED
     if p == 1
@@ -124,10 +124,9 @@ for p = 1:N
 
     % Obtain Optimal Solution Update
     md_update = MD_Update(md_post_sampling, md_hessian_analysis);
-    % z_bar = md_update.Posterior_Update_Mean();
-    % NOTE! BUG WITH NABLA_THETA DELTA IN ABOVE FUNCTION
-    theta_post = md_update.Posterior_Theta_Mean_Temp();
-    z_bar = z_lofi - PHinvB(theta_post);
+    z_bar = md_update.Posterior_Update_Mean();
+    theta_post = Extract_mean_theta(md_post_sampling.post_data);
+    % z_bar = z_lofi - PHinvB(theta_post);
 
     % Display Stats
     Jhat_oed(p) = opt_hifi.Jhat(z_bar);
@@ -164,7 +163,7 @@ for p = 1:N
         % legend("Location", "best");
     end
 
-    seq_oed_mean_theta(:, p) = Extract_mean_theta(z_prior_interface, md_post_sampling.post_data);
+    seq_oed_mean_theta(:, p) = theta_post;
     seq_oed_mean_z(:, p) = z_bar;
 
 end

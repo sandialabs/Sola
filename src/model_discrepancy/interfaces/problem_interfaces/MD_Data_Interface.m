@@ -39,6 +39,7 @@ classdef MD_Data_Interface < handle
         function Set_Z_and_D(this, Z, D)
             this.Z = Z;
             this.D = D;
+            this.data_shift = zeros(size(this.D, 1), 1);
         end
 
         function Update_z_opt(this, z_opt)
