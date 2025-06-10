@@ -252,7 +252,7 @@ $$
     \f_y(\y(t), \z, t)
     = \left(\begin{array}{cccc}
         0 & 1 & 0 & 0 \\
-        y_4(t)^2 - \frac{2k}{y_1(t)^3} & 0 & 0 & 2y_1(t) y_4(t) \\
+        y_4(t)^2 + \frac{2k}{y_1(t)^3} & 0 & 0 & 2y_1(t) y_4(t) \\
         0 & 0 & 0 & 1 \\
         \frac{y_2(t) y_4(t)}{y_1(t)^2} & -\frac{y_4(t)}{y_1(t)} & 0 & -\frac{y_2(t)}{y_1(t)} \\
     \end{array}\right).
@@ -295,7 +295,9 @@ https://github.com/executablebooks/jupyter-book/issues/1928
 | $(4,1,2)$ | $\partial_{y_{1}}\partial_{y_{2}}\left[- 2 y_2 y_4 / y_1\right]  = 2y_4/y_1^2$ |
 | $(4,1,4)$ | $\partial_{y_{1}}\partial_{y_{4}}\left[- 2 y_2 y_4 / y_1\right]  = 2y_2/y_1^2$ |
 | $(4,2,1)$ | $\partial_{y_{2}}\partial_{y_{1}}\left[- 2 y_2 y_4 / y_1\right]  = 2y_4/y_1^2$ |
+| $(4,2,4)$ | $\partial_{y_{2}}\partial_{y_{4}}\left[- 2 y_2 y_4 / y_1\right]  = -2/y_1$     |
 | $(4,4,1)$ | $\partial_{y_{4}}\partial_{y_{1}}\left[- 2 y_2 y_4 / y_1\right]  = 2y_2/y_1^2$ |
+| $(4,4,2)$ | $\partial_{y_{4}}\partial_{y_{2}}\left[- 2 y_2 y_4 / y_1\right]  = -2/y_1$     |
 
 Now gather the terms with like $j$ and multiply with the appropriate $\lambda_i$ and $v_k$'s:
 
@@ -309,11 +311,12 @@ $$
         + 2\lambda_{4}y_{4}v_{2}/y_1^2
         + 2\lambda_{4}y_{2}v_{4}/y_1^2
         \\
-        2\lambda_{4}y_4v_{1}/y_1^2
+        2\lambda_{4}y_4v_{1}/y_1^2 - 2\lambda_4 v_4 / y_1
         \\ 0 \\
         2\lambda_{2}y_4v_{1}
         + 2\lambda_{2}y_1v_{4}
         + 2\lambda_{4}y_2v_{1}/y_1^2
+        - 2\lambda_{4} v_{2} / y_{1}
     \end{array}\right).
 \end{aligned}
 $$
@@ -415,12 +418,14 @@ function [y_out] = f_yy_Apply(this, y_in, y, ~, ~, lambda)
     ijk411 = -4 * lambda(4) * y(2) * y(4) * y_in(1, :) / y(1)^3;
     ijk412 = 2 * lambda(4) * y(4) * y_in(2, :) / y(1)^2;
     ijk414 = 2 * lambda(4) * y(2) * y_in(4, :) / y(1)^2;
+    ijk424 = -2 * lambda(4) * y_in(4, :) / y(1);
     ijk421 = 2 * lambda(4) * y(4) * y_in(1, :) / y(1)^2;
     ijk441 = 2 * lambda(4) * y(2) * y_in(1, :) / y(1)^2;
+    ijk442 = -2 * lambda(4) * y_in(2, :) / y(1);
     y_out = [ijk211 + ijk214 + ijk411 + ijk412 + ijk414
-             ijk421
+             ijk421 + ijk424
              zeros(1, size(y_in, 2))
-             ijk241 + ijk244 + ijk441];
+             ijk241 + ijk244 + ijk441 + ijk442];
 end
 ```
 
@@ -496,7 +501,7 @@ The following figure plots the state trajectory `u`.
 :align: center
 :width: 100 %
 
-Figure 1: Results of `Tutorial_1.m`.
+Results of `Tutorial_1.m`.
 :::
 
 :::{admonition} Plotting code
@@ -959,7 +964,7 @@ by less than options.FunctionTolerance = 1.000000e-06.
 :align: center
 :width: 100 %
 
-Figure 2: Results of `Tutorial_2.m`.
+Results of `Tutorial_2.m`.
 :::
 
 :::{admonition} Plotting code

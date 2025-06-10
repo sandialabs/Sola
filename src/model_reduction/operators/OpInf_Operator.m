@@ -190,26 +190,6 @@ classdef OpInf_Operator < handle
             Mv = 0;
         end
 
-        %% Galerkin projection (dimensionality reduction).
-
-        function [reduced] = Galerkin(this, Vr, Wr)
-            % Compute the Galerkin projection of this operator with respect to
-            % :math:`n_y'`-dimensional trial and test bases.
-            %
-            % Parameters
-            % ----------
-            % Vr
-            %   Basis matrix :math:`\V_r\in\R^{n_y \times n_y'}` for the trial space.
-            % Wr
-            %   Basis matrix :math:`\W_r\in\R^{n_y \times n_y'}` for the test space.
-            %
-            % Returns
-            % -------
-            % reduced : OpInf_Operator
-            %   Galerkin projection of this operator (a new object).
-            error('Galerkin() not implemented');
-        end
-
         %% Verification.
 
         function Finite_Difference_Check(this, n_t)
@@ -255,7 +235,6 @@ classdef OpInf_Operator < handle
             % Finite difference check for Hessian_yy().
             lambda = randn(this.n_y, 1);
             Mv = this.Hessian_yy_Apply(v, y, y, lambda);
-            diffs_yy = zeros(p, 1);
             if norm(Mv) > 0
                 disp(' ');
                 disp(['Finite difference check for ', class(this), '.Hessian_yy_Apply()']);
@@ -266,15 +245,6 @@ classdef OpInf_Operator < handle
                     disp(['h = ', num2str(h(k)), ' error = ', num2str(diff)]);
                 end
                 disp(' ');
-            end
-
-            % Ensure Galerkin() gives a dimension reduction.
-            if this.n_y > 1
-                r = floor(this.n_y / 2);
-                Vr = randn(this.n_y, r);
-                op = this.Galerkin(Vr, Vr);
-                assert(op.n_y == r);
-                assert(isa(op, class(this)));
             end
         end
 

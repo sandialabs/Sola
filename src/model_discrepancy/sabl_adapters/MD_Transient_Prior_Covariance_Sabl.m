@@ -6,7 +6,14 @@ classdef MD_Transient_Prior_Covariance_Sabl < MD_Transient_Prior_Covariance
 
     methods
 
-        function this = MD_Transient_Prior_Covariance_Sabl(beta_t, beta_i, T, n_t, n_y)
+        function this = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface, T, n_t, n_y)
+            arguments
+                data_interface MD_Data_Interface
+                u_hyperparam_interface MD_u_Hyperparameter_Interface
+                T (1, 1) double
+                n_t (1, 1) double
+                n_y (1, 1) double
+            end
             h = T / (n_t - 1);
 
             M_t = diag(4 * ones(1, n_t)) + diag(ones(1, n_t - 1), 1) + diag(ones(1, n_t - 1), -1);
@@ -19,10 +26,7 @@ classdef MD_Transient_Prior_Covariance_Sabl < MD_Transient_Prior_Covariance
             S_t(end, end) = .5 * S_t(end, end);
             S_t = (1 / h) * S_t;
 
-            this@MD_Transient_Prior_Covariance(beta_t, beta_i, M_t, S_t, n_y);
-            num_evals = n_t;
-            oversampling = 20;
-            this.Compute_Time_Covariance_GEVP(num_evals, oversampling);
+            this@MD_Transient_Prior_Covariance(M_t, S_t, n_y, data_interface, u_hyperparam_interface);
         end
 
     end

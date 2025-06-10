@@ -45,24 +45,6 @@ classdef Constant_Operator < OpInf_Operator
             out = this.entries(:, ones(1, size(y, 2)));
         end
 
-        function [reduced] = Galerkin(this, Vr, ~)
-            % Compute the Galerkin projection of this operator :math:`\C\in\R^{n_y}`
-            % with respect to a trial basis :math:`\V_r\in\R^{n_y \times n_y'}`,
-            % i.e., :math:`\hat{\C} = \V_r\trp\C \in \R^{n_y'}`.
-            %
-            % Parameters
-            % ----------
-            % Vr
-            %   Basis matrix :math:`\V_r\in\R^{n_y \times n_y'}` for the trial space.
-            %
-            % Returns
-            % -------
-            % reduced : Constant_Operator
-            %   Galerkin projection of this operator (a new object).
-            reduced = Constant_Operator();
-            reduced.Set_Entries(Vr' * this.entries);
-        end
-
     end
 
     methods (Static, Access = public)

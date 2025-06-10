@@ -23,7 +23,7 @@ data_interface = MD_Data_Interface_Diff_React();
 data_interface.Load_Data();
 
 alpha_u = 2^2;
-alpha_z = 1.e-4; % (1 / 50000)^2;
+alpha_z = 1.e-4; % 1.e-6;
 u_prior_interface = MD_Elliptic_u_Prior_Interface_Diff_React(alpha_u, opt);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Diff_React(alpha_z, opt);
 

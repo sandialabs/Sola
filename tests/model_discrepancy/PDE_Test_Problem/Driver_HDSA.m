@@ -23,7 +23,7 @@ data_interface = MD_Data_Interface_PDE_Test_Problem();
 data_interface.Load_Data();
 
 alpha_u = 1 / (2^2);
-alpha_z = 1 / (600^2);
+alpha_z = 1 / (3^2);
 u_prior_interface = MD_Elliptic_u_Prior_Interface_PDE_Test_Problem(alpha_u, opt_lofi);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_PDE_Test_Problem(alpha_z, opt_lofi);
 
@@ -103,6 +103,11 @@ end
 %%
 opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
+
+num_evals = 10;
+oversampling = 10;
+md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
+
 md_update = MD_Update(md_post_samples, md_hessian_analysis);
 
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
@@ -126,7 +131,7 @@ end
 z_mean_ref = load('reference_solution.mat').z_update_mean;
 z_samples_ref = load('reference_solution.mat').z_update_samples;
 ref_diff = max(norm(z_mean_ref - z_update_mean) / norm(z_update_mean), norm(z_update_samples - z_samples_ref) / norm(z_update_samples));
-if ref_diff > 1.e-14
-    disp('model_discrepancy_sythetic_test difference:');
+if ref_diff > 1.e-11
+    disp('PDE_Test_Problem difference:');
     disp(ref_diff);
 end

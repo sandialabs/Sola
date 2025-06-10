@@ -25,6 +25,7 @@ classdef Transient_ADR_2D < handle
         reactant        % Reaction coefficient (default = 0.01).
         init_center     % Center of the initial condition blob (2 x 1).
         v_weights       % Weights forcing the velocity to obey no-slip conditions.
+        vel_params      % Vector of parameters defining velocity field
     end
 
     properties (Dependent)
@@ -75,6 +76,8 @@ classdef Transient_ADR_2D < handle
             %   Diffusion coefficients. Larger means more diffusion.
             % advection_coeffs : [float, float]
             %   Advection coefficients. Larger means more advection.
+            % reaction_coeff : float
+            %   Reaction coefficient. Larger means more reaction.
             % nodes : int or str
             %   Number of sources OR a 2xn_q matrix of center coordinates.
 
@@ -115,6 +118,7 @@ classdef Transient_ADR_2D < handle
             this.advection = reshape(advection_coeffs, 2, 1);
             this.reactant = reaction_coeff;
             this.init_center = reshape(init_center, 2, 1);
+            this.vel_params = [1; 1; 10; 75];
             this.model = model;
         end
 
@@ -143,6 +147,7 @@ classdef Transient_ADR_2D < handle
 
             % Extract the mass matrix from the model.
             M = assembleFEMatrices(this.model, 'M').M;
+            M = M(1:this.n_x, 1:this.n_x);  % Otherwise shape is 2n_x by 2n_x.
 
             % % Assemble the control matrix.
             % xy = [this.x, this.y];
@@ -163,10 +168,10 @@ classdef Transient_ADR_2D < handle
             % ----------
             % x
             %   x-coordinates at which to evaluate the initial condition.
-            out = 50 * exp(-50 .* sum(([x; y] - this.init_center).^2, 1)) + 1;
+            out = 50 * exp(-50 .* sum(([x; y] - this.init_center).^2, 1)); % + 1;
         end
 
-        function [v] = Velocity(this, x, y)
+        function [v] = Velocity(this, x, ~)
             % Constant velocity field: constant -> in x, sin(x) in y,
             % with x-dependent rotation.
             %
@@ -182,14 +187,14 @@ classdef Transient_ADR_2D < handle
             % v : (n x 2)
             %   Velocity in x and y directions at the given coordinates.
             xx = reshape(x, [], 1);
-            xmin = min(xx);
-            xmax = max(xx);
+            xmin = min(this.x(:));
+            xmax = max(this.x(:));
             xspan = xmax - xmin;
             n = size(xx, 1);
-            flow = [ones(n, 1), sin(10 * pi .* xx) / 2];
+            flow = [this.vel_params(1) * ones(n, 1), this.vel_params(2) * sin(this.vel_params(3) * pi .* xx) / 2];
             for i = 1:n
-                dt = (xx(i) - xmin) / xspan;
-                angl = pi * (-75 * dt) / 180;
+                dx = (xx(i) - xmin) / xspan;
+                angl = pi * (-this.vel_params(4) * dx) / 180;
                 cosangl = cos(angl);
                 sinangl = sin(angl);
                 rotation = [cosangl -sinangl; sinangl cosangl];
@@ -304,14 +309,24 @@ classdef Transient_ADR_2D < handle
                 fig.Position(3:4) = [830, 300];
             end
 
+            if size(y, 2) == 1
+                y_new = zeros(this.n_x, 2);
+                y_new(:, 1) = y(1:this.n_x, 1);
+                if size(y, 1) == 2 * this.n_x
+                    y_new(:, 2) = y(this.n_x + 1:end, 1);
+                end
+                y = y_new;
+            end
+
             for i = 1:2
-                subplot(1, 2, i);
+                ax = subplot(1, 2, i);
                 pdeplot(this.model.Mesh, XYData = y(:, i), ColorMap = "parula");
-                if logscale
-                    set(gca, 'ColorScale', 'log');
+                if logscale && min(y(:, i), [], "all") > 0
+                    set(ax, 'ColorScale', 'log');
                 end
                 colorbar;
                 title(name);
+                ax.Color = [0.6, 0.6, 0.6];
             end
         end
 
@@ -367,12 +382,13 @@ classdef Transient_ADR_2D < handle
             title('Velocity field (wind)');
         end
 
-        function Animate_Solution(this, u)
-            n_t = size(u, 3);
-            waittime = 2 / n_t;
-            umax = max(abs(u), [], "all");
-            umin = min(abs(u), [], "all");
-            limits = [umin, umax];
+        function Animate_Solution(this, u, logscale)
+            arguments
+                this
+                u
+                logscale = true
+                % exportto {mustBeText} = "lastAnimation.mp4"
+            end
 
             fig = figure(50);
             fig.Position(3:4) = [830, 300];
@@ -384,15 +400,43 @@ classdef Transient_ADR_2D < handle
                 u = unew;
             end
 
+            n_t = size(u, 3);
+            umax = max(abs(u), [], "all");
+            umin = min(abs(u), [], "all");
+            limits = [umin, umax];
+
+            % outputVideo = VideoWriter(exportto, 'MPEG-4');
+            % outputVideo.FrameRate = 10;
+            % open(outputVideo)
+
             for j = 1:n_t
                 ys = [u(:, 1, j), u(:, 2, j)];
-                this.Plot_Field(abs(ys), ['t = t_{', num2str(j), '}'], true, true);
+                this.Plot_Field(abs(ys), ['t = t_{', num2str(j), '}'], logscale, true);
                 subplot(1, 2, 1);
-                clim(limits);
+                caxis(limits);
                 subplot(1, 2, 2);
-                clim(limits);
-                pause(waittime);
+                caxis(limits);
+                % drawnow;
+                % writeVideo(outputVideo, getframe(gcf));
+                % pause(waittime);
             end
+
+            % close(outputVideo);
+        end
+
+        function Animate_Controls(this, z)
+            arguments
+                this
+                z
+            end
+
+            n_t = size(z, 2);
+            Bz = zeros(this.n_x, n_t);
+            for j = 1:n_t
+                Bz(:, j) = this.Source(z(:, j), this.x, this.y);
+            end
+
+            this.Animate_Solution([ones(this.n_x, n_t); Bz], false);
         end
 
     end
@@ -456,7 +500,7 @@ classdef Transient_ADR_2D < handle
             out = [zeros(1, n); f];
         end
 
-        function [out] = ReactionTerm(this, loc, state)
+        function [out] = ReactionTerm(this, ~, state)
             % Reaction term.
             %
             % Parameters
@@ -506,11 +550,9 @@ classdef Transient_ADR_2D < handle
             load(loadfile, 'points', 'triangles');
             geometryFromMesh(model, points, triangles(1:3, :));
 
-            % Enforce homogeneous Dirichlet boundary conditions everywhere.
+            % Enforce homogeneous Neumann boundary conditions everywhere.
             nE = model.Geometry.NumEdges;
-            % applyBoundaryCondition(model, "dirichlet", "Edge", 1:nE, u = [0; 0]);
             applyBoundaryCondition(model, "neumann", "Edge", 1:nE, g = [0; 0], q = [0, 0; 0, 0]);
-            % applyBoundaryCondition(model, "dirichlet", "Edge", [1, 44, 47, 74], u = [0; 0]);
         end
 
         function [model] = model_default(Hmax)

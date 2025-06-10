@@ -11,6 +11,8 @@ classdef Prior_Model < handle
 
         [z_out] = Prior_Precision_Apply(this, z_in)
 
+        [z_out] = Prior_Covariance_Apply(this, z_in)
+
         [z_prior_mean] = Get_Prior_Mean(this)
 
         % Assume that the prior covariance is factorized as

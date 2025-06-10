@@ -1,0 +1,22 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8\relax}]
+\PYG{k}{namespace}\PYG{+w}{ }\PYG{n+nn}{HDSA}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{  }\PYG{k}{template}\PYG{+w}{ }\PYG{o}{\PYGZlt{}}\PYG{k}{class}\PYG{+w}{ }\PYG{n+nc}{RealT}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{k}{class}\PYG{+w}{ }\PYG{n+nc}{MD\PYGZus{}u\PYGZus{}Prior\PYGZus{}Interface}\PYG{+w}{ }\PYG{p}{\PYGZob{}}
+\PYG{+w}{    }\PYG{k}{public}\PYG{o}{:}
+\PYG{+w}{      }\PYG{k}{virtual}\PYG{+w}{ }\PYG{k+kt}{void}\PYG{+w}{ }\PYG{n}{Apply\PYGZus{}M\PYGZus{}u}\PYG{p}{(}
+\PYG{+w}{        }\PYG{n}{HDSA}\PYG{o}{::}\PYG{n}{Vector}\PYG{o}{\PYGZlt{}}\PYG{n}{RealT}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{o}{\PYGZam{}}\PYG{+w}{ }\PYG{n}{u\PYGZus{}out}\PYG{p}{,}
+\PYG{+w}{        }\PYG{k}{const}\PYG{+w}{ }\PYG{n}{HDSA}\PYG{o}{::}\PYG{n}{Vector}\PYG{o}{\PYGZlt{}}\PYG{n}{RealT}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{o}{\PYGZam{}}\PYG{+w}{ }\PYG{n}{u\PYGZus{}in}
+\PYG{+w}{      }\PYG{p}{)}\PYG{+w}{ }\PYG{k}{const}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{;}\PYG{+w}{  }\PYG{c+c1}{// $\v\mapsto\M_u\v$}
+
+\PYG{+w}{      }\PYG{k}{virtual}\PYG{+w}{ }\PYG{k+kt}{void}\PYG{+w}{ }\PYG{n+nf}{Apply\PYGZus{}W\PYGZus{}u\PYGZus{}Inverse}\PYG{p}{(}
+\PYG{+w}{          }\PYG{n}{HDSA}\PYG{o}{::}\PYG{n}{Vector}\PYG{o}{\PYGZlt{}}\PYG{n}{RealT}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{o}{\PYGZam{}}\PYG{+w}{ }\PYG{n}{u\PYGZus{}out}\PYG{p}{,}
+\PYG{+w}{          }\PYG{k}{const}\PYG{+w}{ }\PYG{n}{HDSA}\PYG{o}{::}\PYG{n}{Vector}\PYG{o}{\PYGZlt{}}\PYG{n}{RealT}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{o}{\PYGZam{}}\PYG{+w}{ }\PYG{n}{u\PYGZus{}in}
+\PYG{+w}{      }\PYG{p}{)}\PYG{+w}{ }\PYG{k}{const}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{;}\PYG{+w}{  }\PYG{c+c1}{// $\v\mapsto\W_u^{-1}\v$}
+
+\PYG{+w}{      }\PYG{k}{virtual}\PYG{+w}{ }\PYG{k+kt}{void}\PYG{+w}{ }\PYG{n+nf}{Apply\PYGZus{}W\PYGZus{}u\PYGZus{}Plus\PYGZus{}scalar\PYGZus{}M\PYGZus{}u\PYGZus{}Inverse}\PYG{p}{(}
+\PYG{+w}{          }\PYG{n}{HDSA}\PYG{o}{::}\PYG{n}{Vector}\PYG{o}{\PYGZlt{}}\PYG{n}{RealT}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{o}{\PYGZam{}}\PYG{+w}{ }\PYG{n}{u\PYGZus{}out}\PYG{p}{,}
+\PYG{+w}{          }\PYG{k}{const}\PYG{+w}{ }\PYG{n}{HDSA}\PYG{o}{::}\PYG{n}{Vector}\PYG{o}{\PYGZlt{}}\PYG{n}{RealT}\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{o}{\PYGZam{}}\PYG{+w}{ }\PYG{n}{u\PYGZus{}in}\PYG{p}{,}
+\PYG{+w}{          }\PYG{k}{const}\PYG{+w}{ }\PYG{n}{RealT}\PYG{+w}{ }\PYG{o}{\PYGZam{}}\PYG{+w}{ }\PYG{n}{scalar}
+\PYG{+w}{      }\PYG{p}{)}\PYG{+w}{ }\PYG{k}{const}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{;}\PYG{+w}{  }\PYG{c+c1}{// $\v\mapsto(\W_u + \alpha\M_u)^{-1}\v$}
+\PYG{+w}{  }\PYG{p}{\PYGZcb{};}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

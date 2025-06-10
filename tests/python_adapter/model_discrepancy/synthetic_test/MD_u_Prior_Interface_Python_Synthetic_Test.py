@@ -1,6 +1,6 @@
 import numpy as np
 import sys
-sys.path.append('../../../../src/python_adapter/model_discrepancy/')
+sys.path.append('../../../../src/python_adapter/model_discrepancy/interfaces/u_prior_interfaces')
 from MD_u_Prior_Interface_Py import *
 
 class MD_u_Prior_Interface_Python_Synthetic_Test(MD_u_Prior_Interface_Py):
@@ -43,13 +43,15 @@ class MD_u_Prior_Interface_Python_Synthetic_Test(MD_u_Prior_Interface_Py):
         return u_out
 
     # Compute samples from a mean zero Gaussian with covariance W_u^{-1}
-    def Sample_with_Covariance_W_u_Inverse_Py(this,num_samples):
+    def Sample_with_Covariance_W_u_Inverse_Py(self,num_samples):
+        num_samples = int(num_samples)
         Omega = np.random.standard_normal((self.m,num_samples))
         L = np.linalg.cholesky(self.W_u)
         u_out = np.linalg.solve(np.transpose(L), Omega)
         return u_out
 
     def Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse_Py(self, num_samples, scalar):
+        num_samples = int(num_samples)
         Omega = np.random.standard_normal((self.m,num_samples))
         L = np.linalg.cholesky(self.W_u + scalar * self.M)
         u_out = np.linalg.solve(np.transpose(L), Omega)

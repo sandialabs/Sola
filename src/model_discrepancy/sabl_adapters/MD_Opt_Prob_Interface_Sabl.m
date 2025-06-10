@@ -8,16 +8,8 @@ classdef MD_Opt_Prob_Interface_Sabl < MD_Opt_Prob_Interface
         m
     end
 
+    %% Implementation of base class virtual functions
     methods
-
-        function this = MD_Opt_Prob_Interface_Sabl(sabl_opt, md_interface_data)
-            this@MD_Opt_Prob_Interface();
-            this.sabl_opt = sabl_opt;
-            this.z_current = md_interface_data.z_init;
-            [~, ~, this.hessian_data] = this.sabl_opt.Jhat(this.z_current);
-            this.m = (length(this.hessian_data) - length(this.z_current)) / 2;
-            this.u_current = this.hessian_data(1:this.m);
-        end
 
         function [z_out] = Apply_Solution_Operator_z_Jacobian_Transpose(this, u_in, z)
             if norm(z - this.z_current) ~= 0
@@ -46,6 +38,30 @@ classdef MD_Opt_Prob_Interface_Sabl < MD_Opt_Prob_Interface
             u_out = this.sabl_opt.obj.J_uu_Apply(u_in, u, z);
         end
 
+        function [u_out] = Apply_Solution_Operator_z_Jacobian(this, z_in, z)
+            u = this.State_Solve(z);
+            tmp = this.sabl_opt.con.c_z_Apply(z_in, u, z);
+            u_out = -this.sabl_opt.con.c_u_Inverse_Apply(tmp, u, z);
+        end
+
+    end
+
+    %% Constructor and helper function
+    methods
+
+        function this = MD_Opt_Prob_Interface_Sabl(sabl_opt, md_data_interface)
+            arguments
+                sabl_opt Reduced_Space_Optimization
+                md_data_interface MD_Data_Interface
+            end
+            this@MD_Opt_Prob_Interface();
+            this.sabl_opt = sabl_opt;
+            this.z_current = md_data_interface.z_opt;
+            [~, ~, this.hessian_data] = this.sabl_opt.Jhat(this.z_current);
+            this.m = (length(this.hessian_data) - length(this.z_current)) / 2;
+            this.u_current = this.hessian_data(1:this.m);
+        end
+
         function [u] = State_Solve(this, z)
             if norm(z - this.z_current) == 0
                 u = this.u_current;
@@ -54,12 +70,6 @@ classdef MD_Opt_Prob_Interface_Sabl < MD_Opt_Prob_Interface
                 this.u_current = u;
                 this.z_current = z;
             end
-        end
-
-        function [u_out] = Apply_Solution_Operator_z_Jacobian(this, z_in, z)
-            u = this.State_Solve(z);
-            tmp = this.sabl_opt.con.c_z_Apply(z_in, u, z);
-            u_out = -this.sabl_opt.con.c_u_Inverse_Apply(tmp, u, z);
         end
 
     end

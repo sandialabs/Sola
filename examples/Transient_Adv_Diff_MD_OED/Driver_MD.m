@@ -18,13 +18,14 @@ x = con_lofi.x;
 data_interface = MD_Data_Interface_Adv_Diff();
 data_interface.Load_Data();
 
-beta_t = 50;
-beta_i = 1.e5;
-transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(beta_t, beta_i, T, n_t, n_y);
+hyperparams = MD_Hyperparameters_Transient_Adv_Diff(data_interface, n_y);
+
+hyperparams.beta_t = 50;
+transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(hyperparams, T, n_t, n_y);
 
 alpha_u = (1 / 1)^2;
-u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface_Adv_Diff(alpha_u, transient_prior_cov, opt_lofi);
-
+spatial_u_prior_interface = MD_Elliptic_u_Prior_Interface_Adv_Diff(alpha_u, opt_lofi);
+u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(spatial_u_prior_interface, transient_prior_cov);
 z_prior_interface = MD_z_Prior_Interface_Adv_Diff(obj);
 
 %%

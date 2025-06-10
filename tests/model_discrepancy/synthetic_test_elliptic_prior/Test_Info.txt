@@ -1,0 +1,27 @@
+This examples tests:
+* MD_Elliptic_u_Prior_Interface
+	- Compute_E_u_Inverse_GSVD
+	- Sample_with_Covariance_W_u_Acute_Inverse
+	- Apply_W_u_Acute_Inverse
+	- Apply_W_u_Acute_Plus_scalar_M_u_Inverse
+	- Sample_with_Covariance_W_u_Acute_Plus_scalar_M_u_Inverse
+
+* MD_Scaled_u_Prior_Interface
+	- Sample_with_Covariance_W_u_Inverse
+	- Apply_W_u_Inverse
+	- Apply_W_u_Plus_scalar_M_u_Inverse
+	- Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse
+
+* MD_Elliptic_z_Prior_Interface
+	- Apply_W_z_Acute_Inverse
+
+* MD_Scaled_z_Prior_Interface
+	- Apply_W_z_Inverse
+	- Sample_with_Covariance_W_z_Inverse
+
+* Elliptic_GSVD
+	- Apply_Operator
+	- Apply_Operator_Transpose
+	- Apply_Input_Weighting_Operator_Inverse
+	- Apply_Output_Weighting_Operator
+

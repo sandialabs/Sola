@@ -49,7 +49,7 @@ classdef Adv_Diff_Objective < Dynamic_Objective
         end
 
         function [target] = Evaluate_Target(this, t, x)
-            target = 0.2 * t^2 * exp(-10 * (x - .5).^2);
+            target = (1.e2) * t * x;
         end
 
     end

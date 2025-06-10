@@ -15,7 +15,7 @@ data_interface = MD_Data_Interface_Diff_React();
 data_interface.Load_Data();
 
 alpha_u = 2^2;
-alpha_z = 1.e-10;
+alpha_z = 4.e-6; % 1.e-10;
 u_prior_interface = MD_Elliptic_u_Prior_Interface_Diff_React(alpha_u, opt_lofi);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Diff_React(alpha_z, opt_lofi);
 
@@ -92,7 +92,7 @@ opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 
 num_evals = 4;
-oversampling = 20;
+oversampling = 10;
 md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
 
 md_update = MD_Update(md_post_samping, md_hessian_analysis);
@@ -158,8 +158,8 @@ yticks([]);
 set(gca, 'fontsize', 18);
 
 %%
-rank_range = (1:100)';
-oversampling = 20;
+rank_range = (1:12)';
+oversampling = 10;
 z_update_mean_range = cell(length(rank_range), 1);
 z_update_samples_range = cell(length(rank_range), 1);
 count = 1;

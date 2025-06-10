@@ -1,0 +1,10 @@
+This examples tests:
+* MD_Multi_State_u_Prior_Interface
+	- Apply_M_u
+	- Sample_with_Covariance_W_u_Inverse
+	- Apply_W_u_Inverse
+	- Apply_W_u_Plus_scalar_M_u_Inverse
+	- Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse
+
+* MD_Multi_State_u_Hyperparameter_Interface
+	- Load_Spatial_Node_Data

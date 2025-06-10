@@ -37,6 +37,12 @@ classdef Inf_Dim_Prior_Model < Prior_Model
             z_out = this.Laplacian_Like_Transpose_Apply(tmp2);
         end
 
+        function [z_out] = Prior_Covariance_Apply(this, z_in)
+            tmp1 = this.Laplacian_Like_Transpose_Inverse_Apply(z_in);
+            tmp2 = this.Mass_Matrix_Apply(tmp1);
+            z_out = this.Laplacian_Like_Inverse_Apply(tmp2);
+        end
+
         function [z_out] = Prior_Covariance_Factor_Apply(this, z_in)
             tmp = this.mass_mat_sqrt.Matrix_Sqrt_Apply(z_in);
             z_out = this.Laplacian_Like_Inverse_Apply(tmp);

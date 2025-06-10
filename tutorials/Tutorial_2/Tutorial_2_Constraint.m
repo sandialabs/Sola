@@ -49,12 +49,14 @@ classdef Tutorial_2_Constraint < Dynamic_Constraint
             ijk411 = -4 * lambda(4) * y(2) * y(4) * y_in(1, :) / y(1)^3;
             ijk412 = 2 * lambda(4) * y(4) * y_in(2, :) / y(1)^2;
             ijk414 = 2 * lambda(4) * y(2) * y_in(4, :) / y(1)^2;
+            ijk424 = -2 * lambda(4) * y_in(4, :) / y(1);
             ijk421 = 2 * lambda(4) * y(4) * y_in(1, :) / y(1)^2;
             ijk441 = 2 * lambda(4) * y(2) * y_in(1, :) / y(1)^2;
+            ijk442 = -2 * lambda(4) * y_in(2, :) / y(1);
             y_out = [ijk211 + ijk214 + ijk411 + ijk412 + ijk414
-                     ijk421
+                     ijk421 + ijk424
                      zeros(1, size(y_in, 2))
-                     ijk241 + ijk244 + ijk441];
+                     ijk241 + ijk244 + ijk441 + ijk442];
         end
 
         function [y_out] = f_yz_Apply(this, z_in, ~, ~, ~, ~)

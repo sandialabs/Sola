@@ -22,32 +22,23 @@ classdef Matrix_Sqrt < handle
             d = size(vec_in, 2);
             vec_out = zeros(n, d);
             A = @(v) this.Matrix_Apply(v);
-            G = speye(n);
             tol = 1.e-8;
             for k = 1:d
-                vec_out(:, k) = this.krylov_sqrt(A, G, vec_in(:, k), n, tol);
+                vec_out(:, k) = this.krylov_sqrt(A, vec_in(:, k), n, tol);
             end
         end
 
-        function [x12, relres] = krylov_sqrt(this, A, G, b, maxiter, tol, varargin)
+        function [x12, relres] = krylov_sqrt(this, A, b, maxiter, tol)
             % This function computes A^{1/2}b using Lanczos approach
             % described in Algorithm 2.2 of
             %   "Quantifying Uncertainties in Bayesian Linear Inverse Problems using
             %   Krylov Subspace Methods" - Saibaba, Chung, and Petroske, 2018
             %
             % Inputs:
-            %   A (n x n) - Sparse matrix or funMat type
-            %   G (n x n) - Sparse matrix or funMat type. Preconditioner, such that G'*G approx A^{-1}
+            %   A (n x n) - func type
             %   b (n x 1) - right hand side
             %   maxiter   - maximum number of Lanczos iterations
-            %         tol - tolerance for stopping
-            %    varargin - test {'True', 'False'} Optional parameter to verify accuracy of Lanczos relationships
-
-            if nargin > 6
-                test = varargin{1};
-            else
-                test = 'False';
-            end
+            %   tol - tolerance for stopping
 
             n = size(b, 1);
             nrmb = norm(b);
@@ -65,7 +56,7 @@ classdef Matrix_Sqrt < handle
 
             for j = 1:maxiter
                 V(:, j) = vj;
-                wj = G * (A(G' * vj));
+                wj = A(vj);
                 alpha = wj' * vj;
                 wj = wj - alpha * vj - beta * vjm1;
                 beta = norm(wj);
@@ -74,7 +65,7 @@ classdef Matrix_Sqrt < handle
                 vjm1 = vj;
                 vj =    wj / beta;
 
-                % Reorthogonalize vj (CGS2) % Change to something more sophisticated
+                % Reorthogonalize vj (CGS2)
                 vj = vj - V(:, 1:j) * (V(:, 1:j)' * vj);
                 vj = vj / norm(vj);
                 vj = vj - V(:, 1:j) * (V(:, 1:j)' * vj);
@@ -93,7 +84,7 @@ classdef Matrix_Sqrt < handle
                 T12 = sqrtm(Tk);
                 yk = T12 * e1;
 
-                %   relres(j) = norm(G*(A(G'*(Vk*(Tk\e1))))-b); % Lanczos residual
+                %   relres(j) = norm(A*(Vk*(Tk\e1))))-b); % Lanczos residual
                 % Check differences b/w successive iterations
                 relres(j) = norm([ykp; 0] - yk) / norm(yk);
                 if  relres(j) < tol
@@ -103,27 +94,7 @@ classdef Matrix_Sqrt < handle
                     ykp = yk;
                 end
             end
-            x12 = G \ (Vk * yk);
-
-            % Test the accuracy of Lanczos
-            if strcmp(test, 'True')
-
-                maxiter = size(relres, 1);
-                AG = 0 * Vk;
-                for i = 1:maxiter
-                    AG(:, i) = A(G' * Vk(:, i));
-                end
-                AVk = G * AG;
-
-                figure;
-                imagesc(log10(abs(Vk' * AVk - Tk)));
-                colorbar;
-                norm(Vk' * AVk - Tk);
-                norm(Vk' * Vk - eye(maxiter));
-                ek = zeros(maxiter, 1);
-                ek(end) = beta;
-                norm(AVk - Vk * Tk - vj * ek');
-            end
+            x12 = Vk * yk;
         end
 
     end

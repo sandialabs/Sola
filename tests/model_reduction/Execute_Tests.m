@@ -12,6 +12,7 @@ end
 test_operators = true;
 if test_operators
     run Test_Operators;
+    run Test_Operators_Multi;
 end
 
 test_roms = true;

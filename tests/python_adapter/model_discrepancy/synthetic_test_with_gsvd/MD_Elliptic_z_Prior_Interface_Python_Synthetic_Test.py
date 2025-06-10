@@ -1,12 +1,13 @@
 import numpy as np
 import sys
-sys.path.append('../../../../src/python_adapter/model_discrepancy/')
+sys.path.append('../../../../src/python_adapter/model_discrepancy/interfaces/z_prior_interfaces')
 from MD_Elliptic_z_Prior_Interface_Py import *
 
 class MD_Elliptic_z_Prior_Interface_Python_Synthetic_Test(MD_Elliptic_z_Prior_Interface_Py):
 
-    def __init__(self,m):
+    def __init__(self,m,alpha_z):
         self.m = m
+        self.alpha_z = alpha_z
         self.x = np.linspace(0.0,1.0,m)
         h = self.x[1] - self.x[0]
 
@@ -41,8 +42,10 @@ class MD_Elliptic_z_Prior_Interface_Python_Synthetic_Test(MD_Elliptic_z_Prior_In
         return z_out
 
     # Compute samples from a mean zero Gaussian with covariance W_z^{-1}
-    def Sample_with_Covariance_W_z_Inverse(this,num_samples):
+    def Sample_with_Covariance_W_z_Inverse(self,num_samples):
+        num_samples = int(num_samples)
         Omega = np.random.standard_normal((self.m,num_samples)) 
-        L = np.linalg.cholesky(self.W_z)
-        z_out = np.transpose(L)@Omega
+        L = np.linalg.cholesky(self.M)
+        tmp = L@Omega
+        z_out = np.sqrt(self.alpha_z) * np.linalg.solve(self.E_z,tmp)
         return z_out

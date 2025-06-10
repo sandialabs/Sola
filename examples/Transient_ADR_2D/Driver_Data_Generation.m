@@ -30,7 +30,7 @@ control_nodes = [
 model = Transient_ADR_2D.model_fromfile('urban_canyon.mat');
 solver = Transient_ADR_2D(model, [.05; .85], [.1; .1], [4; 4], 2, control_nodes);
 
-t = linspace(0, .4, 401);
+t = linspace(0, .4, 101);
 
 %% Visualize the solver geometry.
 solver.Plot_Control_Nodes();
@@ -44,11 +44,12 @@ figure;
 plot(t, controller(t));
 title('Controller');
 
-%% Solve with the selected controller and visualize the results.
+%% Solve with the selected controller.
 tic();
 u = solver.State_Solve(controller, t);
 solve_time = toc();
 
+%% Visualize the results.
 solver.Plot_Field(u.NodalSolution(:, :, 1), 'Initial condition');
 solver.Animate_Solution(u.NodalSolution);
 

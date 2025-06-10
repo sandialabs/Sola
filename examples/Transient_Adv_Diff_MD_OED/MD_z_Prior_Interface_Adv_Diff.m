@@ -12,6 +12,10 @@ classdef MD_z_Prior_Interface_Adv_Diff < MD_z_Prior_Interface
             z_out = this.alpha_z * this.F * (this.F' * z_in);
         end
 
+        function [z_out] = Apply_M_z(this, z_in)
+            z_out = this.Wz * z_in;
+        end
+
         % Compute samples from a mean zero Gaussian with covariance W_z^{-1}
         function [z_out] = Sample_with_Covariance_W_z_Inverse(this, num_samples)
             z_out = sqrt(this.alpha_z) * this.F * randn(size(this.F, 1), num_samples);
@@ -28,7 +32,7 @@ classdef MD_z_Prior_Interface_Adv_Diff < MD_z_Prior_Interface
             R = chol(this.Wz);
             this.F = linsolve(R, eye(size(R, 1)));
 
-            this.alpha_z = 5.e-5;
+            this.alpha_z = 5;
         end
 
     end

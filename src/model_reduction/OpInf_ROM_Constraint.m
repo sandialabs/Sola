@@ -2,7 +2,7 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
     % Operator Inference Reduced-order Model.
     %
     % This class represents systems of ordinary differential equations (ODEs)
-    % with the polynomial
+    % with the polynomial form
     %
     % .. math:: \ddt\y(t) = \c + \A\y(t) + \H[\y(t)\otimes\y(t)] + \B\q(t),
     %
@@ -165,7 +165,7 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             % T
             %   Final time :math:`T > 0`.
             % n_t
-            %   Number of nodes :math:`N` in the time mesh.
+            %   Number of nodes :math:`n_t` in the time mesh.
             % y0
             %   Initial condition :math:`\y(0)\in\R^{n_y}` for the ODE.
             % operators
@@ -461,7 +461,7 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             elseif ddt_strategy == "6thOrder"
                 driver = @this.Estimate_State_ddts_6thOrder;
             else
-                error('unexpected ddt_strategy');
+                error('invalid ddt_strategy');
             end
 
             % Check shapes and estimate time derivatives.
@@ -587,7 +587,7 @@ classdef OpInf_ROM_Constraint < Dynamic_Constraint
             vt = v(I, :);
             Mv = zeros(this.n_z, size(v, 2));
             for i = 1:length(this.operators)
-                Mv(I, :) = Mv(I, :) + this.operators{i}.Hessian_yq_Apply(vt, y, q, lambda);
+                Mv(I, :) = Mv(I, :) + this.operators{i}.Hessian_qq_Apply(vt, y, q, lambda);
             end
         end
 
