@@ -153,7 +153,9 @@ classdef MD_OED_Seq < handle
                 Quz_y(:, i) = this.offline_data.V_accute * diag(1 ./ this.offline_data.Rho.^2) * tmp;
                 y_Qz_y(i) = tmp' * diag(1 ./ this.offline_data.Rho.^2) * tmp;
 
-                c(i) = sum(g(:, i));
+                % c(i) = sum(g(:, i)); (to recover previous code)
+                % now computes + (z_init - z_opt)' * (Mz * Wz_inv * Mz) * y_i:
+                c(i) = sum(g(:, i)) - this.beta_bar' * this.offline_data.Vt_Mz_Wz_inv_Mz_V * Mg(:, i);
             end
 
             val = 0;
@@ -165,7 +167,9 @@ classdef MD_OED_Seq < handle
                 tmp = diag(this.offline_data.Mu_Wu_inv_V_acute' * Ws_V_acute{i})' * (1 ./ this.offline_data.Rho.^2);
                 val = val + c(i)^2 * tmp;
 
-                grad = grad + 2 * c(i) * sum(g_jac{i}, 1)' * tmp;
+                % grad_c = sum(g_jac{i}, 1)' (to recover previous code...)
+                grad_c = sum(g_jac{i}, 1)' + (this.beta_bar' * this.offline_data.Vt_Mz_Wz_inv_Mz_V * Mg_jac{i})';
+                grad = grad + 2 * c(i) * grad_c * tmp;
 
                 tmp1 = this.u_prior_interface.Apply_M_u(Ws_V_acute{i});
                 tmp2 = (1 / alpha_d) * this.u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(tmp1, mu(i) / alpha_d);
@@ -176,7 +180,7 @@ classdef MD_OED_Seq < handle
                 tmp = (Quz_y(:, i)' * Ws_Mu_Wu_inv_Ju(:, i));
                 val = val + 2 * c(i) * tmp;
 
-                grad = grad + 2 * sum(g_jac{i}, 1)' * tmp;
+                grad = grad + 2 * grad_c * tmp;
 
                 tmp1 = this.u_prior_interface.Apply_M_u(Ws_Mu_Wu_inv_Ju(:, i));
                 tmp2 = (1 / alpha_d) * this.u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(tmp1, mu(i) / alpha_d);
