@@ -36,9 +36,11 @@ fprintf('Objective of z_hifi: \t%.3f\n\n', Jhat_hifi);
 data_interface = MD_Data_Interface_Diff(u_lofi, z_lofi);
 
 % Generate Priors for u and z
-alpha_u = (1 / 2)^2;
-alpha_z = (1 / 100)^2;
-alpha_d = 1.e-2;
+% alpha_u = (1 / 2)^2;
+% alpha_z = (1 / 100)^2;
+alpha_u = 15;
+alpha_z = 5;
+alpha_d = (1.e-2)^2 * alpha_u;
 u_prior_interface = MD_Elliptic_u_Prior_Interface_Diff(alpha_u, opt_lofi);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Diff(alpha_z, opt_lofi);
 
@@ -51,6 +53,11 @@ md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface)
 num_evals = 4;
 oversampling = 20;
 md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_init, num_evals, oversampling);
+
+% Get best possible z under projected problem
+z_best_proj = z_lofi + md_hessian_analysis.evecs * (md_hessian_analysis.evecs \ (z_hifi - z_lofi));
+Jhat_best_proj = opt_hifi.Jhat(z_best_proj);
+fprintf('Objective of z_proj: \t%.3f\n\n', Jhat_best_proj);
 
 % Perform Offline OED Computations - This is used to generate many random designs (to avoid OED in next steps)
 Im = eye(m);
@@ -121,11 +128,17 @@ for p = 1:N
     % Perform Posterior Sampling (TODO: Reuse data)
     md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
     md_post_sampling.Compute_Posterior_Data(alpha_d, 1);
-
-    % Obtain Optimal Solution Update
-    md_update = MD_Update(md_post_sampling, md_hessian_analysis);
-    z_bar = md_update.Posterior_Update_Mean();
     theta_post = Extract_mean_theta(md_post_sampling.post_data);
+
+    % Obtain Optimal Solution Update via Continuation
+    num_continuation_steps = 1;
+    md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
+    [u_cont, z_cont] = md_cont_update.Posterior_Update_Mean_PC_beta();
+    z_bar = z_cont(:, end);
+
+    % Obtain Optimal Solution Update via HDSA (linearization)
+    % md_update = MD_Update(md_post_sampling, md_hessian_analysis);
+    % z_bar = md_update.Posterior_Update_Mean();
     % z_bar = z_lofi - PHinvB(theta_post);
 
     % Display Stats
@@ -176,6 +189,7 @@ if show_figures
     xlim([0 N]);
     yline(Jhat_hifi, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
     yline(Jhat_lofi, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
+    % yline(Jhat_best_proj, "b--", "DisplayName", "Best-Proj", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
     try
         yline(Jhat_HDSA, "b--", "DisplayName", "Best-HDSA", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
         plot(0:N, [Jhat_lofi; old_oed(1:N)], ".-", "Color", "#1F618D", "DisplayName", "Standard OED");
