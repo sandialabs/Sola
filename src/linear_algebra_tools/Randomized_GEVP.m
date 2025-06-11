@@ -60,8 +60,12 @@ classdef Randomized_GEVP < handle
         end
 
         function [Q, WQ, R] = CholQR(this, Z, type)
-            R_Z = chol(Z' * Z);
-            Q_Z = Z * linsolve(R_Z, eye(size(R_Z, 1)));
+            % disp("...")
+            % disp(cond(Z' * Z))
+            % R_Z = chol(Z' * Z);
+            % Q_Z = Z * linsolve(R_Z, eye(size(R_Z, 1)));
+            [Q_Z, R_Z] = qr(Z, "econ");
+
             if strcmp(type, 'weighting')
                 W_Q_Z = this.Apply_Weighting_Operator(Q_Z);
             elseif strcmp(type, 'weighting_inverse')

@@ -33,9 +33,12 @@ fprintf('Objective of z_hifi: \t%.3f\n\n', Jhat_hifi);
 data_interface = MD_Data_Interface_Diff_React(u_lofi, z_lofi);
 
 % Generate Priors for u and z
-alpha_u = 2^2;
-alpha_z = 1.e-10;
-alpha_d = 1.e-4;
+% alpha_u = 2^2;
+% alpha_z = 1.e-10;
+% alpha_d = 1.e-4;
+alpha_u = 2;
+alpha_z = 1e-8;
+alpha_d = (1.e-2)^2 * alpha_u;
 u_prior_interface = MD_Elliptic_u_Prior_Interface_Diff_React(alpha_u, opt_lofi);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Diff_React(alpha_z, opt_lofi);
 
@@ -48,6 +51,11 @@ md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface)
 num_evals = 4;
 oversampling = 20;
 md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_init, num_evals, oversampling);
+
+% Get best possible z under projected problem
+z_best_proj = z_lofi + md_hessian_analysis.evecs * (md_hessian_analysis.evecs \ (z_hifi - z_lofi));
+Jhat_best_proj = opt_hifi.Jhat(z_best_proj);
+fprintf('Objective of z_proj: \t%.3f\n\n', Jhat_best_proj);
 
 % Perform Offline OED Computations - This is used to generate many random designs (to avoid OED in next steps)
 alpha_zd = 1.e-2;
@@ -83,14 +91,14 @@ D = [];
 betas = [];
 z_bar = z_lofi;
 
+% Sequential OED
+md_oed = MD_OED_Seq(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
+md_oed.Offline_Computation();
+
 for p = 1:N
     % Update Data Interface (with prior center)
     fprintf('\nStep %d:\n-------------\n', p);
     data_interface.Update_z_opt(z_bar);
-
-    % Sequential OED
-    md_oed = MD_OED_Seq(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
-    md_oed.Offline_Computation();
 
     % Set Parameters for OED
     if p == 1
@@ -117,9 +125,15 @@ for p = 1:N
     md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
     md_post_sampling.Compute_Posterior_Data(alpha_d, 1);
 
-    % Obtain Optimal Solution Update
-    md_update = MD_Update(md_post_sampling, md_hessian_analysis);
-    z_bar = md_update.Posterior_Update_Mean();
+    % Obtain Optimal Solution Update via Continuation
+    num_continuation_steps = 3;
+    md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
+    [u_cont, z_cont] = md_cont_update.Posterior_Update_Mean_PC_beta();
+    z_bar = z_cont(:, end);
+
+    % Obtain Optimal Solution Update via HDSA (linearization)
+    % md_update = MD_Update(md_post_sampling, md_hessian_analysis);
+    % z_bar = md_update.Posterior_Update_Mean();
 
     % Display Stats
     Jhat_oed(p) = opt_hifi.Jhat(z_bar);
