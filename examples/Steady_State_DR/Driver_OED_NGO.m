@@ -45,7 +45,7 @@ md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversa
 alpha_zd = 1.e-2;
 beta_zd = 1.e-2;
 oed_interface = MD_OED_Interface_Diff_React(data_interface, con_lofi, alpha_zd, beta_zd);
-md_oed = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
+md_oed = MD_OED_NGO(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
 md_oed.Offline_Computation();
 
 % Set Parameters for OED
@@ -53,7 +53,15 @@ N = 5;
 rng(0);
 beta_0 = randn(num_evals * (N - 1), 1);
 reg_coeff = 1.e-6;
-[betas, Z] = md_oed.Generate_Optimal_Design(beta_0, alpha_d, reg_coeff);
+% [betas, Z] = md_oed.Generate_Optimal_Design(beta_0, alpha_d, reg_coeff);
+
+% Finite difference check...
+% In = eye(length(beta_0));
+% h = 1.e-6;
+% [val1, grad] = md_oed.Evaluate_Posterior_Cov_Trace(beta_0, alpha_d);
+% disp(grad'*In(:,1))
+% [val2, ~] = md_oed.Evaluate_Posterior_Cov_Trace(beta_0 + h*In(:, 1), alpha_d);
+% disp(1/h * (val2-val1))
 
 % Generate Design (Generate_Random_Design(N), Generate_Random_Design_from_Subspace(N), Generate_Optimal_Design(...))
 % Z = md_oed.Generate_Random_Design(N);
@@ -66,13 +74,19 @@ md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_pr
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 % [delta_mean, delta_samples] = md_post_sampling.Posterior_Discrepancy_Samples(Z);
 
-% % Sample from Posterior of Optimal Solution
-md_update = MD_Update(md_post_sampling, md_hessian_analysis);
-[z_bar, z_update_samples] = md_update.Posterior_Update_Samples();
+% Obtain Optimal Solution Update via Continuation
+num_continuation_steps = 3;
+md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
+[u_cont, z_cont] = md_cont_update.Posterior_Update_Mean_PC_beta();
+z_bar = z_cont(:, end);
+
+% Sample from Posterior of Optimal Solution
+% md_update = MD_Update(md_post_sampling, md_hessian_analysis);
+% [z_bar, z_update_samples] = md_update.Posterior_Update_Samples();
 
 % Sample from Design Prior of Z
-num_prior_samples = 1;
-Z_prior_samps = md_oed.Generate_Random_Design(num_prior_samples);
+% num_prior_samples = 1;
+% Z_prior_samps = md_oed.Generate_Random_Design(num_prior_samples);
 
 % Evaluate Objectives
 fprintf("\n\n");

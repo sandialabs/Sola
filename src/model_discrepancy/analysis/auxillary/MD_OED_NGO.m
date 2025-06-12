@@ -41,13 +41,16 @@ classdef MD_OED_NGO < handle
             this.offline_data.r = length(this.offline_data.Rho);
             this.offline_data.m = length(this.data_interface.u_opt);
 
-            this.offline_data.Wd_Wu_inv = this.u_prior_interface.Apply_M_u_Inverse();
+            tmp = this.u_prior_interface.Apply_W_u_Inverse(eye(this.offline_data.m));
+            Mu_Wu_inv = this.u_prior_interface.Apply_M_u(tmp);
 
             V_acute = zeros(length(this.opt_prob_interface.u_current), this.offline_data.r);
             Mu_Wu_inv_V_acute = zeros(length(this.opt_prob_interface.u_current), this.offline_data.r);
             Mz_V = this.z_prior_interface.Apply_M_z(this.offline_data.V);
             Vt_Mz_Wz_inv_Mz_V = zeros(this.offline_data.r, this.offline_data.r);
-            Mu_Wu_inv = zeros(this.offline_data.r, this.offline_data.r);
+            Mz_Wz_inv_Mz_V = zeros(this.offline_data.m, this.offline_data.r);
+            Wz_inv_Mz_V = zeros(this.offline_data.m, this.offline_data.r);
+
             for k = 1:this.offline_data.r
                 tmp = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian(this.offline_data.V(:, k), this.data_interface.z_opt);
                 V_acute(:, k) = this.opt_prob_interface.Apply_Misfit_Hessian(tmp, this.data_interface.u_opt, this.data_interface.z_opt);
@@ -55,16 +58,18 @@ classdef MD_OED_NGO < handle
                 tmp = this.u_prior_interface.Apply_W_u_Inverse(V_acute(:, k));
                 Mu_Wu_inv_V_acute(:, k) = this.u_prior_interface.Apply_M_u(tmp);
 
-                tmp = this.u_prior_interface.Apply_W_u_Inverse(eye(m));
-                Mu_Wu_inv = this.u_prior_interface.Apply_M_u(tmp);
-
                 tmp = this.z_prior_interface.Apply_W_z_Inverse(Mz_V(:, k));
+                Wz_inv_Mz_V(:, k) = tmp;
+                Mz_Wz_inv_Mz_V(:, k) = this.z_prior_interface.Apply_M_z(tmp);
                 Vt_Mz_Wz_inv_Mz_V(:, k) = Mz_V' * tmp;
             end
+
             this.offline_data.V_accute = V_acute;
             this.offline_data.Mu_Wu_inv_V_acute = Mu_Wu_inv_V_acute;
             this.offline_data.Mu_Wu_inv = Mu_Wu_inv;
             this.offline_data.Vt_Mz_Wz_inv_Mz_V = Vt_Mz_Wz_inv_Mz_V;
+            this.offline_data.Mz_Wz_inv_Mz_V = Mz_Wz_inv_Mz_V;
+            this.offline_data.Wz_inv_Mz_V = Wz_inv_Mz_V;
 
             Ju = this.opt_prob_interface.Misfit_Gradient(this.data_interface.u_opt, this.data_interface.z_opt);
             tmp = this.u_prior_interface.Apply_W_u_Inverse(Ju);
@@ -98,24 +103,17 @@ classdef MD_OED_NGO < handle
 
             [g, mu, Mg, g_jac, mu_jac, Mg_jac] = this.G_eigs(beta);
 
-            m = length(this.offline_data.Mu_Wu_inv_Ju);
-            Ws_V_acute = cell(N, 1);
-            Ws_Mu_Wu_inv_Ju = zeros(m, N);
-            Ws_Mu_Wu_inv = cell(N, 1);
-            Quz_y = zeros(m, N);
-            y_Qz_y = zeros(N, 1);
-            c = zeros(N, 1);
+            Ws_Mu_Wu_inv = cell(N, 1); % new
+            y_P_y = zeros(N, 1); % new
+            s = zeros(N, 1); % new
+            p = zeros(N, 1); % new
 
             for i = 1:N
-                Ws_V_acute{i} = (1 / alpha_d) * this.u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(this.offline_data.V_accute, mu(i) / alpha_d);
-                Ws_Mu_Wu_inv_Ju(:, i) = (1 / alpha_d) * this.u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(this.offline_data.Mu_Wu_inv_Ju, mu(i) / alpha_d);
-                Ws_Mu_Wu_inv{i} = (1 / alpha_d) * this.u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(this.offline_data.Mu_Wu_inv, mu(i) / alpha_d);
-
+                Ws_Mu_Wu_inv{i} = (1 / alpha_d) * this.u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(this.offline_data.Mu_Wu_inv, mu(i) / alpha_d); % new
                 tmp = this.offline_data.Vt_Mz_Wz_inv_Mz_V * Mg(:, i);
-                Quz_y(:, i) = this.offline_data.V_accute * diag(1 ./ this.offline_data.Rho.^2) * tmp;
-                y_Qz_y(i) = tmp' * diag(1 ./ this.offline_data.Rho.^2) * tmp;
-
-                c(i) = sum(g(:, i));
+                y_P_y(i) = tmp' * tmp; % new
+                s(i) = sum(g(:, i)) - (this.offline_data.Mz_Wz_inv_Mz_V * Mg(:, i))' * this.data_interface.z_opt;
+                p(i) = s(i)^2 + y_P_y(i);
             end
 
             val = 0;
@@ -123,40 +121,15 @@ classdef MD_OED_NGO < handle
             % Implement gradient via product rules, may be able to
             % precompute additional vectors needed in the analysis
             for i = 1:N
-                %
-                tmp = diag(this.offline_data.Mu_Wu_inv_V_acute' * Ws_V_acute{i})' * (1 ./ this.offline_data.Rho.^2);
-                val = val + c(i)^2 * tmp;
+                val = val + p(i) * trace(Ws_Mu_Wu_inv{i});
+                grad_si = sum(g_jac{i}, 1)' - Mg_jac{i}' * (this.offline_data.Mz_Wz_inv_Mz_V' * this.data_interface.z_opt);
+                grad_yPyi = Mg_jac{i}' * (2 * this.offline_data.Vt_Mz_Wz_inv_Mz_V * (this.offline_data.Vt_Mz_Wz_inv_Mz_V * Mg(:, i)));
+                grad_pi = 2 * s(i) * grad_si + grad_yPyi;
+                grad = grad + grad_pi * trace(Ws_Mu_Wu_inv{i});
 
-                grad = grad + 2 * c(i) * sum(g_jac{i}, 1)' * tmp;
-
-                tmp1 = this.u_prior_interface.Apply_M_u(Ws_V_acute{i});
-                tmp2 = (1 / alpha_d) * this.u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(tmp1, mu(i) / alpha_d);
-                tmp3 = diag(this.offline_data.Mu_Wu_inv_V_acute' * tmp2)' * (1 ./ this.offline_data.Rho.^2);
-                grad = grad - c(i)^2 * tmp3 * mu_jac{i};
-
-                %
-                tmp = (Quz_y(:, i)' * Ws_Mu_Wu_inv_Ju(:, i));
-                val = val + 2 * c(i) * tmp;
-
-                grad = grad + 2 * sum(g_jac{i}, 1)' * tmp;
-
-                tmp1 = this.u_prior_interface.Apply_M_u(Ws_Mu_Wu_inv_Ju(:, i));
-                tmp2 = (1 / alpha_d) * this.u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(tmp1, mu(i) / alpha_d);
-                grad = grad - 2 * c(i) * (Quz_y(:, i)' * tmp2) * mu_jac{i};
-
-                tmp3 = this.offline_data.Vt_Mz_Wz_inv_Mz_V * Mg_jac{i};
-                tmp4 = this.offline_data.V_accute * diag(1 ./ this.offline_data.Rho.^2) * tmp3;
-                grad = grad + 2 * c(i) * (tmp4' * Ws_Mu_Wu_inv_Ju(:, i));
-
-                %
-                tmp = (this.offline_data.Ju' * Ws_Mu_Wu_inv_Ju(:, i));
-                val = val + y_Qz_y(i) * tmp;
-
-                grad = grad - y_Qz_y(i) * (this.offline_data.Ju' * tmp2) * mu_jac{i};
-
-                tmp1 = this.offline_data.Vt_Mz_Wz_inv_Mz_V * Mg_jac{i};
-                tmp2 = this.offline_data.Vt_Mz_Wz_inv_Mz_V * Mg(:, i);
-                grad = grad + 2 * tmp * (tmp1' * diag(1 ./ this.offline_data.Rho.^2) * tmp2);
+                tmp1 = this.u_prior_interface.Apply_M_u(Ws_Mu_Wu_inv{i});
+                tmp2 = -(1 / alpha_d) * this.u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(tmp1, mu(i) / alpha_d);
+                grad = grad + p(i) * trace(tmp2) * mu_jac{i};
             end
 
         end
