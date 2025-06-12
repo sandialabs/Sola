@@ -1,4 +1,4 @@
-classdef MD_OED < handle
+classdef MD_OED_NGO < handle
 
     properties
         opt_prob_interface
@@ -14,7 +14,7 @@ classdef MD_OED < handle
 
     methods
 
-        function this = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface)
+        function this = MD_OED_NGO(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface)
             arguments
                 opt_prob_interface MD_Opt_Prob_Interface
                 data_interface MD_Data_Interface
@@ -39,11 +39,15 @@ classdef MD_OED < handle
             this.offline_data.V = this.md_hessian_analysis.evecs;
             this.offline_data.Rho = this.md_hessian_analysis.evals;
             this.offline_data.r = length(this.offline_data.Rho);
+            this.offline_data.m = length(this.data_interface.u_opt);
+
+            this.offline_data.Wd_Wu_inv = this.u_prior_interface.Apply_M_u_Inverse();
 
             V_acute = zeros(length(this.opt_prob_interface.u_current), this.offline_data.r);
             Mu_Wu_inv_V_acute = zeros(length(this.opt_prob_interface.u_current), this.offline_data.r);
             Mz_V = this.z_prior_interface.Apply_M_z(this.offline_data.V);
             Vt_Mz_Wz_inv_Mz_V = zeros(this.offline_data.r, this.offline_data.r);
+            Mu_Wu_inv = zeros(this.offline_data.r, this.offline_data.r);
             for k = 1:this.offline_data.r
                 tmp = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian(this.offline_data.V(:, k), this.data_interface.z_opt);
                 V_acute(:, k) = this.opt_prob_interface.Apply_Misfit_Hessian(tmp, this.data_interface.u_opt, this.data_interface.z_opt);
@@ -51,11 +55,15 @@ classdef MD_OED < handle
                 tmp = this.u_prior_interface.Apply_W_u_Inverse(V_acute(:, k));
                 Mu_Wu_inv_V_acute(:, k) = this.u_prior_interface.Apply_M_u(tmp);
 
+                tmp = this.u_prior_interface.Apply_W_u_Inverse(eye(m));
+                Mu_Wu_inv = this.u_prior_interface.Apply_M_u(tmp);
+
                 tmp = this.z_prior_interface.Apply_W_z_Inverse(Mz_V(:, k));
                 Vt_Mz_Wz_inv_Mz_V(:, k) = Mz_V' * tmp;
             end
             this.offline_data.V_accute = V_acute;
             this.offline_data.Mu_Wu_inv_V_acute = Mu_Wu_inv_V_acute;
+            this.offline_data.Mu_Wu_inv = Mu_Wu_inv;
             this.offline_data.Vt_Mz_Wz_inv_Mz_V = Vt_Mz_Wz_inv_Mz_V;
 
             Ju = this.opt_prob_interface.Misfit_Gradient(this.data_interface.u_opt, this.data_interface.z_opt);
@@ -65,32 +73,6 @@ classdef MD_OED < handle
 
             this.offline_data.Vt_Design_Cov_Inv_V = this.offline_data.V' * this.oed_interface.Apply_Design_Cov_Inverse(this.offline_data.V);
 
-        end
-
-        function [Z] = Generate_Random_Design(this, N)
-            Omega = randn(length(this.data_interface.z_opt), N - 1);
-            Z = this.data_interface.z_opt + this.oed_interface.Apply_Design_Cov_Factor(Omega);
-            Z = [this.data_interface.z_opt, Z];
-        end
-
-        function [Z] = Generate_Random_Design_from_Subspace(this, N)
-            v = randn(size(this.offline_data.V, 2), N - 1);
-            coeff = length(this.data_interface.z_opt) / trace(this.offline_data.Vt_Design_Cov_Inv_V);
-            Z_tmp = sqrt(coeff) * this.offline_data.V * v;
-            Z = [this.data_interface.z_opt, this.data_interface.z_opt + Z_tmp];
-        end
-
-        function [beta, Z, post_var, reg_val] = L_Curve_Analysis(this, beta_0, alpha_d, reg_coeffs)
-            m = length(reg_coeffs);
-            post_var = zeros(m, 1);
-            reg_val = zeros(m, 1);
-            beta = zeros(length(beta_0), m);
-            Z = cell(m, 1);
-            for k = 1:m
-                [beta(:, k), Z{k}] = this.Generate_Optimal_Design(beta_0, alpha_d, reg_coeffs(k));
-                post_var(k) = -this.Evaluate_Posterior_Cov_Trace(beta(:, k), alpha_d);
-                reg_val(k) = this.Evaluate_Regularization(beta(:, k));
-            end
         end
 
         function [beta, Z] = Generate_Optimal_Design(this, beta_0, alpha_d, reg_coeff)
@@ -119,6 +101,7 @@ classdef MD_OED < handle
             m = length(this.offline_data.Mu_Wu_inv_Ju);
             Ws_V_acute = cell(N, 1);
             Ws_Mu_Wu_inv_Ju = zeros(m, N);
+            Ws_Mu_Wu_inv = cell(N, 1);
             Quz_y = zeros(m, N);
             y_Qz_y = zeros(N, 1);
             c = zeros(N, 1);
@@ -126,6 +109,7 @@ classdef MD_OED < handle
             for i = 1:N
                 Ws_V_acute{i} = (1 / alpha_d) * this.u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(this.offline_data.V_accute, mu(i) / alpha_d);
                 Ws_Mu_Wu_inv_Ju(:, i) = (1 / alpha_d) * this.u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(this.offline_data.Mu_Wu_inv_Ju, mu(i) / alpha_d);
+                Ws_Mu_Wu_inv{i} = (1 / alpha_d) * this.u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(this.offline_data.Mu_Wu_inv, mu(i) / alpha_d);
 
                 tmp = this.offline_data.Vt_Mz_Wz_inv_Mz_V * Mg(:, i);
                 Quz_y(:, i) = this.offline_data.V_accute * diag(1 ./ this.offline_data.Rho.^2) * tmp;
