@@ -26,9 +26,9 @@ x = con_lofi.x;
 data_interface = MD_Data_Interface_Diff(u_lofi, z_lofi);
 
 % Generate Priors for u and z
-alpha_u = (1 / 2)^2;
-alpha_z = (1 / 100)^2;
-alpha_d = 1.e-3;
+alpha_u = 15;
+alpha_z = 5;
+alpha_d = (1.e-2)^2 * alpha_u;
 u_prior_interface = MD_Elliptic_u_Prior_Interface_Diff(alpha_u, opt_lofi);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Diff(alpha_z, opt_lofi);
 
@@ -154,4 +154,4 @@ fprintf("\nError of Best-HDSA Control: \t" + oed_z_error_fn(z_best_HDSA)); % 0.1
 fprintf("\nObjective of Best-HDSA Control: \t" + Jhat_HDSA); % 19.9269
 
 best_z = z_best_HDSA;
-save('Truth_Results.mat', 'best_theta', 'best_z', 'z_hifi', 'z_lofi', 'u_prior_interface', 'z_prior_interface', 'opt_prob_interface', 'md_hessian_analysis');
+save('Truth_Results.mat', 'best_theta', 'best_z', 'con_hifi', 'con_lofi', 'opt_hifi', 'opt_lofi', 'obj', 'z_hifi', 'z_lofi', 'u_prior_interface', 'z_prior_interface', 'opt_prob_interface', 'md_hessian_analysis');

@@ -88,7 +88,7 @@ end
 
 %% Iterate for each data point
 N = 5;
-Jhat_oed = zeros(N, 1);
+Jhat_seq_oed = zeros(N, 1);
 oed_z_error = zeros(N, 1);
 Z = [];
 D = [];
@@ -96,8 +96,8 @@ betas = [];
 z_bar = z_lofi;
 
 m = length(z_lofi);
-seq_oed_mean_theta = zeros(m * (m + 1), N);
-seq_oed_mean_z = zeros(m, N);
+seq_oed_mean_theta = cell(N, 1);
+seq_oed_mean_z = cell(N, 1);
 seq_oed_Z = cell(N, 1);
 
 % Sequential OED
@@ -142,15 +142,15 @@ for p = 1:N
     % z_bar = z_lofi - PHinvB(theta_post);
 
     % Display Stats
-    Jhat_oed(p) = opt_hifi.Jhat(z_bar);
+    Jhat_seq_oed(p) = opt_hifi.Jhat(z_bar);
     oed_z_error(p) = oed_z_error_fn(z_bar);
-    fprintf('Objective of z_bar: \t%.3f\n', Jhat_oed(p));
+    fprintf('Objective of z_bar: \t%.3f\n', Jhat_seq_oed(p));
     % fprintf('Rel. Err of z_bar: \t%.2f%%\n', 100 * oed_z_error(p));
-    % fprintf('Diff. w/ z_hifi obj.: \t%.2f%%\n', 100 * (Jhat_oed(p) - Jhat_hifi) / (Jhat_hifi));
+    % fprintf('Diff. w/ z_hifi obj.: \t%.2f%%\n', 100 * (Jhat_seq_oed(p) - Jhat_hifi) / (Jhat_hifi));
     if p == 1
-        fprintf('Percent Improvement: \t%.2f%%\n\n', 100 * (Jhat_lofi - Jhat_oed(p)) / (Jhat_lofi - Jhat_hifi));
+        fprintf('Percent Improvement: \t%.2f%%\n\n', 100 * (Jhat_lofi - Jhat_seq_oed(p)) / (Jhat_lofi - Jhat_hifi));
     else
-        fprintf('Percent Improvement: \t%.2f%%\n\n', 100 * (Jhat_oed(p - 1) - Jhat_oed(p)) / (Jhat_oed(p - 1) - Jhat_hifi));
+        fprintf('Percent Improvement: \t%.2f%%\n\n', 100 * (Jhat_seq_oed(p - 1) - Jhat_seq_oed(p)) / (Jhat_seq_oed(p - 1) - Jhat_hifi));
     end
 
     % Plot Low-Fidelity, High-fidelity and Updated States
@@ -176,8 +176,8 @@ for p = 1:N
         % legend("Location", "best");
     end
 
-    seq_oed_mean_theta(:, p) = theta_post;
-    seq_oed_mean_z(:, p) = z_bar;
+    seq_oed_mean_theta{p} = theta_post;
+    seq_oed_mean_z{p} = z_bar;
 
 end
 
@@ -198,7 +198,7 @@ if show_figures
             rethrow(ME);
         end
     end
-    plot(0:N, [Jhat_lofi; Jhat_oed], ".-", "Color", "#00C83A", "DisplayName", "Sequential OED");
+    plot(0:N, [Jhat_lofi; Jhat_seq_oed], ".-", "Color", "#00C83A", "DisplayName", "Sequential OED");
     xlabel("Evaluations ($N$)", "Interpreter", "latex");
     ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
     legend("location", "east", "Interpreter", "latex");
@@ -208,4 +208,4 @@ if show_figures
     end
 end
 
-save('Seq_OED_Results.mat', 'seq_oed_mean_theta', 'seq_oed_mean_z', 'seq_oed_Z');
+save('Seq_OED_Results.mat', 'Jhat_seq_oed', 'seq_oed_mean_theta', 'seq_oed_mean_z', 'seq_oed_Z');
