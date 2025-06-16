@@ -1,5 +1,6 @@
 % !TEX root = main-arxiv.tex
 
+\begin{comment}
 \bigskip\noindent\textbf{** Begin Developer Notes **}
 
 % \bartnote{Decided to focus the paper on HDSA with respect to model discrepancy. We can mention in the intro and/or conclusion that there are other outer-loop problems that we can use the \SABL $\to$ \MrHyDE approach for, but let the main focus be on HDSA throughout.}
@@ -22,6 +23,7 @@
 
 \noindent\textbf{** End Developer Notes **}
 \clearpage
+\end{comment}
 
 \section{Introduction}
 
@@ -585,7 +587,7 @@ Second, the kinds of problems for which HDSA-MD is most useful are large scale, 
 These are competing and conflicting interests that influence our choice of software language: on the one hand, a high-level language --- designed for high readability and ease of use --- would enable an intuitive translation of mathematics to code and simplify the process of checking intermediate steps, but may ultimately struggle to perform at scale; on the other hand, a low-level language --- optimized for performance but not for readability or implementation ease --- would require substantial expertise and be difficult to verify, but a successful implementation would ultimately be able to tackle large-scale problems.
 To address the first issue, this section presents \SABL: \textbf{S}andbox for \textbf{A}djoint-\textbf{B}ased outer \textbf{L}oop analysis, a \MATLAB library that implements PDE-constrained optimization and HDSA-MD.
 The source code is publicly available at \textbf{TODO}.
-\SM{We need to discuss making a version of \SABL and \HdsaLib public (\texttt{GitHub/SandiaLabs/<SABL,HdsaLib>}?), which requires making a software release request. I did this recently but it can take a while, so it's best to get the process started sooner rather than later.)}
+\SM{A version of \SABL and \HdsaLib should be made public for this paper (\texttt{GitHub/SandiaLabs/<SABL,HdsaLib>}?), which requires making a software release request.)}
 Our purpose in this discussion is not to provide detailed package documentation, but rather to shed light on the design and implementation process and the associated challenges.
 Writing a high-level library allows us to make design decisions with relatively little technical debt and enables rapid verification of intermediate parts of the procedure.
 Once designed and tested, \SABL can be used a guide for developing a low-level HPC implementation of HDSA-MD in \cpp, which is the topic of \Cref{sec:hpc}.
@@ -941,8 +943,6 @@ This section introduces \HdsaLib, a \cpp library that implements HDSA-MD using t
 Working in \cpp requires low-level memory management (pointers), custom data structures, and in general more boiler-plate code than is required in \MATLAB.
 On the other hand, these features enable parallelization and state-of-the-art compute performance.
 Whereas \SABL includes its own forward solver and optimization routines, \HdsaLib relies on interfaces to other high-performance \cpp codes for these tasks.
-In this work, we show how to implement \HdsaLib requirements using \MrHyDE, a software library for the solution of \textbf{M}ulti-\textbf{r}esolution \textbf{H}ybridized \textbf{D}ifferential \textbf{E}quations.
-The section concludes with a discussion on verification strategies.
 
 % \begin{purpose}
 % \begin{itemize}
@@ -957,9 +957,10 @@ The section concludes with a discussion on verification strategies.
 \subsection{Object-oriented design following \SABL}
 
 \HdsaLib uses the same object-oriented abstract interface paradigm as \SABL.
-One of the main reasons for creating \SABL before attempting a \cpp implementation is the ease of making and adjusting design choices in \MATLAB; using the code architecture and conventions established in \SABL as a guide for \HdsaLib significantly eases the intellectual implementation burden and allows the developer to focus on the technical aspects of \cpp rather than the algorithmic approach to HDSA-MD.
-\SM{Custom data structures needed, etc.}
+Using the code architecture and conventions established in \SABL as a guide for \HdsaLib significantly eases the intellectual implementation burden and allows the developer to focus on the technical aspects of \cpp rather than the algorithmic approach to HDSA-MD.
+For instance, \HdsaLib defines its own \texttt{Vector} data structure and implements randomized linear algebra routines for generalized SVD and eigenvalue problems, all of which are taken for granted in \MATLAB.
 \Cref{code:hdsalib-hdsa} shows a \cpp class in \HdsaLib that follows the design of the \MATLAB class in \SABL included in \Cref{code:sabl-hdsa}.
+The only substantive difference from the \MATLAB version is additional \cpp boilerplate code.
 
 \begin{listing}[t]
 \begin{minted}{cpp}
@@ -1009,33 +1010,53 @@ namespace HDSA {
 \subsection{\MrHyDE: A high-performance \cpp library for solving differential equations}
 \label{sec:mrhyde}
 
-\begin{purpose}
-\begin{itemize}
-\item What are the things you need to do for HPC? Derivatives, matrix-vector computations, forward solver, parallelism, etc. In this paper, we're going to use a library that does a lot of things.
-\item Introduce \MrHyDE: scope, style, repository, etc.
-\item Forward solver capabilities of \MrHyDE.
-\item Discuss how \MrHyDE addresses many of the challenges of working in an HPC environment, for example calculating the adjoint at the element level via automatic differentiation. Transposes and handling boundary conditions are nontrivial in a parallel environment, but this is handled by Panzer in \MrHyDE.
-\item Emphasize efficient automatic differentiation tools.
-\end{itemize}
-\end{purpose}
+% \begin{purpose}
+% \begin{itemize}
+% \item What are the things you need to do for HPC? Derivatives, matrix-vector computations, forward solver, parallelism, etc. In this paper, we're going to use a library that does a lot of things.
+% \item Introduce \MrHyDE: scope, style, repository, etc.
+% \item Forward solver capabilities of \MrHyDE.
+% \item Discuss how \MrHyDE addresses many of the challenges of working in an HPC environment, for example calculating the adjoint at the element level via automatic differentiation. Transposes and handling boundary conditions are nontrivial in a parallel environment, but this is handled by Panzer in \MrHyDE.
+% \item Emphasize efficient automatic differentiation tools.
+% \end{itemize}
+% \end{purpose}
 
-\subsection{Using \MrHyDE as a driver for \HdsaLib}
+Implementing HDSA-MD at scale requires several HPC capabilities, including efficient matrix-vector computations, linear and nonlinear system solvers, forward numerical PDE solvers for a variety of relevant dynamics, time steppers, differentiation of forward solvers and other functions, and, perhaps most challengingly, all of these tasks should be accomplished in parallel.
+To meet these requirements, we leverage \MrHyDE, a software library for the solution of \textbf{M}ulti-\textbf{r}esolution \textbf{Hy}bridized \textbf{D}ifferential \textbf{E}quations, publicly available at \href{https://github.com/sandialabs/MrHyDE}{\texttt{github.com/sandialabs/MrHyDE}}.
+\SM{@Tim best current way to cite \MrHyDE?}
+\MrHyDE builds on builds on the advanced \cpp HPC libraries \texttt{trilinos}~\cite{trilinos2020} and \texttt{kokkos}~\cite{edwards2014kokkos,trott2022kokkos} to solve transient nonlinear strongly coupled multiphysics/multiscale problems and to enable outer-loop analyses through automatic differentiation.
+The user specifies the weak form of the governing physics, a computational mesh and geometry, and any system parameters; corresponding finite elements are then assembled automatically in parallel.
+Available physics include, but are not limited to, convection-diffusion-reaction systems, Helmholtz equations, linear elasticity, crystal elasticity, Stokes flow, Navier--Stokes equations, Maxwell's equations, single-phase incompressible flow in porous media, and nonlinear heat diffusion.
+Post-processing options are available to compute quantities of interest, e.g., an objective function in the context of optimization.
 
-\begin{purpose}
-Once we've selected a driver, we need to develop specialized interfaces so that the data structures from the driver can be converted to the data structures of \HdsaLib.
-\end{purpose}
+% \begin{purpose}
+% Once we've selected a driver, we need to develop specialized interfaces so that the data structures from the driver can be converted to the data structures of \HdsaLib.
+% \end{purpose}
+
+% \subsection{Using \MrHyDE as a driver for \HdsaLib}
+
+To fully leverage \MrHyDE for HDSA-MD, \HdsaLib includes \MrHyDE-specific interfaces that convert between the data structures used in each library.
+\SM{More here about technicalities?}
 
 \subsection{Verification by comparison with \SABL}
 
-\begin{purpose}
-\begin{itemize}
-\item Reiterate that the complexities of a full HPC environment make it difficult to assess and verify implementations of novel, complicated algorithms such as HDSA-MD.
-\item Compared to \MATLAB, it's also not always easy to do very small tests like check for positive definiteness.
-\item We used \SABL to develop the library design, but we also use it for verification. For example, we can re-implement the example in \Cref{sec:smallexample} and use the \SABL results to debug the \HdsaLib results. Both libraries should give the same solution. Now that we've done this for a small problem, we have more confidence diving into a huge problem that \SABL wouldn't be able to handle.
-\end{itemize}
-\end{purpose}
+The complexities of a full HPC environment often make it difficult to assess and verify implementations of novel, complicated algorithms such as HDSA-MD.
+For example, it is not always convenient to do even simple unit-level tests such as testing matrices for positive definiteness.
+This was one reason for developing \SABL, where many such checks are straightforward.
+In addition, \SABL can be used to compare to \HdsaLib with \MrHyDE on simple problems.
+For example, we can re-implement the example in \Cref{sec:smallexample} in \HdsaLib and compare the results from each library.
+This is not an ideal verification strategy: comparing two software libraries can only show if two implementations are equivalent, not if one or both implementation is mathematically correct.
+However, due to the complexities of HDSA-MD and the complications of working in a full HPC enviroment, this is our best option for verification.
+After verifying results on simple problems that can also be solved in \SABL, we have more confidence to dive into a large-scale problem that cannot be solved with \SABL.
 
-\section{Example 2: Big fat HPC-worthy problem, \HdsaLib/\MrHyDE only}
+% \begin{purpose}
+% \begin{itemize}
+% \item Reiterate that the complexities of a full HPC environment make it difficult to assess and verify implementations of novel, complicated algorithms such as HDSA-MD.
+% \item Compared to \MATLAB, it's also not always easy to do very small tests like check for positive definiteness.
+% \item We used \SABL to develop the library design, but we also use it for verification. For example, we can re-implement the example in \Cref{sec:smallexample} and use the \SABL results to debug the \HdsaLib results. Both libraries should give the same solution. Now that we've done this for a small problem, we have more confidence diving into a huge problem that \SABL wouldn't be able to handle.
+% \end{itemize}
+% \end{purpose}
+
+\section{A large-scale application: Crystal elasticity}
 \label{sec:application}
 
 \begin{purpose}

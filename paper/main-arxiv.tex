@@ -8,9 +8,9 @@
 \usepackage{hyperref}
 \usepackage{titlesec}
 
-\usepackage{showlabels}
-\renewcommand{\showlabelfont}{\scriptsize\rmfamily\color{blue}}
-\renewcommand{\showlabelsetlabel}[1]{\hspace*{-7.5in}\showlabelfont #1}
+% \usepackage{showlabels}
+% \renewcommand{\showlabelfont}{\scriptsize\rmfamily\color{blue}}
+% \renewcommand{\showlabelsetlabel}[1]{\hspace*{-7.5in}\showlabelfont #1}
 
 \input{config}
 
@@ -40,11 +40,12 @@
 
 % -----------------------------------------------------------------------------
 
-\author{Joseph~Hart}
-\author{Shane~A.~McQuarrie}
-\author{Bart~van~Bloemen~Waanders}
-\author{Tim~Wildey}
-\affil{\normalsize Scientific Machine Learning, Sandia National Laboratories}
+\author[1]{Shane~A.~McQuarrie}
+\author[1]{Joseph~Hart}
+\author[1]{Bart~van~Bloemen~Waanders}
+\author[2]{Tim~Wildey}
+\affil[1]{\normalsize Scientific Machine Learning, Sandia National Laboratories}
+\affil[1]{\normalsize Computational Mathematics, Sandia National Laboratories}
 
 \date{}
 
@@ -66,7 +67,7 @@
 \vspace{2mm}
 \noindent \emph{Keywords:} post optimality sensitivity, implementation complexity, high-performance computing, object-oriented design, etc.
 
-\tableofcontents
+% \tableofcontents
 
 \input{body}
 
