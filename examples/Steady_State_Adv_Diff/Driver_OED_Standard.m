@@ -6,6 +6,11 @@ addpath(genpath('../../src'));
 load OED_Ensemble_Results.mat;
 clear data_interface Z D;
 
+% Set Default Font Axes and Line Width
+set(0, "DefaultAxesFontSize", 20);
+set(0, "DefaultLineLineWidth", 3);
+set(0, "DefaultLineMarkerSize", 20);
+
 N = 5;
 num_post_samps = 1;
 save_figures = false;
