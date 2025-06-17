@@ -6,6 +6,8 @@ classdef MD_Continuation_Update < handle
         opt_prob_interface
         u_opt
         z_opt
+        u_init
+        z_init
         num_continuation_steps
         step_size
 
@@ -22,6 +24,8 @@ classdef MD_Continuation_Update < handle
             this.opt_prob_interface = md_hessian_analysis.opt_prob_interface;
             this.u_opt = md_post_sampling.data_interface.u_opt;
             this.z_opt = md_post_sampling.data_interface.z_opt;
+            this.u_init = md_post_sampling.data_interface.u_init;
+            this.z_init = md_post_sampling.data_interface.z_init;
 
             this.Mz_Wz_inv_Mz_Z_minus_z_opt = this.md_post_sampling.post_data.Mz_Wz_inv_Mz_Z - this.md_post_sampling.post_data.Mz_Wz_inv_Mz_z_opt;
             this.Mz_Wz_inv_Mz_yi = 0 * this.Mz_Wz_inv_Mz_Z_minus_z_opt;
@@ -35,12 +39,12 @@ classdef MD_Continuation_Update < handle
         end
 
         function [u, z] = Posterior_Update_Mean(this)
-            u = zeros(length(this.u_opt), this.num_continuation_steps + 1);
-            z = zeros(length(this.z_opt), this.num_continuation_steps + 1);
+            u = zeros(length(this.u_init), this.num_continuation_steps + 1);
+            z = zeros(length(this.z_init), this.num_continuation_steps + 1);
             t = linspace(0, 1, this.num_continuation_steps + 1);
 
-            u(:, 1) = this.u_opt;
-            z(:, 1) = this.z_opt;
+            u(:, 1) = this.u_init;
+            z(:, 1) = this.z_init;
 
             for k = 1:this.num_continuation_steps
                 Btheta_n = this.Apply_B(u(:, k), z(:, k), t(k));
@@ -51,12 +55,12 @@ classdef MD_Continuation_Update < handle
         end
 
         function [u, z] = Posterior_Update_Mean_PC(this)
-            u = zeros(length(this.u_opt), this.num_continuation_steps + 1);
-            z = zeros(length(this.z_opt), this.num_continuation_steps + 1);
+            u = zeros(length(this.u_init), this.num_continuation_steps + 1);
+            z = zeros(length(this.z_init), this.num_continuation_steps + 1);
             t = linspace(0, 1, this.num_continuation_steps + 1);
 
-            u(:, 1) = this.u_opt;
-            z(:, 1) = this.z_opt;
+            u(:, 1) = this.u_init;
+            z(:, 1) = this.z_init;
 
             for k = 1:this.num_continuation_steps
                 Btheta_n = this.Apply_B(u(:, k), z(:, k), t(k));
@@ -71,31 +75,31 @@ classdef MD_Continuation_Update < handle
         end
 
         function [u, z, beta] = Posterior_Update_Mean_beta(this)
-            u = zeros(length(this.u_opt), this.num_continuation_steps + 1);
-            z = zeros(length(this.z_opt), this.num_continuation_steps + 1);
+            u = zeros(length(this.u_init), this.num_continuation_steps + 1);
+            z = zeros(length(this.z_init), this.num_continuation_steps + 1);
             t = linspace(0, 1, this.num_continuation_steps + 1);
             beta = zeros(length(this.md_hessian_analysis.evals), this.num_continuation_steps + 1);
 
-            u(:, 1) = this.u_opt;
-            z(:, 1) = this.z_opt;
+            u(:, 1) = this.u_init;
+            z(:, 1) = this.z_init;
 
             for k = 1:this.num_continuation_steps
                 Btheta_n = this.Apply_B_beta(u(:, k), beta(:, k), t(k));
                 beta_pert = -this.Apply_Parameterized_RS_Hessian_Inverse_beta(Btheta_n, u(:, k), beta(:, k), t(k));
                 beta(:, k + 1) = beta(:, k) + this.step_size * beta_pert;
-                z(:, k + 1) = this.z_opt + this.md_hessian_analysis.evecs * beta(:, k + 1);
+                z(:, k + 1) = this.z_init + this.md_hessian_analysis.evecs * beta(:, k + 1);
                 u(:, k + 1) = this.opt_prob_interface.State_Solve(z(:, k + 1));
             end
         end
 
         function [u, z, beta] = Posterior_Update_Mean_PC_beta(this)
-            u = zeros(length(this.u_opt), this.num_continuation_steps + 1);
-            z = zeros(length(this.z_opt), this.num_continuation_steps + 1);
+            u = zeros(length(this.u_init), this.num_continuation_steps + 1);
+            z = zeros(length(this.z_init), this.num_continuation_steps + 1);
             t = linspace(0, 1, this.num_continuation_steps + 1);
             beta = zeros(length(this.md_hessian_analysis.evals), this.num_continuation_steps + 1);
 
-            u(:, 1) = this.u_opt;
-            z(:, 1) = this.z_opt;
+            u(:, 1) = this.u_init;
+            z(:, 1) = this.z_init;
 
             for k = 1:this.num_continuation_steps
                 % Predictive step for beta
@@ -104,7 +108,7 @@ classdef MD_Continuation_Update < handle
                 beta_pred = beta(:, k) + this.step_size * beta_pert;
 
                 % Predictive step for z and u
-                z_pred = this.z_opt + this.md_hessian_analysis.evecs * beta_pred;
+                z_pred = this.z_init + this.md_hessian_analysis.evecs * beta_pred;
                 u_pred = this.opt_prob_interface.State_Solve(z_pred);
 
                 % Corrective step for beta
@@ -112,13 +116,13 @@ classdef MD_Continuation_Update < handle
                 beta(:, k + 1) = beta_pred - this.Apply_Parameterized_RS_Hessian_Inverse_beta(Jbeta_val, u_pred, beta_pred, t(k + 1));
 
                 % Corrective step for z and u
-                z(:, k + 1) = this.z_opt + this.md_hessian_analysis.evecs * beta(:, k + 1);
+                z(:, k + 1) = this.z_init + this.md_hessian_analysis.evecs * beta(:, k + 1);
                 u(:, k + 1) = this.opt_prob_interface.State_Solve(z(:, k + 1));
             end
         end
 
         function [Btheta_n] = Apply_B_beta(this, u_n, beta_n, t_n)
-            z_n = this.z_opt + this.md_hessian_analysis.evecs * beta_n;
+            z_n = this.z_init + this.md_hessian_analysis.evecs * beta_n;
             Btheta_n = this.md_hessian_analysis.evecs' * this.Apply_B(u_n, z_n, t_n);
         end
 
@@ -135,7 +139,7 @@ classdef MD_Continuation_Update < handle
         end
 
         function [beta_out] = Apply_Parameterized_RS_Hessian_beta(this, beta_in, u_n, beta_n, t_n)
-            z_n = this.z_opt + this.md_hessian_analysis.evecs * beta_n;
+            z_n = this.z_init + this.md_hessian_analysis.evecs * beta_n;
             beta_out = this.md_hessian_analysis.evecs' * Apply_Parameterized_RS_Hessian(this, this.md_hessian_analysis.evecs * beta_in, u_n, z_n, t_n);
         end
 
