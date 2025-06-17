@@ -157,7 +157,6 @@ classdef MD_OED_Seq < handle
                 % now computes + (z_init - z_opt)' * (Mz * Wz_inv * Mz) * y_i:
                 c(i) = sum(g(:, i)) - this.beta_bar' * this.offline_data.Vt_Mz_Wz_inv_Mz_V * Mg(:, i);
             end
-
             val = 0;
             grad = 0 * beta;
             % Implement gradient via product rules, may be able to
@@ -168,7 +167,7 @@ classdef MD_OED_Seq < handle
                 val = val + c(i)^2 * tmp;
 
                 % grad_c = sum(g_jac{i}, 1)' (to recover previous code...)
-                grad_c = sum(g_jac{i}, 1)' + (this.beta_bar' * this.offline_data.Vt_Mz_Wz_inv_Mz_V * Mg_jac{i})';
+                grad_c = sum(g_jac{i}, 1)' - (this.beta_bar' * this.offline_data.Vt_Mz_Wz_inv_Mz_V * Mg_jac{i})';
                 grad = grad + 2 * c(i) * grad_c * tmp;
 
                 tmp1 = this.u_prior_interface.Apply_M_u(Ws_V_acute{i});
@@ -206,6 +205,7 @@ classdef MD_OED_Seq < handle
         function [val, grad] = Evaluate_Regularization(this, beta)
             N = length(beta) / this.offline_data.r + 1;
             M = reshape([zeros(this.offline_data.r, 1); beta], this.offline_data.r, N) - this.beta_bar;
+            % note the above regularizes about z_bar (instead of z_lofi), due to subtracting beta_bar.
             val = 0;
             grad = 0 * beta;
             for i = 2:N

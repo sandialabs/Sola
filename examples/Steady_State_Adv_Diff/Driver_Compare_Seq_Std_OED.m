@@ -122,14 +122,3 @@ PHinvB = @(x) md_hessian_analysis.Apply_Projected_RS_Hessian_Inverse(B(x));
 % disp(norm(seq_theta_error_z_hifi)-1.2730)
 % disp(norm(seq_theta_error_z_data)-0.0021)
 % disp(norm(seq_z_error)-0.1896)
-
-x = linspace(0, 1, m)';
-for k = 1:6
-    figure(1);
-    plot(x, std_oed_Z{k});
-    title('Std OED');
-    figure(2);
-    plot(x, seq_oed_Z{k});
-    title('Seq OED');
-    pause();
-end
