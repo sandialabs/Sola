@@ -1,6 +1,6 @@
 % Clear Workspace and Add Interfaces to Path
 % clear;
-close all;
+% close all;
 % clc;
 addpath(genpath('../../src'));
 rng(0);
@@ -116,6 +116,8 @@ for p = 1:N
         [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, reg_coeff, betas);
         betas = [betas; beta_new];
         z_p = z_p(:, end);
+        % disp(norm(z_p - z_bar))
+        % z_p = z_bar;
     end
 
     % Obtain Discrepancies
@@ -138,7 +140,8 @@ for p = 1:N
 
     % Obtain Optimal Solution Update via HDSA (linearization)
     % md_update = MD_Update(md_post_sampling, md_hessian_analysis);
-    % z_bar = md_update.Posterior_Update_Mean();
+    % z_bar_2 = md_update.Posterior_Update_Mean();
+    % disp(norm(z_bar-z_bar_2)/norm(z_bar))
     % z_bar = z_lofi - PHinvB(theta_post);
 
     % Display Stats

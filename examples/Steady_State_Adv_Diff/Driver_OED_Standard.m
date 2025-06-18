@@ -34,11 +34,42 @@ std_oed_mean_theta = cell(N, 1);
 std_oed_mean_z = cell(N, 1);
 std_oed_Z = cell(N, 1);
 
+oedMethod = "live-stdOED"; % options: load-stdOED, live-stdOED, seqOED
+
+% Some prep for other OED methods
+seq_oed_Z = load("Seq_OED_Results.mat", "seq_oed_Z").seq_oed_Z;
+Z = [];
+D = [];
+betas = [];
+data_interface = MD_Data_Interface_Diff(u_lofi, z_lofi);
+beta_0 = randn(num_evals, 1);
+
 for k = 1:N
     % Run step k
     fprintf('\nStep %d:\n-------------\n', k);
-    data_interface = MD_Data_Interface_Diff(k, 1, 'OED');
-    data_interface.Load_Data();
+
+    switch oedMethod
+        case "load-stdOED"
+            data_interface = MD_Data_Interface_Diff(k, 1, 'OED');
+            data_interface.Load_Data();
+        case "seqOED"
+            data_interface.Set_Z_and_D(seq_oed_Z{k}, Evaluate_Discrepancy(con_hifi, con_lofi, seq_oed_Z{k}));
+        case "live-stdOED"
+            % Set Parameters for OED
+            if k == 1
+                z_p = z_lofi;
+            else
+                [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, oed_reg_coeff, betas);
+                betas = [betas; beta_new];
+                z_p = z_p(:, end);
+            end
+
+            % Obtain Discrepancies
+            Z = [Z z_p];
+            D_p = Evaluate_Discrepancy(con_hifi, con_lofi, z_p);
+            D = [D D_p];
+            data_interface.Set_Z_and_D(Z, D);
+    end
 
     md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
     md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samps);
