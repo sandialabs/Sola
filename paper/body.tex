@@ -1,30 +1,5 @@
 % !TEX root = main-arxiv.tex
 
-\begin{comment}
-\bigskip\noindent\textbf{** Begin Developer Notes **}
-
-% \bartnote{Decided to focus the paper on HDSA with respect to model discrepancy. We can mention in the intro and/or conclusion that there are other outer-loop problems that we can use the \SABL $\to$ \MrHyDE approach for, but let the main focus be on HDSA throughout.}
-
-\bartnote{The big thing about \HdsaLib is that it implements the model discrepancy details, abstracts the interface and requires the user to instantiate the things that are needed. The high-level challenge is accessibility because of the complexity of the HPC environment. Need to point to the abstractions, i.e., make sure any sample code listings are tied carefully to the mathematics.}
-
-\shanenote{Explaining the full OOP structure of \HdsaLib would be too much, but showing an example of a particular piece of the algorithm in all three elements might be effective. Need to drive everything from a very high-level view. Maybe have a baby 1D problem just in \SABL (everything is plottable but it doesn't take much space), then a transition problem done in both \SABL and \MrHyDE, then a monster problem done solely in \MrHyDE. Can make the case that this is one way to validate your HPC implementations as well as lower the barrier to entry for new HPC practitioners.}
-
-\bartnote{Implementation strategy is really step by step, to the level of verifying matvecs at each stage of the algorithm. Also, \MrHyDE is a particular driver, but not the only driver for \HdsaLib. Maybe have Section~3 be \HdsaLib, Section~4 HPC simulator with \MrHyDE as an example.}
-
-\shanenote{Give the sense that this is very complicated. Don't underplay the complexity of the full-order model (finite element is already hard, it could be a time-dependent problem), solving the optimization problem (trust region methods, Newton Krylov, etc.), the HDSA-MD Bayesian inference problem (with a prior, etc.), the posterior update, sampling, etc. The high-level accessibility is still very important, we want it to be publishable but also readable.}
-
-\bartnote{Do we have to show the final product of the $\H$ and $\B$ and the huge inverse to get $\bfSigma$? Should think about if we want to show any more detail. Might want to just list the big expressions to better show what the ingredients at the expense of detailed derivation? Could be philosophical up front, then walk through the pieces. Forward modeling, Bayesian modeling and sampling, etc. \SABL could be a big section, walk through an example slowly? This paper should be \textbf{focused on the development paradigm}, not feel like a practitioner-oriented tutorial paper.}
-
-\bartnote{Diagram for under-the-hood linear algebra? Might even re-purpose the diagram from the hyperparameter sampling paper. Let's try to highlight some of the complexity but not necessarily all of it. Perhaps $\B\bar{\bftheta}$ is sufficient. We can describe in words that the sampling is analytic and based on matrix factorizations, etc. Once we get to \MrHyDE, we probably can't form matrices explicitly and have to do something special to do matrix-free computations. Might want a table that mirrors \Cref{table:hdsa-requirements} that lists math on the left, then shows the tools needed in \MrHyDE for each thing. Don't have to make too strong of a distinction between the frontend and backend pieces. Software design takes place in \SABL, but the algorithmic design happens beforehand in the math (making sure everything can be done efficiently). In \SABL, and for small problems, we don't have to worry yet about the complications of matrix-free operations, sparse data structures, etc. but later we will. That means we can validate the algorithm on small problems without worrying about HPC challenges. Need to get the high-level math to \SABL to \MrHyDE story correct, pick and choose demonstrations that support our points but don't need to be comprehensive in terms of the implementation details.}
-
-\bartnote{For the first numerical example, we want to talk about the workflow and where we switch between \SABL and \HdsaLib for comparing different algorithmic components. In \SABL, check that computations are efficient and that the algorithm works, then verify \HdsaLib/\MrHyDE intermediate steps and final results. Write the formulation, focus on the high-level parts of the story, etc.}
-
-\bartnote{Diagram might be best to set the stage at the beginning of Section~2.1, probably before we start to talk about the actual. Parts of SABL that need to be verified: positive definiteness and symmetry trivial, finite difference checks, verify forward problem, optimization, etc. Message can be pretty high level: standard verification is easy in MATLAB. One HDSA verification could be a case where we actually know the solution to the high-fidelity optimization problem (small enough problems where we can actually solve the high-fidelity optimization problem) and see if the update gets us close to the true solution. Maybe diffusion/reaction or convection/diffusion in 1D, something steady-state (Steady\_State\_Adv\_Diff folder?). This example can probably go before we get to Section~4. For HPC, we want to check each component of the algorithm and compare it to what happened in SABL. Big example will probably be time dependent.}
-
-\noindent\textbf{** End Developer Notes **}
-\clearpage
-\end{comment}
-
 \section{Introduction}
 
 \begin{purpose}
@@ -43,7 +18,6 @@ This paper presents a paradigm for developing algorithms and utilizing HPC tools
 
 \begin{purpose}
 Outer-loop problems go beyond forward simulation. Introduce and motivate HDSA.
-% an outer-loop sensitivity analysis tool that sits on top of / wraps around large-scale constrained optimization problems. Model-form error, etc.
 \end{purpose}
 
 In contemporary computational science and engineering, an outer-loop problem is a procedure which requires many expensive ``forward'' simulations of a physical process to enable discovery, control, or decision making.
@@ -57,7 +31,6 @@ The HDSA-MD framework has been demonstrated to be effective for \SM{@Joey, add s
 
 \begin{purpose}
 HDSA is mathematically complicated and difficult to implement at scale within HPC frameworks.
-% HPC has high software complexity, lots of minutia (data types, parallelism and communication, etc.).
 \end{purpose}
 
 \SM{Shold note that leveraging problem structure leads to interpretable results, but also introduces significant complexity. By contrast, black-box methods are less complicated, but the results are often uninterpretable and typically leave rich structural information on the table.}
@@ -70,9 +43,7 @@ All of these elements are further complicated in HPC-level applications where th
 Taken together, this results in a high barrier to entry to new practitioners who desire to deploy or extend HDSA-MD and makes implementing HDSA-MD (and validating that implementation) a challenging prospect.
 
 \begin{purpose}
-Goal of this paper: implement HDSA-MD. Do this by writing a high-level library first, then a low-level HPC library.%
-% This paper presents two complementary software libraries that aim to lower the barrier to entry for HDSA practitioners. The first is a MATLAB library that implements HDSA in a mathematically intuitive way and provides templates for interfacing with the algorithm. The second is a \cpp library with a similar structure as the \MATLAB library but with state-of-the-art HPC features (parallelism, optimization, etc.).
-% \textbf{Goals of this paper}: A minimal-but-sufficient, accessible mathematical presentation of HDSA; present an HPC implementation that abstracts away much of the complexity inherent in HDSA and HPC.
+Goal of this paper: implement HDSA-MD. Do this by writing a high-level library first, then a low-level HPC library.
 \end{purpose}
 
 This paper addresses these challenges by presenting a software solution for HDSA-MD that, to the extent possible, abstracts the mathematical complexity and defines accessible user interfaces.
@@ -104,14 +75,14 @@ and \Cref{sec:conclusion} offers some concluding remarks.
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{figures/hdsa-diagram.pdf}
-    \caption{The HDSA-MD framework. The discrepancy between a large-scale optimization problem and an inexpensive surrogate problem is calibrated with available data, leading to an update formula from the solution of the surrogate problem to the solution of the large-scale problem.
+    \caption{The HDSA-MD framework. The discrepancy between the true optimization problem and an inexpensive approximate optimization problem is calibrated with available data, leading to an update formula from the solution of the approximate problem to the solution of the true optimization problem.
     }
     \label{fig:diagram}
 \end{figure}
 
 This section gives a mathematical description of HDSA-MD, which leverages post-optimality sensitivities in the presence of model form insufficiencies to solve PDE-constrained optimization problems with expensive or inaccessible constraint models.
-The main idea of HDSA-MD is to first solve an optimization problem where the constraints are given by a computationally efficient surrogate model, then update the problem solution based on limited data samples from the original large-scale optimization constraints.
-The discrepancy between the large-scale and surrogate models is parameterized, calibrated, and used to transfer uncertainties in the input spaces to the updated solution.
+The main idea of HDSA-MD is to first solve an optimization problem where the constraints are given by a computationally efficient approximate model, then update the problem solution based on limited data samples from the original large-scale optimization constraints.
+The discrepancy between the true and approximate models is parameterized, calibrated, and used to transfer uncertainties in the input spaces to the updated solution.
 \Cref{sec:optimization} establishes the setting of constrained optimization and adjoint-based solvers.
 The problem is modified to account for discrepancies in the model form in \Cref{sec:model-discrepancy}, and \Cref{sec:hdsa-algorithm} outlines the strategy for using limited data to improve the quality of the solution despite model inaccuracies.
 The overall procedure is summarized in \Cref{fig:diagram}.
@@ -141,9 +112,6 @@ In this case, \cref{eq:optimization-constrained} can be formulated as the equiva
 The problem~\cref{eq:optimization-reducedspace} is often called the \emph{reduced-space formulation} of \cref{eq:optimization-constrained}.
 
 Local minima of \cref{eq:optimization-reducedspace} can be computed with standard optimization strategies as long as the derivatives of $\hat{J}$ can be computed efficiently.
-% gradient $\grad{\z}\hat{J}(\z)\in\R^{n_z}$ and, for any vector $\v\in\R^{n_z}$, Hessian-vector products $\v\mapsto \grad{z,z}\hat{J}(\z) \v \in \R^{n_z}$ can be computed efficiently.
-% {prf:ref}`alg:adjoint_gradient` shows how to efficiently calculate the gradient by utilizing adjoint-based derivative formulas.
-% Similarly, {prf:ref}`alg:adjoint_hessvec` shows how to compute Hessian-vector products using incremental state and incremental adjoint equations, which avoids explicitly forming the (very large) Hessian matrix $\grad{z,z}\hat{J}(\z)\in\R^{n_z \times n_z}$.
 The adjoint method~\cite{courant1962physics,givoli2021adjoint,tarantola2005inverse} provides expressions for the derivatives of $\hat{J}$ in terms of the (partial) derivatives of $J$ and $\c$.
 Applying the chain rule,
 \begin{align}
@@ -228,31 +196,6 @@ Note that the computational cost of this approach is typically dominated by the 
 \label{alg:adjoint-hessvec}
 \end{algorithm}
 
-% \begin{algorithm}[t]  % Gauss--Newton, probably not relevant here.
-% \begin{algorithmic}[1]
-% \Procedure{GaussNewtonHessvec}{
-%     % State
-%     $\u\in\R^{n_u}$,
-%     % control
-%     $\z\in\R^{n_z}$,
-%     % adjoint
-%     $\bflambda\in\R^{n_u}$,
-%     % search direction
-%     $\v\in\R^{n_z}$
-% }
-%     \State Solve $\c_u(\u,\z) \bfmu = -\c_z(\u,\z) \v$ for $\bfmu$
-%         % \Comment{Compute the incremental adjoint.}
-%     \State $\x_J \gets \grad{z,u}J(\u,\z) \bfmu +  \grad{z,z}J(\u,\z) \v$
-%     \State $\y_J \gets \grad{u,u}J(\u,\z) \bfmu + \grad{u,z}J(\u,\z) \v$
-%     \State Solve $\c_u(\u,\z)\trp \bfgamma = -\y_J$ for $\bfgamma$
-%     \State $\x_c \gets \c_z(\u,\z)\trp \bfgamma$
-%     \State \textbf{return} $\x_J + \x_c$
-% \EndProcedure
-% \end{algorithmic}
-% \caption{Gauss--Newton approximation of the Hessian-vector product $\grad{z,z}\hat{J}(\z)\v $ for minimizing \cref{eq:optimization-reducedspace}.}
-% \label{alg:gaussnewton-hessvec}
-% \end{algorithm}
-
 A software implementation for solving \cref{eq:optimization-reducedspace} through \cref{eq:newton-cg} with \Cref{alg:adjoint-gradient,alg:adjoint-hessvec} requires several ingredients, namely the constraint solver $\s:\z\mapsto\u$ and the derivatives of $J$ and $\c$.
 The software libraries introduced in later sections define abstract templates with methods for each ingredient, to be implemented by the user or handled with automatic differentiation when possible.
 
@@ -260,30 +203,20 @@ The software libraries introduced in later sections define abstract templates wi
 \label{sec:model-discrepancy}
 
 There are several scenarios in which solving \cref{eq:optimization-reducedspace} is computationally infeasible: (1) solving the constraint and/or forming its derivatives is possible, but highly computationally expensive; (2) the constraint is available only as a black box, meaning it can be evaluated but not differentiated; and (3) the constraint is unknown or unavailable for computation.
-In each scenario, one remedy
-% In large-scale problems, solving the constraint equation $\c(\u, \z) = \0$ or forming the derivatives of $\c$ can be computationally intensive, prohibiting the direct optimization approach described in the previous section. One remedy
-is to replace the constraint with a computationally tractable model based on simplified physics, model order reduction, or data-driven surrogate modeling.
+In each scenario, one remedy is to replace the constraint with a computationally tractable model based on simplified physics, model order reduction, or data-driven surrogate modeling.
 To that end, let $\tilde{\c}:\R^{n_u}\times\R^{n_z}\to\R^{n_u}$ be an approximation to the original constraint $\c$ with corresponding solution map $\tilde{\s}:Z\to U$, i.e., $\tilde{\c}(\tilde{\s}(\z), \z) = \0$ for all $\z\in Z$, and consider the reduced-space problem
 \begin{align}
-    \label{eq:optimization-surrogate}
-    % \begin{aligned}
-    % \min_{\u,\z} ~& J(\u,\z)
-    % \\
-    % \text{where}~~& \tilde{\c}(\u,\z) = \0
-    % \end{aligned}
-    % \qquad\Longleftrightarrow\qquad
+    \label{eq:optimization-approx}
     \min_{\z\in Z}
     \tilde{J}(\z) \coloneqq
     J(\tilde{\s}(\z), \z).
 \end{align}
-The discrepancy between the model constraint $\tilde{\c}$ and the true constraint $\c$ may cause minimizers of \cref{eq:optimization-surrogate} to be far from minimizers of \cref{eq:optimization-reducedspace}.
-We will show, however, that solutions of \cref{eq:optimization-reducedspace} can be written in terms of solutions of \cref{eq:optimization-surrogate}.
+The discrepancy between the model constraint $\tilde{\c}$ and the true constraint $\c$ may cause minimizers of \cref{eq:optimization-approx} to be far from minimizers of \cref{eq:optimization-reducedspace}.
+We will show, however, that solutions of \cref{eq:optimization-reducedspace} can be written in terms of solutions of \cref{eq:optimization-approx}.
 % in which $\tilde{\c}(\tilde{\s}(\z), \z) = \0$ for all $\z\in Z$.
-If $\tilde{\s}$ is less expensive to evaluate than $\s$, and if the derivatives of $\tilde{\c}$ are more easily formed than the derivatives of $\c$, then solving \cref{eq:optimization-surrogate} and strategically updating that solution is a computationally tractable alternative to solving \cref{eq:optimization-reducedspace} directly.
+If $\tilde{\s}$ is less expensive to evaluate than $\s$, and if the derivatives of $\tilde{\c}$ are more easily formed than the derivatives of $\c$, then solving \cref{eq:optimization-approx} and strategically updating that solution is a computationally tractable alternative to solving \cref{eq:optimization-reducedspace} directly.
 
-% \SM{Might be good to introduce the baby example here, define $\c$ and $\tilde{\c}$?}
-
-To relate \cref{eq:optimization-surrogate} to \cref{eq:optimization-reducedspace}, let $\bfdelta \coloneqq \bfdelta(\z;\bftheta)\in\R^{n_z}$ for $\bftheta\in\R^{n_\theta}$ be a smooth function, parameterized such that $\bfdelta(\z;\0) = \0$ for all $\z$ (hence $\bfdelta_z(\z;\0)$ is the zero matrix), and consider the perturbed objective function
+To relate \cref{eq:optimization-approx} to \cref{eq:optimization-reducedspace}, let $\bfdelta \coloneqq \bfdelta(\z;\bftheta)\in\R^{n_z}$ for $\bftheta\in\R^{n_\theta}$ be a smooth function, parameterized such that $\bfdelta(\z;\0) = \0$ for all $\z$ (hence $\bfdelta_z(\z;\0)$ is the zero matrix), and consider the perturbed objective function
 \begin{align}
     \label{eq:optimization-discrepancy}
     \J(\z, \bftheta)
@@ -297,7 +230,7 @@ $
     = J(\tilde{\s}(\z),\z)
     = \tilde{J}(\z),
 $
-the objective function in the surrogate problem~\cref{eq:optimization-surrogate}.
+the objective function in the approximate problem~\cref{eq:optimization-approx}.
 On the other hand, if $\bftheta$ is such that $\tilde{\s}(\z) + \bfdelta(\z;\bftheta) \approx \s(\z)$ for all $\z$, then
 $
     \J(\z, \bftheta)
@@ -308,7 +241,7 @@ $
 $
 the objective function for the original optimization problem \cref{eq:optimization-reducedspace}.
 
-Next, let $\tilde{\z}\in\R^{n_z}$ be a local minimizer of~\cref{eq:optimization-surrogate}.
+Next, let $\tilde{\z}\in\R^{n_z}$ be a local minimizer of~\cref{eq:optimization-approx}.
 Fixing $\bftheta = \0$, the necessary optimality conditions give
 \begin{align*}
     \grad{z}\J(\z,\0)
@@ -332,13 +265,13 @@ If we can find $\bftheta'$ such that $\z' = \f(\bftheta')$, then linearizing $\f
     \approx \f(\0) + \f_\theta(\0)\bftheta'
     = \tilde{\z} + \f_\theta(\0)\bftheta',
 \end{align}
-which is an update formula from the solution $\tilde{\z}$ of \cref{eq:optimization-surrogate} to the solution $\z'$ of \cref{eq:optimization-reducedspace}.
+which is an update formula from the solution $\tilde{\z}$ of \cref{eq:optimization-approx} to the solution $\z'$ of \cref{eq:optimization-reducedspace}.
 
 \subsection{Hyper-differential sensitivity analysis}
 \label{sec:hdsa-algorithm}
 
 Computing $\z'$ with \cref{eq:control-update} requires three components:
-the surrogate problem solution $\tilde{\z}$, which can computed by applying the adjoint method to \cref{eq:optimization-surrogate};
+the approximate problem solution $\tilde{\z}$, which can computed by applying the adjoint method to \cref{eq:optimization-approx};
 the Jacobian $\f_\theta$ given in \cref{eq:theta-jacobian} at $\bftheta=\0$;
 and the optimal discrepancy parameters $\bftheta'$, to be chosen so that $\tilde{\s}(\z) + \bfdelta(\z;\bftheta') \approx \s(\z)$.
 \Cref{alg:adjoint-gradient,alg:adjoint-hessvec} describe the ingredients needed to compute $\tilde{\z}$ (replacing $\c$ with $\tilde{\c}$, $\s$ with $\tilde{\s}$, and $\hat{J}$ with $\tilde{J}$).
@@ -391,13 +324,6 @@ Because $\H$ is independent of the discrepancy term $\bfdelta$, and since $\B$ d
 where $\otimes$ denotes the Kronecker product~\cite{vanloan2000kronecker} and $\M_z\in\R^{n_z\times n_z}$ is a mass matrix defining an appropriate inner product $\langle\z_1,\z_2\rangle = \sqrt{\z_1\trp\M_z\z_2}$ on $Z\subset\R^{n_z}$, the space of admissible controls (see \cite{hart2023hdsaoptimal} for more detail).
 Hence, the dimension of $\bftheta$ is $n_\theta = n_u(n_z + 1)$.
 The Kronecker structure of \cref{eq:affine-discrepancy} enables efficient matrix-vector products $\v\mapsto\B\v$ without assembling $\B$ explicitly, which we will discuss shortly.
-
-% \begin{purpose}
-%     Calibrating $\bftheta$ from data.
-%     A prior for $\bftheta$ can be written in terms of priors for $\u$ and $\z$.
-%     % Don't go too far into the weeds (e.g., Kronecker structure), just list the essential ingredients that users of \HdsaLib will need to know about in order to use it.
-%     % Concise summary, consider a diagram like Figure~1 from \cite{hart2023hdsaoptimal}.
-% \end{purpose}
 
 The final item needed for \cref{eq:control-update} is an optimal $\bftheta'$ such that $\bfdelta(\z;\bftheta') \approx \s(\z) - \tilde{\s}(\z)$.
 Although solving~\cref{eq:optimization-reducedspace} directly is intractable due to the derivatives of the full constraint $\c$ being inaccessible or highly expensive, we assume that we can either (1) solve the constraint equation (i.e., evaluate $\s(\z)$) a limited number of times or (2) in a data-driven scenario, observe a limited number of state solutions with known controls.
@@ -535,14 +461,14 @@ Similar calculations expose structure to enable drawing samples (not just the me
     % HDSA-MD requirement & \SABL/\HdsaLib class
     % \\ \hline
     \hline
-    1. & Solution $(\tilde{\s}(\tilde{\z}),\tilde{\z})$ to surrogate problem \cref{eq:optimization-surrogate}
+    1. & Solution $(\tilde{\s}(\tilde{\z}),\tilde{\z})$ to approximate problem \cref{eq:optimization-approx}
     \\
-    2. & Data $(\z_{\ell},\tilde{\s}(\z_{\ell}),\s(\z_{\ell}))$ for the full and surrogate constraints, $\ell=1,\ldots,n_d$
+    2. & Data $(\z_{\ell},\tilde{\s}(\z_{\ell}),\s(\z_{\ell}))$ for the full and approximate constraints, $\ell=1,\ldots,n_d$
     % & \texttt{MD\_Data\_Interface}
     \\ % \hline
-    3. & Application of surrogate constraint Jacobian transpose, $\v\mapsto\tilde{\s}_{z}(\z)\trp\v$ % Apply_Solution_Operator_z_Jacobian_Transpose
+    3. & Application of approximate constraint Jacobian transpose, $\v\mapsto\tilde{\s}_{z}(\z)\trp\v$ % Apply_Solution_Operator_z_Jacobian_Transpose
     \\
-    4. & Application of surrogate reduced-space Hessian, $\v\mapsto\tilde{J}_{z,z}(\tilde{\z})\v$ % Apply_RS_Hessian
+    4. & Application of approximate reduced-space Hessian, $\v\mapsto\tilde{J}_{z,z}(\tilde{\z})\v$ % Apply_RS_Hessian
     \\
     5. & Objective state gradient, $\grad{u}J(\u,\z)$ % Misfit_Gradient
     \\
@@ -570,7 +496,7 @@ Similar calculations expose structure to enable drawing samples (not just the me
 \label{table:hdsa-requirements}
 \end{table}
 
-Fully specifying an HDSA-MD problem requires the solution to the surrogate optimization problem \cref{eq:optimization-surrogate}; data for the Bayesian inference~\cref{eq:bayesian-inference}; derivatives of $J$, $\tilde{J}$, and $\tilde{\s}$; mass and precision matrices for the state and control spaces; and an inverse of the form $(\alpha\W_u + \mu_i\M_u)^{-1}$ for constructing $\u_{\ell,i}$.
+Fully specifying an HDSA-MD problem requires the solution to the approximate optimization problem \cref{eq:optimization-approx}; data for the Bayesian inference~\cref{eq:bayesian-inference}; derivatives of $J$, $\tilde{J}$, and $\tilde{\s}$; mass and precision matrices for the state and control spaces; and an inverse of the form $(\alpha\W_u + \mu_i\M_u)^{-1}$ for constructing $\u_{\ell,i}$.
 These requirements are listed in \Cref{table:hdsa-requirements}.
 Our goal now is to design a software framework for implementing this complex procedure.
 
@@ -592,11 +518,6 @@ Our purpose in this discussion is not to provide detailed package documentation,
 Writing a high-level library allows us to make design decisions with relatively little technical debt and enables rapid verification of intermediate parts of the procedure.
 Once designed and tested, \SABL can be used a guide for developing a low-level HPC implementation of HDSA-MD in \cpp, which is the topic of \Cref{sec:hpc}.
 
-% \begin{purpose}
-% Why \MATLAB: intuitive/mathematical high-level syntax, strong backward compatibility, low barrier to entry, takes care of low-level computing tasks in the background, common/popular language in current engineering curriculum.
-% Also, \SABL is Designed in such a way to emulate a \cpp HPC framework: object-oriented design, use \texttt{this} instead of \texttt{obj}, etc.
-% \end{purpose}
-
 \begin{remark}[Why \MATLAB?]
 Other popular high-level languages such as \texttt{Python} and \texttt{Julia} could also be suitable for a prototype library, but \MATLAB has a few features that make it particularly attractive for our purposes.
 It has a low barrier to entry, intuitive syntax, and is designed around linear algebra operations, which form the majority of the mathematics in HDSA-MD.
@@ -606,10 +527,6 @@ Unlike open-source languages, \MATLAB also has strong backwards compatibility gu
 \end{remark}
 
 \subsection{Abstract interface design}
-
-% \begin{purpose}
-% Isolate the abstract information that the user must define.
-% \end{purpose}
 
 \noindent
 \SABL is written with the object-oriented \MATLAB protocol, which translates readily to \cpp.
@@ -669,12 +586,7 @@ end
 First, we implement \Cref{alg:adjoint-gradient,alg:adjoint-hessvec} for adjoint-based optimization.
 Template classes are defined to represent the objective $J$ (or $\tilde{J}$) and the constraint $\c$ (or $\tilde{\c}$), with abstract methods for each of the necessary gradients, Jacobians, and Hessians (see \Cref{code:sabl-optimization}).
 An additional class is defined that is initialized with instances of the objective and constraint classes, then uses \Cref{alg:adjoint-gradient,alg:adjoint-hessvec} to solve the associated constrained optimization problem via a trust region or Newton--CG iteration.
-Taken together, these classes are used to define and solve the surrogate-constrained optimization \cref{eq:optimization-surrogate}, yielding the state-control pair $(\tilde{\s}(\tilde{\z}),\tilde{\z})$.
-%  which is the first step for HDSA-MD.
-
-% \SM{I'm learning toward cutting \Cref{code:sabl-optimization} down to just the \texttt{Optimize} class and not naming classes specifically in the body text, and similar for \Cref{code:sabl-hdsa}. The point of this section is to talk about design and the difficulty of actually implementing the backend, so we shouldn't spend a lot space enumerating the API.}
-
-% The user defines child classes that implement the abstract methods; to verify the implementation, each class is provided with methods for comparing user-defined derivatives to finite difference estimates with varying step sizes. Next, the user instantiates the classes and pass them to a \texttt{ReducedSpaceOptimization} class, which solves the corresponding optimization problem via \Cref{alg:adjoint-gradient} and \Cref{alg:adjoint-hessvec} and a Newton--CG method.
+Taken together, these classes are used to define and solve the approximate optimization \cref{eq:optimization-approx}, yielding the state-control pair $(\tilde{\s}(\tilde{\z}),\tilde{\z})$.
 
 \begin{remark}[Interface specialization]
 One advantage of an abstract user interface is that it can be specialized to express algorithmic requirements in terms of the mathematical objects that the user is most likely to have access to.
@@ -748,12 +660,9 @@ end
 % end
 
 The additional problem-specific operations needed to fully specify an HDSA-MD problem listed in \Cref{table:hdsa-requirements} include derivatives of $J$, $\tilde{J}$, and $\tilde{\s}$; mass and precision matrices for the state and control spaces; and data for the Bayesian inference~\cref{eq:bayesian-inference}.
-Similar to the optimization classes, we define template classes with abstract methods for each ingredient, grouped by the surrogate optimization problem (requirements 3--6), the state prior (requirements 7--9), and the control prior (requirements 10--11).
-We also include a class for loading the surrogate solution and data (requirements 1--2), which separates solving for $\tilde{\z}$ from the rest of the HDSA-MD procedure.
+Similar to the optimization classes, we define template classes with abstract methods for each ingredient, grouped by the approximate optimization problem (requirements 3--6), the state prior (requirements 7--9), and the control prior (requirements 10--11).
+We also include a class for loading the approximate solution and data (requirements 1--2), which separates solving for $\tilde{\z}$ from the rest of the HDSA-MD procedure.
 In an HPC context, this separation means that one code can be responsible for generating data through forward PDE solves, and the HDSA-MD update can be computed in a distinct computing environment.
-
-% To enable verification on model problems, \SABL also includes tests for prototyping and verification, we want to do everything in-house, which means we also write our own forward solvers (constraints).
-% But, technically, to do HDSA we just need high-fidelity data and the solution to the surrogate-constrained optimization problem, which could be provided in a separate HPC workflow and imported to an HDSA-MD program later. This is the approach that \HdsaLib takes, but we also include the optimization classes here to get everything in one place.
 
 \subsection{Verification strategies}
 
@@ -763,7 +672,6 @@ On the other hand, a few intermediate parts of the procedure can be checked dire
 We discuss two short examples here. \shanenote{other examples?}
 These fine-grained ``sanity checks'' are easy to perform with a high-level language but can be surprisingly nontrivial in an HPC context.
 
-% Vector and matrix shapes?
 First, the implementation of the derivatives of $J$ and $\c$ (or $\tilde{J}$ and $\tilde{\c}$) can be compared to finite difference estimates.
 For example,
 \begin{align}
@@ -786,8 +694,6 @@ For example, \Cref{alg:adjoint-hessvec} can be partially verified by constructin
 \end{align}
 and performing an eigendecomposition to check that all eigenvalues are real and positive.
 
-% \bartnote{Let's not do MMS for the forward or optimization (inverse) problem, instead go straight to the HDSA-MD setting, that's the focus.}
-
 In addition to fine-grained (unit) tests, it is important to probe the correctness and performance of the overall framework with end-to-end (regression) tests.
 However, as with many outer-loop procedures, there is no obvious strategy for formally verifying HDSA-MD as a whole.
 This is in contrast to numerical PDE solvers, for which end-to-end tests are often conducted via the method of manufactured solutions~(MMS)~\cite{roache2001manufacturedsolutions}.
@@ -795,21 +701,11 @@ For example, a solver for the problem $\mathcal{L}(u) = f$ can be verified by fi
 % Similar strategies exist for inverse problems: select the solution first, determine observations, apply an algorithm to the observations, and compare the results with the truth.
 This approach does not readily extend to HDSA-MD, which consists not only of forward PDE solves (applying $\s$ and $\tilde{\s}$), but also optimization problems (computing $\tilde{\z}$) and a sensitivity analysis (updating $\tilde{\z} \to \z'$) involving the specification and interaction of several probability distributions.
 Our best alternative for end-to-end verification is to construct a problem~\cref{eq:optimization-constrained} that is simple and low-dimensional enough to be solved directly with \Cref{alg:adjoint-gradient,alg:adjoint-hessvec}, resulting in a true control solution $\z^{*}$.
-An artificial surrogate problem \cref{eq:optimization-surrogate} can then be constructed, and HDSA-MD applied, to produce an updated control $\z'$ that can be compared to $\z^{*}$.
+An artificial approximate problem \cref{eq:optimization-approx} can then be constructed, and HDSA-MD applied, to produce an updated control $\z'$ that can be compared to $\z^{*}$.
 We provide one such simple example now.
-
-% One of the main advantages of using a high-level language like \MATLAB is the linear-algebraic representation of mathematical objects which makes operations such as transposition trivial.
-% ``Of course transposition is easy!'' you exclaim. Alas, dear reader, even tasks as simple as transposition are nontrivial in many HPC environments.
-
-% \SM{FEM verifies with MMS. Comparing code to code is not verification because the first code might be wrong, but we have no other choice. There are a few small things we can do to verify certain things: check for symmetry / positive definiteness, checkpointing quantities throughout algorithmic implementation, etc. We can also try to set up inverse problems for a type of MMS. All of these tasks would be much harder in HPC, but \MATLAB just does it (example: \texttt{eig()} to determine positive definiteness). Maybe focus a bit on how we can verify things (gradients, positive definiteness, symmetry, prototypical examples to demonstrated improvements in the solution.)
-% }
-
-% \bartnote{Parts of SABL that need to be verified: positive definiteness and symmetry trivial, finite difference checks, verify forward problem, optimization, etc. Message can be pretty high level: standard verification is easy in MATLAB. One HDSA verification could be a case where we actually know the solution to the high-fidelity optimization problem (small enough problems where we can actually solve the high-fidelity optimization problem) and see if the update gets us close to the true solution.}
 
 \subsection{A simple test problem}
 \label{sec:smallexample}
-
-% \texttt{SABL/examples/Steady\_State\_Adv\_Diff/}
 
 Consider the minimization problem
 \begin{align}
@@ -899,12 +795,12 @@ The discretized dynamics are given by
     \label{eq:diffusion-discrete}
     (\kappa\S + h\B)\u = \M\z,
 \end{align}
-which gives rise to the surrogate constraint $\tilde{\c}(\u,\z) = \A_\textrm{d}\u - \M\z$, with solution operator $\tilde{\s}(\z) = \A_\textrm{d}^{-1}\M\z$, where $\A_\text{d} = \kappa\S + h\B$.
+which gives rise to the approximate constraint $\tilde{\c}(\u,\z) = \A_\textrm{d}\u - \M\z$, with solution operator $\tilde{\s}(\z) = \A_\textrm{d}^{-1}\M\z$, where $\A_\text{d} = \kappa\S + h\B$.
 An MMS-type check can again be applied to verify \cref{eq:diffusion-discrete} and the optimization of $\tilde{J}(\z) = J(\tilde{\s}(\z),\z)$ to produce $\tilde{\z}$.
 % For these experiments, we use $n_u = 200$ grid points.
 
 In this simple test problem, we can minimize $J(\s(\z),\z)$ directly to obtain the true optimizer $\z^{*}$, see \Cref{fig:simple-hdsa}.
-The target function $\phi$ can be well approximated by both the original model~\cref{eq:advection-diffusion} and the surrogate model~\cref{eq:just-diffusion}, that is, the objective functions $J(\s(\z),\z)$ and $J(\tilde{\s}(\z),\z)$ can both be driven to near zero; the issue is that using the surrogate control $\tilde{\z}$ in the original model \cref{eq:advection-diffusion} results in a state $\s(\tilde{\z})$ which does not approximate the target well, i.e., $J(\s(\tilde{\z}), \tilde{\z})$ is large even though $J(\tilde{\s}(\tilde{\z}), \tilde{\z})$ is small.
+The target function $\phi$ can be well approximated by both the original model~\cref{eq:advection-diffusion} and the approximate model~\cref{eq:just-diffusion}, that is, the objective functions $J(\s(\z),\z)$ and $J(\tilde{\s}(\z),\z)$ can both be driven to near zero; the issue is that using the approximate control $\tilde{\z}$ in the original model \cref{eq:advection-diffusion} results in a state $\s(\tilde{\z})$ which does not approximate the target well, i.e., $J(\s(\tilde{\z}), \tilde{\z})$ is large even though $J(\tilde{\s}(\tilde{\z}), \tilde{\z})$ is small.
 Hence, \cref{eq:just-diffusion} is not a good surrogate for \cref{eq:advection-diffusion} for the purpose of optimization unless we account for the discrepancy between the two models.
 Applying HDSA-MD with $n_d = 2$ data samples, using $\z_1 = \tilde{\z}$ and $\z_2$ a vector of all ones, produces an updated control $\z'$.
 The update does not perfectly recover the true solution $\z^*$, but it decreases the relative $L^2$ error appreciatively in the state space:
@@ -930,9 +826,6 @@ An MMS-type approach is not possible for HDSA-MD, but this experiment constitute
     \label{fig:simple-hdsa}
 \end{figure}
 
-% We've verified HDSA-MD as much as we are able to, so now we have to crank everything up to 11 and implement this procedure in \cpp in order to tackle really large problems.
-
-% \shanenote{We could tweak this example by having true (but unknown) $\kappa$ and $v$ and a surrogate with different fixed $\kappa$ and $v$ used as guesses. In that case we don't have a reduced-physics model (but this problem is about the verification process, not getting cost savings), and we don't end up actually learn the true values for $\kappa$ and $v$, but it would be different from the previous paper and compactify the explanation a bit. Thoughts?}
 \shanenote{Anything to add about unit-type tests for the HDSA part? Also didn't state anything about specifying the prior distributions, etc.}
 
 \section{\HdsaLib: High-performance HDSA-MD in \cpp}
@@ -943,16 +836,6 @@ This section introduces \HdsaLib, a \cpp library that implements HDSA-MD using t
 Working in \cpp requires low-level memory management (pointers), custom data structures, and in general more boiler-plate code than is required in \MATLAB.
 On the other hand, these features enable parallelization and state-of-the-art compute performance.
 Whereas \SABL includes its own forward solver and optimization routines, \HdsaLib relies on interfaces to other high-performance \cpp codes for these tasks.
-
-% \begin{purpose}
-% \begin{itemize}
-% \item Introduce \HdsaLib, scope, repository, etc.
-% \item High-level comparison with \SABL: on the one hand, more difficult because of more dependencies, low-level memory control (pointers), and lots of boiler plate (including data structures); on the other hand, excellent performance, parallelization, and can interface with state-of-the-art PDE solvers such as those we might want to work with at Sandia.
-% \item By design, \HdsaLib relies on interfaces to other high-performance codes for the forward solves and differentiation, which we were explicit about in \SABL.
-% \item Note again that \SABL is designed to prepare users for using \HdsaLib.
-% \end{itemize}
-% \end{purpose}
-
 
 \subsection{Object-oriented design following \SABL}
 
@@ -1010,16 +893,6 @@ namespace HDSA {
 \subsection{\MrHyDE: A high-performance \cpp library for solving differential equations}
 \label{sec:mrhyde}
 
-% \begin{purpose}
-% \begin{itemize}
-% \item What are the things you need to do for HPC? Derivatives, matrix-vector computations, forward solver, parallelism, etc. In this paper, we're going to use a library that does a lot of things.
-% \item Introduce \MrHyDE: scope, style, repository, etc.
-% \item Forward solver capabilities of \MrHyDE.
-% \item Discuss how \MrHyDE addresses many of the challenges of working in an HPC environment, for example calculating the adjoint at the element level via automatic differentiation. Transposes and handling boundary conditions are nontrivial in a parallel environment, but this is handled by Panzer in \MrHyDE.
-% \item Emphasize efficient automatic differentiation tools.
-% \end{itemize}
-% \end{purpose}
-
 Implementing HDSA-MD at scale requires several HPC capabilities, including efficient matrix-vector computations, linear and nonlinear system solvers, forward numerical PDE solvers for a variety of relevant dynamics, time steppers, differentiation of forward solvers and other functions, and, perhaps most challengingly, all of these tasks should be accomplished in parallel.
 To meet these requirements, we leverage \MrHyDE, a software library for the solution of \textbf{M}ulti-\textbf{r}esolution \textbf{Hy}bridized \textbf{D}ifferential \textbf{E}quations, publicly available at \href{https://github.com/sandialabs/MrHyDE}{\texttt{github.com/sandialabs/MrHyDE}}.
 \SM{@Tim best current way to cite \MrHyDE?}
@@ -1027,12 +900,6 @@ To meet these requirements, we leverage \MrHyDE, a software library for the solu
 The user specifies the weak form of the governing physics, a computational mesh and geometry, and any system parameters; corresponding finite elements are then assembled automatically in parallel.
 Available physics include, but are not limited to, convection-diffusion-reaction systems, Helmholtz equations, linear elasticity, crystal elasticity, Stokes flow, Navier--Stokes equations, Maxwell's equations, single-phase incompressible flow in porous media, and nonlinear heat diffusion.
 Post-processing options are available to compute quantities of interest, e.g., an objective function in the context of optimization.
-
-% \begin{purpose}
-% Once we've selected a driver, we need to develop specialized interfaces so that the data structures from the driver can be converted to the data structures of \HdsaLib.
-% \end{purpose}
-
-% \subsection{Using \MrHyDE as a driver for \HdsaLib}
 
 To fully leverage \MrHyDE for HDSA-MD, \HdsaLib includes \MrHyDE-specific interfaces that convert between the data structures used in each library.
 \SM{More here about technicalities?}
@@ -1047,14 +914,6 @@ For example, we can re-implement the example in \Cref{sec:smallexample} in \Hdsa
 This is not an ideal verification strategy: comparing two software libraries can only show if two implementations are equivalent, not if one or both implementation is mathematically correct.
 However, due to the complexities of HDSA-MD and the complications of working in a full HPC enviroment, this is our best option for verification.
 After verifying results on simple problems that can also be solved in \SABL, we have more confidence to dive into a large-scale problem that cannot be solved with \SABL.
-
-% \begin{purpose}
-% \begin{itemize}
-% \item Reiterate that the complexities of a full HPC environment make it difficult to assess and verify implementations of novel, complicated algorithms such as HDSA-MD.
-% \item Compared to \MATLAB, it's also not always easy to do very small tests like check for positive definiteness.
-% \item We used \SABL to develop the library design, but we also use it for verification. For example, we can re-implement the example in \Cref{sec:smallexample} and use the \SABL results to debug the \HdsaLib results. Both libraries should give the same solution. Now that we've done this for a small problem, we have more confidence diving into a huge problem that \SABL wouldn't be able to handle.
-% \end{itemize}
-% \end{purpose}
 
 \section{A large-scale application: Crystal elasticity}
 \label{sec:application}
