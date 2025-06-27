@@ -1,4 +1,4 @@
-classdef MD_OED_NGO < handle
+classdef MD_OED_DeltaCov < handle
 
     properties
         opt_prob_interface
@@ -14,7 +14,7 @@ classdef MD_OED_NGO < handle
 
     methods
 
-        function this = MD_OED_NGO(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface)
+        function this = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface)
             arguments
                 opt_prob_interface MD_Opt_Prob_Interface
                 data_interface MD_Data_Interface
@@ -81,13 +81,13 @@ classdef MD_OED_NGO < handle
         end
 
         function [val, grad] = Evaluate_OED_Objective(this, beta, alpha_d, reg_coeff, beta_bar)
-            [val1, grad1] = this.Evaluate_Posterior_Cov_Trace(beta, alpha_d);
+            [val1, grad1] = this.Evaluate_Posterior_Cov_Trace(beta, alpha_d, beta_bar);
             [val2, grad2] = this.Evaluate_Regularization(beta, beta_bar);
             val = real(-val1 + reg_coeff * val2);
             grad = real(-grad1 + reg_coeff * grad2);
         end
 
-        function [val, grad] = Evaluate_Posterior_Cov_Trace(this, beta, alpha_d)
+        function [val, grad] = Evaluate_Posterior_Cov_Trace(this, beta, alpha_d, beta_bar)
             N = length(beta) / this.offline_data.r + 1;
 
             [g, mu, Mg, g_jac, mu_jac, Mg_jac] = this.G_eigs(beta);
@@ -99,8 +99,9 @@ classdef MD_OED_NGO < handle
 
             for i = 1:N
                 Ws_Mu_Wu_inv{i} = (1 / alpha_d) * this.u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(this.offline_data.Mu_Wu_inv, mu(i) / alpha_d); % new
-                y_P_y(i) = Mg(:, i)' * this.offline_data.Vt_Mz_Wz_inv_Mz_V * Mg(:, i); % new
-                s(i) = sum(g(:, i)) - (this.offline_data.Mz_Wz_inv_Mz_V * Mg(:, i))' * this.data_interface.z_opt;
+                tmp = this.offline_data.Mz_Wz_inv_Mz_V * Mg(:, i);
+                y_P_y(i) = tmp' * tmp; % can add scalar multiple here to control radius of neighborhood (also add to grad)
+                s(i) = sum(g(:, i)) + (beta_bar' * this.offline_data.Vt_Mz_Wz_inv_Mz_V) * Mg(:, i);
                 p(i) = s(i)^2 + y_P_y(i);
             end
 
@@ -110,8 +111,8 @@ classdef MD_OED_NGO < handle
             % precompute additional vectors needed in the analysis
             for i = 1:N
                 val = val + p(i) * trace(Ws_Mu_Wu_inv{i});
-                grad_si = sum(g_jac{i}, 1)' - Mg_jac{i}' * (this.offline_data.Mz_Wz_inv_Mz_V' * this.data_interface.z_opt);
-                grad_yPyi = Mg_jac{i}' * (2 * this.offline_data.Vt_Mz_Wz_inv_Mz_V * Mg(:, i));
+                grad_si = sum(g_jac{i}, 1)' + Mg_jac{i}' * (this.offline_data.Vt_Mz_Wz_inv_Mz_V * beta_bar);
+                grad_yPyi = Mg_jac{i}' * (2 * this.offline_data.Mz_Wz_inv_Mz_V' * (this.offline_data.Mz_Wz_inv_Mz_V * Mg(:, i)));
                 grad_pi = 2 * s(i) * grad_si + grad_yPyi;
                 grad = grad + grad_pi * trace(Ws_Mu_Wu_inv{i});
 

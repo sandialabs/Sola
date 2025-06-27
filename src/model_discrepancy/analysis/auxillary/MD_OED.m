@@ -99,12 +99,13 @@ classdef MD_OED < handle
             else
                 options = optimoptions('fminunc', 'Algorithm', 'quasi-newton', 'Display', 'None', 'MaxIterations', 5000, 'SpecifyObjectiveGradient', true);
             end
-            beta = fminunc(@(beta) this.Evaluate_OED_Objective(beta, alpha_d, reg_coeff), beta_0, options);
+            beta_bar = zeros(size(this.offline_data.V, 2), 1);
+            beta = fminunc(@(beta) this.Evaluate_OED_Objective(beta, alpha_d, reg_coeff, beta_bar), beta_0, options);
             Z = this.data_interface.z_opt + this.offline_data.V * reshape(beta, size(this.offline_data.V, 2), []);
             Z = [this.data_interface.z_opt, Z];
         end
 
-        % NOTE: This is not "Sequential OED". This performs "Standard OED" for just the Nth point.
+        % NOTE: This does not incorporate sequential prior updates.
         function [beta_new, Z_new] = Generate_Seq_Optimal_Design(this, beta_0, alpha_d, reg_coeff, betas, beta_bar)
             if this.verbosity
                 options = optimoptions('fminunc', 'Algorithm', 'quasi-newton', 'Display', 'iter', 'MaxIterations', 5000, 'SpecifyObjectiveGradient', true);
@@ -115,7 +116,7 @@ classdef MD_OED < handle
             Z_new = this.data_interface.z_init + this.offline_data.V * beta_new;
         end
 
-        % NOTE: This is not "Sequential OED". This performs "Standard OED" for just the Nth point.
+        % NOTE: This does not incorporate sequential prior updates.
         function [val, grad] = Evaluate_OED_Objective_Seq(this, beta, alpha_d, reg_coeff, beta_bar)
             [val, grad_full] = this.Evaluate_OED_Objective(beta, alpha_d, reg_coeff, beta_bar);
             grad = grad_full(end - this.offline_data.r + 1:end);

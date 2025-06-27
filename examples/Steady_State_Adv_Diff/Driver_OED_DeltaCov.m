@@ -50,7 +50,7 @@ md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversa
 
 % Perform Offline OED Computations - USES data_interface
 oed_interface = MD_OED_Interface_Diff(data_interface, con_lofi);
-md_oed = MD_OED_NGO(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
+md_oed = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
 md_oed.Offline_Computation();
 
 %% Perform OED
@@ -58,7 +58,7 @@ N = 5;
 Z = [];
 D = [];
 betas = [];
-Jhat_NGO_oed = zeros(N, 1);
+Jhat_DC_oed = zeros(N, 1);
 oed_reg_coeff = 1.e-3;
 beta_0 = randn(num_evals, 1);
 
@@ -93,13 +93,12 @@ for p = 1:N
     z_bar = z_cont(:, end);
 
     % Display Stats
-    Jhat_NGO_oed(p) = opt_hifi.Jhat(z_bar);
-    % Jhat_NGO_dist_z(p) = oed_z_error_fn(z_bar);
-    fprintf('Objective of z_bar: \t%.3f\n', Jhat_NGO_oed(p));
+    Jhat_DC_oed(p) = opt_hifi.Jhat(z_bar);
+    fprintf('Objective of z_bar: \t%.3f\n', Jhat_DC_oed(p));
     if p == 1
-        fprintf('Percent Improvement: \t%.2f%%\n\n', 100 * (Jhat_lofi - Jhat_NGO_oed(p)) / (Jhat_lofi - Jhat_hifi));
+        fprintf('Percent Improvement: \t%.2f%%\n\n', 100 * (Jhat_lofi - Jhat_DC_oed(p)) / (Jhat_lofi - Jhat_hifi));
     else
-        fprintf('Percent Improvement: \t%.2f%%\n\n', 100 * (Jhat_NGO_oed(p - 1) - Jhat_NGO_oed(p)) / (Jhat_NGO_oed(p - 1) - Jhat_hifi));
+        fprintf('Percent Improvement: \t%.2f%%\n\n', 100 * (Jhat_DC_oed(p - 1) - Jhat_DC_oed(p)) / (Jhat_DC_oed(p - 1) - Jhat_hifi));
     end
 
 end
@@ -112,7 +111,7 @@ if show_figures
     xlim([0 N]);
     yline(Jhat_hifi, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
     yline(Jhat_lofi, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
-    plot(0:N, [Jhat_lofi; Jhat_NGO_oed], ".-", "Color", "#00008B", "DisplayName", "NGO OED");
+    plot(0:N, [Jhat_lofi; Jhat_DC_oed], ".-", "Color", "#BAB86C", "DisplayName", "DeltaCov OED");
     xlabel("Evaluations ($N$)", "Interpreter", "latex");
     ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
     legend("location", "east", "Interpreter", "latex");
