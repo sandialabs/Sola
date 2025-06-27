@@ -81,16 +81,16 @@ classdef MD_OED_Seq < handle
             Z = [this.data_interface.z_init, this.data_interface.z_init + Z_tmp];
         end
 
-        function [beta, Z, post_var, reg_val] = L_Curve_Analysis(this, beta_0, alpha_d, reg_coeffs)
+        function [beta_new, Z_new, post_var, reg_val] = L_Curve_Analysis(this, beta_0, alpha_d, reg_coeffs, betas)
             m = length(reg_coeffs);
             post_var = zeros(m, 1);
             reg_val = zeros(m, 1);
-            beta = zeros(length(beta_0), m);
-            Z = cell(m, 1);
+            beta_new = zeros(length(beta_0), m);
+            Z_new = cell(m, 1);
             for k = 1:m
-                [beta(:, k), Z{k}] = this.Generate_Optimal_Design(beta_0, alpha_d, reg_coeffs(k));
-                post_var(k) = -this.Evaluate_Posterior_Cov_Trace(beta(:, k), alpha_d);
-                reg_val(k) = this.Evaluate_Regularization(beta(:, k));
+                [beta_new(:, k), Z_new{k}] = this.Generate_Seq_Optimal_Design(beta_0, alpha_d, reg_coeffs(k), betas);
+                post_var(k) = -this.Evaluate_Posterior_Cov_Trace([betas; beta_new(:, k)], alpha_d);
+                reg_val(k) = this.Evaluate_Regularization([betas; beta_new(:, k)]);
             end
         end
 
@@ -118,6 +118,13 @@ classdef MD_OED_Seq < handle
                 options = optimoptions('fminunc', 'Algorithm', 'quasi-newton', 'Display', 'None', 'MaxIterations', 5000, 'SpecifyObjectiveGradient', true);
             end
             beta_new = fminunc(@(beta_new)this.Evaluate_OED_Objective_Seq([betas; beta_new], alpha_d, reg_coeff), beta_0, options);
+            % [val1, grad1] = this.Evaluate_Posterior_Cov_Trace([betas; beta_new], alpha_d);
+            % [val2, grad2] = this.Evaluate_Regularization([betas; beta_new]);
+            % disp("OED Trace: " + val1)
+            % disp("OED Reg.: " + reg_coeff * val2)
+            % disp("OED Trace Grad: " + norm(grad1))
+            % disp("OED Reg. Grad: " + reg_coeff * norm(grad2))
+            % disp("OED Overall Grad: " + norm(-grad1 + reg_coeff * grad2))
             Z_new = this.data_interface.z_init + this.offline_data.V * beta_new;
         end
 

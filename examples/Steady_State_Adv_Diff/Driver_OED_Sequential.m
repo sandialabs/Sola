@@ -67,7 +67,7 @@ B2 = @(x) [zeros(m, m) kron(opt_prob_interface.Misfit_Gradient(u_lofi, z_lofi)',
 B = @(x) B1(x) + B2(x);
 PHinvB = @(x) md_hessian_analysis.Apply_Projected_RS_Hessian_Inverse(B(x));
 
-reg_coeff = 1.e-6;
+reg_coeff = 1.e-3;
 beta_0 = randn(num_evals, 1);
 oed_interface = MD_OED_Interface_Diff(data_interface, con_lofi);
 
@@ -113,6 +113,12 @@ for p = 1:N
     if p == 1
         z_p = z_lofi;
     else
+        % beta_0 = beta_cont(:, end);
+        if p == 2
+            % reg_coeffs = [1.e-6, 1.e-5, 1.e-4, 2.e-4, 5.e-4, 1.e-3, 1.e-2];
+            reg_coeffs = [1.e-3, 1.e-2, 1.e-1, 1, 10, 20];
+            [beta_lc, Z_lc, post_var, reg_val] = md_oed.L_Curve_Analysis(beta_0, alpha_d, reg_coeffs, betas);
+        end
         [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, reg_coeff, betas);
         betas = [betas; beta_new];
         z_p = z_p(:, end);
@@ -135,7 +141,7 @@ for p = 1:N
     % Obtain Optimal Solution Update via Continuation
     num_continuation_steps = 1;
     md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
-    [u_cont, z_cont] = md_cont_update.Posterior_Update_Mean_PC_beta();
+    [u_cont, z_cont, beta_cont] = md_cont_update.Posterior_Update_Mean_PC_beta();
     z_bar = z_cont(:, end);
 
     % Obtain Optimal Solution Update via HDSA (linearization)

@@ -43,6 +43,7 @@ D = [];
 betas = [];
 data_interface = MD_Data_Interface_Diff(u_lofi, z_lofi);
 beta_0 = randn(num_evals, 1);
+oed_reg_coeff = 1.e-3;
 
 for k = 1:N
     % Run step k
@@ -59,7 +60,7 @@ for k = 1:N
             if k == 1
                 z_p = z_lofi;
             else
-                [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, oed_reg_coeff, betas);
+                [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, oed_reg_coeff, betas, betas_cont(:, end));
                 betas = [betas; beta_new];
                 z_p = z_p(:, end);
             end
@@ -77,7 +78,7 @@ for k = 1:N
     % z_update_mean = md_update.Posterior_Update_Mean();
     num_continuation_steps = 1;
     md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
-    [~, z_cont, ~] = md_cont_update.Posterior_Update_Mean_PC_beta();
+    [~, z_cont, betas_cont] = md_cont_update.Posterior_Update_Mean_PC_beta();
     z_update_mean = z_cont(:, end);
     Jhat_std_oed(k) = opt_hifi.Jhat(z_update_mean);
     oed_z_error(k) = oed_z_error_fn(z_update_mean);

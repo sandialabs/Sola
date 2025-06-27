@@ -94,6 +94,7 @@ for p = 1:N
 
     % Display Stats
     Jhat_NGO_oed(p) = opt_hifi.Jhat(z_bar);
+    Jhat_NGO_dist_z(p) = oed_z_error_fn(z_bar);
     fprintf('Objective of z_bar: \t%.3f\n', Jhat_NGO_oed(p));
     if p == 1
         fprintf('Percent Improvement: \t%.2f%%\n\n', 100 * (Jhat_lofi - Jhat_NGO_oed(p)) / (Jhat_lofi - Jhat_hifi));
