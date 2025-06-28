@@ -1,6 +1,5 @@
 % Get the OED Setup ready
 OED_Setup;
-oed_interface = MD_OED_Interface_Diff(data_interface, con_lofi);
 oed_reg_coeff = 1.e-3;
 beta_0 = randn(num_evals, 1);
 

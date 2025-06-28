@@ -2,11 +2,11 @@
 OED_Setup;
 
 % Perform Offline OED Computations
-oed_reg_coeff = 10;
+oed_reg_coeff = 1.e5; % large due to magnitude of criterion
 beta_0 = randn(num_evals, 1);
 
 % Initialize Quantities
-N = 5;
+N = 10;
 Jhat_seq_oed = zeros(N, 1);
 oed_z_error = zeros(N, 1);
 Z = [];
@@ -28,7 +28,7 @@ for p = 1:N
         [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, oed_reg_coeff, betas, betas_cont(:, end));
         betas = [betas; beta_new];
         z_p = z_p(:, end);
-        % disp(norm(z_p - z_bar)/norm(z_bar))
+        disp(norm(z_p - z_bar) / norm(z_bar));
         % disp(norm(z_lofi - z_bar)/norm(z_bar))
         % z_p = z_bar;
     end
@@ -43,10 +43,9 @@ for p = 1:N
     % Perform Posterior Sampling (TODO: Reuse data)
     md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
     md_post_sampling.Compute_Posterior_Data(alpha_d, 1);
-    theta_post = Extract_mean_theta(md_post_sampling.post_data);
 
     % Obtain Optimal Solution Update via Continuation
-    num_continuation_steps = 1;
+    num_continuation_steps = 2;
     md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
     [u_cont, z_cont, betas_cont] = md_cont_update.Posterior_Update_Mean_PC_beta();
     z_bar = z_cont(:, end);

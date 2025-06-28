@@ -1,28 +1,20 @@
 % Get the OED Setup ready
 OED_Setup;
-show_figures = true;
-save_figures = false;
-
-% Show initial objective
-fprintf("\nStep 0:\n-------------\n");
-fprintf('Objective of z_lofi: \t%.3f\n', Jhat_lofi);
-fprintf('Objective of z_hifi: \t%.3f\n\n', Jhat_hifi);
 
 % Perform Offline OED Computations - USES data_interface
-md_oed = MD_OED_NGO(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
+md_oed = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
 md_oed.Offline_Computation();
 
 %% Perform OED
-N = 5;
+N = 10;
 Z = [];
 D = [];
 betas = [];
-Jhat_NGO_oed = zeros(N, 1);
-oed_reg_coeff = 1.e-3;
+Jhat_DC_oed = zeros(N, 1);
+oed_reg_coeff = 1.e-4;
 beta_0 = randn(num_evals, 1);
 
 for p = 1:N
-    % Update Data Interface (with prior center)
     fprintf('\nStep %d:\n-------------\n', p);
 
     % Set Parameters for OED
@@ -32,6 +24,7 @@ for p = 1:N
         [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, oed_reg_coeff, betas, betas_cont(:, end));
         betas = [betas; beta_new];
         z_p = z_p(:, end);
+        disp(norm(z_p - z_bar) / norm(z_bar));
     end
 
     % Obtain Discrepancies
@@ -43,7 +36,6 @@ for p = 1:N
     % Perform Posterior Sampling (TODO: Reuse data)
     md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
     md_post_sampling.Compute_Posterior_Data(alpha_d, 1);
-    theta_post = Extract_mean_theta(md_post_sampling.post_data);
 
     % Obtain Optimal Solution Update via Continuation
     num_continuation_steps = 1;
@@ -52,24 +44,24 @@ for p = 1:N
     z_bar = z_cont(:, end);
 
     % Display Stats
-    Jhat_NGO_oed(p) = opt_hifi.Jhat(z_bar);
-    fprintf('Objective of z_bar: \t%.3f\n', Jhat_NGO_oed(p));
+    Jhat_DC_oed(p) = opt_hifi.Jhat(z_bar);
+    fprintf('Objective of z_bar: \t%.3f\n', Jhat_DC_oed(p));
     if p == 1
-        fprintf('Percent Improvement: \t%.2f%%\n\n', 100 * (Jhat_lofi - Jhat_NGO_oed(p)) / (Jhat_lofi - Jhat_hifi));
+        fprintf('Percent Improvement: \t%.2f%%\n\n', 100 * (Jhat_lofi - Jhat_DC_oed(p)) / (Jhat_lofi - Jhat_hifi));
     else
-        fprintf('Percent Improvement: \t%.2f%%\n\n', 100 * (Jhat_NGO_oed(p - 1) - Jhat_NGO_oed(p)) / (Jhat_NGO_oed(p - 1) - Jhat_hifi));
+        fprintf('Percent Improvement: \t%.2f%%\n\n', 100 * (Jhat_DC_oed(p - 1) - Jhat_DC_oed(p)) / (Jhat_DC_oed(p - 1) - Jhat_hifi));
     end
 
 end
 
 % Plot Objective Function over N
-if show_figures
+if true
     figure;
     hold on;
     xlim([0 N]);
     yline(Jhat_hifi, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
     yline(Jhat_lofi, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
-    plot(0:N, [Jhat_lofi; Jhat_NGO_oed], ".-", "Color", "#00008B", "DisplayName", "NGO OED");
+    plot(0:N, [Jhat_lofi; Jhat_DC_oed], ".-", "Color", "#BAB86C", "DisplayName", "DeltaCov OED");
     xlabel("Evaluations ($N$)", "Interpreter", "latex");
     ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
     legend("location", "east", "Interpreter", "latex");
