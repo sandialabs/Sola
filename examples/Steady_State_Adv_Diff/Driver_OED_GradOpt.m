@@ -1,10 +1,12 @@
-% Get the OED Setup ready
+% Clear Workspace and Add Interfaces to Path
 OED_Setup;
+
+% Perform Offline OED Computations
 oed_interface = MD_OED_Interface_Diff(data_interface, con_lofi);
-oed_reg_coeff = 1.e-3;
+oed_reg_coeff = 10;
 beta_0 = randn(num_evals, 1);
 
-% Iterate over steps
+% Initialize Quantities
 N = 5;
 Jhat_seq_oed = zeros(N, 1);
 oed_z_error = zeros(N, 1);
@@ -13,33 +15,22 @@ D = [];
 betas = [];
 z_bar = z_lofi;
 
-% Saving quantities
-seq_oed_mean_theta = cell(N, 1);
-seq_oed_mean_z = cell(N, 1);
-seq_oed_Z = cell(N, 1);
-
 % Sequential OED
-md_oed = MD_OED_Seq(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
-md_oed.Offline_Computation();
+md_oed = MD_OED_OptGrad(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
 
 for p = 1:N
-    % Update Data Interface (with prior center)
     fprintf('\nStep %d:\n-------------\n', p);
-    data_interface.Update_z_opt(z_bar);
 
     % Set Parameters for OED
     if p == 1
         z_p = z_lofi;
     else
-        % beta_0 = beta_cont(:, end);
-        % if p == 2
-        %     oed_reg_coeffs = [1.e-6, 1.e-5, 1.e-4, 2.e-4, 5.e-4, 1.e-3, 1.e-2];
-        %     [beta_lc, Z_lc, post_var, reg_val] = md_oed.L_Curve_Analysis(beta_0, alpha_d, oed_reg_coeffs, betas);
-        % end
-        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, oed_reg_coeff, betas);
+        md_oed.Offline_Computation(md_cont_update, z_bar, u_bar);
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, oed_reg_coeff, betas, betas_cont(:, end));
         betas = [betas; beta_new];
         z_p = z_p(:, end);
-        % disp(norm(z_p - z_bar))
+        % disp(norm(z_p - z_bar)/norm(z_bar))
+        % disp(norm(z_lofi - z_bar)/norm(z_bar))
         % z_p = z_bar;
     end
 
@@ -58,13 +49,17 @@ for p = 1:N
     % Obtain Optimal Solution Update via Continuation
     num_continuation_steps = 1;
     md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
-    [u_cont, z_cont, beta_cont] = md_cont_update.Posterior_Update_Mean_PC_beta();
+    [u_cont, z_cont, betas_cont] = md_cont_update.Posterior_Update_Mean_PC_beta();
     z_bar = z_cont(:, end);
+
+    [delta_mean, ~] = md_post_sampling.Posterior_Discrepancy_Samples(z_bar);
+    u_bar = con_lofi.State_Solve(z_bar) + delta_mean{:};
 
     % Obtain Optimal Solution Update via HDSA (linearization)
     % md_update = MD_Update(md_post_sampling, md_hessian_analysis);
     % z_bar_2 = md_update.Posterior_Update_Mean();
     % disp(norm(z_bar-z_bar_2)/norm(z_bar))
+    % z_bar = z_lofi - PHinvB(theta_post);
 
     % Display Stats
     Jhat_seq_oed(p) = opt_hifi.Jhat(z_bar);
@@ -76,9 +71,6 @@ for p = 1:N
         fprintf('Percent Improvement: \t%.2f%%\n\n', 100 * (Jhat_seq_oed(p - 1) - Jhat_seq_oed(p)) / (Jhat_seq_oed(p - 1) - Jhat_hifi));
     end
 
-    seq_oed_mean_theta{p} = theta_post;
-    seq_oed_mean_z{p} = z_bar;
-
 end
 
 % Plot Objective Function over N
@@ -88,11 +80,10 @@ if true
     xlim([0 N]);
     yline(Jhat_hifi, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
     yline(Jhat_lofi, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
+    % yline(Jhat_best_proj, "b--", "DisplayName", "Best-Proj", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
     plot(0:N, [Jhat_lofi; Jhat_seq_oed], ".-", "Color", "#00C83A", "DisplayName", "Sequential OED");
     xlabel("Evaluations ($N$)", "Interpreter", "latex");
     ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
     legend("location", "east", "Interpreter", "latex");
     title("Optimization Objective over Evals");
 end
-
-save('Seq_OED_Results.mat', 'Jhat_seq_oed', 'seq_oed_mean_theta', 'seq_oed_mean_z', 'seq_oed_Z');
