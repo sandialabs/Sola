@@ -7,13 +7,13 @@ rng(1342);
 
 %% Instantiate the optimization problem.
 N = 30;
-theta = randn(3, N);
+Xi = randn(3, N);
 
 m = 51;
 obj = Synthetic_Test_OUU_Objective(m);
 cons = cell(N, 1);
 for k = 1:N
-    cons{k} = Synthetic_Test_OUU_Constraint(theta(:, k));
+    cons{k} = Synthetic_Test_OUU_Constraint(Xi(:, k));
 end
 opt = Reduced_Space_Optimization_Under_Uncertainty(obj, cons);
 
@@ -40,4 +40,4 @@ for i = 1:2
     end
 end
 
-save('Optimization_Results.mat', 'u_opt', 'z_opt', 'Z', 'D', 'theta');
+save('Optimization_Results.mat', 'u_opt', 'z_opt', 'Z', 'D', 'Xi');

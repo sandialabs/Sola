@@ -28,11 +28,11 @@ opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
 
 writematrix(data_interface.u_opt, 'u_opt.txt');
 writematrix(data_interface.z_opt, 'z_opt.txt');
-writematrix(data_interface.D+data_interface.u_opt, 'U_Hifi_1.txt');
+writematrix(data_interface.D + data_interface.u_opt, 'U_Hifi_1.txt');
 writematrix(data_interface.u_opt, 'U_Lofi_1.txt');
 writematrix(data_interface.Z, 'Z_1.txt');
 
-adapt_time_variance = false; %true;
+adapt_time_variance = false; % true;
 u_hyperparam_interface = MD_u_Hyperparameter_Interface_Transient_Test_Problem(x, t, adapt_time_variance);
 u_hyperparam_interface.alpha_u = 2e3;
 u_hyperparam_interface.beta_u = .009;
@@ -52,11 +52,11 @@ z_hyperparam_interface.beta_z = .001;
 z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(con.S, con.M, data_interface, z_hyperparam_interface, u_prior_interface);
 
 %%
-%num_prior_samples = 100;
-%md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
-%md_prior_viz = MD_Prior_Visualization(md_prior_sampling);
-%md_prior_sampling.Generate_Prior_Discrepancy_z_opt_Sample_Data(num_prior_samples);
-%md_prior_sampling.Generate_Prior_Discrepancy_z_pert_Sample_Data();
+% num_prior_samples = 100;
+% md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
+% md_prior_viz = MD_Prior_Visualization(md_prior_sampling);
+% md_prior_sampling.Generate_Prior_Discrepancy_z_opt_Sample_Data(num_prior_samples);
+% md_prior_sampling.Generate_Prior_Discrepancy_z_pert_Sample_Data();
 % md_prior_viz.Visualization_for_Prior_Time_Evolution(1,false);
 % md_prior_viz.Visualization_for_Prior_Discrepancy_at_z_opt(1);
 % md_prior_viz.Visualization_for_Prior_Discrepancy_at_z_pert(1);
