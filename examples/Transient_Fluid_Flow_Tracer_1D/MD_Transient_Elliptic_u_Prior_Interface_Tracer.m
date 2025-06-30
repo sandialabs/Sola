@@ -19,8 +19,8 @@ classdef MD_Transient_Elliptic_u_Prior_Interface_Tracer < MD_Transient_Elliptic_
             u_out = this.M * u_in;
         end
 
-        function this = MD_Transient_Elliptic_u_Prior_Interface_Tracer(alpha_u, transient_prior_cov, sabl_opt)
-            this@MD_Transient_Elliptic_u_Prior_Interface(alpha_u, transient_prior_cov);
+        function this = MD_Transient_Elliptic_u_Prior_Interface_Tracer(data_interface, spatial_prior_cov, transient_prior_cov, sabl_opt)
+            this@MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_prior_cov, transient_prior_cov);
 
             S = sabl_opt.con.S_z;
             this.M = sabl_opt.con.M_z;

@@ -42,9 +42,9 @@ classdef MD_u_Hyperparameter_Interface < handle
 
         function this = MD_u_Hyperparameter_Interface(is_transient, center_data, adapt_time_variance, component_id)
             arguments
-                is_transient {boolean}
-                center_data {boolean} = false
-                adapt_time_variance {boolean} = false
+                is_transient {logical}
+                center_data {logical} = false
+                adapt_time_variance {logical} = false
                 component_id (1, 1) {mustBeNumeric} = 1
             end
 

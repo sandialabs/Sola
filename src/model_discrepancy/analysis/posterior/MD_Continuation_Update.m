@@ -140,7 +140,7 @@ classdef MD_Continuation_Update < handle
 
         function [beta_out] = Apply_Parameterized_RS_Hessian_beta(this, beta_in, u_n, beta_n, t_n)
             z_n = this.z_init + this.md_hessian_analysis.evecs * beta_n;
-            beta_out = this.md_hessian_analysis.evecs' * Apply_Parameterized_RS_Hessian(this, this.md_hessian_analysis.evecs * beta_in, u_n, z_n, t_n);
+            beta_out = this.md_hessian_analysis.evecs' * this.Apply_Parameterized_RS_Hessian(this.md_hessian_analysis.evecs * beta_in, u_n, z_n, t_n);
         end
 
         function [z_out] = Gradient_J_z(this, u_n, z_n, t_n)
@@ -184,6 +184,7 @@ classdef MD_Continuation_Update < handle
             delta = this.Discrepancy_Evaluation(z_n, t_n);
 
             z_out = this.opt_prob_interface.Apply_RS_Hessian(z_in, z_n); % NOTE: this computes J_{zz} + S_z' * J_uu * S_z
+            z_out = z_out(:);
 
             u_tmp1 = this.Apply_Discrepancy_z_Jacobian(z_in, t_n);
             u_tmp2 = this.opt_prob_interface.Apply_Misfit_Hessian(u_tmp1, u_n + delta, z_n);

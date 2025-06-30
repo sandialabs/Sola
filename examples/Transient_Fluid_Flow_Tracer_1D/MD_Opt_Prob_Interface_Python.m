@@ -3,14 +3,16 @@ classdef MD_Opt_Prob_Interface_Python < MD_Opt_Prob_Interface
     properties
         z_current
         u_current
+        sabl_opt
     end
 
     methods (Access = public)
 
-        function this = MD_Opt_Prob_Interface_Python(md_interface_data)
+        function this = MD_Opt_Prob_Interface_Python(md_interface_data, sabl_opt)
             this@MD_Opt_Prob_Interface();
             this.z_current = md_interface_data.z_init;
             this.u_current = md_interface_data.u_init;
+            this.sabl_opt  = sabl_opt;
         end
 
         function [z_out] = Apply_Solution_Operator_z_Jacobian_Transpose(this, u_in, z)
@@ -52,6 +54,16 @@ classdef MD_Opt_Prob_Interface_Python < MD_Opt_Prob_Interface
             u_out = double(u_out);
             if isvector(u_out)
                 u_out = u_out';
+            end
+        end
+
+        function [u] = State_Solve(this, z)
+            if norm(z - this.z_current) == 0
+                u = this.u_current;
+            else
+                u = this.sabl_opt.con.State_Solve(z);
+                this.u_current = u;
+                this.z_current = z;
             end
         end
 

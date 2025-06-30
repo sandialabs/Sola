@@ -6,7 +6,7 @@ md_oed = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, 
 md_oed.Offline_Computation();
 
 %% Perform OED
-N = 10;
+N = 5;
 Z = [];
 D = [];
 betas = [];

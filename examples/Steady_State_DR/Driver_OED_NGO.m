@@ -8,7 +8,7 @@ md_oed = MD_OED_NGO(opt_prob_interface, data_interface, u_prior_interface, z_pri
 md_oed.Offline_Computation();
 
 %% Perform OED
-N = 10;
+N = 5;
 Z = [];
 D = [];
 betas = [];

@@ -16,10 +16,13 @@ classdef Tracer_LoFi_Constraint < Constraint
             % Set Mass and Stiffness matrices
             this.M_z = double(py.fluid_flow_1d_lofi.M_one);
             this.S_z = double(py.fluid_flow_1d_lofi.K_mat_one);
-            this.M_u = double(py.fluid_flow_1d_lofi.M);
-            this.S_u = double(py.fluid_flow_1d_lofi.K_mat);
+            this.M_u = this.M_z;
+            this.S_u = this.S_z;
+            % this.M_u = double(py.fluid_flow_1d_lofi.M);
+            % this.S_u = double(py.fluid_flow_1d_lofi.K_mat);
             this.x = double(py.fluid_flow_1d_lofi.mesh_coordinates);
-            this.m = double(py.fluid_flow_1d_lofi.num_steps) * length(this.x);
+            this.m = length(this.x);
+            % this.m = double(py.fluid_flow_1d_lofi.num_steps) * length(this.x);
         end
 
         function [u] = State_Solve(this, z)
