@@ -34,11 +34,15 @@ classdef MD_OUU_Opt_Prob_Interface < MD_Opt_Prob_Interface
         end
 
         function [z_out] = Apply_RS_Hessian(this, z_in, z)
-            z_out = zeros(length(z), this.data_interface.n_r);
-            for s = 1:this.data_interface.n_r
-                z_out(:, s) = this.Apply_RS_Hessian_Per_Sample(z_in, z, s);
+            n = size(z_in,2);
+            z_out = zeros(length(z),n);
+            for k = 1:n
+                z_out_k = zeros(length(z), this.data_interface.n_r);
+                for s = 1:this.data_interface.n_r
+                    z_out_k(:, s) = this.Apply_RS_Hessian_Per_Sample(z_in(:,k), z, s);
+                end
+                z_out(:,k) = mean(z_out_k, 2);
             end
-            z_out = mean(z_out, 2);
         end
 
         function [grad_u] = Misfit_Gradient(this, u, z)

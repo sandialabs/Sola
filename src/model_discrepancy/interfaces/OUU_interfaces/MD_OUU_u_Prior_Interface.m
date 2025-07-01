@@ -3,7 +3,9 @@ classdef MD_OUU_u_Prior_Interface < MD_u_Prior_Interface
     properties
         us_prior_interface
         data_interface
+        L
         C
+        Cinv
         R
         Rinv
     end
@@ -15,8 +17,8 @@ classdef MD_OUU_u_Prior_Interface < MD_u_Prior_Interface
             n = size(u_in, 2);
             for k = 1:n
                 u_in_k = this.data_interface.Reshape_State_to_Mat(u_in(:, k));
-                tmp = this.us_prior_interface.Apply_M_u(u_in_k) * this.C;
-                u_out(:, k) = this.data_interface.Reshape_State_to_Vec(tmp);
+                tmp = this.C * this.us_prior_interface.Apply_M_u(u_in_k)';
+                u_out(:, k) = this.data_interface.Reshape_State_to_Vec(tmp');
             end
         end
 
@@ -25,8 +27,8 @@ classdef MD_OUU_u_Prior_Interface < MD_u_Prior_Interface
             n = size(u_in, 2);
             for k = 1:n
                 u_in_k = this.data_interface.Reshape_State_to_Mat(u_in(:, k));
-                tmp = this.us_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(u_in_k, scalar) * this.C;
-                u_out(:, k) = this.data_interface.Reshape_State_to_Vec(tmp);
+                tmp = this.Cinv * this.us_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(u_in_k, scalar)';
+                u_out(:, k) = this.data_interface.Reshape_State_to_Vec(tmp');
             end
         end
 
@@ -35,8 +37,8 @@ classdef MD_OUU_u_Prior_Interface < MD_u_Prior_Interface
             n = size(u_in, 2);
             for k = 1:n
                 u_in_k = this.data_interface.Reshape_State_to_Mat(u_in(:, k));
-                tmp = this.us_prior_interface.Apply_W_u_Inverse(u_in_k) * this.C;
-                u_out(:, k) = this.data_interface.Reshape_State_to_Vec(tmp);
+                tmp = this.Cinv * this.us_prior_interface.Apply_W_u_Inverse(u_in_k)';
+                u_out(:, k) = this.data_interface.Reshape_State_to_Vec(tmp');
             end
         end
 
@@ -45,7 +47,7 @@ classdef MD_OUU_u_Prior_Interface < MD_u_Prior_Interface
             u_out = zeros(this.data_interface.n_u * this.data_interface.n_r, num_samples);
             for k = 1:num_samples
                 I = ((k - 1) * this.data_interface.n_r + 1):(k * this.data_interface.n_r);
-                u_out(:, k) = this.data_interface.Reshape_State_to_Vec(u_samps(:, I) * this.Rinv);
+                u_out(:, k) = this.data_interface.Reshape_State_to_Vec( (this.Rinv * u_samps(:, I)')' );
             end
         end
 
@@ -54,7 +56,7 @@ classdef MD_OUU_u_Prior_Interface < MD_u_Prior_Interface
             u_out = zeros(this.data_interface.n_u * this.data_interface.n_r, num_samples);
             for k = 1:num_samples
                 I = ((k - 1) * this.data_interface.n_r + 1):(k * this.data_interface.n_r);
-                u_out(:, k) = this.data_interface.Reshape_State_to_Vec(u_samps(:, I) * this.Rinv);
+                u_out(:, k) = this.data_interface.Reshape_State_to_Vec( (this.Rinv * u_samps(:, I)')' );
             end
         end
 
@@ -69,9 +71,17 @@ classdef MD_OUU_u_Prior_Interface < MD_u_Prior_Interface
                     dist(s, k) = norm(Xi(:, s) - Xi(:, k))^2;
                 end
             end
-            this.C = exp(-dist);
+            this.L = exp(-dist);
+            this.C = diag(diag(this.L) + 2*sum(this.L,2)) - 2*this.L;
             this.R = chol(this.C);
             this.Rinv = linsolve(this.R, eye(n_r));
+            this.Cinv = this.Rinv * this.Rinv';
+
+            scaling = n_r/trace(this.Cinv);
+            this.Cinv = scaling * this.Cinv;
+            this.C = (1/scaling) * this.C;
+            this.R = (1/sqrt(scaling)) * this.R;
+            this.Rinv = sqrt(scaling) * this.Rinv;
         end
 
     end

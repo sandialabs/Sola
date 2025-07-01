@@ -7,7 +7,7 @@ rng(1342);
 
 %% Instantiate the optimization problem.
 N = 30;
-Xi = randn(3, N);
+Xi = ones(3,1) * linspace(0,1,N);
 
 m = 51;
 obj = Synthetic_Test_OUU_Objective(m);

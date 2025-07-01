@@ -18,6 +18,10 @@ classdef MD_z_Prior_Interface_synthetic_test_OUU < MD_z_Prior_Interface
             z_out = linsolve(this.W_z, z_in);
         end
 
+        function [z_out] = Apply_W_z(this, z_in)
+            z_out = this.W_z * z_in;
+        end
+
         % Compute samples from a mean zero Gaussian with covariance W_z^{-1}
         function [z_out] = Sample_with_Covariance_W_z_Inverse(this, num_samples)
             R = chol(this.W_z);

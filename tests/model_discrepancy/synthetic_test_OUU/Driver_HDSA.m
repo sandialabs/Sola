@@ -2,9 +2,9 @@
 clear;
 close all;
 addpath(genpath('../../../src'));
-rng(121234);
+%rng(121234);
 
-suppress_figures = true;
+suppress_figures = false;
 
 m = 51;
 
@@ -19,6 +19,7 @@ for k = 1:N
     cons{k} = Synthetic_Test_OUU_Constraint(Xi(:, k));
 end
 opt = Reduced_Space_Optimization_Under_Uncertainty(obj, cons);
+x = obj.x;
 
 opt_prob_interface = MD_OUU_Opt_Prob_Interface_Sabl(data_interface, opt);
 
@@ -30,6 +31,26 @@ z_prior_interface = MD_z_Prior_Interface_synthetic_test_OUU(m);
 num_prior_samples = 100;
 md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 prior_delta_samples_zopt = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
+
+if ~suppress_figures
+    k = 1;
+    u = data_interface.Reshape_State_to_Mat(prior_delta_samples_zopt(:,k));
+
+    colormap('jet');
+    c = u_prior_interface.L(k,:);
+    c_normalized = (c - min(c)) / (max(c) - min(c));
+    n = size(u, 2);
+    figure;
+    hold on;
+    col = colormap;
+    for j = 1:n
+        color = col(round(c_normalized(j) * (size(colormap, 1) - 1)) + 1, :);
+        plot(x, u(:, j), 'Color', color, 'LineWidth', 3);
+    end
+    hold off;
+    colorbar;
+    clim([min(c) max(c)]); 
+end
 
 %%
 x = opt.obj.x;
@@ -51,5 +72,9 @@ Z_test(:, 3) = 1.5 * ones(m, 1);
 
 %%
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
+num_evals = 20;
+oversampling = 10;
+md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
+
 md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
