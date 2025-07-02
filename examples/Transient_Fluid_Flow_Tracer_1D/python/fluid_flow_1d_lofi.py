@@ -8,6 +8,7 @@ PORT = 5000;
 # Access Functions
 state_solve = lambda *x, **kwargs: call_remote_function('state_solve', PORT, *x, **kwargs)
 J = lambda *x: call_remote_function('J', PORT, *x)
+Jz = lambda *x: call_remote_function('Jz', PORT, *x)
 J_uu_apply = lambda *x: call_remote_function('J_uu_apply', PORT, *x)
 J_zz_apply = lambda *x: call_remote_function('J_zz_apply', PORT, *x)
 apply_solution_operator_z_jacobian_transpose = lambda *x: call_remote_function('apply_solution_operator_z_jacobian_transpose', PORT, *x)

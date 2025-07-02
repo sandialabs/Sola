@@ -52,8 +52,8 @@ data_interface = MD_Data_Interface_Tracer(u_lofi, z_lofi);
 
 % Generate Priors for u and z
 alpha_z = 1.e-2; % If too large, may cause bouncing.
-alpha_u = (0.2)^2; % Larger prior if large.
-alpha_d = (1.e-2)^2 * alpha_u; % Controls speed of improvement (large)
+alpha_u = (1)^2; % smallar alpha_u -> smaller expected magnitude of discrepancy
+alpha_d = (1.e-2)^2 * alpha_u; % smaller alpha_d -> more certainty (linearity) in data
 beta_t = 50;
 num_evals = 4; % significant impact when very small; very little beyond
 oversampling = 5;
@@ -71,16 +71,6 @@ u_hyperparam_interface.Set_alpha_d(alpha_d);
 spatial_u_prior_interface = MD_Elliptic_u_Prior_Interface_Tracer(alpha_u, opt_lofi);
 transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface, T, n_t, n_y);
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_u_prior_interface, transient_prior_cov);
-
-% u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface_Tracer(data_interface, spatial_u_prior_interface, transient_prior_cov, opt_lofi);
-% u_hyperparam_interface = MD_u_Hyperparameter_Interface_Transient_Test_Problem(x, t, adapt_time_variance);
-% u_hyperparam_interface.beta_t = 11;
-% transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface, T, n_t, n_y);
-% opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
-% u_hyperparam_interface.alpha_u = 1.e-2;
-% num_sing_vals = 50;
-% spatial_u_prior_interface = MD_Elliptic_u_Prior_Interface_Transient_Test_Problem(u_hyperparam_interface.alpha_u, opt, num_sing_vals);
-% u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_u_prior_interface, transient_prior_cov);
 
 % num_prior_samples = 100;
 % md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
@@ -100,12 +90,11 @@ md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_init, num_evals, overs
 % Perform Offline OED Computations
 alpha_zd = 1.e-1;
 beta_zd = 1.e-1;
-reg_coeff = 1.e-5;
+reg_coeff = 100;
 beta_0 = randn(num_evals, 1);
 oed_interface = MD_OED_Interface_Tracer(data_interface, con_lofi, alpha_zd, beta_zd);
 
 % Plot low-fidelity and high-fidelity states
-% pyplot(x, con_hifi.State_Solve(z_lofi), 'r-', x, con_hifi.State_Solve(z_hifi), 'k--', 'Legend', {'Low-Fidelity', 'High-Fidelity'});
 
 %% Iterate for each data point
 N = 5;
@@ -121,23 +110,23 @@ D_z_hifi = Evaluate_Discrepancy(con_hifi, con_lofi, z_hifi);
 disp("Discrep. Eval. for Hifi [DONE].");
 
 % Sequential OED
-md_oed = MD_OED_Seq(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
+md_oed = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
 md_oed.Offline_Computation();
 
 for p = 1:N
     % Update Data Interface (with prior center)
     fprintf('\nStep %d:\n-------------\n', p);
-    data_interface.Update_z_opt(z_bar);
+    % data_interface.Update_z_opt(z_bar);
 
     % Set Parameters for OED
     if p == 1
         z_p = z_lofi;
-        % betas = [betas; 0*beta_0]; % This is for the updated sequential OED
     else
         % z_p = z_bar;
-        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, reg_coeff, betas);
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, reg_coeff, betas, beta_cont(:, end));
         betas = [betas; beta_new];
         z_p = z_p(:, end); % Redundancy for standard OED.
+        disp(norm(z_p - z_bar) / norm(z_bar));
     end
 
     % Obtain Discrepancies
@@ -169,12 +158,13 @@ for p = 1:N
     % z_bar = md_update.Posterior_Update_Mean();
     num_continuation_steps = 1;
     md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
-    [u_cont, z_cont, beta_cont] = md_cont_update.Posterior_Update_Mean_beta();
+    [u_cont, z_cont, beta_cont] = md_cont_update.Posterior_Update_Mean_PC_beta();
     z_bar = z_cont(:, end);
 
     % Display Stats
     Jhat_oed(p) = Jhat_hifi_fn(z_bar);
     fprintf('Objective of z_bar: \t%.3f\n', Jhat_oed(p));
+    fprintf('Distance to z_hifi: \t%.3f\n', oed_z_error_fn(z_bar));
     if p == 1
         fprintf('Percent Improvement: \t%.2f%%\n\n', 100 * (Jhat_lofi - Jhat_oed(p)) / (Jhat_lofi - Jhat_hifi));
     else

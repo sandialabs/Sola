@@ -2,9 +2,20 @@ classdef Tracer_Objective < Objective
 
     methods (Access = public)
 
-        function [val] = J(this, u, z)
+        function [val, grad_u, grad_z] = J(this, u, z)
             % Call the Python function J
-            val = py.fluid_flow_1d_lofi.J(z, u);
+            if nargout == 1
+                val = py.fluid_flow_1d_lofi.J(z, u);
+                grad_u = NaN;
+                grad_z = NaN;
+            elseif nargout == 3
+                val = NaN;
+                grad_u = NaN;
+                grad_z = double(py.fluid_flow_1d_lofi.Jz(z, u));
+                if isvector(grad_z)
+                    grad_z = grad_z';
+                end
+            end
             % val = double(result{1}); % Objective value
             % grad_z = double(result{2})'; % Gradient with respect to z
             % grad_u = double(result{3})'; % Gradient with respect to u

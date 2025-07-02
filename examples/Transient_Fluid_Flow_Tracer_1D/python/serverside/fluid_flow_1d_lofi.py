@@ -76,7 +76,7 @@ def state_solve(k0_input, return_type: Literal["vertex", "vector", "petsc", "fun
         t.assign(float(t)+float(dt))
         u_n = Function(U)
         u_timeseries.retrieve(u_n.vector(), float(t))
-        u_n.vector()[:] = 0.5 * u_n.vector()[:]
+        u_n.vector()[:] = 0.5 * u_n.vector()[:] # NOTE: factor of 0.5 multiplication
         F_k = (1/dt * (k - k_n) * v_k + gamma*k.dx(0)*v_k.dx(0) + u_n*k.dx(0)*v_k + u_n.dx(0)*k*v_k + reac_fn(k)*v_k) * dx - k.dx(0)*v_k*ds
         solve(F_k == 0, k, J=derivative(F_k, k))
         k_n.assign(k)
@@ -115,7 +115,8 @@ def state_solve_all_obj(k0, kt_in, annotate=True, verbose=False):
         t.assign(float(t)+float(dt))
         u_n = Function(U)
         u_timeseries.retrieve(u_n.vector(), float(t))
-        F_k = (1/dt * (k - k_n) * v_k + gamma*k.dx(0)*v_k.dx(0) + u_n*k.dx(0)*v_k + u_n.dx(0)*k*v_k + reac_fn(k)*v_k) * dx #- gamma*k.dx(0)*v_k*ds
+        u_n.vector()[:] = 0.5 * u_n.vector()[:] # NOTE: factor of 0.5 multiplication
+        F_k = (1/dt * (k - k_n) * v_k + gamma*k.dx(0)*v_k.dx(0) + u_n*k.dx(0)*v_k + u_n.dx(0)*k*v_k + reac_fn(k)*v_k) * dx - k.dx(0)*v_k*ds
         solve(F_k == 0, k, J=derivative(F_k, k))
         k_n.assign(k)
         J_output += assemble(inner(k_n, fenics_convert(kt_in[:, n], "function", K)) * dx)
@@ -125,13 +126,19 @@ def state_solve_all_obj(k0, kt_in, annotate=True, verbose=False):
     set_log_level(log_level)
 
     # Return sum of inner product objectives with test vectors
-    return 1.e4*J_output
+    return J_output
 
 def J(k0, kt):
     # Convert inputs to functions
     k0 = fenics_convert(k0, "function", fun_space=K)
     kt = fenics_convert(kt, "function", fun_space=K)
-    val = 1.e4*assemble(0.5*inner(kt - k_terminal, kt - k_terminal)*dx + 0.5 * beta * inner(k0.dx(0), k0.dx(0)) * dx)
+    val = 1.e4*(assemble(0.5*inner(kt - k_terminal, kt - k_terminal)*dx + 0.5 * beta * inner(k0.dx(0), k0.dx(0)) * dx))
+    return val
+
+def Jz(k0, kt):
+    # Convert inputs to functions
+    k0 = fenics_convert(k0, "vector", fun_space=K)
+    val = 1.e4*(float(beta) * K_mat_one @ k0)
     return val
 
 J_hat_np = None;
@@ -173,13 +180,18 @@ def apply_solution_operator_z_jacobian_transpose(kt_in, k0):
     k0 = fenics_convert(k0, "function", fun_space=K)
     return compute_gradient(state_solve_all_obj(k0, kt_in), Control(k0)).vector()[:]
 
+# def apply_solution_operator_z_jacobian_transpose(kt_in, k0):
+#     # Multiply by inv(M) to compensate for assembly in L2
+#     k0 = fenics_convert(k0, "function", fun_space=K)
+#     return compute_gradient(state_solve_all_obj(k0, kt_in), Control(k0)).vector()[:]
+
 def misfit_gradient(kt, k0):
     # Backwards Compatible for more
     kt = fenics_convert(kt, "vector", K)
     if kt.size == N + 1:
-        return M_one @ (kt - fenics_convert(k_terminal, "vector"));
+        return 1.e4 * M_one @ (kt - fenics_convert(k_terminal, "vector"));
     else:
-        unpadded_vec = M_one @ (kt[-N-1:] - fenics_convert(k_terminal, "vector"));
+        unpadded_vec = 1.e4 * M_one @ (kt[-N-1:] - fenics_convert(k_terminal, "vector"));
         return np.pad(unpadded_vec, (kt.size-N-1, 0), 'constant');
 
 def apply_misfit_hessian(kt_in, k0, kt):
@@ -187,11 +199,10 @@ def apply_misfit_hessian(kt_in, k0, kt):
     kt_in = fenics_convert(kt_in, "vector", K)
     if kt_in.size == N + 1:
         raise Exception("Incorrect kt_in size!")
-        return M_one @ fenics_convert(kt_in, "vector", K)
+        return 1.e4 * M_one @ fenics_convert(kt_in, "vector", K)
     else:
-        unpadded_vec = M_one @ fenics_convert(kt_in[-N-1:], "vector", K);
+        unpadded_vec = 1.e4 * M_one @ fenics_convert(kt_in[-N-1:], "vector", K);
         return np.pad(unpadded_vec, (kt_in.size-N-1, 0), 'constant');
-    
 
 def apply_rs_hessian(k0_in, k0):
     # No change needed for more
@@ -205,12 +216,14 @@ def apply_rs_hessian(k0_in, k0):
         return np.column_stack([J_hat_np.hessian(k0, k0_in[:, col]) for col in range(k0_in.shape[1])])
 
 # USED IN OED!!!
+# def apply_solution_operator_z_jacobian_terminal(k0_in, k0):
+#     k0_in = fenics_convert(k0_in, "function", fun_space=K)
+#     k0 = fenics_convert(k0, "function", fun_space=K)
+#     kt = state_solve(k0, return_type="function")
+#     return compute_jacobian_action(kt, Control(k0), k0_in).vector()[:]
+
 def apply_solution_operator_z_jacobian(k0_in, k0):
     return state_solve_all_jac(k0, k0_in)
-    # k0_in = fenics_convert(k0_in, "function", fun_space=K)
-    # k0 = fenics_convert(k0, "function", fun_space=K)
-    # kt = state_solve(k0, return_type="function")
-    # return compute_jacobian_action(kt, Control(k0), k0_in).vector()[:]
    
 def state_solve_all_jac(k0, k0_in, annotate=True, verbose=False):
     # Handle annotation and verbosity
@@ -236,7 +249,8 @@ def state_solve_all_jac(k0, k0_in, annotate=True, verbose=False):
         t.assign(float(t)+float(dt))
         u_n = Function(U)
         u_timeseries.retrieve(u_n.vector(), float(t))
-        F_k = (1/dt * (k - k_n) * v_k + gamma*k.dx(0)*v_k.dx(0) + u_n*k.dx(0)*v_k + u_n.dx(0)*k*v_k + reac_fn(k)*v_k) * dx #- gamma*k.dx(0)*v_k*ds
+        u_n.vector()[:] = 0.5 * u_n.vector()[:] # NOTE: factor of 0.5 multiplication
+        F_k = (1/dt * (k - k_n) * v_k + gamma*k.dx(0)*v_k.dx(0) + u_n*k.dx(0)*v_k + u_n.dx(0)*k*v_k + reac_fn(k)*v_k) * dx - k.dx(0)*v_k*ds # to resemble state_solve
         solve(F_k == 0, k, J=derivative(F_k, k))
         k_n.assign(k)
         J_list.append(compute_jacobian_action(k_n, Control(k0), k0_in).vector()[:])
