@@ -55,7 +55,7 @@ classdef MD_u_Prior_Interface_synthetic_test_OUU < MD_u_Prior_Interface
             S = (1 / h) * S;
             this.S = S;
 
-            E_u = (2.0) * ((5.e-2) * S + M);
+            E_u = (1.0) * ((5.e-2) * S + M);
 
             this.W_u = E_u' * linsolve(M, E_u);
         end

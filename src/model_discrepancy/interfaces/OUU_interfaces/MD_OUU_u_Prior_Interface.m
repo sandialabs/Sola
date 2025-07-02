@@ -4,6 +4,7 @@ classdef MD_OUU_u_Prior_Interface < MD_u_Prior_Interface
         us_prior_interface
         data_interface
         L
+        scaling
         C
         Cinv
         R
@@ -71,17 +72,17 @@ classdef MD_OUU_u_Prior_Interface < MD_u_Prior_Interface
                     dist(s, k) = norm(Xi(:, s) - Xi(:, k))^2;
                 end
             end
-            this.L = exp(-dist);
+            this.L = exp(-0.5*dist);
             this.C = diag(diag(this.L) + 2*sum(this.L,2)) - 2*this.L;
             this.R = chol(this.C);
             this.Rinv = linsolve(this.R, eye(n_r));
             this.Cinv = this.Rinv * this.Rinv';
 
-            scaling = n_r/trace(this.Cinv);
-            this.Cinv = scaling * this.Cinv;
-            this.C = (1/scaling) * this.C;
-            this.R = (1/sqrt(scaling)) * this.R;
-            this.Rinv = sqrt(scaling) * this.Rinv;
+            this.scaling = n_r/trace(this.Cinv);
+            this.Cinv = this.scaling * this.Cinv;
+            this.C = (1/this.scaling) * this.C;
+            this.R = (1/sqrt(this.scaling)) * this.R;
+            this.Rinv = sqrt(this.scaling) * this.Rinv;
         end
 
     end
