@@ -61,18 +61,11 @@ classdef MD_OUU_u_Prior_Interface < MD_u_Prior_Interface
             end
         end
 
-        function this = MD_OUU_u_Prior_Interface(us_prior_interface, data_interface)
+        function this = MD_OUU_u_Prior_Interface(us_prior_interface, data_interface, L)
             this.us_prior_interface = us_prior_interface;
             this.data_interface = data_interface;
-            Xi = this.data_interface.Xi;
-            n_r = size(Xi, 2);
-            dist = zeros(n_r, n_r);
-            for s = 1:n_r
-                for k = 1:n_r
-                    dist(s, k) = norm(Xi(:, s) - Xi(:, k))^2;
-                end
-            end
-            this.L = exp(-0.5 * dist);
+            n_r = size(L, 2);
+            this.L = L;
             this.C = diag(diag(this.L) + 2 * sum(this.L, 2)) - 2 * this.L;
             this.R = chol(this.C);
             this.Rinv = linsolve(this.R, eye(n_r));

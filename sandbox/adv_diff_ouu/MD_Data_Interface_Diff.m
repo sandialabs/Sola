@@ -23,7 +23,9 @@ classdef MD_Data_Interface_Diff < MD_OUU_Data_Interface
         end
 
         function [Ds] = Load_ds_Data(this, s)
-            Ds = load('Optimization_Results.mat', 'D').D(:, s);
+            Ds = load('Optimization_Results.mat', 'D').D(:, s, :);
+            N = size(Ds, 3);
+            Ds = reshape(Ds, [], N);
         end
 
         function this = MD_Data_Interface_Diff()

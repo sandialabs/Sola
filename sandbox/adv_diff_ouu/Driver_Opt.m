@@ -6,8 +6,8 @@ addpath(genpath('../../src'));
 m = 200;
 vel_coeff = 1 / 2;
 reg_coeff = 10;
-n_r = 10;
-diff_coeff = linspace(.1, 1, n_r);
+n_r = 3;
+diff_coeff = [1, .99, .8];
 obj = Adv_Diff_Objective(m, reg_coeff);
 cons_hifi = cell(n_r, 1);
 cons_lofi = cell(n_r, 1);
@@ -23,10 +23,14 @@ z0 = randn(m, 1);
 [u_lofi, z_lofi] = opt_lofi.Optimize(z0);
 [u_hifi, z_hifi] = opt_hifi.Optimize(z_lofi);
 
-Z = z_lofi;
-D = zeros(m, n_r);
-for k = 1:n_r
-    D(:, k) = cons_hifi{k}.State_Solve(z_lofi) - cons_lofi{k}.State_Solve(z_lofi);
+Z = zeros(m, 2);
+Z(:, 1) = z_lofi;
+Z(:, 2) = ones(m, 1);
+D = zeros(m, n_r, 2);
+for j = 1:2
+    for k = 1:n_r
+        D(:, k, j) = cons_hifi{k}.State_Solve(Z(:, j)) - cons_lofi{k}.State_Solve(Z(:, j));
+    end
 end
 
 save('Optimization_Results.mat', 'Z', 'D', 'z_lofi', 'z_hifi', 'u_lofi', 'u_hifi', 'diff_coeff', 'm', 'vel_coeff', 'reg_coeff');

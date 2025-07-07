@@ -26,15 +26,7 @@ x = cons_lofi{1}.x;
 S = cons_lofi{1}.S;
 M = cons_lofi{1}.M;
 
-dist = zeros(n_r, n_r);
-for s = 1:n_r
-    for k = 1:n_r
-        dist(s, k) = norm(diff_coeff(:, s) - diff_coeff(:, k))^2;
-    end
-end
-L = exp(-500 * dist);
-L(1, 2) = 20 * L(1, 2);
-L(2, 1) = 20 * L(2, 1);
+L = eye(n_r);
 us_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(S, M, md_ouu_data_interface, u_hyperparam_interface);
 u_prior_interface = MD_OUU_u_Prior_Interface(us_prior_interface, md_ouu_data_interface, L);
 z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S, M, md_ouu_data_interface, z_hyperparam_interface, u_prior_interface);
@@ -85,7 +77,7 @@ plot(x, discrepancy_z1(:, xi1) - discrepancy_z1(:, xi2), "Color", 'magenta', 'Li
 legend({'$(S(z_1,\xi_1)-\tilde{S}(z_1,\xi_1))-(S(z_1,\xi_2)-\tilde{S}(z_1,\xi_2))$', '$\delta(z_1,\theta_1)-\delta(z_1,\theta_2)$'}, 'Interpreter', 'latex');
 ylim([-r, r]);
 set(gca, 'fontsize', 20);
-exportgraphics(gcf, 'z_1_xi_12_corr.pdf', 'BackgroundColor', 'none', 'ContentType', 'vector');
+exportgraphics(gcf, 'z_1_xi_12.pdf', 'BackgroundColor', 'none', 'ContentType', 'vector');
 
 figure;
 hold on;
@@ -95,7 +87,7 @@ plot(x, discrepancy_z1(:, xi1) - discrepancy_z1(:, xi3), "Color", 'magenta', 'Li
 legend({'$(S(z_1,\xi_3)-\tilde{S}(z_1,\xi_3))-(S(z_1,\xi_3)-\tilde{S}(z_1,\xi_3))$', '$\delta(z_1,\theta_1)-\delta(z_1,\theta_3)$'}, 'Interpreter', 'latex');
 ylim([-r, r]);
 set(gca, 'fontsize', 20);
-exportgraphics(gcf, 'z_1_xi_13_corr.pdf', 'BackgroundColor', 'none', 'ContentType', 'vector');
+exportgraphics(gcf, 'z_1_xi_13.pdf', 'BackgroundColor', 'none', 'ContentType', 'vector');
 
 figure;
 hold on;
@@ -105,7 +97,7 @@ plot(x, discrepancy_z3(:, xi1) - discrepancy_z3(:, xi2), "Color", 'magenta', 'Li
 legend({'$(S(z_3,\xi_1)-\tilde{S}(z_3,\xi_1))-(S(z_3,\xi_2)-\tilde{S}(z_3,\xi_2))$', '$\delta(z_3,\theta_1)-\delta(z_3,\theta_2)$'}, 'Interpreter', 'latex');
 ylim([-r, r]);
 set(gca, 'fontsize', 20);
-exportgraphics(gcf, 'z_3_xi_12_corr.pdf', 'BackgroundColor', 'none', 'ContentType', 'vector');
+exportgraphics(gcf, 'z_3_xi_12.pdf', 'BackgroundColor', 'none', 'ContentType', 'vector');
 
 figure;
 hold on;
@@ -115,4 +107,4 @@ plot(x, discrepancy_z3(:, xi1) - discrepancy_z3(:, xi3), "Color", 'magenta', 'Li
 legend({'$(S(z_3,\xi_3)-\tilde{S}(z_3,\xi_3))-(S(z_3,\xi_3)-\tilde{S}(z_3,\xi_3))$', '$\delta(z_3,\theta_1)-\delta(z_3,\theta_3)$'}, 'Interpreter', 'latex');
 ylim([-r, r]);
 set(gca, 'fontsize', 20);
-exportgraphics(gcf, 'z_3_xi_13_corr.pdf', 'BackgroundColor', 'none', 'ContentType', 'vector');
+exportgraphics(gcf, 'z_3_xi_13.pdf', 'BackgroundColor', 'none', 'ContentType', 'vector');
