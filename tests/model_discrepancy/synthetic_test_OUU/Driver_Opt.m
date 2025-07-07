@@ -7,7 +7,7 @@ rng(1342);
 
 %% Instantiate the optimization problem.
 N = 30;
-Xi = ones(3,1) * linspace(0,1,N);
+Xi = ones(3, 1) * linspace(0, 1, N);
 
 m = 51;
 obj = Synthetic_Test_OUU_Objective(m);
@@ -49,4 +49,4 @@ for i = 1:2
     end
 end
 
-save('Optimization_Results.mat', 'u_opt', 'z_opt', 'Z', 'D', 'Xi','z_hifi');
+save('Optimization_Results.mat', 'u_opt', 'z_opt', 'Z', 'D', 'Xi', 'z_hifi');

@@ -2,7 +2,7 @@
 clear;
 close all;
 addpath(genpath('../../../src'));
-%rng(121234);
+% rng(121234);
 
 suppress_figures = false;
 
@@ -33,21 +33,21 @@ md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior
 prior_delta_samples_zopt = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
 
 if ~suppress_figures
-    I = 1:N:(m*N);
-    u = prior_delta_samples_zopt(I,:);
+    I = 1:N:(m * N);
+    u = prior_delta_samples_zopt(I, :);
 
-    figure,
+    figure;
     plot(x, u, 'LineWidth', 3);
 end
 
 if ~suppress_figures
     k = 1;
-    u = data_interface.Reshape_State_to_Mat(prior_delta_samples_zopt(:,k));
+    u = data_interface.Reshape_State_to_Mat(prior_delta_samples_zopt(:, k));
 
-    c = u_prior_interface.L(1,:);
+    c = u_prior_interface.L(1, :);
     c_normalized = (c - min(c)) / (max(c) - min(c));
     n = size(u, 2);
-    figure,
+    figure;
     hold on;
     col = colormap;
     for j = 1:n
@@ -56,7 +56,7 @@ if ~suppress_figures
     end
     hold off;
     colorbar;
-    clim([min(c) max(c)]); 
+    clim([min(c) max(c)]);
 end
 
 %%
@@ -81,11 +81,11 @@ if ~suppress_figures
     i = 2;
 
     k = 20;
-    u = data_interface.Reshape_State_to_Mat(delta_samples{i}(:,k));
-    c = u_prior_interface.L(1,:);
+    u = data_interface.Reshape_State_to_Mat(delta_samples{i}(:, k));
+    c = u_prior_interface.L(1, :);
     c_normalized = (c - min(c)) / (max(c) - min(c));
     n = size(u, 2);
-    figure,
+    figure;
     hold on;
     col = colormap;
     for j = 1:n
@@ -94,17 +94,16 @@ if ~suppress_figures
     end
     hold off;
     colorbar;
-    clim([min(c) max(c)]); 
+    clim([min(c) max(c)]);
 
-
-    u1 = data_interface.Reshape_State_to_Mat(data_interface.D(:,i));
+    u1 = data_interface.Reshape_State_to_Mat(data_interface.D(:, i));
     u2 = data_interface.Reshape_State_to_Mat(delta_mean{i});
     n = size(u1, 2);
-    figure,
+    figure;
     hold on;
     col = lines(n);
     for j = 1:n
-        color = col(j,:);
+        color = col(j, :);
         plot(x, u1(:, j), 'Color', color, 'LineWidth', 3);
         plot(x, u2(:, j), '--', 'Color', 'black', 'LineWidth', 3);
     end
@@ -115,11 +114,11 @@ if ~suppress_figures
     i = 3;
 
     k = 20;
-    u = data_interface.Reshape_State_to_Mat(delta_samples{i}(:,k));
-    c = u_prior_interface.L(1,:);
+    u = data_interface.Reshape_State_to_Mat(delta_samples{i}(:, k));
+    c = u_prior_interface.L(1, :);
     c_normalized = (c - min(c)) / (max(c) - min(c));
     n = size(u, 2);
-    figure,
+    figure;
     hold on;
     col = colormap;
     for j = 1:n
@@ -128,7 +127,7 @@ if ~suppress_figures
     end
     hold off;
     colorbar;
-    clim([min(c) max(c)]); 
+    clim([min(c) max(c)]);
 end
 
 %%
@@ -142,10 +141,10 @@ md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 
 %%
 if ~suppress_figures
-    z_hifi = load('Optimization_Results.mat','z_hifi').z_hifi;
-    figure,
-    hold on
-    plot(x,data_interface.z_opt,'Color','magenta','LineWidth',3)
-    plot(x,z_hifi,'Color','cyan','LineWidth',3)
-    plot(x,z_update_mean,'--','Color','red','LineWidth',3)
+    z_hifi = load('Optimization_Results.mat', 'z_hifi').z_hifi;
+    figure;
+    hold on;
+    plot(x, data_interface.z_opt, 'Color', 'magenta', 'LineWidth', 3);
+    plot(x, z_hifi, 'Color', 'cyan', 'LineWidth', 3);
+    plot(x, z_update_mean, '--', 'Color', 'red', 'LineWidth', 3);
 end

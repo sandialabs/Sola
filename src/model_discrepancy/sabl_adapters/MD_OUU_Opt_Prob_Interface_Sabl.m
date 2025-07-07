@@ -36,7 +36,7 @@ classdef MD_OUU_Opt_Prob_Interface_Sabl < MD_OUU_Opt_Prob_Interface
         end
 
         function [grad_u] = Misfit_Gradient_Per_Sample(this, u, z, s)
-            [~,grad_u] = this.sabl_opt.obj.J(u, z);
+            [~, grad_u] = this.sabl_opt.obj.J(u, z);
         end
 
         function [u_out] = Apply_Misfit_Hessian_Per_Sample(this, u_in, u, z, s)
