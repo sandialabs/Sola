@@ -10,11 +10,13 @@ classdef MD_OED_DeltaCov < handle
 
         offline_data
         verbosity
+
+        covar_coeff
     end
 
     methods
 
-        function this = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface)
+        function this = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface, covar_coeff)
             arguments
                 opt_prob_interface MD_Opt_Prob_Interface
                 data_interface MD_Data_Interface
@@ -22,7 +24,9 @@ classdef MD_OED_DeltaCov < handle
                 z_prior_interface MD_z_Prior_Interface
                 md_hessian_analysis MD_Hessian_Analysis
                 oed_interface MD_OED_Interface
+                covar_coeff double
             end
+            this.covar_coeff = covar_coeff;
             this.opt_prob_interface = opt_prob_interface;
             this.data_interface = data_interface;
             this.u_prior_interface = u_prior_interface;
@@ -100,7 +104,7 @@ classdef MD_OED_DeltaCov < handle
             for i = 1:N
                 Ws_Mu_Wu_inv{i} = (1 / alpha_d) * this.u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(this.offline_data.Mu_Wu_inv, mu(i) / alpha_d); % new
                 tmp = this.offline_data.Mz_Wz_inv_Mz_V * Mg(:, i);
-                y_P_y(i) = tmp' * tmp; % can add scalar multiple here to control radius of neighborhood (also add to grad)
+                y_P_y(i) = this.covar_coeff * (tmp' * tmp); % can add scalar multiple here to control radius of neighborhood (also add to grad)
                 s(i) = sum(g(:, i)) + (beta_bar' * this.offline_data.Vt_Mz_Wz_inv_Mz_V) * Mg(:, i);
                 p(i) = s(i)^2 + y_P_y(i);
             end
@@ -112,7 +116,7 @@ classdef MD_OED_DeltaCov < handle
             for i = 1:N
                 val = val + p(i) * trace(Ws_Mu_Wu_inv{i});
                 grad_si = sum(g_jac{i}, 1)' + Mg_jac{i}' * (this.offline_data.Vt_Mz_Wz_inv_Mz_V * beta_bar);
-                grad_yPyi = Mg_jac{i}' * (2 * this.offline_data.Mz_Wz_inv_Mz_V' * (this.offline_data.Mz_Wz_inv_Mz_V * Mg(:, i)));
+                grad_yPyi = this.covar_coeff * Mg_jac{i}' * (2 * this.offline_data.Mz_Wz_inv_Mz_V' * (this.offline_data.Mz_Wz_inv_Mz_V * Mg(:, i)));
                 grad_pi = 2 * s(i) * grad_si + grad_yPyi;
                 grad = grad + grad_pi * trace(Ws_Mu_Wu_inv{i});
 

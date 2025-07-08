@@ -91,6 +91,7 @@ md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_init, num_evals, overs
 alpha_zd = 1.e-1;
 beta_zd = 1.e-1;
 reg_coeff = 100;
+covar_coeff = 1;
 beta_0 = randn(num_evals, 1);
 oed_interface = MD_OED_Interface_Tracer(data_interface, con_lofi, alpha_zd, beta_zd);
 
@@ -110,7 +111,7 @@ D_z_hifi = Evaluate_Discrepancy(con_hifi, con_lofi, z_hifi);
 disp("Discrep. Eval. for Hifi [DONE].");
 
 % Sequential OED
-md_oed = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
+md_oed = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface, covar_coeff);
 md_oed.Offline_Computation();
 
 for p = 1:N

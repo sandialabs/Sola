@@ -2,7 +2,7 @@
 OED_Setup;
 
 % Perform Offline OED Computations
-oed_reg_coeff = 10;
+oed_reg_coeff = 0;
 beta_0 = randn(num_evals, 1);
 
 % Initialize Quantities
@@ -24,11 +24,12 @@ for p = 1:N
     if p == 1
         z_p = z_lofi;
     else
+        beta_init = betas_cont(:, end);
         md_oed.Offline_Computation(md_cont_update, z_bar, u_bar);
-        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, oed_reg_coeff, betas, betas_cont(:, end));
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_init, alpha_d, oed_reg_coeff, betas, betas_cont(:, end));
         betas = [betas; beta_new];
         z_p = z_p(:, end);
-        % disp(norm(z_p - z_bar)/norm(z_bar))
+        disp(norm(z_p - z_bar) / norm(z_bar));
         % disp(norm(z_lofi - z_bar)/norm(z_bar))
         % z_p = z_bar;
     end
@@ -46,7 +47,7 @@ for p = 1:N
     theta_post = Extract_mean_theta(md_post_sampling.post_data);
 
     % Obtain Optimal Solution Update via Continuation
-    num_continuation_steps = 1;
+    num_continuation_steps = 2;
     md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
     [u_cont, z_cont, betas_cont] = md_cont_update.Posterior_Update_Mean_PC_beta();
     z_bar = z_cont(:, end);
@@ -63,6 +64,7 @@ for p = 1:N
     % Display Stats
     Jhat_seq_oed(p) = opt_hifi.Jhat(z_bar);
     oed_z_error(p) = oed_z_error_fn(z_bar);
+    z_bars(:, p) = z_bar;
     fprintf('Objective of z_bar: \t%.3f\n', Jhat_seq_oed(p));
     if p == 1
         fprintf('Percent Improvement: \t%.2f%%\n\n', 100 * (Jhat_lofi - Jhat_seq_oed(p)) / (Jhat_lofi - Jhat_hifi));

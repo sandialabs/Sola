@@ -50,6 +50,8 @@ classdef MD_OED_OptGrad < handle
             Mu_Wu_inv_V_acute = zeros(length(this.opt_prob_interface.u_current), this.offline_data.r);
             Mz_V = this.z_prior_interface.Apply_M_z(this.offline_data.V);
             Vt_Mz_Wz_inv_Mz_V = zeros(this.offline_data.r, this.offline_data.r);
+            Vt_Wz_Mz_Wz_inv_Mz_V = zeros(this.offline_data.r, this.offline_data.r);
+
             for k = 1:this.offline_data.r
                 % tmp0 = this.offline_data.V(:, k); % modified
                 tmp0 = this.z_prior_interface.Apply_W_z(this.offline_data.V(:, k)); % modified
@@ -63,10 +65,15 @@ classdef MD_OED_OptGrad < handle
 
                 tmp = this.z_prior_interface.Apply_W_z_Inverse(Mz_V(:, k));
                 Vt_Mz_Wz_inv_Mz_V(:, k) = Mz_V' * tmp;
+
+                tmp3(:, k) = this.z_prior_interface.Apply_M_z(tmp0); % M_z W_z V
+                tmp4(:, k) = tmp; % Wz_inv Mz V
             end
+            Vt_Wz_Mz_Wz_inv_Mz_V = tmp3' * tmp4; % (Mz Wz V)' * (Wz_inv Mz V)
             this.offline_data.V_accute = V_acute;
             this.offline_data.Mu_Wu_inv_V_acute = Mu_Wu_inv_V_acute;
             this.offline_data.Vt_Mz_Wz_inv_Mz_V = Vt_Mz_Wz_inv_Mz_V;
+            this.offline_data.Vt_Wz_Mz_Wz_inv_Mz_V = Vt_Wz_Mz_Wz_inv_Mz_V;
 
             Ju = this.opt_prob_interface.Misfit_Gradient(u_bar, z_bar); % modified (opt)
             tmp = this.u_prior_interface.Apply_W_u_Inverse(Ju);
@@ -127,6 +134,8 @@ classdef MD_OED_OptGrad < handle
         function [val, grad] = Evaluate_OED_Objective_Seq(this, beta, alpha_d, reg_coeff, beta_bar)
             [val, grad_full] = this.Evaluate_OED_Objective(beta, alpha_d, reg_coeff, beta_bar);
             grad = grad_full(end - this.offline_data.r + 1:end);
+            val = val;
+            grad = grad;
         end
 
         function [val, grad] = Evaluate_OED_Objective(this, beta, alpha_d, reg_coeff, beta_bar)
@@ -152,7 +161,7 @@ classdef MD_OED_OptGrad < handle
                 Ws_V_acute{i} = (1 / alpha_d) * this.u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(this.offline_data.V_accute, mu(i) / alpha_d);
                 Ws_Mu_Wu_inv_Ju(:, i) = (1 / alpha_d) * this.u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(this.offline_data.Mu_Wu_inv_Ju, mu(i) / alpha_d);
 
-                tmp = this.offline_data.Vt_Mz_Wz_inv_Mz_V * Mg(:, i);
+                tmp = this.offline_data.Vt_Wz_Mz_Wz_inv_Mz_V * Mg(:, i);
                 Quz_y(:, i) = this.offline_data.V_accute * diag(1 ./ this.offline_data.Rho.^2) * tmp;
                 y_Qz_y(i) = tmp' * diag(1 ./ this.offline_data.Rho.^2) * tmp;
 
@@ -188,7 +197,7 @@ classdef MD_OED_OptGrad < handle
                 tmp2 = (1 / alpha_d) * this.u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(tmp1, mu(i) / alpha_d);
                 grad = grad - 2 * c(i) * (Quz_y(:, i)' * tmp2) * mu_jac{i};
 
-                tmp3 = this.offline_data.Vt_Mz_Wz_inv_Mz_V * Mg_jac{i};
+                tmp3 = this.offline_data.Vt_Wz_Mz_Wz_inv_Mz_V * Mg_jac{i};
                 tmp4 = this.offline_data.V_accute * diag(1 ./ this.offline_data.Rho.^2) * tmp3;
                 grad = grad + 2 * c(i) * (tmp4' * Ws_Mu_Wu_inv_Ju(:, i));
 
@@ -198,8 +207,8 @@ classdef MD_OED_OptGrad < handle
 
                 grad = grad - y_Qz_y(i) * (this.offline_data.Ju' * tmp2) * mu_jac{i};
 
-                tmp1 = this.offline_data.Vt_Mz_Wz_inv_Mz_V * Mg_jac{i};
-                tmp2 = this.offline_data.Vt_Mz_Wz_inv_Mz_V * Mg(:, i);
+                tmp1 = this.offline_data.Vt_Wz_Mz_Wz_inv_Mz_V * Mg_jac{i};
+                tmp2 = this.offline_data.Vt_Wz_Mz_Wz_inv_Mz_V * Mg(:, i);
                 grad = grad + 2 * tmp * (tmp1' * diag(1 ./ this.offline_data.Rho.^2) * tmp2);
             end
 

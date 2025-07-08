@@ -3,7 +3,8 @@ OED_Setup;
 
 % Perform Offline OED Computations - USES data_interface
 oed_interface = MD_OED_Interface_Diff(data_interface, con_lofi);
-md_oed = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
+covar_coeff = 1.e-2;
+md_oed = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface, covar_coeff);
 md_oed.Offline_Computation();
 
 %% Perform OED
@@ -12,7 +13,7 @@ Z = [];
 D = [];
 betas = [];
 Jhat_DC_oed = zeros(N, 1);
-oed_reg_coeff = 1.e-3;
+oed_reg_coeff = 0;
 beta_0 = randn(num_evals, 1);
 
 for p = 1:N
