@@ -44,20 +44,18 @@ classdef MD_OUU_u_Prior_Interface < MD_u_Prior_Interface
         end
 
         function [u_out] = Sample_with_Covariance_W_u_Inverse(this, num_samples)
-            u_samps = this.us_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samples * this.data_interface.n_r);
             u_out = zeros(this.data_interface.n_u * this.data_interface.n_r, num_samples);
             for k = 1:num_samples
-                I = ((k - 1) * this.data_interface.n_r + 1):(k * this.data_interface.n_r);
-                u_out(:, k) = this.data_interface.Reshape_State_to_Vec((this.Rinv * u_samps(:, I)')');
+                u_samps = this.us_prior_interface.Sample_with_Covariance_W_u_Inverse(this.data_interface.n_r);
+                u_out(:, k) = this.data_interface.Reshape_State_to_Vec((this.Rinv * u_samps')');
             end
         end
 
         function [u_out] = Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(this, num_samples, scalar)
-            u_samps = this.us_prior_interface.Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(num_samples * this.data_interface.n_r, scalar);
             u_out = zeros(this.data_interface.n_u * this.data_interface.n_r, num_samples);
             for k = 1:num_samples
-                I = ((k - 1) * this.data_interface.n_r + 1):(k * this.data_interface.n_r);
-                u_out(:, k) = this.data_interface.Reshape_State_to_Vec((this.Rinv * u_samps(:, I)')');
+                u_samps = this.us_prior_interface.Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(this.data_interface.n_r, scalar);
+                u_out(:, k) = this.data_interface.Reshape_State_to_Vec((this.Rinv * u_samps')');
             end
         end
 
