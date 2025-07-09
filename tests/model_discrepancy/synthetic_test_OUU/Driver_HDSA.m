@@ -30,10 +30,10 @@ for s = 1:n_r
         dist(s, k) = norm(Xi(:, s) - Xi(:, k))^2;
     end
 end
-L = exp(-.5 * dist);
+K = exp(-.5 * dist);
 
 us_prior_interface = MD_u_Prior_Interface_synthetic_test_OUU(m);
-u_prior_interface = MD_OUU_u_Prior_Interface(us_prior_interface, data_interface, L);
+u_prior_interface = MD_OUU_u_Prior_Interface(us_prior_interface, data_interface, K);
 z_prior_interface = MD_z_Prior_Interface_synthetic_test_OUU(m);
 
 %%
@@ -53,7 +53,7 @@ if ~suppress_figures
     k = 1;
     u = data_interface.Reshape_State_to_Mat(prior_delta_samples_zopt(:, k));
 
-    c = u_prior_interface.L(1, :);
+    c = u_prior_interface.K(1, :);
     c_normalized = (c - min(c)) / (max(c) - min(c));
     n = size(u, 2);
     figure;
@@ -91,7 +91,7 @@ if ~suppress_figures
 
     k = 20;
     u = data_interface.Reshape_State_to_Mat(delta_samples{i}(:, k));
-    c = u_prior_interface.L(1, :);
+    c = u_prior_interface.K(1, :);
     c_normalized = (c - min(c)) / (max(c) - min(c));
     n = size(u, 2);
     figure;
@@ -124,7 +124,7 @@ if ~suppress_figures
 
     k = 20;
     u = data_interface.Reshape_State_to_Mat(delta_samples{i}(:, k));
-    c = u_prior_interface.L(1, :);
+    c = u_prior_interface.K(1, :);
     c_normalized = (c - min(c)) / (max(c) - min(c));
     n = size(u, 2);
     figure;

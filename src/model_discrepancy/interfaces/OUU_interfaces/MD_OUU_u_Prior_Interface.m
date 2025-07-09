@@ -3,7 +3,7 @@ classdef MD_OUU_u_Prior_Interface < MD_u_Prior_Interface
     properties
         us_prior_interface
         data_interface
-        L
+        K
         scaling
         C
         Cinv
@@ -61,12 +61,12 @@ classdef MD_OUU_u_Prior_Interface < MD_u_Prior_Interface
             end
         end
 
-        function this = MD_OUU_u_Prior_Interface(us_prior_interface, data_interface, L)
+        function this = MD_OUU_u_Prior_Interface(us_prior_interface, data_interface, K)
             this.us_prior_interface = us_prior_interface;
             this.data_interface = data_interface;
-            n_r = size(L, 2);
-            this.L = L;
-            this.C = diag(diag(this.L) + 2 * sum(this.L, 2)) - 2 * this.L;
+            n_r = size(K, 2);
+            this.K = K;
+            this.C = diag(diag(this.K) + 2 * sum(this.K, 2)) - 2 * this.K;
             this.R = chol(this.C);
             this.Rinv = linsolve(this.R, eye(n_r));
             this.Cinv = this.Rinv * this.Rinv';
