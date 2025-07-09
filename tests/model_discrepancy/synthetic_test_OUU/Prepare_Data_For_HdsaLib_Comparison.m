@@ -14,8 +14,13 @@ m = 51;
 data_interface = MD_OUU_Data_Interface_synthetic_test_OUU();
 data_interface.Load_Data();
 
-writematrix(data_interface.z_opt, 'z_opt.txt');
-writematrix(data_interface.Z, 'Z.txt');
+fileID = fopen('z_opt.txt', 'w');
+fprintf(fileID, '%f %f\n', data_interface.z_opt');
+fclose(fileID);
+
+fileID = fopen('Z.txt', 'w');
+fprintf(fileID, '%f %f\n', data_interface.Z');
+fclose(fileID);
 
 Xi = data_interface.Xi;
 N = size(Xi, 2);
