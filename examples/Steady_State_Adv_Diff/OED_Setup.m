@@ -37,6 +37,12 @@ z_prior_interface = MD_Elliptic_z_Prior_Interface_Diff(alpha_z, opt_lofi);
 % Calculate Relative OED Error (Lambda Function for now)
 oed_z_error_fn = @(z) sqrt((z - z_hifi)' * z_prior_interface.Apply_M_z(z - z_hifi)) / sqrt(z_hifi' * z_prior_interface.Apply_M_z(z_hifi));
 
+W_z_norm = @(z) z' * z_prior_interface.Apply_W_z(z); % squared
+% opt_alpha = @(z1, z2) ((z1 - z2)' * z_prior_interface.Apply_W_z(z1 - z2)) / n;
+% sample_from_dist = @(zmean, alpha) zmean + sqrt(alpha) * z_prior_interface.Sample_with_Covariance_W_z_Inverse(1);
+% rel_err = @(zmean, z_sample)  W_z_norm(z_sample - zmean)/W_z_norm(zmean);
+% rel_err_dist = @(zmean, alpha) rel_err(zmean, sample_from_dist(zmean, alpha));
+
 % Hessian analysis
 opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);

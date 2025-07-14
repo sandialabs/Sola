@@ -16,7 +16,7 @@ classdef MD_OED_DeltaCov < handle
 
     methods
 
-        function this = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface, covar_coeff)
+        function this = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface)
             arguments
                 opt_prob_interface MD_Opt_Prob_Interface
                 data_interface MD_Data_Interface
@@ -24,9 +24,7 @@ classdef MD_OED_DeltaCov < handle
                 z_prior_interface MD_z_Prior_Interface
                 md_hessian_analysis MD_Hessian_Analysis
                 oed_interface MD_OED_Interface
-                covar_coeff double
             end
-            this.covar_coeff = covar_coeff;
             this.opt_prob_interface = opt_prob_interface;
             this.data_interface = data_interface;
             this.u_prior_interface = u_prior_interface;
@@ -34,6 +32,10 @@ classdef MD_OED_DeltaCov < handle
             this.md_hessian_analysis = md_hessian_analysis;
             this.oed_interface = oed_interface;
             this.verbosity = false;
+        end
+
+        function Set_Covariance_Coefficient(this, covar_coeff)
+            this.covar_coeff = covar_coeff;
         end
 
         function this = Offline_Computation(this)
@@ -77,6 +79,19 @@ classdef MD_OED_DeltaCov < handle
             beta_new = fminunc(@(beta_new) this.Evaluate_OED_Objective_Seq([betas; beta_new], alpha_d, reg_coeff, beta_bar), beta_0, options);
             Z_new = this.data_interface.z_init + this.offline_data.V * beta_new;
         end
+
+        % function [beta, Z, post_var, reg_val] = L_Curve_Analysis(this, beta_0, alpha_d, reg_coeffs)
+        %     m = length(reg_coeffs);
+        %     post_var = zeros(m, 1);
+        %     reg_val = zeros(m, 1);
+        %     beta = zeros(length(beta_0), m);
+        %     Z = cell(m, 1);
+        %     for k = 1:m
+        %         [beta(:, k), Z{k}] = this.Generate_Seq_Optimal_Design(beta_0, alpha_d, reg_coeffs(k));
+        %         post_var(k) = -this.Evaluate_Posterior_Cov_Trace(beta(:, k), alpha_d);
+        %         reg_val(k) = this.Evaluate_Regularization(beta(:, k));
+        %     end
+        % end
 
         % NOTE: This does not incorporate sequential prior updates.
         function [val, grad] = Evaluate_OED_Objective_Seq(this, beta, alpha_d, reg_coeff, beta_bar)
