@@ -27,7 +27,7 @@ classdef MD_Opt_Prob_Interface_Transient_ADR_2D < MD_Opt_Prob_Interface
 
         function [z_out] = Apply_Solution_Operator_z_Jacobian_Transpose(this, u_in, z)
             if norm(z - this.z_current) ~= 0
-                [~, ~, this.hessian_data] = this.opt.Jhat(this.z_current);
+                [~, ~, this.hessian_data] = this.opt.Jhat(z);
                 this.z_current = z;
                 this.u_current = this.hessian_data(1:this.m);
             end
@@ -56,7 +56,7 @@ classdef MD_Opt_Prob_Interface_Transient_ADR_2D < MD_Opt_Prob_Interface
 
         function [z_out] = Apply_RS_Hessian(this, z_in, z)
             if norm(z - this.z_current) ~= 0
-                [~, ~, this.hessian_data] = this.opt.Jhat(this.z_current);
+                [~, ~, this.hessian_data] = this.opt.Jhat(z);
                 this.z_current = z;
                 this.u_current = this.hessian_data(1:this.m);
             end

@@ -15,7 +15,7 @@ classdef MD_OUU_Opt_Prob_Interface_Sabl < MD_OUU_Opt_Prob_Interface
 
         function [z_out] = Apply_Solution_Operator_z_Jacobian_Transpose_Per_Sample(this, u_in, z, s)
             if norm(z - this.z_current) ~= 0
-                [~, ~, this.hessian_data] = this.sabl_opt.Jhat(this.z_current);
+                [~, ~, this.hessian_data] = this.sabl_opt.Jhat(z);
                 this.z_current = z;
                 this.u_current = this.hessian_data(1:this.m, :);
             end
@@ -28,7 +28,7 @@ classdef MD_OUU_Opt_Prob_Interface_Sabl < MD_OUU_Opt_Prob_Interface
 
         function [z_out] = Apply_RS_Hessian_Per_Sample(this, z_in, z, s)
             if norm(z - this.z_current) ~= 0
-                [~, ~, this.hessian_data] = this.sabl_opt.Jhat(this.z_current);
+                [~, ~, this.hessian_data] = this.sabl_opt.Jhat(z);
                 this.z_current = z;
                 this.u_current = this.hessian_data(1:this.m, :);
             end
