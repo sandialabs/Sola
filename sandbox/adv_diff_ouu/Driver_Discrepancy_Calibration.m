@@ -36,7 +36,7 @@ for s = 1:n_r
     end
 end
 K = exp(-bandwidth * dist);
-K = eye(n_r) + scale*(K-eye(n_r));
+K = eye(n_r) + scale * (K - eye(n_r));
 us_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(S, M, md_ouu_data_interface, u_hyperparam_interface);
 u_prior_interface = MD_OUU_u_Prior_Interface(us_prior_interface, md_ouu_data_interface, K);
 z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S, M, md_ouu_data_interface, z_hyperparam_interface, u_prior_interface);

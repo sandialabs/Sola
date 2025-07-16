@@ -4,7 +4,7 @@ close all;
 addpath(genpath('../../../src'));
 rng(121234);
 
-random_numbers = randn(3*10^6, 1);
+random_numbers = randn(3 * 10^6, 1);
 writematrix(random_numbers, 'random_numbers.txt');
 
 rng(121234);
