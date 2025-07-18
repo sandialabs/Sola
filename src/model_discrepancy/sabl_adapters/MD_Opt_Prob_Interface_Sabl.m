@@ -13,7 +13,7 @@ classdef MD_Opt_Prob_Interface_Sabl < MD_Opt_Prob_Interface
 
         function [z_out] = Apply_Solution_Operator_z_Jacobian_Transpose(this, u_in, z)
             if norm(z - this.z_current) ~= 0
-                [~, ~, this.hessian_data] = this.sabl_opt.Jhat(this.z_current);
+                [~, ~, this.hessian_data] = this.sabl_opt.Jhat(z);
                 this.z_current = z;
                 this.u_current = this.hessian_data(1:this.m);
             end
@@ -23,7 +23,7 @@ classdef MD_Opt_Prob_Interface_Sabl < MD_Opt_Prob_Interface
 
         function [z_out] = Apply_RS_Hessian(this, z_in, z)
             if norm(z - this.z_current) ~= 0
-                [~, ~, this.hessian_data] = this.sabl_opt.Jhat(this.z_current);
+                [~, ~, this.hessian_data] = this.sabl_opt.Jhat(z);
                 this.z_current = z;
                 this.u_current = this.hessian_data(1:this.m);
             end
@@ -39,9 +39,13 @@ classdef MD_Opt_Prob_Interface_Sabl < MD_Opt_Prob_Interface
         end
 
         function [u_out] = Apply_Solution_Operator_z_Jacobian(this, z_in, z)
-            u = this.State_Solve(z);
-            tmp = this.sabl_opt.con.c_z_Apply(z_in, u, z);
-            u_out = -this.sabl_opt.con.c_u_Inverse_Apply(tmp, u, z);
+            if norm(z - this.z_current) ~= 0
+                [~, ~, this.hessian_data] = this.sabl_opt.Jhat(z);
+                this.z_current = z;
+                this.u_current = this.hessian_data(1:this.m);
+            end
+            tmp = this.sabl_opt.con.c_z_Apply(z_in, this.u_current, z);
+            u_out = -this.sabl_opt.con.c_u_Inverse_Apply(tmp, this.u_current, z);
         end
 
     end
@@ -67,8 +71,6 @@ classdef MD_Opt_Prob_Interface_Sabl < MD_Opt_Prob_Interface
                 u = this.u_current;
             else
                 u = this.sabl_opt.con.State_Solve(z);
-                this.u_current = u;
-                this.z_current = z;
             end
         end
 

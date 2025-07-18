@@ -104,7 +104,7 @@ classdef MD_Continuation_Update < handle
             for k = 1:this.num_continuation_steps
                 % Predictive step for beta
                 Btheta_n = this.Apply_B_beta(u(:, k), beta(:, k), t(k));
-                beta_pert = -this.Apply_Parameterized_RS_Hessian_Inverse_beta(Btheta_n, u(:, k), beta(:, k), t(k));
+                beta_pert = -this.Apply_Parameterized_RS_Hessian_Inverse_beta_noCG(Btheta_n, u(:, k), beta(:, k), t(k));
                 beta_pred = beta(:, k) + this.step_size * beta_pert;
 
                 % Predictive step for z and u
@@ -113,12 +113,29 @@ classdef MD_Continuation_Update < handle
 
                 % Corrective step for beta
                 Jbeta_val = this.md_hessian_analysis.evecs' * this.Gradient_J_z(u_pred, z_pred, t(k + 1));
-                beta(:, k + 1) = beta_pred - this.Apply_Parameterized_RS_Hessian_Inverse_beta(Jbeta_val, u_pred, beta_pred, t(k + 1));
+                beta(:, k + 1) = beta_pred - this.Apply_Parameterized_RS_Hessian_Inverse_beta_noCG(Jbeta_val, u_pred, beta_pred, t(k + 1));
 
                 % Corrective step for z and u
                 z(:, k + 1) = this.z_init + this.md_hessian_analysis.evecs * beta(:, k + 1);
                 u(:, k + 1) = this.opt_prob_interface.State_Solve(z(:, k + 1));
             end
+        end
+
+        function [val, grad] = Jhat_Posterior_beta(this, beta)
+            z = this.z_init + this.md_hessian_analysis.evecs * beta;
+            [val, J_grad_z] = this.Jhat_Posterior(z);
+            grad = this.md_hessian_analysis.evecs' * J_grad_z;
+        end
+
+        function [val, grad] = Jhat_Posterior(this, z)
+            u = this.opt_prob_interface.State_Solve(z);
+            delta = this.Discrepancy_Evaluation(z, 1);
+
+            [val, ~, grad_z] = this.opt_prob_interface.sabl_opt.obj.J(u + delta, z);
+            state_grad = this.opt_prob_interface.Misfit_Gradient(u + delta, z);
+            z_tmp1 = this.Apply_Discrepancy_z_Jacobian_transpose(state_grad, 1);
+            z_tmp2 = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(state_grad, z);
+            grad = grad_z + z_tmp1 + z_tmp2;
         end
 
         function [Btheta_n] = Apply_B_beta(this, u_n, beta_n, t_n)
@@ -130,12 +147,22 @@ classdef MD_Continuation_Update < handle
             beta_out = 0 * beta_in;
             for k = 1:size(beta_in, 2)
                 tol = 1.e-7;
-                max_iter = length(beta_n) + 5;
+                max_iter = length(beta_n) + 10;
                 [beta_out(:, k), flag, relres, iter, resvec] = pcg(@(x)this.Apply_Parameterized_RS_Hessian_beta(x, u_n, beta_n, t_n), beta_in(:, k), tol, max_iter);
                 if flag ~= 0
                     disp('CG did not converge');
+                    disp(flag);
                 end
             end
+        end
+
+        function [beta_out] = Apply_Parameterized_RS_Hessian_Inverse_beta_noCG(this, beta_in, u_n, beta_n, t_n)
+            I = eye(length(beta_n));
+            H = I;
+            for i = 1:size(beta_n, 1)
+                H(:, i) = this.Apply_Parameterized_RS_Hessian_beta(I(:, i), u_n, beta_n, t_n);
+            end
+            beta_out = H \ beta_in;
         end
 
         function [beta_out] = Apply_Parameterized_RS_Hessian_beta(this, beta_in, u_n, beta_n, t_n)
