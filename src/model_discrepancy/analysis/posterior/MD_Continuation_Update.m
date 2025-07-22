@@ -170,6 +170,14 @@ classdef MD_Continuation_Update < handle
             beta_out = this.md_hessian_analysis.evecs' * this.Apply_Parameterized_RS_Hessian(this.md_hessian_analysis.evecs * beta_in, u_n, z_n, t_n);
         end
 
+        % function [beta_out] = Apply_Parameterized_RS_Hessian_beta(this, beta_in, u_n, beta_n, t_n)
+        %     % z_n = this.z_init + this.md_hessian_analysis.evecs * beta_n;
+        %     % beta_out = this.md_hessian_analysis.evecs' * this.Apply_Parameterized_RS_Hessian(this.md_hessian_analysis.evecs * beta_in, u_n, z_n, t_n);
+        %     z_lofi = this.z_init;
+        %     u_lofi = this.md_post_sampling.data_interface.u_opt;
+        %     beta_out = this.md_hessian_analysis.evecs' * this.Apply_Parameterized_RS_Hessian(this.md_hessian_analysis.evecs * beta_in, u_lofi, z_lofi, t_n);
+        % end
+
         function [z_out] = Gradient_J_z(this, u_n, z_n, t_n)
             % Useful for performing finite-difference checks
             delta = this.Discrepancy_Evaluation(z_n, t_n);

@@ -12,6 +12,7 @@ D = [];
 betas = [];
 Jhat_DC_oed = zeros(N, 1);
 oed_reg_coeff = 1.e-4;
+z_bars = zeros(n, N);
 beta_0 = randn(num_evals, 1);
 
 for p = 1:N
@@ -21,9 +22,19 @@ for p = 1:N
     if p == 1
         z_p = z_lofi;
     else
+        if p == 2
+            covar_coeff = W_z_norm(z_bar - z_lofi) / n;
+        else
+            covar_coeff = W_z_norm(z_bar - z_bars(:, p - 2)) / n;
+        end
+        % covar_coeff = 0;
+        % disp(covar_coeff)
+        md_oed.Set_Covariance_Coefficient(covar_coeff);
+        beta_0 = betas_cont(:, end);
         [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, oed_reg_coeff, betas, betas_cont(:, end));
         betas = [betas; beta_new];
         z_p = z_p(:, end);
+        % z_p = z_bar;
         disp(norm(z_p - z_bar) / norm(z_bar));
     end
 
@@ -38,10 +49,11 @@ for p = 1:N
     md_post_sampling.Compute_Posterior_Data(alpha_d, 1);
 
     % Obtain Optimal Solution Update via Continuation
-    num_continuation_steps = 1;
+    num_continuation_steps = 3;
     md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
     [u_cont, z_cont, betas_cont] = md_cont_update.Posterior_Update_Mean_PC_beta();
     z_bar = z_cont(:, end);
+    z_bars(:, p) = z_bar;
 
     % Display Stats
     Jhat_DC_oed(p) = opt_hifi.Jhat(z_bar);
