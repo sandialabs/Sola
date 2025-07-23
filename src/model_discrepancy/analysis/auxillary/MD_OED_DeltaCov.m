@@ -80,18 +80,18 @@ classdef MD_OED_DeltaCov < handle
             Z_new = this.data_interface.z_init + this.offline_data.V * beta_new;
         end
 
-        % function [beta, Z, post_var, reg_val] = L_Curve_Analysis(this, beta_0, alpha_d, reg_coeffs)
-        %     m = length(reg_coeffs);
-        %     post_var = zeros(m, 1);
-        %     reg_val = zeros(m, 1);
-        %     beta = zeros(length(beta_0), m);
-        %     Z = cell(m, 1);
-        %     for k = 1:m
-        %         [beta(:, k), Z{k}] = this.Generate_Seq_Optimal_Design(beta_0, alpha_d, reg_coeffs(k));
-        %         post_var(k) = -this.Evaluate_Posterior_Cov_Trace(beta(:, k), alpha_d);
-        %         reg_val(k) = this.Evaluate_Regularization(beta(:, k));
-        %     end
-        % end
+        function [beta, Z, post_var, reg_val] = L_Curve_Analysis(this, beta_0, alpha_d, reg_coeffs, betas, beta_bar)
+            m = length(reg_coeffs);
+            post_var = zeros(m, 1);
+            reg_val = zeros(m, 1);
+            beta = zeros(length(beta_0), m);
+            Z = cell(m, 1);
+            for k = 1:m
+                [beta(:, k), Z{k}] = this.Generate_Seq_Optimal_Design(beta_0, alpha_d, reg_coeffs(k), betas, beta_bar);
+                post_var(k) = -this.Evaluate_Posterior_Cov_Trace(beta(:, k), alpha_d, beta_bar);
+                reg_val(k) = this.Evaluate_Regularization(beta(:, k), beta_bar);
+            end
+        end
 
         % NOTE: This does not incorporate sequential prior updates.
         function [val, grad] = Evaluate_OED_Objective_Seq(this, beta, alpha_d, reg_coeff, beta_bar)
@@ -119,7 +119,8 @@ classdef MD_OED_DeltaCov < handle
             for i = 1:N
                 Ws_Mu_Wu_inv{i} = (1 / alpha_d) * this.u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(this.offline_data.Mu_Wu_inv, mu(i) / alpha_d); % new
                 tmp = this.offline_data.Mz_Wz_inv_Mz_V * Mg(:, i);
-                y_P_y(i) = this.covar_coeff * (tmp' * tmp); % can add scalar multiple here to control radius of neighborhood (also add to grad)
+                % y_P_y(i) = this.covar_coeff * (tmp' * tmp);
+                y_P_y(i) = this.covar_coeff * (tmp' * this.z_prior_interface.Apply_W_z_Inverse(tmp));
                 s(i) = sum(g(:, i)) + (beta_bar' * this.offline_data.Vt_Mz_Wz_inv_Mz_V) * Mg(:, i);
                 p(i) = s(i)^2 + y_P_y(i);
             end
@@ -131,7 +132,9 @@ classdef MD_OED_DeltaCov < handle
             for i = 1:N
                 val = val + p(i) * trace(Ws_Mu_Wu_inv{i});
                 grad_si = sum(g_jac{i}, 1)' + Mg_jac{i}' * (this.offline_data.Vt_Mz_Wz_inv_Mz_V * beta_bar);
-                grad_yPyi = this.covar_coeff * Mg_jac{i}' * (2 * this.offline_data.Mz_Wz_inv_Mz_V' * (this.offline_data.Mz_Wz_inv_Mz_V * Mg(:, i)));
+                % grad_yPyi = this.covar_coeff * Mg_jac{i}' * (2 * this.offline_data.Mz_Wz_inv_Mz_V' * (this.offline_data.Mz_Wz_inv_Mz_V * Mg(:, i)));
+                tmp = this.covar_coeff * this.offline_data.Mz_Wz_inv_Mz_V' * this.z_prior_interface.Apply_W_z_Inverse(this.offline_data.Mz_Wz_inv_Mz_V * Mg(:, i));
+                grad_yPyi = Mg_jac{i}' * (2 * tmp);
                 grad_pi = 2 * s(i) * grad_si + grad_yPyi;
                 grad = grad + grad_pi * trace(Ws_Mu_Wu_inv{i});
 
