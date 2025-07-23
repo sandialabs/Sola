@@ -29,7 +29,7 @@ data_interface = MD_Data_Interface_Diff_React(u_lofi, z_lofi);
 
 % Generate Priors for u and z
 alpha_u = 10;
-alpha_z = 1e-6;
+alpha_z = 1.e-6;
 alpha_d = (1.e-2)^2 * alpha_u;
 u_prior_interface = MD_Elliptic_u_Prior_Interface_Diff_React(alpha_u, opt_lofi);
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Diff_React(alpha_z, opt_lofi);

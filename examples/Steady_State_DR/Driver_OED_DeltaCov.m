@@ -11,7 +11,7 @@ Z = [];
 D = [];
 betas = [];
 Jhat_DC_oed = zeros(N, 1);
-oed_reg_coeff = 1.e-4;
+oed_reg_coeff = 1.e-4; % 1.e-5 is too small; 1.e-2 to 1.e-3 is okay; 1.e-1 too large
 z_bars = zeros(n, N);
 beta_0 = randn(num_evals, 1);
 
@@ -23,11 +23,12 @@ for p = 1:N
         z_p = z_lofi;
     else
         if p == 2
-            covar_coeff = W_z_norm(z_bar - z_lofi) / n;
+            covar_coeff = W_z_norm(z_bar - z_lofi)^2 / n;
         else
-            covar_coeff = W_z_norm(z_bar - z_bars(:, p - 2)) / n;
+            covar_coeff = W_z_norm(z_bar - z_bars(:, p - 2))^2 / n;
         end
-        % covar_coeff = 0;
+        % oed_reg_coeff = (covar_coeff*n/W_z_norm(z_bar - z_lofi)^2)  * oed_reg_coeff;
+        covar_coeff = 1;
         % disp(covar_coeff)
         md_oed.Set_Covariance_Coefficient(covar_coeff);
         beta_0 = betas_cont(:, end);

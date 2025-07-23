@@ -13,7 +13,7 @@ Z = [];
 D = [];
 betas = [];
 Jhat_DC_oed = zeros(N, 1);
-oed_reg_coeff = 1.e-4;
+oed_reg_coeff = 1.e-2;
 z_bars = zeros(n, N);
 beta_0 = randn(num_evals, 1);
 
@@ -73,43 +73,55 @@ fprintf('Objective at z_bar: \t%.3f\n', opt_hifi.Jhat(z_bar_OED));
 
 %% Step 2 - Random
 p = 2;
+num_samples = 10;
+objectives = zeros(num_samples, 1);
+covar_coeff = W_z_norm(z_bar - z_lofi)^2 / n;
+z_ps = z_bar + sqrt(covar_coeff) * z_prior_interface.Sample_with_Covariance_W_z_Inverse(num_samples);
 fprintf('\nStep %d (Rand.):\n-------------\n', p);
 rng(2);
 
-% Get Random
-covar_coeff = W_z_norm(z_bar - z_lofi)^2 / n;
-z_p = z_bar + sqrt(covar_coeff) * z_prior_interface.Sample_with_Covariance_W_z_Inverse(1);
+wb = waitbar(0, 'Starting');
 
-% disp(W_z_norm(z_bar - z_p)^2)
-% disp(W_z_norm(z_bar - z_lofi)^2)
-% Obtain Discrepancies
-Z = [Z(:, 1:p - 1) z_p];
-D_p = Evaluate_Discrepancy(con_hifi, con_lofi, z_p);
-D = [D(:, 1:p - 1) D_p];
-data_interface.Set_Z_and_D(Z, D);
+for i = 1:num_samples
+    waitbar(i / num_samples, wb, sprintf('Progress: %d %%', floor(i / num_samples * 100)));
+    z_p = z_ps(:, i);
 
-% Perform Posterior Sampling
-md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
-md_post_sampling.Compute_Posterior_Data(alpha_d, 1);
+    % Obtain Discrepancies
+    Z = [Z(:, 1:p - 1) z_p];
+    D_p = Evaluate_Discrepancy(con_hifi, con_lofi, z_p);
+    D = [D(:, 1:p - 1) D_p];
+    data_interface.Set_Z_and_D(Z, D);
 
-% Obtain Optimal Solution Update
-num_continuation_steps = 3;
-md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
-[u_cont, z_cont, betas_cont] = md_cont_update.Posterior_Update_Mean_PC_beta();
-z_bar = z_cont(:, end);
-fprintf('Objective at z_bar: \t%.3f\n', opt_hifi.Jhat(z_bar));
+    % Perform Posterior Sampling
+    md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
+    md_post_sampling.Compute_Posterior_Data(alpha_d, 1);
 
-% covar_coeff = W_z_norm(z_bar - z_bars(:, p - 2)) / n;
+    % Obtain Optimal Solution Update
+    num_continuation_steps = 3;
+    md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
+    [u_cont, z_cont, betas_cont] = md_cont_update.Posterior_Update_Mean_PC_beta();
+    z_bar = z_cont(:, end);
+
+    % Compute and store the objective
+    objectives(i) = opt_hifi.Jhat(z_bar);
+    fprintf('Objective at z_bar (Sample %d): \t%.3f\n', i, objectives(i));
+end
+
+% Display all objectives
+fprintf('\nAll Objectives:\n');
+disp(objectives);
+
+% covar_coeff = W_z_norm(z_bar - z_bars(:, p - 2))^2 / n;
 %% Plot Objective Function over N
 % if true
-%     figure;
-%     hold on;
-%     xlim([0 N]);
-%     yline(Jhat_hifi, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
-%     yline(Jhat_lofi, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
-%     plot(0:N, [Jhat_lofi; Jhat_DC_oed], ".-", "Color", "#BAB86C", "DisplayName", "DeltaCov OED");
-%     xlabel("Evaluations ($N$)", "Interpreter", "latex");
-%     ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
-%     legend("location", "east", "Interpreter", "latex");
-%     title("Optimization Objective over Evals");
+% figure;
+% hold on;
+% xlim([0 N]);
+% yline(Jhat_hifi, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
+% yline(Jhat_lofi, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
+% plot(0:N, [Jhat_lofi; Jhat_DC_oed], ".-", "Color", "#BAB86C", "DisplayName", "DeltaCov OED");
+% xlabel("Evaluations ($N$)", "Interpreter", "latex");
+% ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
+% legend("location", "east", "Interpreter", "latex");
+% title("Optimization Objective over Evals");
 % end
