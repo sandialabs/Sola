@@ -32,6 +32,7 @@ classdef MD_OED_DeltaCov < handle
             this.md_hessian_analysis = md_hessian_analysis;
             this.oed_interface = oed_interface;
             this.verbosity = false;
+            this.covar_coeff = 1;
         end
 
         function Set_Covariance_Coefficient(this, covar_coeff)
@@ -46,15 +47,18 @@ classdef MD_OED_DeltaCov < handle
             this.offline_data.r = length(this.md_hessian_analysis.evals);
             this.offline_data.m = length(this.data_interface.u_opt);
 
-            W_u_inv = this.u_prior_interface.Apply_W_u_Inverse(eye(this.offline_data.m));
-            Mz_V = this.z_prior_interface.Apply_M_z(this.offline_data.V);
-            Wz_inv_Mz_V = this.z_prior_interface.Apply_W_z_Inverse(Mz_V);
+            Mz_V = this.z_prior_interface.Apply_M_z(this.offline_data.V); % Cost: r matvecs with Mz
+            Wz_inv_Mz_V = this.z_prior_interface.Apply_W_z_Inverse(Mz_V); % Cost: r matvecs with Wz_inv
 
-            this.offline_data.Mu_Wu_inv = this.u_prior_interface.Apply_M_u(W_u_inv);
             this.offline_data.Mz_Wz_inv_Mz_V = this.z_prior_interface.Apply_M_z(Wz_inv_Mz_V);
             this.offline_data.Vt_Mz_Wz_inv_Mz_V = Mz_V' * Wz_inv_Mz_V;
             this.offline_data.Vt_Design_Cov_Inv_V = this.offline_data.V' * this.oed_interface.Apply_Design_Cov_Inverse(this.offline_data.V);
 
+            this.offline_data.xjTxj = sum(this.u_prior_interface.sing_vecs_output .* this.u_prior_interface.sing_vecs_output, 1)';
+            this.offline_data.lambda_js = 1 ./ (this.u_prior_interface.alpha_u * this.u_prior_interface.sing_vals.^2);
+
+            % W_u_inv = this.u_prior_interface.Apply_W_u_Inverse(eye(this.offline_data.m));
+            % this.offline_data.Mu_Wu_inv = this.u_prior_interface.Apply_M_u(W_u_inv);
         end
 
         function [beta, Z] = Generate_Optimal_Design(this, beta_0, alpha_d, reg_coeff)
@@ -110,14 +114,17 @@ classdef MD_OED_DeltaCov < handle
             N = length(beta) / this.offline_data.r + 1;
 
             [g, mu, Mg, g_jac, mu_jac, Mg_jac] = this.G_eigs(beta);
-
-            Ws_Mu_Wu_inv = cell(N, 1); % new
+            %
+            Ws_Mu_Wu_inv = cell(N, 1); % old
+            tr_Ws_Mu_Wu_inv = zeros(N, 1); % new
             y_P_y = zeros(N, 1); % new
             s = zeros(N, 1); % new
             p = zeros(N, 1); % new
 
             for i = 1:N
-                Ws_Mu_Wu_inv{i} = (1 / alpha_d) * this.u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(this.offline_data.Mu_Wu_inv, mu(i) / alpha_d); % new
+                % Ws_Mu_Wu_inv{i} = (1 / alpha_d) * this.u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(this.offline_data.Mu_Wu_inv, mu(i) / alpha_d); % old
+                tr_Ws_Mu_Wu_inv(i) = sum(this.offline_data.xjTxj ./ (this.offline_data.lambda_js .* (mu(i) +  alpha_d * this.offline_data.lambda_js)));
+
                 tmp = this.offline_data.Mz_Wz_inv_Mz_V * Mg(:, i);
                 % y_P_y(i) = this.covar_coeff * (tmp' * tmp);
                 y_P_y(i) = this.covar_coeff * (tmp' * this.z_prior_interface.Apply_W_z_Inverse(tmp));
@@ -130,17 +137,16 @@ classdef MD_OED_DeltaCov < handle
             % Implement gradient via product rules, may be able to
             % precompute additional vectors needed in the analysis
             for i = 1:N
-                val = val + p(i) * trace(Ws_Mu_Wu_inv{i});
+                val = val + p(i) * tr_Ws_Mu_Wu_inv(i);
                 grad_si = sum(g_jac{i}, 1)' + Mg_jac{i}' * (this.offline_data.Vt_Mz_Wz_inv_Mz_V * beta_bar);
-                % grad_yPyi = this.covar_coeff * Mg_jac{i}' * (2 * this.offline_data.Mz_Wz_inv_Mz_V' * (this.offline_data.Mz_Wz_inv_Mz_V * Mg(:, i)));
+                % grad_yPyi = this.covar_coeff * Mg_jac{i}' * (2 * this.offline_data.Mz_Wz_inv_Mz_V' * (this.offline_data.Mz_Wz_inv_Mz_V * Mg(:, i))); % old
                 tmp = this.covar_coeff * this.offline_data.Mz_Wz_inv_Mz_V' * this.z_prior_interface.Apply_W_z_Inverse(this.offline_data.Mz_Wz_inv_Mz_V * Mg(:, i));
                 grad_yPyi = Mg_jac{i}' * (2 * tmp);
                 grad_pi = 2 * s(i) * grad_si + grad_yPyi;
-                grad = grad + grad_pi * trace(Ws_Mu_Wu_inv{i});
+                grad = grad + grad_pi * tr_Ws_Mu_Wu_inv(i);
 
-                tmp1 = this.u_prior_interface.Apply_M_u(Ws_Mu_Wu_inv{i});
-                tmp2 = -(1 / alpha_d) * this.u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(tmp1, mu(i) / alpha_d);
-                grad = grad + p(i) * trace(tmp2) * mu_jac{i};
+                tmp = -sum(this.offline_data.xjTxj ./ (this.offline_data.lambda_js .* (mu(i) + alpha_d * this.offline_data.lambda_js).^2));
+                grad = grad + p(i) * trace(tmp) * mu_jac{i};
             end
 
         end

@@ -4,6 +4,7 @@ addpath(genpath('../../../src'));
 OED_Setup;
 
 load("oed-results.mat");
+% pool = parpool("Threads", 8);
 
 %% Perform Random Data Point Comparison
 N = 5;
@@ -12,7 +13,7 @@ Jhat_rand = zeros(N, num_samples);
 rng(0);
 Jhat_rand(1, :) = Jhat_DC_oed(1);
 
-wb = waitbar(0, 'Starting Random...');
+wb = waitbar(0, 'Starting Random');
 for p = 2:N
     % fprintf('\nStep %d:\n-------------\n', p);
     % Generate random data points
@@ -21,12 +22,12 @@ for p = 2:N
     else
         covar_coeff = W_z_norm(z_bars(:, p - 1) - z_bars(:, p - 2))^2 / n;
     end
-    z_ps = z_bars(:, p - 1) + sqrt(covar_coeff) * z_prior_interface.Sample_with_Covariance_W_z_Inverse(num_samples);
+
+    z_ps = z_bars(:, p - 1) + sqrt(covar_coeff * (n / num_evals)) / W_z_norm(z_lofi) * md_hessian_analysis.evecs * randn(num_evals, num_samples);
 
     for i = 1:num_samples
         % disp(i)
         waitbar((num_samples * (p - 2) + i) / (num_samples * (N - 1)), wb, sprintf('Random Progress: %d %%', floor((num_samples * (p - 2) + i) / (num_samples * (N - 1)) * 100)));
-        % waitbar(i / num_samples * (p - 1) / (N - 1), wb, sprintf('Random Progress: %d %%', floor(i / num_samples * (p - 1) / (N - 1) * 100)));
         % Obtain random data point
         z_p = z_ps(:, i);
         D_p = Evaluate_Discrepancy(con_hifi, con_lofi, z_p);
@@ -46,6 +47,7 @@ for p = 2:N
         [u_cont, z_cont, betas_cont] = md_cont_update.Posterior_Update_Mean_PC_beta();
         Jhat_rand(p, i) = opt_hifi.Jhat(z_cont(:, end));
     end
+    % waitbar((p-1) / (N-1), wb, sprintf('Random Progress: %d %%', floor((p-1) / (N-1) * 100)));
 end
 close(wb);
 
@@ -62,4 +64,4 @@ xlabel("Evaluations ($N$)", "Interpreter", "latex");
 ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
 legend("location", "east", "Interpreter", "latex");
 title("Optimization Objective over Evals");
-saveas(gcf, "oed-rand-3-corrected.eps", "epsc");
+% saveas(gcf, "oed-rand-proj.eps", "epsc");

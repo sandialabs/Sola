@@ -11,7 +11,7 @@ Z = [];
 D = [];
 betas = [];
 Jhat_DC_oed = zeros(N, 1);
-oed_reg_coeff = 1.e-4; % 1.e-5 is too small; 1.e-2 to 1.e-3 is okay; 1.e-1 too large
+oed_reg_coeff = 1.e-2; % 1.e-5 is too small; 1.e-2 to 1.e-3 is okay; 1.e-1 too large
 z_bars = zeros(n, N);
 beta_0 = randn(num_evals, 1);
 
@@ -80,3 +80,7 @@ if true
     legend("location", "east", "Interpreter", "latex");
     title("Optimization Objective over Evals");
 end
+
+Z_oed = Z;
+D_oed = D;
+save("../performance_test_codes/oed-results.mat", "z_bars", "Jhat_DC_oed", "Z_oed", "D_oed");
