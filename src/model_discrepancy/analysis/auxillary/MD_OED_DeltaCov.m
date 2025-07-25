@@ -80,7 +80,19 @@ classdef MD_OED_DeltaCov < handle
             else
                 options = optimoptions('fminunc', 'Algorithm', 'quasi-newton', 'Display', 'None', 'MaxIterations', 5000, 'SpecifyObjectiveGradient', true);
             end
-            beta_new = fminunc(@(beta_new) this.Evaluate_OED_Objective_Seq([betas; beta_new], alpha_d, reg_coeff, beta_bar), beta_0, options);
+            p = length(beta_0) / size(this.offline_data.V, 2);
+            beta_new = fminunc(@(beta_new) this.Evaluate_OED_Objective_Seq([betas; beta_new], alpha_d, reg_coeff, beta_bar, p), beta_0, options);
+            Z_new = this.data_interface.z_init + this.offline_data.V * reshape(beta_new, size(this.offline_data.V, 2), []);
+        end
+
+        function [beta_new, Z_new] = Generate_Seq_Optimal_Design_Con(this, beta_0, alpha_d, reg_coeff, betas, beta_bar, bd_region)
+            if this.verbosity
+                options = optimoptions('fmincon', 'Display', 'iter', 'MaxIterations', 5000, 'SpecifyObjectiveGradient', true);
+            else
+                options = optimoptions('fmincon', 'Display', 'None', 'MaxIterations', 5000, 'SpecifyObjectiveGradient', true);
+            end
+            fun = @(beta_new) this.Evaluate_OED_Objective_Seq([betas; beta_new], alpha_d, reg_coeff, beta_bar);
+            beta_new = fmincon(fun, beta_0, [], [], [], [], beta_bar - bd_region, beta_bar + bd_region, [], options);
             Z_new = this.data_interface.z_init + this.offline_data.V * beta_new;
         end
 
@@ -98,9 +110,9 @@ classdef MD_OED_DeltaCov < handle
         end
 
         % NOTE: This does not incorporate sequential prior updates.
-        function [val, grad] = Evaluate_OED_Objective_Seq(this, beta, alpha_d, reg_coeff, beta_bar)
+        function [val, grad] = Evaluate_OED_Objective_Seq(this, beta, alpha_d, reg_coeff, beta_bar, p)
             [val, grad_full] = this.Evaluate_OED_Objective(beta, alpha_d, reg_coeff, beta_bar);
-            grad = grad_full(end - this.offline_data.r + 1:end);
+            grad = grad_full(end - p * this.offline_data.r + 1:end);
         end
 
         function [val, grad] = Evaluate_OED_Objective(this, beta, alpha_d, reg_coeff, beta_bar)

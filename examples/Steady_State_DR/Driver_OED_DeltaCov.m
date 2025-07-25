@@ -11,8 +11,9 @@ Z = [];
 D = [];
 betas = [];
 Jhat_DC_oed = zeros(N, 1);
-oed_reg_coeff = 1.e-2; % 1.e-5 is too small; 1.e-2 to 1.e-3 is okay; 1.e-1 too large
+oed_reg_coeff = 0; % 1.e-5 is too small; 1.e-2 to 1.e-3 is okay; 1.e-1 too large
 z_bars = zeros(n, N);
+beta_bars = zeros(num_evals, N);
 beta_0 = randn(num_evals, 1);
 
 for p = 1:N
@@ -24,15 +25,18 @@ for p = 1:N
     else
         if p == 2
             covar_coeff = W_z_norm(z_bar - z_lofi)^2 / n;
+            delta_beta = 0 * abs(beta_bar);
         else
             covar_coeff = W_z_norm(z_bar - z_bars(:, p - 2))^2 / n;
+            % delta_beta = abs(beta_bar - beta_bars(:, p - 2));
         end
         % oed_reg_coeff = (covar_coeff*n/W_z_norm(z_bar - z_lofi)^2)  * oed_reg_coeff;
-        covar_coeff = 1;
+        % covar_coeff = 1;
         % disp(covar_coeff)
         md_oed.Set_Covariance_Coefficient(covar_coeff);
-        beta_0 = betas_cont(:, end);
-        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, oed_reg_coeff, betas, betas_cont(:, end));
+        % beta_0 = betas_cont(:, end);
+        % [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, oed_reg_coeff, betas, beta_bar);
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design_Con(beta_0, alpha_d, oed_reg_coeff, betas, beta_bar, delta_beta);
         betas = [betas; beta_new];
         z_p = z_p(:, end);
         % z_p = z_bar;
@@ -55,6 +59,8 @@ for p = 1:N
     [u_cont, z_cont, betas_cont] = md_cont_update.Posterior_Update_Mean_PC_beta();
     z_bar = z_cont(:, end);
     z_bars(:, p) = z_bar;
+    beta_bar = betas_cont(:, end);
+    beta_bars(:, p) = beta_bar;
 
     % Display Stats
     Jhat_DC_oed(p) = opt_hifi.Jhat(z_bar);
@@ -83,4 +89,4 @@ end
 
 Z_oed = Z;
 D_oed = D;
-save("../performance_test_codes/oed-results.mat", "z_bars", "Jhat_DC_oed", "Z_oed", "D_oed");
+% save("../performance_test_codes/oed-results.mat", "z_bars", "Jhat_DC_oed", "Z_oed", "D_oed");
