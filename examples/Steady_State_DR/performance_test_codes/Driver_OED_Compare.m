@@ -43,33 +43,35 @@ p = 2;
 fprintf('\nStep %d (OED):\n-------------\n', p);
 
 covar_coeff = W_z_norm(z_bar - z_lofi)^2 / n;
-disp(sqrt(covar_coeff));
+% disp(sqrt(covar_coeff));
 md_oed.Set_Covariance_Coefficient(covar_coeff);
-[beta_l, Z_l, post_var_l, reg_val_l] = md_oed.L_Curve_Analysis(beta_0, alpha_d, [0, 1.e-10, 1], betas, betas_cont(:, end));
+% [beta_l, Z_l, post_var_l, reg_val_l] = md_oed.L_Curve_Analysis(beta_0, alpha_d, [0, 10.^(-4:0.5:-1)], betas, betas_cont(:, end));
+% md_oed.Evaluate_Posterior_Cov_Trace(beta_0, alpha_d, betas_cont(:, end));
 % beta_0 = betas_cont(:, end);
-% [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, oed_reg_coeff, betas, betas_cont(:, end));
 
-% betas = [betas; beta_new];
-% z_p = z_p(:, end);
-% disp(norm(z_p - z_bar) / norm(z_lofi - z_bar));
+beta_0 = randn(num_evals * 2, 1);
+[beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, oed_reg_coeff, betas, betas_cont(:, end));
+disp(size(z_p));
+betas = [betas; beta_new];
+disp(norm(z_p - z_bar) / norm(z_lofi - z_bar));
 
-% % Obtain Discrepancies
-% Z = [Z z_p];
-% D_p = Evaluate_Discrepancy(con_hifi, con_lofi, z_p);
-% D = [D D_p];
-% data_interface.Set_Z_and_D(Z, D);
+% Obtain Discrepancies
+Z = [Z z_p];
+D_p = Evaluate_Discrepancy(con_hifi, con_lofi, z_p);
+D = [D D_p];
+data_interface.Set_Z_and_D(Z, D);
 
-% % Perform Posterior Sampling
-% md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
-% md_post_sampling.Compute_Posterior_Data(alpha_d, 1);
+% Perform Posterior Sampling
+md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
+md_post_sampling.Compute_Posterior_Data(alpha_d, 1);
 
-% % Obtain Optimal Solution Update
-% num_continuation_steps = 3;
-% md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
-% [u_cont, z_cont, betas_cont] = md_cont_update.Posterior_Update_Mean_PC_beta();
-% z_bar_OED = z_cont(:, end);
-% z_bars(:, p) = z_bar_OED;
-% fprintf('Objective at z_bar: \t%.3f\n', opt_hifi.Jhat(z_bar_OED));
+% Obtain Optimal Solution Update
+num_continuation_steps = 3;
+md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
+[u_cont, z_cont, betas_cont] = md_cont_update.Posterior_Update_Mean_PC_beta();
+z_bar_OED = z_cont(:, end);
+z_bars(:, p) = z_bar_OED;
+fprintf('Objective at z_bar: \t%.3f\n', opt_hifi.Jhat(z_bar_OED));
 
 % %% Step 2 - Random
 % p = 2;

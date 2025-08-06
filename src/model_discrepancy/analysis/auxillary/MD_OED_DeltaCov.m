@@ -91,9 +91,13 @@ classdef MD_OED_DeltaCov < handle
             else
                 options = optimoptions('fmincon', 'Display', 'None', 'MaxIterations', 5000, 'SpecifyObjectiveGradient', true);
             end
-            fun = @(beta_new) this.Evaluate_OED_Objective_Seq([betas; beta_new], alpha_d, reg_coeff, beta_bar);
-            beta_new = fmincon(fun, beta_0, [], [], [], [], beta_bar - bd_region, beta_bar + bd_region, [], options);
-            Z_new = this.data_interface.z_init + this.offline_data.V * beta_new;
+            p = length(beta_0) / size(this.offline_data.V, 2);
+            lb = repmat(beta_bar - bd_region, p, 1);
+            ub = repmat(beta_bar + bd_region, p, 1);
+
+            fun = @(beta_new) this.Evaluate_OED_Objective_Seq([betas; beta_new], alpha_d, reg_coeff, beta_bar, p);
+            beta_new = fmincon(fun, beta_0, [], [], [], [], lb, ub, [], options);
+            Z_new = this.data_interface.z_init + this.offline_data.V * reshape(beta_new, size(this.offline_data.V, 2), []);
         end
 
         function [beta, Z, post_var, reg_val] = L_Curve_Analysis(this, beta_0, alpha_d, reg_coeffs, betas, beta_bar)
