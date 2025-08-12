@@ -3,6 +3,8 @@ addpath(genpath('..'));
 addpath(genpath('../../../src'));
 OED_Setup;
 
+% NOTE: THIS USES RANDOM DATA!
+
 % % GENERATE DATA
 % I = eye(n);
 % h = 1.e-4;

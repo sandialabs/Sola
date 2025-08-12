@@ -25,22 +25,28 @@ for p = 1:N
     else
         if p == 2
             covar_coeff = W_z_norm(z_bar - z_lofi)^2 / n;
-            delta_beta = 0 * abs(beta_bar);
+            delta_beta = abs(beta_bar);
         else
             covar_coeff = W_z_norm(z_bar - z_bars(:, p - 2))^2 / n;
-            % delta_beta = abs(beta_bar - beta_bars(:, p - 2));
+            delta_beta = abs(beta_bar - beta_bars(:, p - 2));
         end
+
+        nonlcon = @(beta) deal(W_z_norm(md_hessian_analysis.evecs * (beta - beta_bar))^2 - covar_coeff * n, [], ...
+                               2 * md_hessian_analysis.evecs' * z_prior_interface.Apply_W_z(md_hessian_analysis.evecs * (beta - beta_bar)), []);
         % oed_reg_coeff = (covar_coeff*n/W_z_norm(z_bar - z_lofi)^2)  * oed_reg_coeff;
         % covar_coeff = 1;
         % disp(covar_coeff)
         md_oed.Set_Covariance_Coefficient(covar_coeff);
         % beta_0 = betas_cont(:, end);
         % [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, oed_reg_coeff, betas, beta_bar);
-        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design_Con(beta_0, alpha_d, oed_reg_coeff, betas, beta_bar, delta_beta);
+        % [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design_Con(beta_0, alpha_d, oed_reg_coeff, betas, beta_bar, delta_beta);
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design_Con_v1(beta_0, alpha_d, betas, beta_bar, nonlcon);
         betas = [betas; beta_new];
         z_p = z_p(:, end);
         % z_p = z_bar;
         disp(norm(z_p - z_bar) / norm(z_bar));
+        disp(beta_new - beta_bar);
+        disp(delta_beta);
     end
 
     % Obtain Discrepancies
@@ -89,4 +95,4 @@ end
 
 Z_oed = Z;
 D_oed = D;
-% save("../performance_test_codes/oed-results.mat", "z_bars", "Jhat_DC_oed", "Z_oed", "D_oed");
+save("../performance_test_codes/oed-results-con.mat", "z_bars", "Jhat_DC_oed", "Z_oed", "D_oed");
