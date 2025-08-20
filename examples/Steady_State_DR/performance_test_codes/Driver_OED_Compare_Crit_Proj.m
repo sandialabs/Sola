@@ -17,6 +17,7 @@ crit_DC_oed = zeros(N, 1);
 crit_same_pt = zeros(N, 1);
 betas_oed = md_hessian_analysis.evecs \ (Z_oed - z_lofi);
 beta_bars = md_hessian_analysis.evecs \ (z_bars - z_lofi);
+beta_bar_hifi = md_hessian_analysis.evecs \ (z_hifi - z_lofi);
 rng(0);
 
 wb = waitbar(0, 'Starting Random');
@@ -49,9 +50,6 @@ for p = 2:N
 
         % Obtain Optimal Solution Update via Continuation
         crit_rand(p, i) = crit_fn(beta_p);
-        if crit_rand(p, i) < crit_DC_oed(p)
-            error("abc");
-        end
     end
     % waitbar((p-1) / (N-1), wb, sprintf('Random Progress: %d %%', floor((p-1) / (N-1) * 100)));
 
