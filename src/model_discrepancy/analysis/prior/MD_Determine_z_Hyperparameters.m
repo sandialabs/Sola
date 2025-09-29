@@ -47,12 +47,11 @@ classdef MD_Determine_z_Hyperparameters < handle
 
             if this.z_hypeparam_interface.discrepancy_percent_z_variation == 1
                 if this.z_hypeparam_interface.num_state_solves > 0
-                    u_nom = this.z_hypeparam_interface.State_Solve(this.data_interface.z_opt);
                     z_samples = z_prior_interface.Sample_with_Covariance_W_z_Acute_Inverse(this.z_hypeparam_interface.num_state_solves);
                     mags = sqrt(diag(z_samples' * z_prior_interface.Apply_M_z(z_samples)));
                     z_samples = zopt_norm * z_samples * diag(1 ./ mags);
                     u_samples = this.z_hypeparam_interface.State_Solve(z_samples + this.data_interface.z_opt);
-                    e = u_samples - u_nom;
+                    e = u_samples - this.data_interface.u_opt;
                     e_norm_sqr = diag(e' * this.u_prior_interface.Apply_M_u(e));
                     d1 = this.data_interface.D(:, 1);
                     d1_norm_sq = d1' * this.u_prior_interface.Apply_M_u(d1);

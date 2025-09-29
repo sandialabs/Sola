@@ -56,8 +56,8 @@ md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 % save('reference_solution.mat','z_hyperparam_interface','md_hessian_analysis')
 ref = load('reference_solution.mat');
 ref_diff = norm(z_hyperparam_interface.alpha_z - ref.z_hyperparam_interface.alpha_z);
-ref_diff = min(ref_diff, norm(z_hyperparam_interface.beta_t - ref.z_hyperparam_interface.beta_t));
-ref_diff = min(ref_diff, norm(md_hessian_analysis.evals - ref.md_hessian_analysis.evals));
+ref_diff = max(ref_diff, norm(z_hyperparam_interface.beta_t - ref.z_hyperparam_interface.beta_t));
+ref_diff = max(ref_diff, norm(md_hessian_analysis.evals - ref.md_hessian_analysis.evals)/norm(ref.md_hessian_analysis.evals));
 
 if ref_diff > 1.e-9
     disp('model_discrepancy_sythetic_test difference:');

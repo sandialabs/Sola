@@ -37,9 +37,15 @@ classdef MD_Data_Interface_transient_control_synthetic_test < MD_Data_Interface
             this.n_t = n_t;
             this.t = linspace(0, 1, n_t)';
 
+            J1 = 1 - (0:(n_y - 1)) / (n_y - 1);
             J2 = (0:(n_y - 1)) / (n_y - 1);
-            tmp = 2 * J2' * this.t' + ones(n_y, 1) * this.t';
-            this.T = tmp(:);
+            J = kron(eye(n_t), [J1; J2])';
+
+            % Forward model: u(t) = z_1(t) * J1 + z_2(t) * J2 
+
+            tmp = [this.t, 2 * this.t]';
+            z_opt = tmp(:);
+            this.T = J*z_opt;
         end
 
     end

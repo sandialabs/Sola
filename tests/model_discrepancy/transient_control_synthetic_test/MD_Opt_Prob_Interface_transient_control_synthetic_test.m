@@ -41,10 +41,11 @@ classdef MD_Opt_Prob_Interface_transient_control_synthetic_test < MD_Opt_Prob_In
             J2 = (0:(n_y - 1)) / (n_y - 1);
             this.J = kron(eye(n_t), [J1; J2])';
 
-            % Forward model: u(t) = z_1(t) * J1 + z_2(t) * J2 - 2 * J1 * t + t
+            % Forward model: u(t) = z_1(t) * J1 + z_2(t) * J2 
 
-            tmp = 2 * J2' * this.t' + ones(n_y, 1) * this.t';
-            this.T = tmp(:);
+            tmp = [this.t, 2 * this.t]';
+            z_opt = tmp(:);
+            this.T = this.J*z_opt;
         end
 
     end
