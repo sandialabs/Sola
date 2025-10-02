@@ -156,7 +156,7 @@ classdef MD_OED_DeltaCov < handle
                 tmp = this.offline_data.Mz_Wz_inv_Mz_V * Mg(:, i);
                 % y_P_y(i) = this.covar_coeff * (tmp' * tmp);
                 y_P_y(i) = this.covar_coeff * (tmp' * this.z_prior_interface.Apply_W_z_Inverse(tmp));
-                s(i) = sum(g(:, i)) + (beta_bar' * this.offline_data.Vt_Mz_Wz_inv_Mz_V) * Mg(:, i);
+                s(i) = sum(g(:, i)) + (beta_bar' * this.offline_data.Vt_Mz_Wz_inv_Mz_V) * Mg(:, i); % Technically, s(i) + z_bar^T (MW^{-1}M) yi
                 p(i) = s(i)^2 + y_P_y(i);
             end
 

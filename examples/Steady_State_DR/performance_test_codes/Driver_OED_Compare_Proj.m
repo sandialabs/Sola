@@ -8,7 +8,7 @@ load("oed-results.mat");
 
 %% Perform Random Data Point Comparison
 N = 5;
-num_samples = 10;
+num_samples = 100;
 Jhat_rand = zeros(N, num_samples);
 rng(0);
 Jhat_rand(1, :) = Jhat_DC_oed(1);
@@ -53,7 +53,7 @@ close(wb);
 
 figure;
 % yline(Jhat_hifi, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
-semilogy(1:N, Jhat_rand' - 3.086, ".", "Color", [0.7 0.8 0.9], "MarkerSize", 25, "HandleVisibility", "off");
+semilogy(1:N, Jhat_rand(:, 1:20)' - 3.086, ".", "Color", [0.7 0.8 0.9], "MarkerSize", 25, "HandleVisibility", "off");
 hold on;
 semilogy(0:N, [Jhat_lofi; Jhat_DC_oed] - 3.086, ".-", "Color", "#BAB86C", "DisplayName", "OED");
 semilogy(1, Jhat_DC_oed(1) - 3.086, ".", "Color", [0.7 0.8 0.9], "MarkerSize", 25, "DisplayName", "Random");

@@ -3,7 +3,7 @@ addpath(genpath('..'));
 addpath(genpath('../../../src'));
 OED_Setup;
 
-load("oed-results.mat");
+load("oed-results-con2.mat");
 
 % Perform Offline OED Computations - USES data_interface
 md_oed = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
@@ -19,7 +19,7 @@ beta_bars = md_hessian_analysis.evecs \ (z_bars - z_lofi);
 beta_bar_hifi = md_hessian_analysis.evecs \ (z_hifi - z_lofi);
 rng(0);
 
-p = 4;
+p = 3;
 covar_coeff = W_z_norm(z_bars(:, p - 1) - z_bars(:, p - 2))^2 / n;
 md_oed.Set_Covariance_Coefficient(covar_coeff);
 
@@ -37,8 +37,8 @@ crit_same_pt_hifi = crit_hifi(zeros(num_evals, 1));
 % Obtains random points in a neighborhood of zbar from a projected subspace, where distance is dictated by covar_coeff
 % z_ps = z_bars(:, p - 1) + 1*sqrt(covar_coeff * (n / num_evals)) / W_z_norm(z_lofi) * md_hessian_analysis.evecs * randn(num_evals, num_samples);
 z_ps = z_bars(:, p - 1) + sqrt(covar_coeff * (n / num_evals)) / W_z_norm(z_lofi) * md_hessian_analysis.evecs * randn(num_evals, 2 * num_samples);
-z_ps = z_ps(:, diag(W_z_norm(z_ps - z_bars(:, 3))).^2 < (covar_coeff * n));
-disp("Rejection Sampling, rejected pct: " + size(z_ps) / (2 * num_samples));
+z_ps = z_ps(:, diag(W_z_norm(z_ps - z_bars(:, p - 1))).^2 < (covar_coeff * n));
+disp("Rejection Sampling, accepted pct: " + size(z_ps, 2) / (2 * num_samples));
 z_ps = z_ps(:, 1:num_samples);
 
 for i = 1:num_samples
@@ -63,12 +63,13 @@ end
 % xlabel("OED Criterion"); ylabel("Distance to z_{bar}"); legend;
 
 figure;
-plot(crit_rand - crit_same_pt,  crit_rand_hifi - crit_same_pt_hifi, ".", "Color", [0.7 0.8 0.9], "MarkerSize", 25, "HandleVisibility", "off");
+plot((crit_rand - crit_same_pt) / (crit_DC_oed - crit_same_pt),  (crit_rand_hifi - crit_same_pt_hifi) / (crit_DC_oed_hifi - crit_same_pt_hifi), ".", "Color", [0.7 0.8 0.9], "MarkerSize", 25, "HandleVisibility", "off");
 hold on;
-plot(crit_DC_oed - crit_same_pt, crit_DC_oed_hifi - crit_same_pt_hifi, "r*", "DisplayName", "Optimal Data Point");
-xlabel("Shifted OED Criterion");
-ylabel("(Shifted) Uncertainty near Hi-Fi Sol.");
-legend;
+plot((crit_DC_oed - crit_same_pt) / (crit_DC_oed - crit_same_pt), (crit_DC_oed_hifi - crit_same_pt_hifi) / (crit_DC_oed_hifi - crit_same_pt_hifi), "r*", "DisplayName", "Optimal Data Point");
+xlabel("Uncertainty reduction near $\bar{z}_k$", "Interpreter", "latex");
+ylabel("Uncertainty reduction near $z^{\star}$", "Interpreter", "latex");
+legend('Location', 'northwest');
+% saveas(gcf, 'ScatterPlot2', 'epsc');
 
 % figure;
 % scatter3(crit_rand - crit_same_pt,  crit_rand_hifi - crit_same_pt_hifi,  dist_rand_hifi, ".", "Color", [0.7 0.8 0.9], "HandleVisibility", "off");

@@ -95,4 +95,4 @@ end
 
 Z_oed = Z;
 D_oed = D;
-save("../performance_test_codes/oed-results-con.mat", "z_bars", "Jhat_DC_oed", "Z_oed", "D_oed");
+save("../performance_test_codes/oed-results-con2.mat", "z_bars", "Jhat_DC_oed", "Z_oed", "D_oed");
