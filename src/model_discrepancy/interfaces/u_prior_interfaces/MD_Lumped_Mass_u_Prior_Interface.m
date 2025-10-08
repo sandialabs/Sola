@@ -99,8 +99,6 @@ classdef MD_Lumped_Mass_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             end
             this.Set_beta_u(this.u_hyperparam_interface.beta_u);
 
-            this.Assemble_Operators();
-
             if ~this.u_hyperparam_interface.is_transient
                 if this.u_hyperparam_interface.alpha_u == 0.0
                     this.determine_u_hyperparams.Determine_alpha_u(this);
@@ -112,6 +110,7 @@ classdef MD_Lumped_Mass_u_Prior_Interface < MD_Scaled_u_Prior_Interface
 
         function [] = Set_beta_u(this, beta_u_new)
             this.beta_u = beta_u_new;
+            this.Assemble_Operators();
         end
 
         function [] = Assemble_Operators(this)
