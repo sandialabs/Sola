@@ -206,8 +206,12 @@ classdef MD_Laplacian_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             end
         end
 
+        function [u_out] = Apply_W_u_Acute(this, u_in)
+            u_out = this.E_u' * this.Apply_M_u_Inverse(this.E_u * u_in);
+        end
+
         function [u_out] = Apply_W_u_Acute_Plus_scalar_M_u(this, u_in, scalar)
-            u_out = this.E_u' * this.Apply_M_u_Inverse(this.E_u * u_in) + scalar * this.Apply_M_u(u_in);
+            u_out = this.Apply_W_u_Acute(u_in) + scalar * this.Apply_M_u(u_in);
         end
 
     end

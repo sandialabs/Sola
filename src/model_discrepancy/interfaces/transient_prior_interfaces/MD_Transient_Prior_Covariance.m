@@ -8,6 +8,7 @@ classdef MD_Transient_Prior_Covariance < handle
         M_t
         S_t
         E_t
+        W_t
         evecs
         evals
         n_t
@@ -50,8 +51,8 @@ classdef MD_Transient_Prior_Covariance < handle
         end
 
         function [] = Compute_Time_Covariance_GEVP(this)
-            A = diag(sqrt(1 ./ this.alpha_t)) * this.E_t * diag(sqrt(1 ./ this.alpha_t));
-            [V, Lambda] = eig(A, this.M_t, 'vector');
+            this.W_t = diag(sqrt(1 ./ this.alpha_t)) * this.E_t * diag(sqrt(1 ./ this.alpha_t));
+            [V, Lambda] = eig(this.W_t, this.M_t, 'vector');
             [~, I] = sort(Lambda, 'ascend');
             Lambda = Lambda(I);
             V = V(:, I);
