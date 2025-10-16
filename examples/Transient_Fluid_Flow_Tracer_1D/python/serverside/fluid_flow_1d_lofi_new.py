@@ -162,7 +162,7 @@ def J(k0, kt):
 
 def Jz(k0, kt):
     """Gradient of J with respect to z"""
-    return 1e4 * float(beta) * (K_mat_one @ fenics_convert(k0, "vector", K))
+    return 1e4 * float(beta) * K_mat_one @ fenics_convert(k0, "vector", K)
 
 
 # -------------------------------------------------------------------------
@@ -242,16 +242,20 @@ def apply_rs_hessian(k0_in, k0):
     if J_hat_np is None: reduced_functional_J_hat(k0_vec)
     return np.column_stack([J_hat_np.hessian(k0_vec, k0_in_vec[:, col])for col in range(k0_in_vec.shape[1])])
 
-def apply_solution_operator_z_jacobian(k0_in, k0, annotate=True, verbose=False):
-    """Jacobian action of the solution operator (used by OED)."""
+def apply_solution_operator_z_jacobian(k0_in, k0):
+    """Jacobian of the forward operator applied to a perturbation."""
+    return state_solve_all_jac(k0, k0_in)
+
+def state_solve_all_jac(k0, k0_in, annotate=True, verbose=False):
+    """Jacobian action for a single perturbation (used by OED)."""
     k0_f = fenics_convert(k0, "function", K)
     k0_in_f = fenics_convert(k0_in, "function", K)
     J_list = []
-    # For terminal only: return compute_jacobian_action(kt, Control(k0), k0_in).vector()[:]
 
     def step_callback(_, k_n, __):
         J_list.append(compute_jacobian_action(k_n, Control(k0_f), k0_in_f).vector()[:])
     _time_step_loop(k0_f, step_callback, annotate, verbose)
     return np.array(J_list).flatten()
+
 
 print(f"Succesfully imported {__name__}")
