@@ -51,9 +51,9 @@ fprintf('Objective of z_hifi: \t%.3f\n\n', Jhat_hifi);
 data_interface = MD_Data_Interface_Tracer(u_lofi, z_lofi);
 
 % Generate Priors for u and z
-alpha_z = 1.e-1; % If too large, may cause bouncing.
-alpha_u = (1)^2; % smallar alpha_u -> smaller expected magnitude of discrepancy
-alpha_d = (1.e-2)^2 * alpha_u; % smaller alpha_d -> more certainty (linearity) in data
+alpha_z = 1.e-1;
+alpha_u = (1)^2;
+alpha_d = (1.e-2)^2 * alpha_u;
 beta_t = 50;
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Tracer(alpha_z, opt_lofi);
 

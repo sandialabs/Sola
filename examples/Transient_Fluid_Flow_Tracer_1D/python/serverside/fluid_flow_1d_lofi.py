@@ -39,9 +39,9 @@ T = 0.1
 num_steps = 25
 dt = Constant(T / num_steps)
 t = Constant(0.0)
-gamma = Constant(0.025)
+gamma = Constant(0.05)
 beta = Constant(1e-5)
-reac_fn = lambda c: Constant(10) * c     # - Constant(5)
+reac_fn = lambda c: Constant(1) * c
 
 # External data
 u_timeseries = TimeSeries(f"{root_path}/../../data/velocity_timeseries_midfi_1d")
@@ -98,7 +98,7 @@ def _time_step_loop(k0: Function,callback: Callable[[int, Function, Function], N
         u_timeseries.retrieve(u_n.vector(), float(t))
 
         # variational form (identical to original)
-        F_k = (1 / dt * (k - k_n) * v_k + gamma * k.dx(0) * v_k.dx(0) + u_n * k.dx(0) * v_k + u_n.dx(0) * k * v_k + reac_fn(k) * v_k) * dx - k.dx(0) * v_k * ds
+        F_k = (1 / dt * (k - k_n) * v_k + gamma * k.dx(0) * v_k.dx(0) + u_n * k.dx(0) * v_k + u_n.dx(0) * k * v_k + reac_fn(k) * v_k) * dx# - gamma * k.dx(0) * v_k * ds
         solve(F_k == 0, k, J=derivative(F_k, k))
         k_n.assign(k)
 
@@ -240,7 +240,7 @@ def apply_rs_hessian(k0_in, k0):
 
     # Build the reduced functional lazily if not yet available
     if J_hat_np is None: reduced_functional_J_hat(k0_vec)
-    return np.column_stack([J_hat_np.hessian(k0_vec, k0_in_vec[:, col])for col in range(k0_in_vec.shape[1])])
+    return np.column_stack([J_hat_np.hessian(k0_vec, k0_in_vec[:, col]) for col in range(k0_in_vec.shape[1])])
 
 def apply_solution_operator_z_jacobian(k0_in, k0, annotate=True, verbose=False):
     """Jacobian action of the solution operator (used by OED)."""

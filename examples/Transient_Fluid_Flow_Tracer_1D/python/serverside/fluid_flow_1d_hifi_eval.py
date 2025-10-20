@@ -40,30 +40,35 @@ t = Constant(0);
 # bc_c_right = DirichletBC(CUPRE.sub(0), Expression("2*exp(-(t+1))/pow(t+1, 2)", t=t, degree=2), "near(x[0], 1)")
 
 # Set boundary conditions for u(x = 0) and u(x = 1)
-bc_u_left = DirichletBC(CUPRE.sub(1), Expression("1/(t+1)", t=t, degree=2), "near(x[0], 0)")
-bc_u_right = DirichletBC(CUPRE.sub(1), Expression("2/(t+1)", t=t, degree=2), "near(x[0], 1)")
+bc_u_left   = DirichletBC(CUPRE.sub(1), Constant(2.0), "near(x[0], 0)")
+bc_u_right  = DirichletBC(CUPRE.sub(1), Constant(2.0), "near(x[0], 1)")
 
-# Set boundary conditions for p(x = 0) and p(x = 1)
-bc_p_left = DirichletBC(CUPRE.sub(2), Expression("1/pow(t+1, 2)", t=t, degree=2), "near(x[0], 0)")
-bc_p_right = DirichletBC(CUPRE.sub(2), Expression("1/pow(t+1, 2)", t=t, degree=2), "near(x[0], 1)")
+# pin energy to zero at the ends
+bc_e_left   = DirichletBC(CUPRE.sub(4), Constant(0.0), "near(x[0], 0)")
+bc_e_right  = DirichletBC(CUPRE.sub(4), Constant(0.0), "near(x[0], 1)")
 
-# Set boundary conditions for r(x = 0) and r(x = 1)
-bc_r_left = DirichletBC(CUPRE.sub(3), Expression("1", t=t, degree=2), "near(x[0], 0)")
-bc_r_right = DirichletBC(CUPRE.sub(3), Expression("0.5", t=t, degree=2), "near(x[0], 1)")
+# likewise for pressure
+bc_p_left   = DirichletBC(CUPRE.sub(2), Constant(0.0), "near(x[0], 0)")
+bc_p_right  = DirichletBC(CUPRE.sub(2), Constant(0.0), "near(x[0], 1)")
 
-# Set boundary conditions for e(x = 0) and e(x = 1)
-bc_e_left = DirichletBC(CUPRE.sub(4), Expression("1/pow(t+1, 2)", t=t, degree=2), "near(x[0], 0)")
-bc_e_right = DirichletBC(CUPRE.sub(4), Expression("2/pow(t+1, 2)", t=t, degree=2), "near(x[0], 1)")
+# keep density pinned at unity
+bc_r_left   = DirichletBC(CUPRE.sub(3), Constant(1.0), "near(x[0], 0)")
+bc_r_right  = DirichletBC(CUPRE.sub(3), Constant(1.0), "near(x[0], 1)")
+
 
 # Combine Boundary Conditions
 bcs = [bc_u_left, bc_u_right, bc_p_left, bc_p_right, bc_r_left, bc_r_right, bc_e_left, bc_e_right];
 
 # Set Initial Condition at t = 0
-c0_exp = Expression("0", degree=2) # NOTE: SET TO ZERO from "(x[0]+1)*exp(-1)"
-u0_exp = Expression("x[0]+1", degree=2)
-p0_exp = Expression("1", degree=2)
-r0_exp = Expression("1/(x[0]+1)", degree=2)
-e0_exp = Expression("x[0]+1", degree=2)
+c0_exp = Expression("0", degree=2)
+u0_exp = Expression("2", degree=2)  
+p0_exp = Expression("rcv1*(cnst*(1 - 4*pow(x[0]-0.5, 2)))", degree=2, cnst=0.1, rcv1=100)
+r0_exp = Constant(1.0)
+e0_exp = Expression("cnst*(1 - 4*pow(x[0]-0.5, 2))", degree=2, cnst=0.1)
+# u0_exp = Expression("x[0]+1", degree=2)
+# p0_exp = Constant(1) # doesn't matter
+# r0_exp = Expression("1/(1+x[0])", degree=2)
+# e0_exp = Expression("1+9*x[0]", degree=2)
 
 # Initialize u_n and p_n
 c_n = interpolate(c0_exp, C)
@@ -80,20 +85,20 @@ assign(cupre, ic)
 T = 0.1
 num_steps = 25
 dt = Constant(T/num_steps)
-gamma = Constant(0.025)
-reac_fn = lambda c: Constant(10) * c# - Constant(5)
-reac_fn_multiplier = Constant(100) # NOTE: MODIFIED!!!
+gamma = Constant(0.05)
+reac_fn = lambda c: Constant(1) * c
+reac_fn_multiplier = Constant(1000) # NOTE: MODIFIED!!!
 alpha = Constant(1)
-rcv = Constant(1)
+rcv = Constant(100)
 
 # Weak Form of PDE 
 # F_3 = (1/dt*(e-e_n)*r*v_e + u*e.dx(0)*r*v_e + p*u.dx(0)*v_e + alpha*e.dx(0)*(r*v_e.dx(0) + r.dx(0)*v_e) ) * dx
 # F_c = (1/dt * (c - c_n) * v_c + gamma*c.dx(0)*v_c.dx(0) + u*c.dx(0)*v_c + u.dx(0)*c*v_c + reac_fn(c)*v_c) * dx 
 F_1 = (1/dt*(r-r_n)*v_r + u*r.dx(0)*v_r + r*u.dx(0)*v_r) * dx;
 F_2 = (1/dt*(u-u_n)*r*v_u + u*u.dx(0)*r*v_u - p*v_u.dx(0)) * dx;
-F_3 = (1/dt*(e-e_n)*r*v_e + u*e.dx(0)*r*v_e + p*u.dx(0)*v_e + alpha*e.dx(0)*(r*v_e.dx(0) + r.dx(0)*v_e) - reac_fn_multiplier*r*reac_fn(c.dx(0))*v_e) * dx
+F_3 = (1/dt*(e-e_n)*r*v_e + u*e.dx(0)*r*v_e + p*u.dx(0)*v_e + alpha*e.dx(0)*(r*v_e.dx(0) + r.dx(0)*v_e) - reac_fn_multiplier*r*reac_fn(c)*v_e) * dx
 F_4 = ((p - rcv*r*e)*v_p) * dx;
-F_c = (1/dt * (c - c_n) * v_c + gamma*c.dx(0)*v_c.dx(0) + u*c.dx(0)*v_c + u.dx(0)*c*v_c + reac_fn(c)*v_c) * dx - c.dx(0)*v_c*ds
+F_c = (1/dt * (c - c_n) * v_c + gamma*c.dx(0)*v_c.dx(0) + u*c.dx(0)*v_c + u.dx(0)*c*v_c + reac_fn(c)*v_c) * dx #- gamma*c.dx(0)*v_c*ds (imposing c.dx(0) = 0)
 F = F_1 + F_2 + F_3 + F_4 + F_c
 
 assemble(F); # This is just to get FFC JIT started well before PDE solve.
@@ -111,6 +116,12 @@ def state_solve(c0, return_type: Literal["vertex", "vector", "petsc", "function"
     ic = [c_n, u_n, p_n, r_n, e_n];
     assign(cupre, ic)
     if plot_c: plot(c_n)
+
+    if store_midfi and len(u_timeseries.vector_times()) != 0: 
+        store_midfi = False
+        print("Cannot overwrite existing file.")
+
+    u_temp = Function(U)
 
     # Solve the PDE with time-stepping
     t.assign(0)
@@ -132,6 +143,16 @@ def state_solve(c0, return_type: Literal["vertex", "vector", "petsc", "function"
         if store_midfi: u_timeseries.store(u_n.vector(), float(t))
         if plot_c: plot(c_n)
         if return_all: k_list.append(c_n.vector()[:])
-    
+
+
+        # u_timeseries.retrieve(u_temp.vector(), float(t))
+        # print(np.linalg.norm(u_n.vector()[:]-u_temp.vector()[:])/np.linalg.norm(u_n.vector()[:]))
+        # print(p_n.vector()[:])
+        # print(e_n.vector()[:])
+        # print(fenics_convert(u_n, 'vertex', U))
+        # print(fenics_convert(u_temp, 'vertex', U))
+        # print(u_n.vector()[:])
+        # print(u_temp.vector()[:])
+
     if return_all: return np.array(k_list).flatten()
     return fenics_convert(c_n, return_type);

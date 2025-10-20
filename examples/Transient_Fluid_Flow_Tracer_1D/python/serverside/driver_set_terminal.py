@@ -1,9 +1,11 @@
 import fluid_flow_1d_hifi_eval as hifi
 from pathlib import Path
 from scipy.io import savemat
+import os
 
 root_path = Path(__file__).parent
 
+# os.remove(f"{root_path}/../../data/velocity_timeseries_midfi_1d.h5")
 
 # Solve initial iterate for inverse problem (used for taping adjoints)
 # k0_hifi = hifi.interpolate(hifi.Expression("x[0]*(1-x[0])*(9-10*x[0])", degree=1), hifi.C)

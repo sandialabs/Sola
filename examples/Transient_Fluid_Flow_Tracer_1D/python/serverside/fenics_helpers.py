@@ -106,15 +106,15 @@ def convert_to_numpy_vector(fenics_input, fun_space=None):
         return np.array(fenics_input);
     elif isinstance(fenics_input, PETScVector):
         return fenics_input[:]
-    fenics_function = convert_to_function(fenics_input);
+    fenics_function = convert_to_function(fenics_input, fun_space);
     return fenics_function.vector()[:]
 
 def convert_to_petsc_vector(fenics_input, fun_space=None):
     if isinstance(fenics_input, PETScVector):
         return fenics_input
-    fenics_function = convert_to_function(fenics_input);
+    fenics_function = convert_to_function(fenics_input, fun_space);
     return fenics_function.vector()
 
 def convert_to_vertex(fenics_input, fun_space=None):
-    fenics_function = convert_to_function(fenics_input);
+    fenics_function = convert_to_function(fenics_input, fun_space);
     return fenics_function.compute_vertex_values()
