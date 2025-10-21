@@ -1,85 +1,14 @@
 %%
 clear;
 close all;
+clc
 addpath(genpath('../../../src'));
 rng(121234);
 
-m = 501;
+suppress_figures = true;
 
-[M, S] = Assemble_Mass_and_Stiffness(m);
-
-data_interface = MD_Data_Interface_synthetic_test_laplacian(m);
-
-u_hyperparam_interface = MD_u_Hyperparameter_Interface_synthetic_test_laplacian(m);
-u_hyperparam_interface.alpha_u = 0.048969233204560;
-u_hyperparam_interface.beta_u = 0.007702351792463;
-
-%%
-u_prior_interface = MD_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface);
-
-M_u = M;
-E_u = u_hyperparam_interface.beta_u * S + M;
-M_u_inv = linsolve(M_u,eye(m));
-W_u = (1/u_hyperparam_interface.alpha_u) * E_u' * M_u_inv * E_u;
-E_u_inv = linsolve(E_u,eye(m));
-W_u_inv = u_hyperparam_interface.alpha_u * E_u_inv * M_u * E_u_inv;
-
-
-%%
-diff1 = [];
-u = randn(m,1);
-tmp1 = M * u;
-tmp2 = u_prior_interface.Apply_M_u(u);
-local_diff = norm(tmp1 - tmp2)/norm(tmp1);
-diff1 = [diff1 ; local_diff];
-
-u = randn(m,1);
-tmp1 = W_u_inv * u;
-tmp2 = u_prior_interface.Apply_W_u_Inverse(u);
-local_diff = norm(tmp1 - tmp2)/norm(tmp1);
-diff1 = [diff1 ; local_diff];
-
-u = randn(m,1);
-scalar = (1.e-2) * rand;
-tmp1 = linsolve(W_u + scalar*M_u,u);
-tmp2 = u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(u,scalar);
-local_diff = norm(tmp1 - tmp2)/norm(tmp1);
-diff1 = [diff1 ; local_diff];
-
-if max(diff1) > 1.e-8
-    disp('Error in model_discrepancy/synthetic_test_laplacian');
-end
-
-%%
-u_prior_interface = MD_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface, true);
-
-%%
-diff2 = [];
-u = randn(m,1);
-tmp1 = M * u;
-tmp2 = u_prior_interface.Apply_M_u(u);
-local_diff = norm(tmp1 - tmp2)/norm(tmp1);
-diff2 = [diff2 ; local_diff];
-
-u = randn(m,1);
-tmp1 = W_u_inv * u;
-tmp2 = u_prior_interface.Apply_W_u_Inverse(u);
-local_diff = norm(tmp1 - tmp2)/norm(tmp1);
-diff2 = [diff2 ; local_diff];
-
-u = randn(m,1);
-scalar = (1.e-2) * rand;
-tmp1 = linsolve(W_u + scalar*M_u,u);
-tmp2 = u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(u,scalar);
-local_diff = norm(tmp1 - tmp2)/norm(tmp1);
-diff2 = [diff2 ; local_diff];
-
-if max(diff2) > 1.e-4
-    disp('Error in model_discrepancy/synthetic_test_laplacian');
-end
-
-%%
 m = 51;
+x = linspace(0, 1, m)';
 
 [M, S] = Assemble_Mass_and_Stiffness(m);
 
@@ -88,66 +17,96 @@ data_interface = MD_Data_Interface_synthetic_test_laplacian(m);
 u_hyperparam_interface = MD_u_Hyperparameter_Interface_synthetic_test_laplacian(m);
 u_hyperparam_interface.alpha_u = 0.048969233204560;
 u_hyperparam_interface.beta_u = 0.007702351792463;
-
-%%
 u_prior_interface = MD_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface);
 
-M_u = M;
-E_u = u_hyperparam_interface.beta_u * S + M;
-M_u_inv = linsolve(M_u,eye(m));
-W_u = (1/u_hyperparam_interface.alpha_u) * E_u' * M_u_inv * E_u;
-E_u_inv = linsolve(E_u,eye(m));
-W_u_inv = u_hyperparam_interface.alpha_u * E_u_inv * M_u * E_u_inv;
+z_hyperparam_interface = MD_z_Hyperparameter_Interface_synthetic_test_laplacian(m);
+z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S, M, data_interface, z_hyperparam_interface, u_prior_interface);
 
 %%
+num_prior_samples = 100;
+md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 
-sampling_diff1 = [];
-num_samps = 10000;
-R = chol(W_u);
-tmp1 = linsolve(R,randn(m,num_samps));                 
-test1 = cov(tmp1');
-tmp2 = u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samps);
-test2 = cov(tmp2');
-local_diff = norm(test1-test2,'fro')/norm(test1,'fro');
-sampling_diff1 = [sampling_diff1 ; local_diff];
+%%
+delta_prior_samples_zopt = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
 
-scalar = (1.e-2) * rand;
-R = chol(W_u + scalar*M_u);
-tmp1 = linsolve(R,randn(m,num_samps));  
-test1 = cov(tmp1');
-tmp2 = u_prior_interface.Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(num_samps,scalar);
-test2 = cov(tmp2');
-local_diff = norm(test1-test2,'fro')/norm(test1,'fro');
-sampling_diff1 = [sampling_diff1 ; local_diff];
+if ~suppress_figures
+    figure;
+    plot(x, delta_prior_samples_zopt, 'LineWidth', 3, 'color', [.9, .9, .9]);
+end
 
-if max(sampling_diff1) > 5.e-2
-    disp('Error in model_discrepancy/synthetic_test_laplacian');
+z = zeros(m, 3);
+z(:, 1) = x;
+z(:, 2) = x.^2 + 1;
+z(:, 3) = sin(2 * pi * x);
+delta_prior_samples = md_prior_sampling.Prior_Discrepancy_Samples(z, num_prior_samples);
+if ~suppress_figures
+    for k = 1:10
+        figure;
+        hold on;
+        plot(x, delta_prior_samples{k}, 'LineWidth', 3);
+    end
 end
 
 %%
-u_prior_interface = MD_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface, true);
+md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
+num_post_samples = 100;
+md_post_sampling.Compute_Posterior_Data(u_hyperparam_interface.alpha_d, num_post_samples);
+Z_test = randn(m, 3);
+Z_test(:, 1:2) = md_post_sampling.post_data.Z;
+Z_test(:, 3) = 1.5 * ones(m, 1);
+[delta_mean, delta_samples] = md_post_sampling.Posterior_Discrepancy_Samples(Z_test);
+
+if ~suppress_figures
+    figure;
+    hold on;
+    plot(x, md_post_sampling.post_data.D(:, 1), 'color', 'black', 'LineWidth', 3);
+    plot(x, delta_mean{1}, '--', 'color', 'red', 'LineWidth', 3);
+    for k = 1:num_post_samples
+        plot(x, delta_samples{1}(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
+    end
+    plot(x, md_post_sampling.post_data.D(:, 1), 'color', 'black', 'LineWidth', 3);
+    plot(x, delta_mean{1}, '--', 'color', 'red', 'LineWidth', 3);
+
+    figure;
+    hold on;
+    plot(x, md_post_sampling.post_data.D(:, 2), 'color', 'black', 'LineWidth', 3);
+    plot(x, delta_mean{2}, '--', 'color', 'red', 'LineWidth', 3);
+    for k = 1:num_post_samples
+        plot(x, delta_samples{2}(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
+    end
+    plot(x, md_post_sampling.post_data.D(:, 2), 'color', 'black', 'LineWidth', 3);
+    plot(x, delta_mean{2}, '--', 'color', 'red', 'LineWidth', 3);
+
+    figure;
+    hold on;
+    plot(x, delta_mean{3}, '--', 'color', 'red', 'LineWidth', 3);
+    for k = 1:num_post_samples
+        plot(x, delta_samples{3}(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
+    end
+    plot(x, delta_mean{3}, '--', 'color', 'red', 'LineWidth', 3);
+
+end
 
 %%
+opt_prob_interface = MD_Opt_Prob_Interface_synthetic_test_laplacian(m);
+md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
+num_evals = 20;
+oversampling = 10;
+md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
+md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 
-sampling_diff2 = [];
-num_samps = 10000;
-R = chol(W_u);
-tmp1 = linsolve(R,randn(m,num_samps));                 
-test1 = cov(tmp1');
-tmp2 = u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_samps);
-test2 = cov(tmp2');
-local_diff = norm(test1-test2,'fro')/norm(test1,'fro');
-sampling_diff2 = [sampling_diff2 ; local_diff];
+[z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
 
-scalar = (1.e-2) * rand;
-R = chol(W_u + scalar*M_u);
-tmp1 = linsolve(R,randn(m,num_samps));  
-test1 = cov(tmp1');
-tmp2 = u_prior_interface.Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(num_samps,scalar);
-test2 = cov(tmp2');
-local_diff = norm(test1-test2,'fro')/norm(test1,'fro');
-sampling_diff2 = [sampling_diff2 ; local_diff];
-
-if max(sampling_diff2) > 5.e-2
-    disp('Error in model_discrepancy/synthetic_test_laplacian');
+if ~suppress_figures
+    figure;
+    hold on;
+    plot(x, (1 + x) / (1.2^(1 / 3)), 'color', 'black', 'LineWidth', 3);
+    plot(x, 1 + x, 'color', 'cyan', 'LineWidth', 3);
+    plot(x, z_update_mean, '--', 'color', 'red', 'LineWidth', 3);
+    for k = 1:num_post_samples
+        plot(x, z_update_samples(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
+    end
+    plot(x, (1 + x) / (1.2^(1 / 3)), 'color', 'black', 'LineWidth', 3);
+    plot(x, 1 + x, 'color', 'cyan', 'LineWidth', 3);
+    plot(x, z_update_mean, '--', 'color', 'red', 'LineWidth', 3);
 end
