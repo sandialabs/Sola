@@ -2,6 +2,7 @@ clear;
 close all;
 clc;
 addpath(genpath('../../src'));
+rng(12342)
 
 m = load('Optimization_Results.mat', 'm').m;
 vel_coeff = load('Optimization_Results.mat', 'vel_coeff').vel_coeff;
@@ -77,7 +78,7 @@ plot(x, discrepancy_z1(:, xi1) - discrepancy_z1(:, xi2), "Color", 'magenta', 'Li
 legend({'$(S(z_1,\xi_1)-\tilde{S}(z_1,\xi_1))-(S(z_1,\xi_2)-\tilde{S}(z_1,\xi_2))$', '$\delta(z_1,\theta_1)-\delta(z_1,\theta_2)$'}, 'Interpreter', 'latex');
 ylim([-r, r]);
 set(gca, 'fontsize', 20);
-%exportgraphics(gcf, 'z_1_xi_12.pdf', 'BackgroundColor', 'none', 'ContentType', 'vector');
+%exportgraphics(gcf, 'z_1_xi_12.eps', 'BackgroundColor', 'none', 'ContentType', 'vector');
 
 figure;
 hold on;
@@ -87,7 +88,7 @@ plot(x, discrepancy_z1(:, xi1) - discrepancy_z1(:, xi3), "Color", 'magenta', 'Li
 legend({'$(S(z_1,\xi_3)-\tilde{S}(z_1,\xi_3))-(S(z_1,\xi_3)-\tilde{S}(z_1,\xi_3))$', '$\delta(z_1,\theta_1)-\delta(z_1,\theta_3)$'}, 'Interpreter', 'latex');
 ylim([-r, r]);
 set(gca, 'fontsize', 20);
-%exportgraphics(gcf, 'z_1_xi_13.pdf', 'BackgroundColor', 'none', 'ContentType', 'vector');
+%exportgraphics(gcf, 'z_1_xi_13.eps', 'BackgroundColor', 'none', 'ContentType', 'vector');
 
 figure;
 hold on;
@@ -97,14 +98,14 @@ plot(x, discrepancy_z3(:, xi1) - discrepancy_z3(:, xi2), "Color", 'magenta', 'Li
 legend({'$(S(z_3,\xi_1)-\tilde{S}(z_3,\xi_1))-(S(z_3,\xi_2)-\tilde{S}(z_3,\xi_2))$', '$\delta(z_3,\theta_1)-\delta(z_3,\theta_2)$'}, 'Interpreter', 'latex');
 ylim([-r, r]);
 set(gca, 'fontsize', 20);
-%exportgraphics(gcf, 'z_3_xi_12.pdf', 'BackgroundColor', 'none', 'ContentType', 'vector');
+%exportgraphics(gcf, 'z_3_xi_12.eps', 'BackgroundColor', 'none', 'ContentType', 'vector');
 
 figure;
 hold on;
 plot(x, discrepancy_z3(:, xi1) - discrepancy_z3(:, xi3), "Color", 'magenta', 'LineWidth', 3);
 plot(x, delta_samples_z3(:, :, xi1) - delta_samples_z3(:, :, xi3), "Color", [.9, .9, .9], 'LineWidth', 3);
 plot(x, discrepancy_z3(:, xi1) - discrepancy_z3(:, xi3), "Color", 'magenta', 'LineWidth', 3);
-legend({'$(S(z_3,\xi_3)-\tilde{S}(z_3,\xi_3))-(S(z_3,\xi_3)-\tilde{S}(z_3,\xi_3))$', '$\delta(z_3,\theta_1)-\delta(z_3,\theta_3)$'}, 'Interpreter', 'latex');
+legend({'$(S(z_3,\xi_1)-\tilde{S}(z_3,\xi_1))-(S(z_3,\xi_3)-\tilde{S}(z_3,\xi_3))$', '$\delta(z_3,\theta_1)-\delta(z_3,\theta_3)$'}, 'Interpreter', 'latex');
 ylim([-r, r]);
 set(gca, 'fontsize', 20);
-%exportgraphics(gcf, 'z_3_xi_13.pdf', 'BackgroundColor', 'none', 'ContentType', 'vector');
+%exportgraphics(gcf, 'z_3_xi_13.eps', 'BackgroundColor', 'none', 'ContentType', 'vector');
