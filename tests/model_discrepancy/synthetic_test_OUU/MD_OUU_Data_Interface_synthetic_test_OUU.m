@@ -34,7 +34,7 @@ classdef MD_OUU_Data_Interface_synthetic_test_OUU < MD_OUU_Data_Interface
     methods
 
         function this = MD_OUU_Data_Interface_synthetic_test_OUU()
-
+            this@MD_OUU_Data_Interface(30);
         end
 
     end

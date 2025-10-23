@@ -14,10 +14,6 @@ classdef MD_Data_Interface_Diff < MD_OUU_Data_Interface
             z_opt = load('Optimization_Results.mat', 'z_lofi').z_lofi;
         end
 
-        function [Xi] = Load_Xi(this)
-            Xi = load('Optimization_Results.mat', 'diff_coeff').diff_coeff;
-        end
-
         function [Z] = Load_Z_Data(this)
             Z = load('Optimization_Results.mat', 'Z').Z;
         end
@@ -29,7 +25,7 @@ classdef MD_Data_Interface_Diff < MD_OUU_Data_Interface
         end
 
         function this = MD_Data_Interface_Diff()
-
+            this@MD_OUU_Data_Interface(3);
         end
 
     end

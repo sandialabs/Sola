@@ -11,7 +11,7 @@ m = 51;
 data_interface = MD_OUU_Data_Interface_synthetic_test_OUU();
 data_interface.Load_Data();
 
-Xi = data_interface.Xi;
+Xi = load('Optimization_Results.mat','Xi').Xi;
 N = size(Xi, 2);
 obj = Synthetic_Test_OUU_Objective(m);
 cons = cell(N, 1);
@@ -22,18 +22,10 @@ opt = Reduced_Space_Optimization_Under_Uncertainty(obj, cons);
 x = obj.x;
 
 opt_prob_interface = MD_OUU_Opt_Prob_Interface_Sabl(data_interface, opt);
-
-n_r = size(Xi, 2);
-dist = zeros(n_r, n_r);
-for s = 1:n_r
-    for k = 1:n_r
-        dist(s, k) = norm(Xi(:, s) - Xi(:, k))^2;
-    end
-end
-K = exp(-.5 * dist);
-
 us_prior_interface = MD_u_Prior_Interface_synthetic_test_OUU(m);
-u_prior_interface = MD_OUU_u_Prior_Interface(us_prior_interface, data_interface, K);
+
+ensemble_weighting = MD_OUU_Ensemble_Weighting_Matrix(data_interface, us_prior_interface);
+u_prior_interface = MD_OUU_u_Prior_Interface(us_prior_interface, data_interface, ensemble_weighting);
 z_prior_interface = MD_z_Prior_Interface_synthetic_test_OUU(m);
 
 %%
@@ -53,7 +45,7 @@ if ~suppress_figures
     k = 1;
     u = data_interface.Reshape_State_to_Mat(prior_delta_samples_zopt(:, k));
 
-    c = u_prior_interface.K(1, :);
+    c = ensemble_weighting.C(1, :);
     c_normalized = (c - min(c)) / (max(c) - min(c));
     n = size(u, 2);
     figure;
@@ -91,7 +83,7 @@ if ~suppress_figures
 
     k = 20;
     u = data_interface.Reshape_State_to_Mat(delta_samples{i}(:, k));
-    c = u_prior_interface.K(1, :);
+    c =ensemble_weighting.C(1, :);
     c_normalized = (c - min(c)) / (max(c) - min(c));
     n = size(u, 2);
     figure;
@@ -124,7 +116,7 @@ if ~suppress_figures
 
     k = 20;
     u = data_interface.Reshape_State_to_Mat(delta_samples{i}(:, k));
-    c = u_prior_interface.K(1, :);
+    c = ensemble_weighting.C(1, :);
     c_normalized = (c - min(c)) / (max(c) - min(c));
     n = size(u, 2);
     figure;

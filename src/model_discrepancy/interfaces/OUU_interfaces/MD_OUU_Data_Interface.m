@@ -1,7 +1,6 @@
 classdef MD_OUU_Data_Interface < MD_Data_Interface
 
     properties
-        Xi
         n_u
         n_r
     end
@@ -12,9 +11,6 @@ classdef MD_OUU_Data_Interface < MD_Data_Interface
         [us_opt] = Load_Optimal_us(this, s)
 
         [z_opt] = Load_Optimal_z(this)
-
-        % Xi should be a n_xi x n_r matrix
-        [Xi] = Load_Xi(this)
 
     end
 
@@ -97,9 +93,8 @@ classdef MD_OUU_Data_Interface < MD_Data_Interface
     %% Constructor and helper functions
     methods
 
-        function this = MD_OUU_Data_Interface()
-            this.Xi =  this.Load_Xi();
-            this.n_r = size(this.Xi, 2);
+        function this = MD_OUU_Data_Interface(n_r)
+            this.n_r = n_r;
         end
 
     end

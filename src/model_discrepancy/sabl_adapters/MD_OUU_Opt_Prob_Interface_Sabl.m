@@ -59,7 +59,7 @@ classdef MD_OUU_Opt_Prob_Interface_Sabl < MD_OUU_Opt_Prob_Interface
             [~, ~, this.hessian_data] = this.sabl_opt.Jhat(this.z_current);
             this.m = (size(this.hessian_data, 1) - length(this.z_current)) / 2;
             this.u_current = this.hessian_data(1:this.m, :);
-            this.n_r = size(md_data_interface.Xi, 2);
+            this.n_r = length(sabl_opt.cons);
             this.rs_opt_per_sample = cell(this.n_r, 1);
             for s = 1:this.n_r
                 this.rs_opt_per_sample{s} = Reduced_Space_Optimization(sabl_opt.obj, sabl_opt.cons{s});
