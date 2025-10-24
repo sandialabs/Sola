@@ -27,7 +27,9 @@ classdef MD_Lumped_Mass_u_Prior_Interface < MD_Scaled_u_Prior_Interface
 
 
         function [u_out] = Apply_W_u_Acute_Inverse(this, u_in)
-            u_out = this.W_u_acute \ u_in;
+            tmp1 = this.E_u' \ u_in;
+            tmp2 = diag(this.M_lumped_diag)*tmp1;
+            u_out = this.E_u \ tmp2;
         end
 
         function [u_out] = Sample_with_Covariance_W_u_Acute_Inverse(this, num_samples)
@@ -36,43 +38,10 @@ classdef MD_Lumped_Mass_u_Prior_Interface < MD_Scaled_u_Prior_Interface
         end
 
         function [u_out] = Sample_with_Covariance_W_u_Acute_Plus_scalar_M_u_Inverse(this, num_samples, scalar)
-
-            u_out = zeros(size(this.M,1),num_samples);
-
-            u_trial = this.Sample_with_Covariance_W_u_Acute_Inverse(num_samples);
-            tmp1 = this.Apply_M_u(u_trial);
-            tmp2 = sum(u_trial' .* permute(tmp1, [2, 1, 3]), 2); % Forming u_trial' * M * u_trial
-            r = exp(-0.5 * scalar * tmp2);
-            u = rand(num_samples,1);
-            I = find(u < r);
-
-            samples_so_far = length(I);
-            u_out(:,1:samples_so_far) = u_trial(:,I);
-
-            accept_rate = 1-(num_samples-samples_so_far)/num_samples;
-            if accept_rate < 0.8
-                disp(['Warning: Acceptance rate in Sample_with_Covariance_W_u_Acute_Plus_scalar_M_u_Inverse is ',num2str(accept_rate)])
-            end
-
-            samples_to_generate = round((num_samples-samples_so_far)/accept_rate);
-            while samples_to_generate > 0
-                u_trial = this.Sample_with_Covariance_W_u_Acute_Inverse(samples_to_generate);
-                tmp1 = this.Apply_M_u(u_trial);
-                tmp2 = sum(u_trial' .* permute(tmp1, [2, 1, 3]), 2); % Forming u_trial' * M * u_trial
-                r = exp(-0.5 * scalar * tmp2);
-                u = rand(samples_to_generate,1);
-
-                I = find(u < r);
-                samples_here = length(I);
-                if samples_here > samples_to_generate
-                    I = I(1:samples_to_generate);
-                    samples_here = samples_to_generate;
-                end
-
-                u_out(:,(samples_so_far+1):(samples_so_far+samples_here)) = u_trial(:,I);
-                samples_so_far = samples_so_far+samples_here;
-                samples_to_generate = num_samples - samples_so_far;
-            end
+            A = this.W_u_acute + scalar * this.M;
+            W_u_Acute_Plus_scalar_M_u_sqrt = Sparse_Matrix_Sqrt(A);
+            omega = randn(this.n_u,num_samples);
+            u_out = W_u_Acute_Plus_scalar_M_u_sqrt.Matrix_Sqrt_Apply(omega);
         end
 
     end

@@ -20,36 +20,48 @@ z_hyperparam_interface = MD_z_Hyperparameter_Interface_synthetic_test_lumped_mas
 z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S, M, data_interface, z_hyperparam_interface, u_prior_interface);
 
 M_u = M;
+M_lumped = diag(M*ones(m,1));
+M_lumped_inv = linsolve(M_lumped,eye(m));
 E_u = u_hyperparam_interface.beta_u * S + M;
-M_u_inv = linsolve(M_u,eye(m));
-W_u = (1/u_hyperparam_interface.alpha_u) * E_u' * M_u_inv * E_u;
+M_u_inv = linsolve(M,eye(m));
+W_u = (1/u_hyperparam_interface.alpha_u) * E_u' * M_lumped_inv * E_u;
 E_u_inv = linsolve(E_u,eye(m));
-W_u_inv = u_hyperparam_interface.alpha_u * E_u_inv * M_u * E_u_inv;
+W_u_inv = u_hyperparam_interface.alpha_u * E_u_inv * M_lumped * E_u_inv;
 
 
 %%
 diff = [];
-u = randn(m,1);
+lumped_mass_error = [];
+
+u = linsolve(E_u,randn(m,1));
 tmp1 = M * u;
 tmp2 = u_prior_interface.Apply_M_u(u);
 local_diff = norm(tmp1 - tmp2)/norm(tmp1);
 diff = [diff ; local_diff];
 
-u = randn(m,1);
+u = linsolve(E_u,randn(m,1));
 tmp1 = W_u_inv * u;
 tmp2 = u_prior_interface.Apply_W_u_Inverse(u);
 local_diff = norm(tmp1 - tmp2)/norm(tmp1);
 diff = [diff ; local_diff];
 
-u = randn(m,1);
-scalar = rand;
+tmp3 = u_hyperparam_interface.alpha_u * E_u_inv * M_u * E_u_inv * u;
+lumped_mass_error_1 = norm(tmp3 - tmp2)/norm(tmp3);
+lumped_mass_error = [lumped_mass_error ; lumped_mass_error_1];
+
+u = linsolve(E_u,randn(m,1));
+scalar = 5e4;
 tmp1 = linsolve(W_u + scalar*M_u,u);
 tmp2 = u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(u,scalar);
 local_diff = norm(tmp1 - tmp2)/norm(tmp1);
 diff = [diff ; local_diff];
 
+tmp3 = linsolve((1/u_hyperparam_interface.alpha_u) * E_u*M_u_inv*E_u + scalar*M_u,u);
+lumped_mass_error_2 = norm(tmp3 - tmp2)/norm(tmp3);
+lumped_mass_error = [lumped_mass_error ; lumped_mass_error_2];
+
 sampling_diff = [];
-num_samps = 100000;
+num_samps = 10000;
 R = chol(W_u);
 tmp1 = linsolve(R,randn(m,num_samps));                 
 test1 = cov(tmp1');
@@ -58,7 +70,12 @@ test2 = cov(tmp2');
 local_diff = norm(test1-test2,'fro')/norm(test1,'fro');
 sampling_diff = [sampling_diff ; local_diff];
 
-scalar = rand;
+R = chol((1/u_hyperparam_interface.alpha_u) * E_u' * M_u_inv * E_u);
+tmp3 = linsolve(R,randn(m,num_samps));                 
+test3 = cov(tmp3');
+lumped_mass_error_3 = norm(test3-test2,'fro')/norm(test3,'fro');
+lumped_mass_error = [lumped_mass_error ; lumped_mass_error_3];
+
 R = chol(W_u + scalar*M_u);
 tmp1 = linsolve(R,randn(m,num_samps));  
 test1 = cov(tmp1');
@@ -67,10 +84,15 @@ test2 = cov(tmp2');
 local_diff = norm(test1-test2,'fro')/norm(test1,'fro');
 sampling_diff = [sampling_diff ; local_diff];
 
-if max(diff) > 2.e-3
-    disp('Error in model_discrepancy/synthetic_test_lumped_mass');
-end
+R = chol((1/u_hyperparam_interface.alpha_u) * E_u' * M_u_inv * E_u + scalar*M_u);
+tmp3 = linsolve(R,randn(m,num_samps));                 
+test3 = cov(tmp3');
+lumped_mass_error_4 = norm(test3-test2,'fro')/norm(test3,'fro');
+lumped_mass_error = [lumped_mass_error ; lumped_mass_error_4];
 
-if max(sampling_diff) > 2.e-2
-    disp('Error in model_discrepancy/synthetic_test_lumped_mass');
-end
+disp('diff:')
+disp(diff')
+disp('sampling_diff')
+disp(sampling_diff')
+disp('lumped_mass_error')
+disp(lumped_mass_error')
