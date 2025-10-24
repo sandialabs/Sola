@@ -10,6 +10,7 @@ classdef MD_OUU_Ensemble_Weighting_Matrix < handle
         reg_opt
         reg_opt_min_cond_var_percent
 
+        Eta
         W_s
         W_s_inv
         R_inv
@@ -47,34 +48,46 @@ classdef MD_OUU_Ensemble_Weighting_Matrix < handle
         function [] = Compute_Matrices(this)
             ens_size = size(this.md_ouu_data_interface.Reshape_State_to_Mat(this.md_ouu_data_interface.D(:,1)),2);
             N = size(this.md_ouu_data_interface.D,2);
-            T = zeros(ens_size,ens_size,N);
+            this.Eta = zeros(ens_size,ens_size,N);
             for i = 1:N
                 d = this.md_ouu_data_interface.Reshape_State_to_Mat(this.md_ouu_data_interface.D(:,i));
                 for s = 1:ens_size
                     for k = 1:ens_size
-                        T(s,k,i) = (d(:,s) - d(:,k))' * this.us_prior_interface.Apply_M_u(d(:,s) - d(:,k));
+                        this.Eta(s,k,i) = (d(:,s) - d(:,k))' * this.us_prior_interface.Apply_M_u(d(:,s) - d(:,k));
                     end
-                    T(s,s,i) = d(:,s)' * this.us_prior_interface.Apply_M_u(d(:,s));
+                    this.Eta(s,s,i) = d(:,s)' * this.us_prior_interface.Apply_M_u(d(:,s));
                 end
             end
-            T = mean(T,3) + 1.e-16;
+            this.Eta = mean(this.Eta,3) + 1.e-16;
 
-            A = diag(sqrt(diag(T))) * (1./T) * diag(sqrt(diag(T)));
-
-            [~,i] = min(sum(T,1));
-            tmp = T(i,:);
+            [~,i] = min(sum(this.Eta,1));
+            tmp = this.Eta(i,:);
             tmp(i) = Inf;
             [~,j] = min(tmp);
 
+            A = diag(sqrt(diag(this.Eta))) * (1./this.Eta) * diag(sqrt(diag(this.Eta)));
             obj_fun = @(reg_coeff) this.Min_Cond_Var_Obj(A,reg_coeff,i,j);
 
-            x0 = 0.05;
-            lb = 0; 
-            ub = 1; 
+            x0 = 0.1;
+            lb = 0;
+            ub = 1;
             options = optimoptions('fmincon', 'Display', 'none', 'Algorithm', 'sqp');
-            this.reg_opt = fmincon(obj_fun, x0, [], [], [], [], lb, ub, [], options);
+            reg_coeff = fmincon(obj_fun, x0, [], [], [], [], lb, ub, [], options);
 
+            this.Set_Matrices(reg_coeff);
+        end
+
+        function [] = Set_Matrices(this,reg_coeff)
+            
+            this.reg_opt = reg_coeff;
+            A = diag(sqrt(diag(this.Eta))) * (1./this.Eta) * diag(sqrt(diag(this.Eta)));
             [this.W_s, this.W_s_inv, this.R_inv, this.C] = this.Assemble_Matrices(A, this.reg_opt);
+
+            [~,i] = min(sum(this.Eta,1));
+            tmp = this.Eta(i,:);
+            tmp(i) = Inf;
+            [~,j] = min(tmp);
+
             this.reg_opt_min_cond_var_percent = (this.W_s_inv(i,i) - this.W_s_inv(i,j)^2/this.W_s_inv(j,j)) / this.W_s_inv(i,i);
 
             if abs(this.reg_opt_min_cond_var_percent - this.min_cond_var_percent)/abs(this.reg_opt_min_cond_var_percent) > 1.e-2

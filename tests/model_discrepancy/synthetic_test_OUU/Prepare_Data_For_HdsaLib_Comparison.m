@@ -22,7 +22,7 @@ fileID = fopen('Z.txt', 'w');
 fprintf(fileID, '%f %f\n', data_interface.Z');
 fclose(fileID);
 
-Xi = data_interface.Xi;
+Xi = load('Optimization_Results.mat','Xi').Xi;
 N = size(Xi, 2);
 obj = Synthetic_Test_OUU_Objective(m);
 cons = cell(N, 1);
@@ -34,17 +34,10 @@ x = obj.x;
 
 opt_prob_interface = MD_OUU_Opt_Prob_Interface_Sabl(data_interface, opt);
 
-n_r = size(Xi, 2);
-dist = zeros(n_r, n_r);
-for s = 1:n_r
-    for k = 1:n_r
-        dist(s, k) = norm(Xi(:, s) - Xi(:, k))^2;
-    end
-end
-K = exp(-.5 * dist);
-
 us_prior_interface = MD_u_Prior_Interface_synthetic_test_OUU(m);
-u_prior_interface = MD_OUU_u_Prior_Interface(us_prior_interface, data_interface, K);
+ensemble_weighting = MD_OUU_Ensemble_Weighting_Matrix(data_interface, us_prior_interface);
+ensemble_weighting.Set_Matrices(0.357);
+u_prior_interface = MD_OUU_u_Prior_Interface(us_prior_interface, data_interface, ensemble_weighting);
 z_prior_interface = MD_z_Prior_Interface_synthetic_test_OUU(m);
 
 %%
