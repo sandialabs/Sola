@@ -1,7 +1,6 @@
 %%
 clear;
 close all;
-clc
 addpath(genpath('../../../src'));
 rng(121234);
 
@@ -12,14 +11,14 @@ x = linspace(0, 1, m)';
 
 [M, S] = Assemble_Mass_and_Stiffness(m);
 
-data_interface = MD_Data_Interface_synthetic_test_laplacian(m);
+data_interface = MD_Data_Interface_synthetic_test_lumped_mass(m);
 
-u_hyperparam_interface = MD_u_Hyperparameter_Interface_synthetic_test_laplacian(m);
+u_hyperparam_interface = MD_u_Hyperparameter_Interface_synthetic_test_lumped_mass(m);
 u_hyperparam_interface.alpha_u = 0.048969233204560;
 u_hyperparam_interface.beta_u = 0.007702351792463;
-u_prior_interface = MD_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface);
+u_prior_interface = MD_Lumped_Mass_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface);
 
-z_hyperparam_interface = MD_z_Hyperparameter_Interface_synthetic_test_laplacian(m);
+z_hyperparam_interface = MD_z_Hyperparameter_Interface_synthetic_test_lumped_mass(m);
 z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S, M, data_interface, z_hyperparam_interface, u_prior_interface);
 
 %%
@@ -88,7 +87,7 @@ if ~suppress_figures
 end
 
 %%
-opt_prob_interface = MD_Opt_Prob_Interface_synthetic_test_laplacian(m);
+opt_prob_interface = MD_Opt_Prob_Interface_synthetic_test_lumped_mass(m);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 num_evals = 20;
 oversampling = 10;
@@ -109,4 +108,18 @@ if ~suppress_figures
     plot(x, (1 + x) / (1.2^(1 / 3)), 'color', 'black', 'LineWidth', 3);
     plot(x, 1 + x, 'color', 'cyan', 'LineWidth', 3);
     plot(x, z_update_mean, '--', 'color', 'red', 'LineWidth', 3);
+end
+
+%%
+z_mean_ref = load('reference_solution.mat').z_update_mean;
+z_samples_ref = load('reference_solution.mat').z_update_samples;
+delta_samples_ref = load('reference_solution.mat','delta_samples').delta_samples;
+ref_diff = norm(z_mean_ref - z_update_mean) / norm(z_update_mean);
+ref_diff = max(ref_diff, norm(z_update_samples - z_samples_ref) / norm(z_update_samples));
+ref_diff = max(ref_diff, norm(delta_samples_ref{1}-delta_samples{1},'fro')/norm(delta_samples_ref{1},'fro'));
+ref_diff = max(ref_diff, norm(delta_samples_ref{2}-delta_samples{2},'fro')/norm(delta_samples_ref{2},'fro'));
+ref_diff = max(ref_diff, norm(delta_samples_ref{3}-delta_samples{3},'fro')/norm(delta_samples_ref{3},'fro'));
+if ref_diff > 1.e-9
+    disp('model_discrepancy_sythetic_test_lumped_mass:');
+    disp(ref_diff);
 end

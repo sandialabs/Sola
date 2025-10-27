@@ -30,6 +30,10 @@ cd synthetic_test_hyperparam_1D/;
 Driver;
 cd ..;
 
+cd synthetic_test_lumped_mass/;
+Driver_MD;
+cd ..;
+
 cd synthetic_test_multi_state/;
 Driver;
 cd ..;
