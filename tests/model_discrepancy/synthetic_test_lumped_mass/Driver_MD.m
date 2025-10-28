@@ -16,9 +16,12 @@ data_interface = MD_Data_Interface_synthetic_test_lumped_mass(m);
 u_hyperparam_interface = MD_u_Hyperparameter_Interface_synthetic_test_lumped_mass(m);
 u_hyperparam_interface.alpha_u = 0.048969233204560;
 u_hyperparam_interface.beta_u = 0.007702351792463;
+u_hyperparam_interface.alpha_d = 2.177109166165424e-07;
 u_prior_interface = MD_Lumped_Mass_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface);
 
 z_hyperparam_interface = MD_z_Hyperparameter_Interface_synthetic_test_lumped_mass(m);
+z_hyperparam_interface.alpha_z = 4.228308007349111;
+z_hyperparam_interface.beta_z = 0.009305846653704;
 z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S, M, data_interface, z_hyperparam_interface, u_prior_interface);
 
 %%
