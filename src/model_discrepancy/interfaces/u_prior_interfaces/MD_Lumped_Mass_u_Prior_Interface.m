@@ -65,6 +65,7 @@ classdef MD_Lumped_Mass_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             this.u_hyperparam_interface = u_hyperparam_interface;
             this.determine_u_hyperparams = MD_Determine_u_Hyperparameters(data_interface, u_hyperparam_interface);
             this.is_sparse = issparse(this.M);
+            this.n_u = size(this.M,1);
 
             this.M_lumped_diag = this.M * ones(size(this.M,1),1);
 
@@ -79,7 +80,6 @@ classdef MD_Lumped_Mass_u_Prior_Interface < MD_Scaled_u_Prior_Interface
                 end
                 this.Set_alpha_u(this.u_hyperparam_interface.alpha_u);
             end
-            this.n_u = size(this.M,1);
         end
 
         function [] = Set_beta_u(this, beta_u_new)

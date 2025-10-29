@@ -5,6 +5,7 @@ classdef MD_u_Hyperparameter_Interface < handle
         center_data
         adapt_time_variance
         component_id
+        trace_estimator_sample_size
 
         alpha_u
         beta_u
@@ -52,6 +53,7 @@ classdef MD_u_Hyperparameter_Interface < handle
             this.center_data = center_data;
             this.adapt_time_variance = adapt_time_variance;
             this.component_id = component_id;
+            this.trace_estimator_sample_size = 0;
 
             this.alpha_u = 0.0;
             this.beta_u = 0.0;

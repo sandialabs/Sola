@@ -14,13 +14,12 @@ x = linspace(0, 1, m)';
 data_interface = MD_Data_Interface_synthetic_test_lumped_mass(m);
 
 u_hyperparam_interface = MD_u_Hyperparameter_Interface_synthetic_test_lumped_mass(m);
-u_hyperparam_interface.alpha_u = 0.048969233204560;
+u_hyperparam_interface.trace_estimator_sample_size = 100;
 u_hyperparam_interface.beta_u = 0.007702351792463;
 u_hyperparam_interface.alpha_d = 2.177109166165424e-07;
 u_prior_interface = MD_Lumped_Mass_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface);
 
 z_hyperparam_interface = MD_z_Hyperparameter_Interface_synthetic_test_lumped_mass(m);
-z_hyperparam_interface.alpha_z = 4.228308007349111;
 z_hyperparam_interface.beta_z = 0.009305846653704;
 z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S, M, data_interface, z_hyperparam_interface, u_prior_interface);
 
@@ -61,22 +60,22 @@ Z_test(:, 3) = 1.5 * ones(m, 1);
 if ~suppress_figures
     figure;
     hold on;
-    plot(x, md_post_sampling.post_data.D(:, 1), 'color', 'black', 'LineWidth', 3);
+    plot(x, md_post_sampling.post_data.D(:, 1) + data_interface.data_shift, 'color', 'black', 'LineWidth', 3);
     plot(x, delta_mean{1}, '--', 'color', 'red', 'LineWidth', 3);
     for k = 1:num_post_samples
         plot(x, delta_samples{1}(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
-    plot(x, md_post_sampling.post_data.D(:, 1), 'color', 'black', 'LineWidth', 3);
+    plot(x, md_post_sampling.post_data.D(:, 1) + data_interface.data_shift, 'color', 'black', 'LineWidth', 3);
     plot(x, delta_mean{1}, '--', 'color', 'red', 'LineWidth', 3);
 
     figure;
     hold on;
-    plot(x, md_post_sampling.post_data.D(:, 2), 'color', 'black', 'LineWidth', 3);
+    plot(x, md_post_sampling.post_data.D(:, 2) + data_interface.data_shift, 'color', 'black', 'LineWidth', 3);
     plot(x, delta_mean{2}, '--', 'color', 'red', 'LineWidth', 3);
     for k = 1:num_post_samples
         plot(x, delta_samples{2}(:, k), 'color', [.9, .9, .9], 'LineWidth', 3);
     end
-    plot(x, md_post_sampling.post_data.D(:, 2), 'color', 'black', 'LineWidth', 3);
+    plot(x, md_post_sampling.post_data.D(:, 2) + data_interface.data_shift, 'color', 'black', 'LineWidth', 3);
     plot(x, delta_mean{2}, '--', 'color', 'red', 'LineWidth', 3);
 
     figure;
