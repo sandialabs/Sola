@@ -41,9 +41,10 @@ classdef MD_Lumped_Mass_u_Prior_Interface < MD_Scaled_u_Prior_Interface
 
         function [u_out] = Sample_with_Covariance_W_u_Acute_Plus_scalar_M_u_Inverse(this, num_samples, scalar)
             A = this.W_u_acute + scalar * this.M;
-            W_u_Acute_Plus_scalar_M_u_sqrt = Sparse_Matrix_Sqrt(A, true);
+            W_u_Acute_Plus_scalar_M_u_sqrt = Sparse_Matrix_Sqrt(A);
             omega = randn(this.n_u,num_samples);
-            u_out = W_u_Acute_Plus_scalar_M_u_sqrt.Matrix_Sqrt_Apply(omega);
+            tmp = W_u_Acute_Plus_scalar_M_u_sqrt.Matrix_Sqrt_Apply(omega);
+            u_out = this.Apply_W_u_Acute_Plus_scalar_M_u_Inverse(tmp, scalar);
         end
 
     end
