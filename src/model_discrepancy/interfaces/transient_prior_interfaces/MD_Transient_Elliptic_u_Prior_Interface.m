@@ -79,15 +79,30 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
 
             else
 
+                % This version of the function avoids explicit use of the spatial prior GSVD
                 u_out = 0 * u_in;
                 for k = 1:size(u_in, 2)
-                    tol = 1.e-7;
-                    max_iter = size(u_in,1);
-                    [u_out(:, k), flag, relres, iter, resvec] = pcg(@(x)this.Apply_W_u_Acute_Plus_scalar_M_u(x, scalar), u_in(:, k), tol, max_iter, @(x)this.Apply_W_u_Acute_Inverse(x));
-                    if flag ~= 0
-                        disp('CG did not converge');
+                    u_tmp1 = reshape(u_in(:, k), this.transient_prior_cov.n_y, this.transient_prior_cov.n_t);
+                    u_tmp2 = u_tmp1 * this.transient_prior_cov.evecs * diag(sqrt(this.transient_prior_cov.evals));
+                    u_tmp3 = 0 * u_tmp2;
+                    for j = 1:this.transient_prior_cov.n_t
+                        u_tmp3(:,j) = this.spatial_prior_cov.Apply_W_u_Acute_Plus_scalar_M_u_Inverse(u_tmp2(:,j),scalar*this.transient_prior_cov.evals(j));
                     end
+                    u_tmp4 = u_tmp3 * diag(sqrt(this.transient_prior_cov.evals)) * this.transient_prior_cov.evecs';
+                    u_out(:,k) = u_tmp4(:);
                 end
+
+                % % For testing, this should not execute ordinary
+                % Wt = this.transient_prior_cov.W_t;
+                % Ws = this.spatial_prior_cov.W_u_acute;
+                % Wu = kron(Wt,Ws);
+                % 
+                % Mt = this.transient_prior_cov.M_t;
+                % Ms = this.spatial_prior_cov.M;
+                % Mu = kron(Mt,Ms);
+                % 
+                % A = Wu + scalar * Mu;
+                % norm(A*u_out - u_in,'fro')/norm(u_in,'fro')
 
             end
         end
@@ -177,59 +192,40 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
 
             else
 
+                % This version of the function avoids explicit use of the spatial prior GSVD
+
+                n_y = this.transient_prior_cov.n_y;
                 n_t = this.transient_prior_cov.n_t;
-                m = n_t * this.transient_prior_cov.n_y;
-                u_out = zeros(m,num_samples);
+                u_out = zeros(n_t*n_y,num_samples);
 
-                u_trial = this.Sample_with_Covariance_W_u_Acute_Inverse(num_samples);
-                tmp1 = this.Apply_M_u(u_trial);
-                tmp2 = sum(u_trial' .* permute(tmp1, [2, 1, 3]), 2); % Forming u_trial' * M * u_trial
-                r = exp(-0.5 * scalar * tmp2);
-                u = rand(num_samples,1);
-                I = find(u < r);
-
-                samples_so_far = length(I);
-                u_out(:,1:samples_so_far) = u_trial(:,I);
-
-                accept_rate = 1-(num_samples-samples_so_far)/num_samples;
-                if accept_rate < 0.8
-                    disp(['Warning: Acceptance rate in Sample_with_Covariance_W_u_Acute_Plus_scalar_M_u_Inverse is ',num2str(accept_rate)])
+                spatial_samples = zeros(n_y,n_t,num_samples);
+                for j = 1:n_t
+                    spatial_samples(:,j,:) = this.spatial_prior_cov.Sample_with_Covariance_W_u_Acute_Plus_scalar_M_u_Inverse(num_samples,scalar*this.transient_prior_cov.evals(j));
                 end
 
-                samples_to_generate = round((num_samples-samples_so_far)/accept_rate);
-                while samples_to_generate > 0
-                    u_trial = this.Sample_with_Covariance_W_u_Acute_Inverse(samples_to_generate);
-                    tmp1 = this.Apply_M_u(u_trial);
-                    tmp2 = sum(u_trial' .* permute(tmp1, [2, 1, 3]), 2); % Forming u_trial' * M * u_trial
-                    r = exp(-0.5 * scalar * tmp2);
-                    u = rand(samples_to_generate,1);
-
-                    I = find(u < r);
-                    samples_here = length(I);
-                    if samples_here > samples_to_generate
-                        I = I(1:samples_to_generate);
-                        samples_here = samples_to_generate;
-                    end
-
-                    u_out(:,(samples_so_far+1):(samples_so_far+samples_here)) = u_trial(:,I);
-                    samples_so_far = samples_so_far+samples_here;
-                    samples_to_generate = num_samples - samples_so_far;
+                for k = 1:num_samples
+                    u_tmp = spatial_samples(:,:,k) * diag(sqrt(this.transient_prior_cov.evals)) * this.transient_prior_cov.evecs';
+                    u_out(:, k) = u_tmp(:);
                 end
 
+                % % For testing, this should not execute ordinary
+                % % Note that we need a very large number of samples to
+                % % achieve a small difference in the covariance matrices
+                % Wt = this.transient_prior_cov.W_t;
+                % Ws = this.spatial_prior_cov.W_u_acute;
+                % Wu = kron(Wt,Ws);
+                % 
+                % Mt = this.transient_prior_cov.M_t;
+                % Ms = this.spatial_prior_cov.M;
+                % Mu = kron(Mt,Ms);
+                % 
+                % A = Wu + scalar * Mu;
+                % Sigma = linsolve(A,eye(size(A,1)));
+                % 
+                % emp_cov = cov(u_out');
+                % norm(Sigma - emp_cov,'fro')/norm(Sigma,'fro')
+                
             end
-        end
-
-        function [u_out] = Apply_W_u_Acute_Plus_scalar_M_u(this, u_in, scalar)
-
-            u_out = 0.0 * u_in;
-            for k = 1:size(u_out, 2)
-                u_tmp1 = reshape(u_in(:, k), this.transient_prior_cov.n_y, this.transient_prior_cov.n_t);
-                u_tmp2 = this.spatial_prior_cov.Apply_W_u_Acute(u_tmp1);
-                u_tmp3 = u_tmp2 * this.transient_prior_cov.W_t;
-                u_tmp4 = u_tmp3 + scalar * (this.spatial_prior_cov.Apply_M_u(u_tmp1) * this.transient_prior_cov.M_t);
-                u_out(:, k) = u_tmp4(:);
-            end
-            
         end
 
     end
