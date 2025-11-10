@@ -42,6 +42,10 @@ cd synthetic_test_transient/;
 Driver;
 cd ..;
 
+cd lumped_mass_unit_test/;
+Driver_Unit_Test;
+cd ..;
+
 cd transient_control_synthetic_test/;
 Driver;
 cd ..;

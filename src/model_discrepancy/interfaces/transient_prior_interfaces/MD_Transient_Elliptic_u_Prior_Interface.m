@@ -92,18 +92,6 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
                     u_out(:,k) = u_tmp4(:);
                 end
 
-                % % For testing, this should not execute ordinary
-                % Wt = this.transient_prior_cov.W_t;
-                % Ws = this.spatial_prior_cov.W_u_acute;
-                % Wu = kron(Wt,Ws);
-                % 
-                % Mt = this.transient_prior_cov.M_t;
-                % Ms = this.spatial_prior_cov.M;
-                % Mu = kron(Mt,Ms);
-                % 
-                % A = Wu + scalar * Mu;
-                % norm(A*u_out - u_in,'fro')/norm(u_in,'fro')
-
             end
         end
 
@@ -207,23 +195,6 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
                     u_tmp = spatial_samples(:,:,k) * diag(sqrt(this.transient_prior_cov.evals)) * this.transient_prior_cov.evecs';
                     u_out(:, k) = u_tmp(:);
                 end
-
-                % % For testing, this should not execute ordinary
-                % % Note that we need a very large number of samples to
-                % % achieve a small difference in the covariance matrices
-                % Wt = this.transient_prior_cov.W_t;
-                % Ws = this.spatial_prior_cov.W_u_acute;
-                % Wu = kron(Wt,Ws);
-                % 
-                % Mt = this.transient_prior_cov.M_t;
-                % Ms = this.spatial_prior_cov.M;
-                % Mu = kron(Mt,Ms);
-                % 
-                % A = Wu + scalar * Mu;
-                % Sigma = linsolve(A,eye(size(A,1)));
-                % 
-                % emp_cov = cov(u_out');
-                % norm(Sigma - emp_cov,'fro')/norm(Sigma,'fro')
                 
             end
         end
