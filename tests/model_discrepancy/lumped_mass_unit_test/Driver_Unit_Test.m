@@ -121,6 +121,7 @@ diff = [diff ; local_diff];
 seed = randi(1.e5);
 rng(seed)
 num_samples = 1;
+u_prior_interface.spatial_prior_cov.use_sampling_prec = false;
 u_samples = u_prior_interface.Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(num_samples,beta);
 
 rng(seed)

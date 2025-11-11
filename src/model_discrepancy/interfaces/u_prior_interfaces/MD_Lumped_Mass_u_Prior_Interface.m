@@ -12,6 +12,7 @@ classdef MD_Lumped_Mass_u_Prior_Interface < MD_Scaled_u_Prior_Interface
         u_hyperparam_interface
         determine_u_hyperparams
         is_sparse
+        use_sampling_prec
         beta_u
         n_u
     end
@@ -41,7 +42,16 @@ classdef MD_Lumped_Mass_u_Prior_Interface < MD_Scaled_u_Prior_Interface
 
         function [u_out] = Sample_with_Covariance_W_u_Acute_Plus_scalar_M_u_Inverse(this, num_samples, scalar)
             A = this.W_u_acute + scalar * this.M;
-            W_u_Acute_Plus_scalar_M_u_sqrt = Sparse_Matrix_Sqrt(A);
+            if this.use_sampling_prec
+                if this.is_sparse
+                    L = ichol(A);
+                else
+                    L = chol(A)';
+                end
+                W_u_Acute_Plus_scalar_M_u_sqrt = Sparse_Matrix_Sqrt(A, L);
+            else
+                W_u_Acute_Plus_scalar_M_u_sqrt = Sparse_Matrix_Sqrt(A);
+            end
             omega = randn(this.n_u,num_samples);
             tmp = W_u_Acute_Plus_scalar_M_u_sqrt.Matrix_Sqrt_Apply(omega);
             u_out = this.Apply_W_u_Acute_Plus_scalar_M_u_Inverse(tmp, scalar);
@@ -67,6 +77,7 @@ classdef MD_Lumped_Mass_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             this.determine_u_hyperparams = MD_Determine_u_Hyperparameters(data_interface, u_hyperparam_interface);
             this.is_sparse = issparse(this.M);
             this.n_u = size(this.M,1);
+            this.use_sampling_prec = true;
 
             this.M_lumped_diag = this.M * ones(size(this.M,1),1);
 
@@ -100,7 +111,7 @@ classdef MD_Lumped_Mass_u_Prior_Interface < MD_Scaled_u_Prior_Interface
                 this.R = chol(this.E_u);
             end
 
-            this.W_u_acute = this.E_u' * diag(1./this.M_lumped_diag) * this.E_u;
+            this.W_u_acute = this.E_u' * sparse(diag(1./this.M_lumped_diag)) * this.E_u;
         end
 
         function [u_out] = Apply_E_u_Inverse(this, u_in)

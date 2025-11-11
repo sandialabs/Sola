@@ -11,20 +11,44 @@ classdef Matrix_Sqrt < handle
 
     end
 
+    methods (Access = public)
+
+        %% Preconditioner G such that G^T*G \approx A^{-1}
+        % Overload these functions if a preconditioner is available
+
+        % Apply G * vec_in
+        function [vec_out] = Preconditioner_Apply(this, vec_in)
+            vec_out = vec_in;
+        end
+
+        % Apply G^T * vec_in
+        function [vec_out] = Preconditioner_Transpose_Apply(this, vec_in)
+            vec_out = vec_in;
+        end
+
+        % Apply G^{-1} * vec_in
+        function [vec_out] = Preconditioner_Inverse_Apply(this, vec_in)
+            vec_out = vec_in;
+        end
+
+    end
+
     methods
 
         function this = Matrix_Sqrt()
 
         end
 
-        function [vec_out] = Matrix_Sqrt_Apply(this, vec_in)
+        function [vec_out, relres] = Matrix_Sqrt_Apply(this, vec_in)
             n = size(vec_in, 1);
             d = size(vec_in, 2);
             vec_out = zeros(n, d);
-            A = @(v) this.Matrix_Apply(v);
+            A = @(v) this.Preconditioner_Apply(this.Matrix_Apply(this.Preconditioner_Transpose_Apply(v)));
             tol = 1.e-8;
+            relres = cell(d,1);
             for k = 1:d
-                vec_out(:, k) = this.krylov_sqrt(A, vec_in(:, k), n, tol);
+                [tmp, relres{k}] = this.krylov_sqrt(A, vec_in(:, k), n, tol);
+                vec_out(:, k) = this.Preconditioner_Inverse_Apply(tmp);
             end
         end
 

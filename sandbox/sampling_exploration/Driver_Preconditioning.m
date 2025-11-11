@@ -11,9 +11,9 @@ m = size(M,1);
 M_lump = M * ones(m,1);
 beta = 1.e4;
 W_lumped_mat = E * sparse(diag(1./M_lump)) * E + beta * M;
-tol = 1.e-7;
+tol = 1.e-8;
 
-R = ichol(W_lumped_mat,struct('type','ict','droptol',1e-7));
+L = ichol(W_lumped_mat,struct('type','ict','droptol',1e-7));
 
 %%
 b = randn(m,1);
@@ -21,15 +21,17 @@ b = randn(m,1);
 W = @(x) E * M \ (E * x) + beta * M * x;
 W_lumped = @(x) W_lumped_mat * x;
 
-[x_W, relres_W] = krylov_sqrt(W, b, 1000, tol);
+[x_W, relres_W] = krylov_sqrt(W, b, m, tol);
 
-A = @(x) R \ ( W(R' \ x) );
-[x_W_pre, relres_W_pre] = krylov_sqrt(A, b, 1000, tol);
+A = @(x) L \ ( W(L' \ x) );
+[x_W_pre, relres_W_pre] = krylov_sqrt(A, b, m, tol);
+x_W_pre = L * x_W_pre;
 
-[x_Wlump, relres_Wlump] = krylov_sqrt(W_lumped, b, 1000, tol);
+Wlump_sqrt = Sparse_Matrix_Sqrt(W_lumped_mat);
+[x_Wlump, relres_Wlump] = Wlump_sqrt.Matrix_Sqrt_Apply(b);
 
-A = @(x) R \ ( W_lumped(R' \ x) );
-[x_Wlump_pre, relres_Wlump_pre] = krylov_sqrt(A, b, 1000, tol);
+Wlump_pre_sqrt = Sparse_Matrix_Sqrt(W_lumped_mat, L);
+[x_Wlump_pre, relres_Wlump_pre] = Wlump_pre_sqrt.Matrix_Sqrt_Apply(b);
 
 disp('Number of iterations for:')
 disp(['W = ',num2str(size(relres_W,1))])
@@ -38,7 +40,7 @@ disp('Number of iterations for:')
 disp(['W_pre = ',num2str(size(relres_W_pre,1))])
 
 disp('Number of iterations for:')
-disp(['W_lump = ',num2str(size(relres_Wlump ,1))])
+disp(['W_lump = ',num2str(size(relres_Wlump{1} ,1))])
 
 disp('Number of iterations for:')
-disp(['Wlump_pre = ',num2str(size(relres_Wlump_pre ,1))])
+disp(['Wlump_pre = ',num2str(size(relres_Wlump_pre{1} ,1))])
