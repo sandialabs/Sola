@@ -110,6 +110,20 @@ diff = [diff ; local_diff2];
 
 %%
 beta = (1.e5) * rand;
+A = sparse(W_s + beta * M_s);
+L = ichol(A);
+W_u_Acute_Plus_scalar_M_u_sqrt = Sparse_Matrix_Sqrt(A, L);
+omega = randn(n_y,1);
+u_test = W_u_Acute_Plus_scalar_M_u_sqrt.Matrix_Sqrt_Apply(omega);
+
+G = L \ eye(n_y);
+B = G * A * G';
+u = G \ sqrtm(B) * omega;
+
+local_diff = norm(u - u_test)/norm(u);
+diff = [diff ; local_diff];
+
+%%
 L = sqrtm(linsolve( kron(eye(n_t),W_s) + kron(beta*inv(Lambda),M_s) ,eye(n_t*n_y)));
 S = T*L;
 W_u_beta_M_u_inv = linsolve(W_u + beta*M_u, eye(n_t*n_y));
