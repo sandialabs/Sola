@@ -89,3 +89,47 @@ end
 
 Z_oed = Z;
 D_oed = D;
+
+figure;
+hold on;
+plot(flip(z_lofi), "Color", [0.7 0.7 0.7], "DisplayName", "$\tilde{z}$", "LineWidth", 3);
+plot(flip(z_hifi), "k-", "DisplayName", "$z_{\rm hifi}$", "LineWidth", 3);
+plot(flip(z_bar), "b-", "DisplayName", "$\overline{z}$", "LineWidth", 3);
+xlabel("$x$", "Interpreter", "latex");
+ylabel("$c_0$", "Interpreter", "latex");
+legend("location", "northeast", "Interpreter", "latex");
+
+%%%%%%%%%%%%%%%%
+% Evaluating Hi-Fi PDE at Hi-Fi Sol...
+
+% Step 0:
+% -------------
+% Objective of z_lofi:    17.006
+% Objective of z_hifi:    0.095
+% Objective of z_proj:    0.134
+
+% Step 1:
+% -------------
+% Objective of z_bar:     3.932
+% Percent Improvement:    77.31%
+
+% Step 2:
+% -------------
+% Objective of z_bar:     2.456
+% Percent Improvement:    38.46%
+
+% Step 3:
+% -------------
+% Objective of z_bar:     2.421
+% Percent Improvement:    1.50%
+
+% Step 4:
+% -------------
+% Objective of z_bar:     2.222
+% Percent Improvement:    8.53%
+
+% Step 5:
+% -------------
+% Objective of z_bar:     2.051
+% Percent Improvement:    8.04%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -55,11 +55,12 @@ classdef MD_OED_DeltaCov < handle
             this.offline_data.Vt_Design_Cov_Inv_V = this.offline_data.V' * this.oed_interface.Apply_Design_Cov_Inverse(this.offline_data.V);
 
             try
-                this.offline_data.xjTxj = sum(this.u_prior_interface.sing_vecs_output .* this.u_prior_interface.sing_vecs_output, 1)';
+                sing_vecs = this.u_prior_interface.sing_vecs_output;
+                this.offline_data.xjTxj = sum(sing_vecs .* this.u_prior_interface.Apply_W_u_Inverse(sing_vecs), 1)';
                 this.offline_data.lambda_js = 1 ./ (this.u_prior_interface.alpha_u * this.u_prior_interface.sing_vals.^2);
             catch
                 sing_vecs = kron(this.u_prior_interface.spatial_prior_cov.sing_vecs_output, this.u_prior_interface.transient_prior_cov.evecs);
-                this.offline_data.xjTxj = sum(sing_vecs .* sing_vecs, 1)';
+                this.offline_data.xjTxj = sum(sing_vecs .* this.u_prior_interface.Apply_W_u_Inverse(sing_vecs), 1)';
                 this.offline_data.lambda_js = 1 ./ (this.u_prior_interface.alpha_u * kron(this.u_prior_interface.spatial_prior_cov.sing_vals.^2, this.u_prior_interface.transient_prior_cov.evals));
             end
 

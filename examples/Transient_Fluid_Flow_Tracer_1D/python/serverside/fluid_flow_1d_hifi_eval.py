@@ -40,31 +40,31 @@ t = Constant(0);
 # bc_c_right = DirichletBC(CUPRE.sub(0), Expression("2*exp(-(t+1))/pow(t+1, 2)", t=t, degree=2), "near(x[0], 1)")
 
 # Set boundary conditions for u(x = 0) and u(x = 1)
-bc_u_left   = DirichletBC(CUPRE.sub(1), Constant(2.0), "near(x[0], 0)")
-bc_u_right  = DirichletBC(CUPRE.sub(1), Constant(2.0), "near(x[0], 1)")
+bc_u_left = DirichletBC(CUPRE.sub(1), Expression("2/(t+1)", t=t, degree=2), "near(x[0], 0)")
+bc_u_right = DirichletBC(CUPRE.sub(1), Expression("1/(t+1)", t=t, degree=2), "near(x[0], 1)")
 
-# pin energy to zero at the ends
-bc_e_left   = DirichletBC(CUPRE.sub(4), Constant(0.0), "near(x[0], 0)")
-bc_e_right  = DirichletBC(CUPRE.sub(4), Constant(0.0), "near(x[0], 1)")
+# Set boundary conditions for p(x = 0) and p(x = 1)
+# bc_p_left = DirichletBC(CUPRE.sub(2), Expression("1/pow(t+1, 2)", t=t, degree=2), "near(x[0], 0)")
+# bc_p_right = DirichletBC(CUPRE.sub(2), Expression("2/pow(t+1, 2)", t=t, degree=2), "near(x[0], 1)")
 
-# likewise for pressure
-bc_p_left   = DirichletBC(CUPRE.sub(2), Constant(0.0), "near(x[0], 0)")
-bc_p_right  = DirichletBC(CUPRE.sub(2), Constant(0.0), "near(x[0], 1)")
+# Set boundary conditions for r(x = 0) and r(x = 1)
+bc_r_left = DirichletBC(CUPRE.sub(3), Constant(1), "near(x[0], 0)")
+bc_r_right = DirichletBC(CUPRE.sub(3), Constant(1), "near(x[0], 1)")
 
-# keep density pinned at unity
-bc_r_left   = DirichletBC(CUPRE.sub(3), Constant(1.0), "near(x[0], 0)")
-bc_r_right  = DirichletBC(CUPRE.sub(3), Constant(1.0), "near(x[0], 1)")
-
+# Set boundary conditions for e(x = 0) and e(x = 1)
+# bc_e_left = DirichletBC(CUPRE.sub(4), Expression("1/pow(t+1, 2)", t=t, degree=2), "near(x[0], 0)")
+# bc_e_right = DirichletBC(CUPRE.sub(4), Expression("2/pow(t+1, 2)", t=t, degree=2), "near(x[0], 1)")
 
 # Combine Boundary Conditions
-bcs = [bc_u_left, bc_u_right, bc_p_left, bc_p_right, bc_r_left, bc_r_right, bc_e_left, bc_e_right];
+bcs = [bc_u_left, bc_u_right, bc_r_left, bc_r_right];
 
 # Set Initial Condition at t = 0
 c0_exp = Expression("0", degree=2)
-u0_exp = Expression("2", degree=2)  
-p0_exp = Expression("rcv1*(cnst*(1 - 4*pow(x[0]-0.5, 2)))", degree=2, cnst=0.1, rcv1=100)
-r0_exp = Constant(1.0)
-e0_exp = Expression("cnst*(1 - 4*pow(x[0]-0.5, 2))", degree=2, cnst=0.1)
+u0_exp = Expression("2-x[0]", degree=2)
+p0_exp = Expression("1*(1+x[0])", degree=2)
+r0_exp = Expression("1", degree=2)
+e0_exp = Expression("1*(1+x[0])", degree=2)
+
 # u0_exp = Expression("x[0]+1", degree=2)
 # p0_exp = Constant(1) # doesn't matter
 # r0_exp = Expression("1/(1+x[0])", degree=2)
@@ -87,9 +87,9 @@ num_steps = 25
 dt = Constant(T/num_steps)
 gamma = Constant(0.05)
 reac_fn = lambda c: Constant(1) * c
-reac_fn_multiplier = Constant(1000) # NOTE: MODIFIED!!!
+reac_fn_multiplier = Constant(1) # NOTE: MODIFIED!!!
 alpha = Constant(1)
-rcv = Constant(100)
+rcv = Constant(1)
 
 # Weak Form of PDE 
 # F_3 = (1/dt*(e-e_n)*r*v_e + u*e.dx(0)*r*v_e + p*u.dx(0)*v_e + alpha*e.dx(0)*(r*v_e.dx(0) + r.dx(0)*v_e) ) * dx
@@ -147,12 +147,23 @@ def state_solve(c0, return_type: Literal["vertex", "vector", "petsc", "function"
 
         # u_timeseries.retrieve(u_temp.vector(), float(t))
         # print(np.linalg.norm(u_n.vector()[:]-u_temp.vector()[:])/np.linalg.norm(u_n.vector()[:]))
-        # print(p_n.vector()[:])
-        # print(e_n.vector()[:])
         # print(fenics_convert(u_n, 'vertex', U))
         # print(fenics_convert(u_temp, 'vertex', U))
-        # print(u_n.vector()[:])
-        # print(u_temp.vector()[:])
+        # print(np.linalg.norm(fenics_convert(u_n, 'vertex', U)))
+        # print(np.linalg.norm(u_temp.vector()[:]))
+    # print("Concentration: ", (fenics_convert(c_n, 'vertex', C)))
+    # print("Velocity: ", (fenics_convert(u_n, 'vertex', U)))
+    # print("Pressure: ", (fenics_convert(p_n, 'vertex', P)))
+    # print("Density: ", (fenics_convert(r_n, 'vertex', R)))
+    # print("Energy: ", (fenics_convert(e_n, 'vertex', E)))
 
     if return_all: return np.array(k_list).flatten()
     return fenics_convert(c_n, return_type);
+
+
+# vec_grad = zeros(31, 1)
+# J_z_bar = Jhat_hifi_fn(z_bar)
+# for i=1:31
+#     disp(i)
+#     vec_grad(i) = 1e4*(Jhat_hifi_fn(z_bar+1e-4*I(:, i)) - J_z_bar)
+# end
