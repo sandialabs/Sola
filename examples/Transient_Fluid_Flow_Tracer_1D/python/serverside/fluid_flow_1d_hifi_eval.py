@@ -59,7 +59,8 @@ bc_r_right = DirichletBC(CUPRE.sub(3), Constant(1), "near(x[0], 1)")
 bcs = [bc_u_left, bc_u_right, bc_r_left, bc_r_right];
 
 # Set Initial Condition at t = 0
-rcv = Constant(10)
+
+rcv = Constant(1)
 c0_exp = Expression("0", degree=2)
 u0_exp = Expression("2-x[0]", degree=2)
 r0_exp = Constant(1)
@@ -87,16 +88,17 @@ T = 0.1
 num_steps = 25
 dt = Constant(T/num_steps)
 gamma = Constant(0.05)
-reac_fn = lambda c: Constant(0.1) * (c+Constant(1))**2
-reac_fn_multiplier = Constant(50_000) # NOTE: MODIFIED!!!
-alpha = Constant(1)
+# reac_fn = lambda c: Constant(0.1) * (c+Constant(1))**2
+reac_fn = lambda c: Constant(1) * c
+reac_enthalpy = Constant(300_000) # NOTE: MODIFIED!!!
+kcv = Constant(30)
 
 # Weak Form of PDE 
 # F_3 = (1/dt*(e-e_n)*r*v_e + u*e.dx(0)*r*v_e + p*u.dx(0)*v_e + alpha*e.dx(0)*(r*v_e.dx(0) + r.dx(0)*v_e) ) * dx
 # F_c = (1/dt * (c - c_n) * v_c + gamma*c.dx(0)*v_c.dx(0) + u*c.dx(0)*v_c + u.dx(0)*c*v_c + reac_fn(c)*v_c) * dx 
 F_1 = (1/dt*(r-r_n)*v_r + u*r.dx(0)*v_r + r*u.dx(0)*v_r) * dx;
 F_2 = (1/dt*(u-u_n)*r*v_u + u*u.dx(0)*r*v_u - p*v_u.dx(0)) * dx;
-F_3 = (1/dt*(e-e_n)*r*v_e + u*e.dx(0)*r*v_e + p*u.dx(0)*v_e + alpha*e.dx(0)*(r*v_e.dx(0) + r.dx(0)*v_e) - reac_fn_multiplier*r*reac_fn(c)*v_e) * dx
+F_3 = (1/dt*(e-e_n)*r*v_e + u*e.dx(0)*r*v_e + p*u.dx(0)*v_e + kcv*e.dx(0)*v_e.dx(0) - reac_enthalpy*reac_fn(c)*v_e) * dx
 F_4 = ((p - rcv*r*e)*v_p) * dx;
 F_c = (1/dt * (c - c_n) * v_c + gamma*c.dx(0)*v_c.dx(0) + u*c.dx(0)*v_c + u.dx(0)*c*v_c + reac_fn(c)*v_c) * dx #- gamma*c.dx(0)*v_c*ds (imposing c.dx(0) = 0)
 F = F_1 + F_2 + F_3 + F_4 + F_c

@@ -1,8 +1,11 @@
 import fluid_flow_1d_lofi as lofi
-from scipy.io import savemat
+from scipy.io import savemat, loadmat
 
 # Solve initial iterate for inverse problem (used for taping adjoints)
-k0_guess = lofi.interpolate(lofi.Expression("2*(0.4 < x[0] && x[0] < 0.6)", degree=1), lofi.K)
+try: 
+    k0_guess = lofi.fenics_convert(loadmat(f'{lofi.root_path}/../../data/lofi_optim_sol.mat')['k0_opt_lofi'], 'function', lofi.K)
+except:
+    k0_guess = lofi.interpolate(lofi.Expression("2*(0.4 < x[0] && x[0] < 0.6)", degree=1), lofi.K)
 k_n = lofi.state_solve(k0_guess, return_type = "function", plot_k=False, verbose=False, annotate=True);
 
 # Set up inverse problem
