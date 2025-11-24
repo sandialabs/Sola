@@ -36,7 +36,7 @@ num_steps = 25
 dt = Constant(T/num_steps)
 t = Constant(0);
 gamma = Constant(0.05)
-reac_fn = lambda c: Constant(1) * c# - Constant(5)
+reac_fn = lambda c: Constant(0.1) * (c+Constant(1))**2
 
 # Retreive velocity from Timeseries
 u_timeseries = TimeSeries(f"{root_path}/../../data/velocity_timeseries_midfi_1d")
@@ -76,7 +76,6 @@ def state_solve(k0_input, return_type: Literal["vertex", "vector", "petsc", "fun
         t.assign(float(t)+float(dt))
         u_n = Function(U)
         u_timeseries.retrieve(u_n.vector(), float(t))
-        u_n.vector()[:] = 5*u_n.vector()[:]
         F_k = (1/dt * (k - k_n) * v_k + gamma*k.dx(0)*v_k.dx(0) + u_n*k.dx(0)*v_k + u_n.dx(0)*k*v_k + reac_fn(k)*v_k) * dx
         solve(F_k == 0, k, J=derivative(F_k, k))
         k_n.assign(k)
@@ -115,7 +114,6 @@ def state_solve_all_obj(k0, kt_in, annotate=True, verbose=False):
         t.assign(float(t)+float(dt))
         u_n = Function(U)
         u_timeseries.retrieve(u_n.vector(), float(t))
-        u_n.vector()[:] = 0*u_n.vector()[:]+1
         F_k = (1/dt * (k - k_n) * v_k + gamma*k.dx(0)*v_k.dx(0) + u_n*k.dx(0)*v_k + u_n.dx(0)*k*v_k + reac_fn(k)*v_k) * dx
         solve(F_k == 0, k, J=derivative(F_k, k))
         k_n.assign(k)

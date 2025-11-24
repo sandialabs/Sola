@@ -59,11 +59,12 @@ bc_r_right = DirichletBC(CUPRE.sub(3), Constant(1), "near(x[0], 1)")
 bcs = [bc_u_left, bc_u_right, bc_r_left, bc_r_right];
 
 # Set Initial Condition at t = 0
+rcv = Constant(10)
 c0_exp = Expression("0", degree=2)
 u0_exp = Expression("2-x[0]", degree=2)
-p0_exp = Expression("1*(1+x[0])", degree=2)
-r0_exp = Expression("1", degree=2)
+r0_exp = Constant(1)
 e0_exp = Expression("1*(1+x[0])", degree=2)
+p0_exp = Expression("rcv*(1+x[0])", rcv=float(rcv), degree=2)
 
 # u0_exp = Expression("x[0]+1", degree=2)
 # p0_exp = Constant(1) # doesn't matter
@@ -86,10 +87,9 @@ T = 0.1
 num_steps = 25
 dt = Constant(T/num_steps)
 gamma = Constant(0.05)
-reac_fn = lambda c: Constant(1) * c
-reac_fn_multiplier = Constant(1) # NOTE: MODIFIED!!!
+reac_fn = lambda c: Constant(0.1) * (c+Constant(1))**2
+reac_fn_multiplier = Constant(50_000) # NOTE: MODIFIED!!!
 alpha = Constant(1)
-rcv = Constant(1)
 
 # Weak Form of PDE 
 # F_3 = (1/dt*(e-e_n)*r*v_e + u*e.dx(0)*r*v_e + p*u.dx(0)*v_e + alpha*e.dx(0)*(r*v_e.dx(0) + r.dx(0)*v_e) ) * dx
