@@ -36,7 +36,7 @@ num_steps = 25
 dt = Constant(T/num_steps)
 t = Constant(0);
 gamma = Constant(0.05)
-# reac_fn = lambda c: Constant(0.1) * (c+Constant(1))**2
+# reac_fn = lambda c: Constant(2) * (c+Constant(1))**2
 reac_fn = lambda c: Constant(1) * c
 
 # Retreive velocity from Timeseries

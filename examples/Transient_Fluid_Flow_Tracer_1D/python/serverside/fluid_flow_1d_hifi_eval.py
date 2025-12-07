@@ -88,9 +88,9 @@ T = 0.1
 num_steps = 25
 dt = Constant(T/num_steps)
 gamma = Constant(0.05)
-# reac_fn = lambda c: Constant(0.1) * (c+Constant(1))**2
+# reac_fn = lambda c: Constant(2) * (c+Constant(1))**2
 reac_fn = lambda c: Constant(1) * c
-reac_enthalpy = Constant(300_000) # NOTE: MODIFIED!!!
+reac_enthalpy = Constant(100_000) # NOTE: MODIFIED!!!
 kcv = Constant(30)
 
 # Weak Form of PDE 

@@ -22,6 +22,8 @@ for p = 1:N
     % Set Parameters for OED
     if p == 1
         z_p = z_lofi;
+    elseif p == 2
+        z_p = z_hifi;
     else
         if p == 2
             covar_coeff = W_z_norm(z_bar - z_lofi)^2 / n;
