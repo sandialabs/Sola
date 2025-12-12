@@ -75,7 +75,7 @@ for p = 1:N
 
 end
 
-% Plot Objective Function over N
+Plot Objective Function over N;
 if true
     figure;
     hold on;

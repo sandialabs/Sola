@@ -8,7 +8,7 @@ set(0, "DefaultLineLineWidth", 3);
 set(0, "DefaultLineMarkerSize", 20);
 
 % Set Python environment and variables
-pyenv('Version', '/usr/local/anaconda3/envs/FenicsEnvCompat/bin/python', 'ExecutionMode', 'InProcess');
+pyenv('Version', '/usr/local/anaconda3/envs/FenicsEnvNew/bin/python', 'ExecutionMode', 'InProcess');
 pythonFilePath = 'python';
 if count(py.sys.path, pythonFilePath) == 0
     insert(py.sys.path, int32(0), pythonFilePath);
@@ -96,3 +96,38 @@ fprintf("\nStep 0:\n-------------\n");
 fprintf('Objective of z_lofi: \t%.3f\n', Jhat_lofi);
 fprintf('Objective of z_hifi: \t%.3f\n', Jhat_hifi);
 fprintf('Objective of z_proj: \t%.3f\n\n', Jhat_best_proj);
+
+% Computing Hessian GEVP...
+
+% Step 0:
+% -------------
+% Objective of z_lofi:    31.774
+% Objective of z_hifi:    1.158
+% Objective of z_proj:    8.750
+
+% Step 1:
+% -------------
+% Objective of z_bar:     12.445
+% Percent Improvement:    63.14%
+
+% Step 2:
+% -------------
+% Objective of z_bar:     10.555
+% Percent Improvement:    16.74%
+
+% Step 3:
+% -------------
+% Objective of z_bar:     10.293
+% Percent Improvement:    2.79%
+
+% Step 4:
+% -------------
+% Objective of z_bar:     10.069
+% Percent Improvement:    2.45%
+
+% Step 5:
+% -------------
+% Objective of z_bar:     9.879
+% Percent Improvement:    2.13%
+
+% Best possible value: 9.8724
