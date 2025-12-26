@@ -1,4 +1,4 @@
-Z = [z_lofi z_hifi z_hifi + 0.01 * randn(size(z_hifi, 1), 30) / norm(z_hifi)];
+Z = [z_lofi z_hifi z_hifi + 0.01 * randn(size(z_hifi, 1), 10) / norm(z_hifi)];
 D = Evaluate_Discrepancy(con_hifi, con_lofi, Z);
 data_interface.Set_Z_and_D(Z, D);
 
@@ -14,4 +14,4 @@ md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, n
 [~, z_cont, ~] = md_cont_update.Posterior_Update_Mean_PC_beta();
 z_bar = z_cont(:, end);
 disp(Jhat_hifi_fn(z_bar));
-% 5.7337
+% 5.7337 (30 runs, alpha_u = 1)

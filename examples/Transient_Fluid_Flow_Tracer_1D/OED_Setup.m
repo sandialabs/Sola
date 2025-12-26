@@ -52,7 +52,7 @@ data_interface = MD_Data_Interface_Tracer(u_lofi, z_lofi);
 
 % Generate Priors for u and z
 alpha_z = 1.e-1;
-alpha_u = (1)^2;
+alpha_u = (4)^2;
 alpha_d = (1.e-2)^2 * alpha_u;
 beta_t = 50;
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Tracer(alpha_z, opt_lofi);
@@ -74,13 +74,17 @@ M_z_norm = @(z) sqrt(z' * z_prior_interface.Apply_M_z(z));
 W_z_norm = @(z) sqrt(z' * z_prior_interface.Apply_W_z(z));
 oed_z_error_fn = @(z) M_z_norm(z - z_hifi) / M_z_norm(z_hifi);
 
+% md_hessian_analysis.evecs' * z_prior_interface.Apply_W_z(Z_oed - z_lofi)/7.6251
+tdisp = @(msg) fprintf('%s (%s)\n', msg, datetime('now'));
+
 % Hessian analysis
 opt_prob_interface = MD_Opt_Prob_Interface_Python(data_interface, opt_lofi);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 num_evals = 4;
 oversampling = 5;
-disp("Computing Hessian GEVP...");
+tdisp("Starting Hessian GEVP computation");
 md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_init, num_evals, oversampling);
+tdisp("Completed Hessian GEVP computation");
 
 % Get OED Interface ready
 alpha_zd = 1.e-1;
@@ -130,4 +134,16 @@ fprintf('Objective of z_proj: \t%.3f\n\n', Jhat_best_proj);
 % Objective of z_bar:     9.879
 % Percent Improvement:    2.13%
 
-% Best possible value: 9.8724
+% Best possible value w/ zero: 9.8724
+
+% figure;
+% hold on;
+% shift_val = 9.8724
+% xlim([0 N]);
+% % yline(1.158, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
+% yline(31.774-shift_val, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
+% plot(0:N, [Jhat_lofi; 12.445; 10.555; 10.293; 10.069; 9.879]-shift_val, ".-", "Color", "#BAB86C", "DisplayName", "DeltaCov OED");
+% xlabel("Evaluations ($N$)", "Interpreter", "latex");
+% ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
+% legend("location", "east", "Interpreter", "latex");
+% title("Optimization Objective over Evals");
