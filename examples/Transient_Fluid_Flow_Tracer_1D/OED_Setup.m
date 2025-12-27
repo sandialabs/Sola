@@ -51,8 +51,8 @@ fprintf('Objective of z_hifi: \t%.3f\n\n', Jhat_hifi);
 data_interface = MD_Data_Interface_Tracer(u_lofi, z_lofi);
 
 % Generate Priors for u and z
-alpha_z = 1.e-1;
-alpha_u = (4)^2;
+alpha_z = 10^2;
+alpha_u = (1.e-2)^2;
 alpha_d = (1.e-2)^2 * alpha_u;
 beta_t = 50;
 z_prior_interface = MD_Elliptic_z_Prior_Interface_Tracer(alpha_z, opt_lofi);

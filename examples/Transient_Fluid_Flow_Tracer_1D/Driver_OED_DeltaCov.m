@@ -4,8 +4,7 @@ OED_Setup;
 % Perform Offline OED Computations - USES data_interface
 md_oed = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
 md_oed.Offline_Computation();
-% md_hessian_analysis.evecs' * (z_bar - z_hifi)
-% disp(Jhat_hifi_fn(z_bar-0.01*W_z_norm(z_bar)*md_hessian_analysis.evecs(:,4)))
+
 %% Perform OED
 N = 5;
 Z = [];
@@ -102,15 +101,17 @@ if true
     title("Optimization Objective over Evals");
 end
 
-% figure;
-% hold on;
-% xlim([0 N]);
-% yline(Jhat_lofi - Jhat_best_proj, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
-% semilogy(0:N, [Jhat_lofi; Jhat_DC_oed] - Jhat_best_proj, ".-", "Color", "#BAB86C", "DisplayName", "DeltaCov OED");
-% xlabel("Evaluations ($N$)", "Interpreter", "latex");
-% ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
-% legend("location", "east", "Interpreter", "latex");
+figure;
+yscale("log");
+hold on;
+yline(Jhat_lofi - Jhat_best_proj, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
+plot(0:N, [Jhat_lofi; Jhat_DC_oed] - Jhat_best_proj, ".-", "Color", "#BAB86C", "DisplayName", "Solution updates");
+xlim([0 N]);
+xlabel("Evaluations ($N$)", "Interpreter", "latex");
+ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
+legend("location", "east", "Interpreter", "latex");
 % title("Optimization Objective over Evals");
+ylim padded;
 
 Z_oed = Z;
 D_oed = D;
@@ -123,3 +124,225 @@ plot(flip(z_bar), "b-", "DisplayName", "$\overline{z}$", "LineWidth", 3);
 xlabel("$x$", "Interpreter", "latex");
 ylabel("$c_0$", "Interpreter", "latex");
 legend("location", "northeast", "Interpreter", "latex");
+
+%%% ORIGINALLY
+% Step 0:
+% -------------
+% Objective of z_lofi:    31.774
+% Objective of z_hifi:    1.158
+% Objective of z_proj:    8.750
+
+% Step 1:
+% -------------
+% Objective of z_bar:     12.445
+% Percent Improvement:    63.14%
+
+% Step 2:
+% -------------
+% Objective of z_bar:     10.555
+% Percent Improvement:    16.74%
+
+% Step 3:
+% -------------
+% Objective of z_bar:     10.291
+% Percent Improvement:    2.81%
+
+% Step 4:
+% -------------
+% Objective of z_bar:     10.065
+% Percent Improvement:    2.47%
+
+% Step 5:
+% -------------
+% Objective of z_bar:     9.874
+% Percent Improvement:    2.15%
+
+% Step 6:
+% -------------
+% Objective of z_bar:     9.715
+% Percent Improvement:    1.82%
+
+% Step 7:
+% -------------
+% Objective of z_bar:     9.581
+% Percent Improvement:    1.56%
+
+% Step 8:
+% -------------
+% Objective of z_bar:     9.467
+% Percent Improvement:    1.36%
+
+% Step 9:
+% -------------
+% Objective of z_bar:     9.367
+% Percent Improvement:    1.20%
+
+% Step 10:
+% -------------
+% Objective of z_bar:     9.278
+% Percent Improvement:    1.08%
+
+%%% UPDATED
+% Step 0:
+% -------------
+% Objective of z_lofi:    31.774
+% Objective of z_hifi:    1.158
+% Objective of z_proj:    8.750
+
+% Step 1:
+% -------------
+% Objective of z_bar:     9.341
+% Percent Improvement:    73.27%
+
+% Step 2:
+% -------------
+% Objective of z_bar:     9.024
+% Percent Improvement:    3.87%
+
+% Step 3:
+% -------------
+% Objective of z_bar:     8.396
+% Percent Improvement:    7.98%
+
+% Step 4:
+% -------------
+% Objective of z_bar:     7.912
+% Percent Improvement:    6.69%
+
+% Step 5:
+% -------------
+% Objective of z_bar:     7.476
+% Percent Improvement:    6.46%
+
+% Step 6:
+% -------------
+% Objective of z_bar:     6.973
+% Percent Improvement:    7.96%
+
+% Step 7:
+% -------------
+% Objective of z_bar:     6.351
+% Percent Improvement:    10.71%
+
+% Step 8:
+% -------------
+% Objective of z_bar:     5.724
+% Percent Improvement:    12.06%
+
+% Step 9:
+% -------------
+% Objective of z_bar:     5.270
+% Percent Improvement:    9.96%
+
+% Step 10:
+% -------------
+% Objective of z_bar:     4.993
+% Percent Improvement:    6.73%
+
+%%%% EVEN BETTER
+% Step 0:
+% -------------
+% Objective of z_lofi:    31.774
+% Objective of z_hifi:    1.158
+% Objective of z_proj:    8.750
+
+% Step 1:
+% -------------
+% Objective of z_bar:     8.467
+% Percent Improvement:    76.13%
+
+% Step 2:
+% -------------
+% Objective of z_bar:     8.452
+% Percent Improvement:    0.21%
+
+% Step 3:
+% -------------
+% Objective of z_bar:     6.206
+% Percent Improvement:    30.80%
+
+% Step 4:
+% -------------
+% Objective of z_bar:     6.693
+% Percent Improvement:    -9.64%
+
+% Step 5:
+% -------------
+% Objective of z_bar:     4.757
+% Percent Improvement:    34.97%
+
+% Step 6:
+% -------------
+% Objective of z_bar:     5.145
+% Percent Improvement:    -10.77%
+
+% Step 7:
+% -------------
+% Objective of z_bar:     3.261
+% Percent Improvement:    47.24%
+
+% Step 8:
+% -------------
+% Objective of z_bar:     2.491
+% Percent Improvement:    36.63%
+
+% Step 9:
+% -------------
+% Objective of z_bar:     2.384
+% Percent Improvement:    8.03%
+
+% Step 10:
+% -------------
+% Objective of z_bar:     2.374
+% Percent Improvement:    0.77%
+
+%% Results Great
+% Step 1:
+% -------------
+% Objective of z_bar:     8.467
+% Percent Improvement:    76.13%
+
+% Step 2:
+% -------------
+% Objective of z_bar:     6.061
+% Percent Improvement:    32.93%
+
+% Step 3:
+% -------------
+% Objective of z_bar:     4.929
+% Percent Improvement:    23.09%
+
+% Step 4:
+% -------------
+% Objective of z_bar:     3.030
+% Percent Improvement:    50.34%
+
+% Step 5:
+% -------------
+% Objective of z_bar:     2.295
+% Percent Improvement:    39.28%
+
+% Step 6:
+% -------------
+% Objective of z_bar:     2.299
+% Percent Improvement:    -0.34%
+
+% Step 7:
+% -------------
+% Objective of z_bar:     2.291
+% Percent Improvement:    0.66%
+
+% Step 8:
+% -------------
+% Objective of z_bar:     2.287
+% Percent Improvement:    0.37%
+
+% Step 9:
+% -------------
+% Objective of z_bar:     2.285
+% Percent Improvement:    0.22%
+
+% Step 10:
+% -------------
+% Objective of z_bar:     2.283
+% Percent Improvement:    0.15%
