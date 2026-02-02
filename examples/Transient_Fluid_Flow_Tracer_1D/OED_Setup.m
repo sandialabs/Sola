@@ -51,23 +51,40 @@ fprintf('Objective of z_hifi: \t%.3f\n\n', Jhat_hifi);
 data_interface = MD_Data_Interface_Tracer(u_lofi, z_lofi);
 
 % Generate Priors for u and z
-alpha_z = 10^2;
-alpha_u = (1.e-2)^2;
-alpha_d = (1.e-2)^2 * alpha_u;
-beta_t = 50;
-z_prior_interface = MD_Elliptic_z_Prior_Interface_Tracer(alpha_z, opt_lofi);
-
+% alpha_u = 0*(1.e-5)^2;
+% alpha_d = 0*(1.e-2)^2 * alpha_u;
+% beta_t = 0*50;
+alpha_z = 51.5;
+alpha_u = 1.5277e-04;
+alpha_d = 3.6663e-09;
+beta_t = 0.0228;
+% z_prior_interface = MD_Elliptic_z_Prior_Interface_Tracer(alpha_z, opt_lofi);
+% determine_z_hyperparams = MD_Determine_z_Hyperparameters(data_interface, z_hyperparam_interface, u_prior_interface);
+% determine_z_hyperparams.Determine_beta_z(); %0.0031
+% z_prior_interface = MD_Elliptic_z_Prior_Interface_Tracer(1, opt_lofi);
+% determine_z_hyperparams.Determine_alpha_z(z_prior_interface);
 % Set Transient Prior
 n_t = 25;
 n_y = 31;
 T = 0.1;
-u_hyperparam_interface = MD_u_Hyperparameter_Interface(true);
-u_hyperparam_interface.Set_beta_t(beta_t);
-u_hyperparam_interface.Set_alpha_u(alpha_u);
-u_hyperparam_interface.Set_alpha_d(alpha_d);
+% u_hyperparam_interface = MD_u_Hyperparameter_Interface(true);
+u_hyperparam_interface = MD_u_Hyperparameter_Interface_Tracer(n_t, n_y, true);
+
+% u_prior_interface_new = MD_Numeric_Laplacian_u_Prior_Interface(pde_meshing.S, pde_meshing.M, data_interface, u_hyperparam_interface);
+
+% u_hyperparam_interface.Set_beta_t(beta_t);
+% u_hyperparam_interface.Set_alpha_u(alpha_u);
+% u_hyperparam_interface.Set_alpha_d(alpha_d);
+Z = load("results_great.mat", "Z_oed").Z_oed;
+D = load("results_great.mat", "D_oed").D_oed;
+data_interface.Set_Z_and_D(Z, D);
+
 spatial_u_prior_interface = MD_Elliptic_u_Prior_Interface_Tracer(alpha_u, opt_lofi);
 transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface, T, n_t, n_y);
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_u_prior_interface, transient_prior_cov);
+
+z_hyperparam_interface = MD_z_Hyperparameter_Interface_Tracer(x);
+z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(con_lofi.S_z, con_lofi.M_z, data_interface, z_hyperparam_interface, u_prior_interface);
 
 % Calculate Relative OED Error (Lambda Function for now)
 M_z_norm = @(z) sqrt(z' * z_prior_interface.Apply_M_z(z));

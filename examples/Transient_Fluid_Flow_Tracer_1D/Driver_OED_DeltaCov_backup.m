@@ -15,7 +15,6 @@ oed_reg_coeff = 0;
 z_bars = zeros(n, N);
 beta_bars = zeros(num_evals, N);
 beta_0 = randn(num_evals, 1);
-alpha_k_denom = alpha_z * norm(z_prior_interface.Apply_E_z_Inverse(z_prior_interface.M), 'fro')^2;
 
 for p = 1:N
     fprintf('\nStep %d:\n-------------\n', p);
@@ -26,21 +25,20 @@ for p = 1:N
     else
         tdisp("Starting OED");
         if p == 2
-            alpha_k = M_z_norm(z_bar - z_lofi)^2 / alpha_k_denom;
+            covar_coeff = W_z_norm(z_bar - z_lofi)^2 / n;
+            % delta_beta = abs(beta_bar);
         else
-            alpha_k = M_z_norm(z_bar - z_bars(:, p - 2))^2 / alpha_k_denom;
+            covar_coeff = W_z_norm(z_bar - z_bars(:, p - 2))^2 / n;
+            % delta_beta = abs(beta_bar - beta_bars(:, p - 2));
         end
 
-        nonlcon = @(beta) deal(M_z_norm(md_hessian_analysis.evecs * (beta - beta_bar))^2 - alpha_k * alpha_k_denom, [], ...
-                               2 * md_hessian_analysis.evecs' * z_prior_interface.Apply_M_z(md_hessian_analysis.evecs * (beta - beta_bar)), []);
+        nonlcon = @(beta) deal(W_z_norm(md_hessian_analysis.evecs * (beta - beta_bar))^2 - covar_coeff * n, [], ...
+                               2 * md_hessian_analysis.evecs' * z_prior_interface.Apply_W_z(md_hessian_analysis.evecs * (beta - beta_bar)), []);
 
-        md_oed.Set_Covariance_Coefficient(alpha_k);
+        md_oed.Set_Covariance_Coefficient(covar_coeff);
         [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design_Con_v1(beta_0, alpha_d, betas, beta_bar, nonlcon);
         tdisp("OED completed");
         z_p = z_p(:, end);
-        if p ~= 2
-            z_p = z_p + 0.1 * (z_bar - z_bars(:, p - 2)); % NEW
-        end
         beta_new = md_hessian_analysis.evecs \ (z_p - z_lofi); % NEW
         betas = [betas; beta_new];
         % disp(norm(z_p - z_bar) / norm(z_bar));
@@ -98,6 +96,18 @@ if true
     % title("Optimization Objective over Evals");
 end
 
+% figure;
+% yscale("log");
+% hold on;
+% yline(Jhat_lofi - Jhat_best_proj, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
+% plot(0:N, [Jhat_lofi; Jhat_DC_oed] - Jhat_best_proj, ".-", "Color", "#BAB86C", "DisplayName", "Solution updates");
+% xlim([0 N]);
+% xlabel("Evaluations ($N$)", "Interpreter", "latex");
+% ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
+% legend("location", "east", "Interpreter", "latex");
+% % title("Optimization Objective over Evals");
+% ylim padded;
+
 Z_oed = Z;
 D_oed = D;
 
@@ -109,6 +119,177 @@ plot(flip(z_bars(:, 5)), "b-", "DisplayName", "$\overline{z}$", "LineWidth", 3);
 xlabel("$x$", "Interpreter", "latex");
 ylabel("$c_0$", "Interpreter", "latex");
 legend("location", "northeast", "Interpreter", "latex");
+
+%%% ORIGINALLY
+% Step 0:
+% -------------
+% Objective of z_lofi:    31.774
+% Objective of z_hifi:    1.158
+% Objective of z_proj:    8.750
+
+% Step 1:
+% -------------
+% Objective of z_bar:     12.445
+% Percent Improvement:    63.14%
+
+% Step 2:
+% -------------
+% Objective of z_bar:     10.555
+% Percent Improvement:    16.74%
+
+% Step 3:
+% -------------
+% Objective of z_bar:     10.291
+% Percent Improvement:    2.81%
+
+% Step 4:
+% -------------
+% Objective of z_bar:     10.065
+% Percent Improvement:    2.47%
+
+% Step 5:
+% -------------
+% Objective of z_bar:     9.874
+% Percent Improvement:    2.15%
+
+% Step 6:
+% -------------
+% Objective of z_bar:     9.715
+% Percent Improvement:    1.82%
+
+% Step 7:
+% -------------
+% Objective of z_bar:     9.581
+% Percent Improvement:    1.56%
+
+% Step 8:
+% -------------
+% Objective of z_bar:     9.467
+% Percent Improvement:    1.36%
+
+% Step 9:
+% -------------
+% Objective of z_bar:     9.367
+% Percent Improvement:    1.20%
+
+% Step 10:
+% -------------
+% Objective of z_bar:     9.278
+% Percent Improvement:    1.08%
+
+%%% UPDATED
+% Step 0:
+% -------------
+% Objective of z_lofi:    31.774
+% Objective of z_hifi:    1.158
+% Objective of z_proj:    8.750
+
+% Step 1:
+% -------------
+% Objective of z_bar:     9.341
+% Percent Improvement:    73.27%
+
+% Step 2:
+% -------------
+% Objective of z_bar:     9.024
+% Percent Improvement:    3.87%
+
+% Step 3:
+% -------------
+% Objective of z_bar:     8.396
+% Percent Improvement:    7.98%
+
+% Step 4:
+% -------------
+% Objective of z_bar:     7.912
+% Percent Improvement:    6.69%
+
+% Step 5:
+% -------------
+% Objective of z_bar:     7.476
+% Percent Improvement:    6.46%
+
+% Step 6:
+% -------------
+% Objective of z_bar:     6.973
+% Percent Improvement:    7.96%
+
+% Step 7:
+% -------------
+% Objective of z_bar:     6.351
+% Percent Improvement:    10.71%
+
+% Step 8:
+% -------------
+% Objective of z_bar:     5.724
+% Percent Improvement:    12.06%
+
+% Step 9:
+% -------------
+% Objective of z_bar:     5.270
+% Percent Improvement:    9.96%
+
+% Step 10:
+% -------------
+% Objective of z_bar:     4.993
+% Percent Improvement:    6.73%
+
+%%%% EVEN BETTER
+% Step 0:
+% -------------
+% Objective of z_lofi:    31.774
+% Objective of z_hifi:    1.158
+% Objective of z_proj:    8.750
+
+% Step 1:
+% -------------
+% Objective of z_bar:     8.467
+% Percent Improvement:    76.13%
+
+% Step 2:
+% -------------
+% Objective of z_bar:     8.452
+% Percent Improvement:    0.21%
+
+% Step 3:
+% -------------
+% Objective of z_bar:     6.206
+% Percent Improvement:    30.80%
+
+% Step 4:
+% -------------
+% Objective of z_bar:     6.693
+% Percent Improvement:    -9.64%
+
+% Step 5:
+% -------------
+% Objective of z_bar:     4.757
+% Percent Improvement:    34.97%
+
+% Step 6:
+% -------------
+% Objective of z_bar:     5.145
+% Percent Improvement:    -10.77%
+
+% Step 7:
+% -------------
+% Objective of z_bar:     3.261
+% Percent Improvement:    47.24%
+
+% Step 8:
+% -------------
+% Objective of z_bar:     2.491
+% Percent Improvement:    36.63%
+
+% Step 9:
+% -------------
+% Objective of z_bar:     2.384
+% Percent Improvement:    8.03%
+
+% Step 10:
+% -------------
+% Objective of z_bar:     2.374
+% Percent Improvement:    0.77%
 
 %% Results Great
 % Step 1:

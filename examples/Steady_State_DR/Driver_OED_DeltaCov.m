@@ -6,7 +6,7 @@ md_oed = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, 
 md_oed.Offline_Computation();
 
 %% Perform OED
-N = 5;
+N = 10;
 Z = [];
 D = [];
 betas = [];
@@ -16,6 +16,8 @@ z_bars = zeros(n, N);
 beta_bars = zeros(num_evals, N);
 beta_0 = randn(num_evals, 1);
 
+alpha_k_denom = alpha_z * norm(z_prior_interface.Apply_E_z_Inverse(z_prior_interface.M), 'fro')^2;
+
 for p = 1:N
     fprintf('\nStep %d:\n-------------\n', p);
 
@@ -24,29 +26,22 @@ for p = 1:N
         z_p = z_lofi;
     else
         if p == 2
-            covar_coeff = W_z_norm(z_bar - z_lofi)^2 / n;
-            delta_beta = abs(beta_bar);
+            alpha_k = M_z_norm(z_bar - z_lofi)^2 / alpha_k_denom;
         else
-            covar_coeff = W_z_norm(z_bar - z_bars(:, p - 2))^2 / n;
-            delta_beta = abs(beta_bar - beta_bars(:, p - 2));
+            alpha_k = M_z_norm(z_bar - z_bars(:, p - 2))^2 / alpha_k_denom;
         end
 
-        nonlcon = @(beta) deal(W_z_norm(md_hessian_analysis.evecs * (beta - beta_bar))^2 - covar_coeff * n, [], ...
-                               2 * md_hessian_analysis.evecs' * z_prior_interface.Apply_W_z(md_hessian_analysis.evecs * (beta - beta_bar)), []);
-        % oed_reg_coeff = (covar_coeff*n/W_z_norm(z_bar - z_lofi)^2)  * oed_reg_coeff;
-        % covar_coeff = 1;
-        % disp(covar_coeff)
-        md_oed.Set_Covariance_Coefficient(covar_coeff);
-        % beta_0 = betas_cont(:, end);
+        nonlcon = @(beta) deal(M_z_norm(md_hessian_analysis.evecs * (beta - beta_bar))^2 - alpha_k * alpha_k_denom, [], ...
+                               2 * md_hessian_analysis.evecs' * z_prior_interface.Apply_M_z(md_hessian_analysis.evecs * (beta - beta_bar)), []);
+        md_oed.Set_Covariance_Coefficient(alpha_k);
         % [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, oed_reg_coeff, betas, beta_bar);
-        % [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design_Con(beta_0, alpha_d, oed_reg_coeff, betas, beta_bar, delta_beta);
         [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design_Con_v1(beta_0, alpha_d, betas, beta_bar, nonlcon);
         betas = [betas; beta_new];
         z_p = z_p(:, end);
         % z_p = z_bar;
         disp(norm(z_p - z_bar) / norm(z_bar));
-        disp(beta_new - beta_bar);
-        disp(delta_beta);
+        % disp(beta_new - beta_bar);
+        % disp(delta_beta);
     end
 
     % Obtain Discrepancies
@@ -95,4 +90,58 @@ end
 
 Z_oed = Z;
 D_oed = D;
-save("../performance_test_codes/oed-results-con2.mat", "z_bars", "Jhat_DC_oed", "Z_oed", "D_oed");
+% save("../performance_test_codes/oed-results-con2.mat", "z_bars", "Jhat_DC_oed", "Z_oed", "D_oed");
+
+% Step 0:
+% -------------
+% Objective of z_lofi:    5.514
+% Objective of z_hifi:    3.082
+% Objective of z_proj:    3.082
+
+% Step 1:
+% -------------
+% Objective of z_bar:     3.397
+% Percent Improvement:    87.05%
+
+% Step 2:
+% -------------
+
+% Objective of z_bar:     3.118
+% Percent Improvement:    88.47%
+
+% Step 3:
+% -------------
+
+% Objective of z_bar:     3.092
+% Percent Improvement:    71.35%
+
+% Step 4:
+% -------------
+% Objective of z_bar:     3.089
+% Percent Improvement:    24.75%
+
+% Step 5:
+% -------------
+% Objective of z_bar:     3.088
+% Percent Improvement:    13.64%
+
+% ---- with new alpha_k
+% Step 2:
+% -------------
+% Objective of z_bar:     3.121
+% Percent Improvement:    87.58%
+
+% Step 3:
+% -------------
+% Objective of z_bar:     3.091
+% Percent Improvement:    75.74%
+
+% Step 4:
+% -------------
+% Objective of z_bar:     3.089
+% Percent Improvement:    20.87%
+
+% Step 5:
+% -------------
+% Objective of z_bar:     3.088
+% Percent Improvement:    13.34%
