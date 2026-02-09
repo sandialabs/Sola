@@ -3,7 +3,7 @@ addpath(genpath('..'));
 addpath(genpath('../../../src'));
 OED_Setup;
 
-load("oed-results.mat");
+load("oed-results-con2-new.mat");
 
 % Perform Offline OED Computations - USES data_interface
 md_oed = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
@@ -58,7 +58,3 @@ if true
     legend("location", "east", "Interpreter", "latex");
     title("Optimization Objective over Evals");
 end
-
-Z_oed = Z;
-D_oed = D;
-save("../performance_test_codes/oed-results-con.mat", "z_bars", "Jhat_DC_oed", "Z_oed", "D_oed");

@@ -6,7 +6,7 @@ md_oed = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, 
 md_oed.Offline_Computation();
 
 %% Perform OED
-N = 10;
+N = 5;
 Z = [];
 D = [];
 betas = [];
@@ -15,8 +15,9 @@ oed_reg_coeff = 0; % 1.e-5 is too small; 1.e-2 to 1.e-3 is okay; 1.e-1 too large
 z_bars = zeros(n, N);
 beta_bars = zeros(num_evals, N);
 beta_0 = randn(num_evals, 1);
-
-alpha_k_denom = alpha_z * norm(z_prior_interface.Apply_E_z_Inverse(z_prior_interface.M), 'fro')^2;
+% opt_hifi.Jhat(z_lofi + V*beta_bar)
+alpha_k_denom = trace(z_prior_interface.Apply_W_z_Inverse(z_prior_interface.M));
+alpha_k_denom_proj = trace(md_hessian_analysis.evecs' * z_prior_interface.M * md_hessian_analysis.evecs) / W_z_norm(z_lofi)^2;
 
 for p = 1:N
     fprintf('\nStep %d:\n-------------\n', p);
@@ -26,12 +27,15 @@ for p = 1:N
         z_p = z_lofi;
     else
         if p == 2
-            alpha_k = M_z_norm(z_bar - z_lofi)^2 / alpha_k_denom;
+            alpha_k_num = M_z_norm(z_bar - z_lofi)^2;
         else
-            alpha_k = M_z_norm(z_bar - z_bars(:, p - 2))^2 / alpha_k_denom;
+            alpha_k_num = M_z_norm(z_bar - z_bars(:, p - 2))^2;
         end
 
-        nonlcon = @(beta) deal(M_z_norm(md_hessian_analysis.evecs * (beta - beta_bar))^2 - alpha_k * alpha_k_denom, [], ...
+        sc = 1;
+        alpha_k = sc * alpha_k_num / alpha_k_denom_proj;
+
+        nonlcon = @(beta) deal(M_z_norm(md_hessian_analysis.evecs * (beta - beta_bar))^2 - alpha_k_num, [], ...
                                2 * md_hessian_analysis.evecs' * z_prior_interface.Apply_M_z(md_hessian_analysis.evecs * (beta - beta_bar)), []);
         md_oed.Set_Covariance_Coefficient(alpha_k);
         % [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, oed_reg_coeff, betas, beta_bar);
@@ -39,7 +43,9 @@ for p = 1:N
         betas = [betas; beta_new];
         z_p = z_p(:, end);
         % z_p = z_bar;
-        disp(norm(z_p - z_bar) / norm(z_bar));
+        disp(alpha_k_num);
+        disp(M_z_norm(z_bar - z_p)^2);
+        % disp(norm(z_p - z_bar) / norm(z_bar));
         % disp(beta_new - beta_bar);
         % disp(delta_beta);
     end
@@ -65,7 +71,7 @@ for p = 1:N
 
     % Display Stats
     Jhat_DC_oed(p) = opt_hifi.Jhat(z_bar);
-    fprintf('Objective of z_bar: \t%.3f\n', Jhat_DC_oed(p));
+    fprintf('Objective of z_bar: \t%.5f\n', Jhat_DC_oed(p));
     if p == 1
         fprintf('Percent Improvement: \t%.2f%%\n\n', 100 * (Jhat_lofi - Jhat_DC_oed(p)) / (Jhat_lofi - Jhat_hifi));
     else
@@ -90,7 +96,7 @@ end
 
 Z_oed = Z;
 D_oed = D;
-% save("../performance_test_codes/oed-results-con2.mat", "z_bars", "Jhat_DC_oed", "Z_oed", "D_oed");
+% save("../performance_test_codes/oed-results-con2-new.mat", "z_bars", "Jhat_DC_oed", "Z_oed", "D_oed");
 
 % Step 0:
 % -------------
