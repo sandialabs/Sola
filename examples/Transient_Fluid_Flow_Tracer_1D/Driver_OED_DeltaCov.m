@@ -15,7 +15,7 @@ oed_reg_coeff = 0;
 z_bars = zeros(n, N);
 beta_bars = zeros(num_evals, N);
 beta_0 = randn(num_evals, 1);
-alpha_k_denom = alpha_z * norm(z_prior_interface.Apply_E_z_Inverse(z_prior_interface.M), 'fro')^2;
+alpha_k_denom = trace(z_prior_interface.Apply_W_z_Inverse(z_prior_interface.M));
 
 for p = 1:N
     fprintf('\nStep %d:\n-------------\n', p);
@@ -26,21 +26,18 @@ for p = 1:N
     else
         tdisp("Starting OED");
         if p == 2
-            alpha_k = M_z_norm(z_bar - z_lofi)^2 / alpha_k_denom;
+            alpha_k_num = M_z_norm(z_bar - z_lofi)^2;
         else
-            alpha_k = M_z_norm(z_bar - z_bars(:, p - 2))^2 / alpha_k_denom;
+            alpha_k_num = M_z_norm(z_bar - z_bars(:, p - 2))^2;
         end
-
-        nonlcon = @(beta) deal(M_z_norm(md_hessian_analysis.evecs * (beta - beta_bar))^2 - alpha_k * alpha_k_denom, [], ...
+        alpha_k = alpha_k_num / alpha_k_denom;
+        nonlcon = @(beta) deal(M_z_norm(md_hessian_analysis.evecs * (beta - beta_bar))^2 - alpha_k_num, [], ...
                                2 * md_hessian_analysis.evecs' * z_prior_interface.Apply_M_z(md_hessian_analysis.evecs * (beta - beta_bar)), []);
 
         md_oed.Set_Covariance_Coefficient(alpha_k);
         [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design_Con_v1(beta_0, alpha_d, betas, beta_bar, nonlcon);
         tdisp("OED completed");
         z_p = z_p(:, end);
-        if p ~= 2
-            z_p = z_p + 0.1 * (z_bar - z_bars(:, p - 2)); % NEW
-        end
         beta_new = md_hessian_analysis.evecs \ (z_p - z_lofi); % NEW
         betas = [betas; beta_new];
         % disp(norm(z_p - z_bar) / norm(z_bar));
@@ -89,9 +86,9 @@ if true
     figure;
     hold on;
     xlim([0 5]);
-    yline(Jhat_hifi, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
-    yline(Jhat_lofi, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
-    plot(0:5, [Jhat_lofi; Jhat_DC_oed(1:5)], ".-", "Color", "#BAB86C", "DisplayName", "Solution Updates");
+    yline(1e-4 * Jhat_hifi, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
+    yline(1e-4 * Jhat_lofi, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
+    plot(0:5, 1e-4 * [Jhat_lofi; Jhat_DC_oed(1:5)], ".-", "Color", "#BAB86C", "DisplayName", "Solution Updates");
     xlabel("Evaluations ($N$)", "Interpreter", "latex");
     ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
     legend("location", "east", "Interpreter", "latex");

@@ -95,6 +95,7 @@ plot((crit_DC_oed - crit_same_pt) / (crit_DC_oed - crit_same_pt), (crit_DC_oed_h
 xlabel("Uncertainty reduction near $\bar{z}_k$", "Interpreter", "latex");
 ylabel("Uncertainty reduction near $z^{\star}$", "Interpreter", "latex");
 legend('Location', 'northwest');
+ylim([0 inf]);
 % saveas(gcf, 'ScatterPlot2', 'epsc');
 
 % figure;

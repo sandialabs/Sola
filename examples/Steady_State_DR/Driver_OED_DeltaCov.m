@@ -32,8 +32,7 @@ for p = 1:N
             alpha_k_num = M_z_norm(z_bar - z_bars(:, p - 2))^2;
         end
 
-        sc = 1;
-        alpha_k = sc * alpha_k_num / alpha_k_denom_proj;
+        alpha_k = alpha_k_num / alpha_k_denom;
 
         nonlcon = @(beta) deal(M_z_norm(md_hessian_analysis.evecs * (beta - beta_bar))^2 - alpha_k_num, [], ...
                                2 * md_hessian_analysis.evecs' * z_prior_interface.Apply_M_z(md_hessian_analysis.evecs * (beta - beta_bar)), []);
@@ -96,7 +95,7 @@ end
 
 Z_oed = Z;
 D_oed = D;
-% save("../performance_test_codes/oed-results-con2-new.mat", "z_bars", "Jhat_DC_oed", "Z_oed", "D_oed");
+% save("performance_test_codes/oed-results-con2-new.mat", "z_bars", "Jhat_DC_oed", "Z_oed", "D_oed");
 
 % Step 0:
 % -------------
