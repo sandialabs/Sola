@@ -64,9 +64,9 @@ beta_t = 0.0228;
 % z_prior_interface = MD_Elliptic_z_Prior_Interface_Tracer(1, opt_lofi);
 % determine_z_hyperparams.Determine_alpha_z(z_prior_interface);
 % Set Transient Prior
-n_t = 25;
+n_t = 50;
 n_y = 31;
-T = 0.1;
+T = 1;
 % u_hyperparam_interface = MD_u_Hyperparameter_Interface(true);
 u_hyperparam_interface = MD_u_Hyperparameter_Interface_Tracer(n_t, n_y, true);
 
@@ -76,7 +76,8 @@ u_hyperparam_interface = MD_u_Hyperparameter_Interface_Tracer(n_t, n_y, true);
 % u_hyperparam_interface.Set_alpha_u(alpha_u);
 % u_hyperparam_interface.Set_alpha_d(alpha_d);
 Z = load("results_great.mat", "Z_oed").Z_oed;
-D = load("results_great.mat", "D_oed").D_oed;
+D = Evaluate_Discrepancy(Z);
+% D = load("results_great.mat", "D_oed").D_oed;
 data_interface.Set_Z_and_D(Z, D);
 
 spatial_u_prior_interface = MD_Elliptic_u_Prior_Interface_Tracer(alpha_u, opt_lofi);

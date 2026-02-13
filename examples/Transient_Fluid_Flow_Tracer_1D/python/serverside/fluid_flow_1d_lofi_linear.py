@@ -31,14 +31,14 @@ K = FunctionSpace(unit_mesh, P1) # Tracer
 mesh_coordinates = K.tabulate_dof_coordinates()
 
 # Define Temporal Mesh
-T = 0.1
-num_steps = 25
+T = 1
+num_steps = 50
 total_dof = num_steps * (N+1)
 dt = Constant(T/num_steps)
 t = Constant(0);
-gamma = Constant(0.05)
+gamma = Constant(0.01)
 # reac_fn = lambda c: Constant(2) * (c+Constant(1))**2
-reac_fn = lambda c: Constant(1) * c
+reac_fn = lambda c: Constant(0.1) * c
 
 # Retreive velocity from Timeseries
 u_timeseries = TimeSeries(f"{root_path}/../../data/velocity_timeseries_midfi_1d")
@@ -53,49 +53,6 @@ K_mat = block_diag(*[K_mat_one] * num_steps)
 # Initial setup for inverse problem
 k_terminal = fenics_convert(loadmat(f'{root_path}/../../data/terminal_state.mat', squeeze_me=True)["k_terminal"], "function", fun_space=K)
 beta = Constant(1e-5)
-
-# def state_solve(k0_input, return_type: Literal["vertex", "vector", "petsc", "function"], plot_k=False, annotate=True, verbose=False, return_all = False):
-#     # Handle annotation and verbosity
-#     if annotate: get_working_tape().clear_tape()
-#     else: pause_annotation()
-#     log_level = get_log_level()
-#     set_log_active(verbose)
-
-#     # Set Trial and Test Functions
-#     k = TrialFunction(K)
-#     v_k = TestFunction(K)
-
-#     # Set initial conditions
-#     k_list = [];
-#     k0 = fenics_convert(k0_input, "function", K)
-#     k_n = Function(K)
-#     k_n.assign(k0)
-#     if plot_k: plot(k_n)
-
-#     # Solve the PDE with time-stepping
-#     t.assign(0.0)
-
-#     u_n = Function(U)
-#     F_k = (1/dt * (k - k_n) * v_k + gamma*k.dx(0)*v_k.dx(0) + u_n*k.dx(0)*v_k + u_n.dx(0)*k*v_k + reac_fn(k)*v_k) * dx
-#     a, L = lhs(F_k), rhs(F_k)
-
-#     k_sol = Function(K)
-#     for n in range(num_steps):
-#         t.assign(float(t)+float(dt))
-#         u_timeseries.retrieve(u_n.vector(), float(t))
-#         solve(a == L, k_sol)
-#         k_n.assign(k_sol)
-#         if return_all: k_list.append(k_n.vector()[:])
-#         if plot_k: plot(k_n)
-
-#     # Revert annotation and verbosity
-#     if not annotate: continue_annotation()
-#     set_log_level(log_level)
-
-#     # Return final state
-#     if return_all: return np.array(k_list).flatten()
-#     return fenics_convert(k_n, return_type, K)
-
 
 def state_solve(k0_input, return_type: Literal["vertex", "vector", "petsc", "function"], plot_k=False, annotate=True, verbose=False, return_all = False):
     # Handle annotation and verbosity

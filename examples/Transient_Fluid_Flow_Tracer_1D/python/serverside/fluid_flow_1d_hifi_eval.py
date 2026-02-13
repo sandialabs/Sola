@@ -36,46 +36,33 @@ v_c, v_u, v_p, v_r, v_e = TestFunctions(CUPRE)
 t = Constant(0);
 
 # Set boundary conditions for u(x = 0) and u(x = 1)
-# bc_c_left = DirichletBC(CUPRE.sub(0), Expression("exp(-(t+1))/pow(t+1, 2)", t=t, degree=2), "near(x[0], 0)")
-# bc_c_right = DirichletBC(CUPRE.sub(0), Expression("2*exp(-(t+1))/pow(t+1, 2)", t=t, degree=2), "near(x[0], 1)")
-
-# Set boundary conditions for u(x = 0) and u(x = 1)
-bc_u_left = DirichletBC(CUPRE.sub(1), Expression("2/(t+1)", t=t, degree=2), "near(x[0], 0)")
-bc_u_right = DirichletBC(CUPRE.sub(1), Expression("1/(t+1)", t=t, degree=2), "near(x[0], 1)")
-
-# Set boundary conditions for p(x = 0) and p(x = 1)
-# bc_p_left = DirichletBC(CUPRE.sub(2), Expression("1/pow(t+1, 2)", t=t, degree=2), "near(x[0], 0)")
-# bc_p_right = DirichletBC(CUPRE.sub(2), Expression("2/pow(t+1, 2)", t=t, degree=2), "near(x[0], 1)")
-
-# Set boundary conditions for r(x = 0) and r(x = 1)
+bc_u_left = DirichletBC(CUPRE.sub(1), Expression("scale", scale=0.5, t=t, degree=2), "near(x[0], 0)")
+bc_p_right = DirichletBC(CUPRE.sub(2), Expression("scale", scale=0.5, t=t, degree=2), "near(x[0], 1)")
 bc_r_left = DirichletBC(CUPRE.sub(3), Constant(1), "near(x[0], 0)")
-bc_r_right = DirichletBC(CUPRE.sub(3), Constant(1), "near(x[0], 1)")
+bcs = [bc_u_left, bc_p_right, bc_r_left];
 
-# Set boundary conditions for e(x = 0) and e(x = 1)
-# bc_e_left = DirichletBC(CUPRE.sub(4), Expression("1/pow(t+1, 2)", t=t, degree=2), "near(x[0], 0)")
-# bc_e_right = DirichletBC(CUPRE.sub(4), Expression("2/pow(t+1, 2)", t=t, degree=2), "near(x[0], 1)")
-
-# Combine Boundary Conditions
-bcs = [bc_u_left, bc_u_right, bc_r_left, bc_r_right];
+# Helper Function
+get_bc_value = lambda bc: list(bc.get_boundary_values().values())[0]
 
 # Set Initial Condition at t = 0
-
 rcv = Constant(1)
 c0_exp = Expression("0", degree=2)
-u0_exp = Expression("2-x[0]", degree=2)
+u0_exp = Expression("scale*(2-x[0])", scale=get_bc_value(bc_u_left)/2, degree=2)
 r0_exp = Constant(1)
-e0_exp = Expression("1*(1+x[0])", degree=2)
-p0_exp = Expression("rcv*(1+x[0])", rcv=float(rcv), degree=2)
+e0_exp = Expression("scale*(1+x[0])", scale=get_bc_value(bc_p_right)/2, degree=2) 
+p0_exp = Expression("rcv*scale*(1+x[0])", rcv=float(rcv), scale=get_bc_value(bc_p_right)/2, degree=2) 
 
-# u0_exp = Expression("x[0]+1", degree=2)
-# p0_exp = Constant(1) # doesn't matter
-# r0_exp = Expression("1/(1+x[0])", degree=2)
-# e0_exp = Expression("1+9*x[0]", degree=2)
+# Make sure ICs are consistent with BCs
+assert u0_exp(0) == get_bc_value(bc_u_left), "Velocity IC/BC Inconsistent"
+assert p0_exp(1) == get_bc_value(bc_p_right), "Pressure IC/BC Inconsistent"
+assert r0_exp(0) == get_bc_value(bc_r_left), "Density IC/BC Inconsistent"
+assert p0_exp(0.6) == float(rcv)*e0_exp(0.6)*r0_exp(0.6), "Pressure IC incorrect"
+# Note p0_exp is just for initialization and not meant to be enforced as an IC.
 
 # Initialize u_n and p_n
 c_n = interpolate(c0_exp, C)
 u_n = interpolate(u0_exp, U)
-p_n = interpolate(p0_exp, P) # just a newton guess
+p_n = interpolate(p0_exp, P) # just for initialization
 r_n = interpolate(r0_exp, R)
 e_n = interpolate(e0_exp, E)
 
@@ -84,14 +71,17 @@ ic = [c_n, u_n, p_n, r_n, e_n];
 assign(cupre, ic)
 
 # Set Grid and PDE Parameters
-T = 0.1
-num_steps = 25
+T = 1
+num_steps = 50
 dt = Constant(T/num_steps)
-gamma = Constant(0.05)
+gamma = Constant(0.01)
 # reac_fn = lambda c: Constant(2) * (c+Constant(1))**2
-reac_fn = lambda c: Constant(1) * c
-reac_enthalpy = Constant(100_000) # NOTE: MODIFIED!!!
-kcv = Constant(30)
+reac_fn = lambda c: Constant(0.1) * c
+# reac_enthalpy = Constant(100_000)
+# kcv = Constant(30)
+# reac_enthalpy = Constant(0)
+reac_enthalpy = Constant(1200)
+kcv = Constant(0.005)
 
 # Weak Form of PDE 
 # F_3 = (1/dt*(e-e_n)*r*v_e + u*e.dx(0)*r*v_e + p*u.dx(0)*v_e + alpha*e.dx(0)*(r*v_e.dx(0) + r.dx(0)*v_e) ) * dx
@@ -123,7 +113,7 @@ def state_solve(c0, return_type: Literal["vertex", "vector", "petsc", "function"
         store_midfi = False
         print("Cannot overwrite existing file.")
 
-    u_temp = Function(U)
+    # u_temp = Function(U)
 
     # Solve the PDE with time-stepping
     t.assign(0)

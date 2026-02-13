@@ -1,4 +1,4 @@
-import fluid_flow_1d_lofi as lofi
+import fluid_flow_1d_lofi_linear as lofi
 from scipy.io import savemat, loadmat
 
 # Solve initial iterate for inverse problem (used for taping adjoints)
