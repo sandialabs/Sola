@@ -95,6 +95,16 @@ if true
     % title("Optimization Objective over Evals");
 end
 
+figure;
+semilogy(0:5, 1e-4 * ([Jhat_lofi; Jhat_DC_oed(1:5)] - Jhat_hifi), ".-", "Color", "#BAB86C", "DisplayName", "Solution Updates");
+hold on;
+xlim([0 5]);
+% yline(1e-4 * Jhat_hifi, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
+yline(1e-4 * Jhat_lofi, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
+xlabel("Evaluations ($N$)", "Interpreter", "latex");
+ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
+legend("location", "east", "Interpreter", "latex");
+
 Z_oed = Z;
 D_oed = D;
 

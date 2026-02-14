@@ -31,14 +31,14 @@ K = FunctionSpace(unit_mesh, P1) # Tracer
 mesh_coordinates = K.tabulate_dof_coordinates()
 
 # Define Temporal Mesh
-T = 1
-num_steps = 50
+T = 0.1
+num_steps = 25
 total_dof = num_steps * (N+1)
 dt = Constant(T/num_steps)
 t = Constant(0);
-gamma = Constant(0.01)
+gamma = Constant(0.05)
 # reac_fn = lambda c: Constant(2) * (c+Constant(1))**2
-reac_fn = lambda c: Constant(0.1) * c
+reac_fn = lambda c: Constant(1) * c
 
 # Retreive velocity from Timeseries
 u_timeseries = TimeSeries(f"{root_path}/../../data/velocity_timeseries_midfi_1d")
@@ -132,7 +132,7 @@ def J(k0, kt):
     # Convert inputs to functions
     k0 = fenics_convert(k0, "function", fun_space=K)
     kt = fenics_convert(kt, "function", fun_space=K)
-    val = 1.e4*(assemble(0.5*inner(kt - k_terminal, kt - k_terminal)*dx + 0.5 * beta * inner(k0.dx(0), k0.dx(0)) * dx))
+    val = (assemble(1.e4*0.5*inner(kt - k_terminal, kt - k_terminal)*dx + 1.e4*0.5 * beta * inner(k0.dx(0), k0.dx(0)) * dx))
     return val
 
 def Jz(k0, kt):

@@ -20,3 +20,4 @@ hifi.state_solve(0*k0_hifi.vector()[:], return_type = "vector", store_midfi=True
 savemat(f'{root_path}/../../data/terminal_state.mat', {'k_terminal': k_terminal}, oned_as='column')
 savemat(f'{root_path}/../../data/hifi_optim_sol.mat', {'k0_hifi': hifi.fenics_convert(k0_hifi, "vector")}, oned_as='column')
 print("Saved.")
+os._exit(0)

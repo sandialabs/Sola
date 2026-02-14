@@ -56,15 +56,15 @@ classdef MD_OED_DeltaCov < handle
 
             try
                 sing_vecs = this.u_prior_interface.sing_vecs_output;
-                this.offline_data.xjTxj = sum(sing_vecs .* this.u_prior_interface.Apply_W_u_Inverse(sing_vecs), 1)';
+                this.offline_data.xjTxj = sum(sing_vecs .* this.u_prior_interface.Apply_M_u(sing_vecs), 1)';
                 this.offline_data.lambda_js = 1 ./ (this.u_prior_interface.alpha_u * this.u_prior_interface.sing_vals.^2);
             catch
                 sing_vecs = kron(this.u_prior_interface.spatial_prior_cov.sing_vecs_output, this.u_prior_interface.transient_prior_cov.evecs);
-                this.offline_data.xjTxj = sum(sing_vecs .* this.u_prior_interface.Apply_W_u_Inverse(sing_vecs), 1)';
+                this.offline_data.xjTxj = sum(sing_vecs .* this.u_prior_interface.Apply_M_u(sing_vecs), 1)';
                 this.offline_data.lambda_js = 1 ./ (this.u_prior_interface.alpha_u * kron(this.u_prior_interface.spatial_prior_cov.sing_vals.^2, this.u_prior_interface.transient_prior_cov.evals));
             end
 
-            % W_u_inv = this.u_prior_interface.Apply_W_u_Inverse(eye(this.offline_data.m));
+            % W_u_inv = this.u_prior_interface.Apply_M_u(eye(this.offline_data.m));
             % this.offline_data.Mu_Wu_inv = this.u_prior_interface.Apply_M_u(W_u_inv);
         end
 

@@ -36,8 +36,8 @@ v_c, v_u, v_p, v_r, v_e = TestFunctions(CUPRE)
 t = Constant(0);
 
 # Set boundary conditions for u(x = 0) and u(x = 1)
-bc_u_left = DirichletBC(CUPRE.sub(1), Expression("scale", scale=0.5, t=t, degree=2), "near(x[0], 0)")
-bc_p_right = DirichletBC(CUPRE.sub(2), Expression("scale", scale=0.5, t=t, degree=2), "near(x[0], 1)")
+bc_u_left = DirichletBC(CUPRE.sub(1), Expression("scale", scale=1, t=t, degree=2), "near(x[0], 0)")
+bc_p_right = DirichletBC(CUPRE.sub(2), Expression("scale", scale=2, t=t, degree=2), "near(x[0], 1)")
 bc_r_left = DirichletBC(CUPRE.sub(3), Constant(1), "near(x[0], 0)")
 bcs = [bc_u_left, bc_p_right, bc_r_left];
 
@@ -47,9 +47,9 @@ get_bc_value = lambda bc: list(bc.get_boundary_values().values())[0]
 # Set Initial Condition at t = 0
 rcv = Constant(1)
 c0_exp = Expression("0", degree=2)
-u0_exp = Expression("scale*(2-x[0])", scale=get_bc_value(bc_u_left)/2, degree=2)
+u0_exp = Expression("scale*(2-x[0])", scale=get_bc_value(bc_u_left)/2, degree=2) # left must be 2 for this to work
 r0_exp = Constant(1)
-e0_exp = Expression("scale*(1+x[0])", scale=get_bc_value(bc_p_right)/2, degree=2) 
+e0_exp = Expression("scale*(1+x[0])", scale=get_bc_value(bc_p_right)/2, degree=2) # right must be 2 for this to work
 p0_exp = Expression("rcv*scale*(1+x[0])", rcv=float(rcv), scale=get_bc_value(bc_p_right)/2, degree=2) 
 
 # Make sure ICs are consistent with BCs
@@ -71,17 +71,17 @@ ic = [c_n, u_n, p_n, r_n, e_n];
 assign(cupre, ic)
 
 # Set Grid and PDE Parameters
-T = 1
-num_steps = 50
+T = 0.1
+num_steps = 25
 dt = Constant(T/num_steps)
-gamma = Constant(0.01)
+gamma = Constant(0.05)
 # reac_fn = lambda c: Constant(2) * (c+Constant(1))**2
-reac_fn = lambda c: Constant(0.1) * c
+reac_fn = lambda c: Constant(1) * c
 # reac_enthalpy = Constant(100_000)
 # kcv = Constant(30)
 # reac_enthalpy = Constant(0)
-reac_enthalpy = Constant(1200)
-kcv = Constant(0.005)
+reac_enthalpy = Constant(50_000)
+kcv = Constant(0.1)
 
 # Weak Form of PDE 
 # F_3 = (1/dt*(e-e_n)*r*v_e + u*e.dx(0)*r*v_e + p*u.dx(0)*v_e + alpha*e.dx(0)*(r*v_e.dx(0) + r.dx(0)*v_e) ) * dx
