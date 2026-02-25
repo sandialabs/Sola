@@ -89,7 +89,7 @@ classdef MD_OED_DeltaCov < handle
             end
             p = length(beta_0) / size(this.offline_data.V, 2);
             beta_new = fminunc(@(beta_new) this.Evaluate_OED_Objective_Seq([betas; beta_new], alpha_d, reg_coeff, beta_bar, p), beta_0, options);
-            Z_new = this.data_interface.z_init + this.offline_data.V * reshape(beta_new, size(this.offline_data.V, 2), []);
+            Z_new = this.data_interface.z_opt + this.offline_data.V * reshape(beta_new, size(this.offline_data.V, 2), []);
         end
 
         function [beta_new, Z_new] = Generate_Seq_Optimal_Design_Con_v1(this, beta_0, alpha_d, betas, beta_bar, nonlcon)
@@ -101,7 +101,7 @@ classdef MD_OED_DeltaCov < handle
             p = length(beta_0) / size(this.offline_data.V, 2);
             fun = @(beta_new) this.Evaluate_OED_Objective_Seq([betas; beta_new], alpha_d, 0, beta_bar, p);
             beta_new = fmincon(fun, beta_0, [], [], [], [], [], [], nonlcon, options);
-            Z_new = this.data_interface.z_init + this.offline_data.V * reshape(beta_new, size(this.offline_data.V, 2), []);
+            Z_new = this.data_interface.z_opt + this.offline_data.V * reshape(beta_new, size(this.offline_data.V, 2), []);
         end
 
         function [beta_new, Z_new] = Generate_Seq_Optimal_Design_Con(this, beta_0, alpha_d, reg_coeff, betas, beta_bar, bd_region)
