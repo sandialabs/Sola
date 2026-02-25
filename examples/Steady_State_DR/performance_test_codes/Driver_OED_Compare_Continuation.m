@@ -51,10 +51,10 @@ if true
     xlim([0 N]);
     yline(Jhat_hifi, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
     yline(Jhat_lofi, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
-    plot(0:N, [Jhat_lofi; Jhat_noncnt], ".-", "Color", "#EDB120", "DisplayName", "HDSA Linearization");
+    plot(0:N, [Jhat_lofi; Jhat_noncnt], ".-", "Color", "#EDB120", "DisplayName", "Post-optimality Linearization");
     plot(0:N, [Jhat_lofi; Jhat_DC_oed], ".-", "Color", "#77AC30", "DisplayName", "Continuation ($N_c = 3$)");
     xlabel("Evaluations ($N$)", "Interpreter", "latex");
     ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
     legend("location", "east", "Interpreter", "latex");
-    title("Optimization Objective over Evals");
+    % title("Optimization Objective over Evals");
 end

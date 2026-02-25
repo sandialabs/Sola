@@ -42,8 +42,8 @@ for p = 1:N
         betas = [betas; beta_new];
         z_p = z_p(:, end);
         % z_p = z_bar;
-        disp(alpha_k_num);
-        disp(M_z_norm(z_bar - z_p)^2);
+        % disp(alpha_k_num);
+        % disp(M_z_norm(z_bar - z_p)^2);
         % disp(norm(z_p - z_bar) / norm(z_bar));
         % disp(beta_new - beta_bar);
         % disp(delta_beta);
@@ -95,7 +95,7 @@ end
 
 Z_oed = Z;
 D_oed = D;
-% save("performance_test_codes/oed-results-con2-new.mat", "z_bars", "Jhat_DC_oed", "Z_oed", "D_oed");
+save("performance_test_codes/oed-results-con2-new.mat", "z_bars", "Jhat_DC_oed", "Z_oed", "D_oed");
 
 % Step 0:
 % -------------
