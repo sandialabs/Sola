@@ -10,8 +10,8 @@ classdef MD_Opt_Prob_Interface_Python < MD_Opt_Prob_Interface
 
         function this = MD_Opt_Prob_Interface_Python(md_interface_data, sabl_opt)
             this@MD_Opt_Prob_Interface();
-            this.z_current = md_interface_data.z_init;
-            this.u_current = md_interface_data.u_init;
+            this.z_current = md_interface_data.z_opt;
+            this.u_current = md_interface_data.u_opt;
             this.sabl_opt  = sabl_opt;
         end
 

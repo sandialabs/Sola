@@ -101,7 +101,7 @@ md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface)
 num_evals = 4;
 oversampling = 5;
 tdisp("Starting Hessian GEVP computation");
-md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_init, num_evals, oversampling);
+md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
 tdisp("Completed Hessian GEVP computation");
 
 % Get OED Interface ready

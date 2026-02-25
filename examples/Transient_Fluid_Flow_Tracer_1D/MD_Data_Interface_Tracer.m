@@ -20,14 +20,11 @@ classdef MD_Data_Interface_Tracer < MD_Data_Interface
         function this = MD_Data_Interface_Tracer(varargin)
             switch nargin
                 case 2
-                    [this.u_init, this.z_init] = deal(varargin{:});
+                    [this.u_opt, this.z_opt] = deal(varargin{:});
                 otherwise
                     error("Please enter the correct number of inputs into the data interface.");
             end
 
-            if isempty(this.z_opt)
-                this.z_opt = this.z_init;
-            end
         end
 
     end

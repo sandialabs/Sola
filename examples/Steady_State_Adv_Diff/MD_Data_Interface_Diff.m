@@ -45,16 +45,11 @@ classdef MD_Data_Interface_Diff < MD_Data_Interface
                 case 0
                     % do nothing
                 case 2
-                    [this.u_init, this.z_init] = deal(varargin{:});
+                    [this.u_opt, this.z_opt] = deal(varargin{:});
                 case 3
                     [this.ensemble_id_k, this.ensemble_id_i, this.design_type] = deal(varargin{:});
                 otherwise
                     error("Please enter the correct number of inputs into MD_Data_Interface_Diff.");
-            end
-
-            if isempty(this.z_opt)
-                this.z_opt = this.z_init;
-                this.u_opt = this.u_init;
             end
         end
 
