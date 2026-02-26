@@ -6,7 +6,6 @@ classdef MD_Posterior_Data < handle
         Z
         D
         Mz_Z
-        z_opt
         Mz_z_opt
         Wz_inv_Mz_Z
         Wz_inv_Mz_z_opt
@@ -41,7 +40,6 @@ classdef MD_Posterior_Data < handle
         function [] = Compute_Posterior_Data(this, data_interface, u_prior_interface, z_prior_interface, alpha_d_in, num_samples)
             this.alpha_d = alpha_d_in;
             this.num_samples = num_samples;
-            this.z_opt = data_interface.z_opt;
             this.Z = data_interface.Z;
             this.D = data_interface.D;
             this.N = size(this.D, 2);

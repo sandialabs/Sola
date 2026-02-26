@@ -46,11 +46,6 @@ num_evals = 4;
 oversampling = 20;
 md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
 
-% Get OED Interface ready
-alpha_zd = 0.05;
-beta_zd = 1.e-2;
-oed_interface = MD_OED_Interface_Diff_React(data_interface, con_lofi, alpha_zd, beta_zd);
-
 % Get best possible z under projected problem
 z_best_proj = z_lofi + md_hessian_analysis.evecs * (md_hessian_analysis.evecs \ (z_hifi - z_lofi));
 Jhat_best_proj = opt_hifi.Jhat(z_best_proj);

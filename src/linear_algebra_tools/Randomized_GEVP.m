@@ -60,10 +60,6 @@ classdef Randomized_GEVP < handle
         end
 
         function [Q, WQ, R] = CholQR(this, Z, type)
-            % disp("...")
-            % disp(cond(Z' * Z))
-            % R_Z = chol(Z' * Z);
-            % Q_Z = Z * linsolve(R_Z, eye(size(R_Z, 1)));
             [Q_Z, R_Z] = qr(Z, "econ");
 
             if strcmp(type, 'weighting')
