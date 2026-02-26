@@ -2,9 +2,9 @@ cd hyperparam_2D/;
 Driver_HDSA;
 cd ..;
 
-cd oed_unit_test/;
-Driver;
-cd ..;
+% cd oed_unit_test/;
+% Driver;
+% cd ..;
 
 cd PDE_Test_Problem/;
 Driver_HDSA;

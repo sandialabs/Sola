@@ -1,3 +1,3 @@
 restoredefaultpath;
 addpath(genpath('.'));
-addpath(genpath('~/Documents/alpha/src/TPLs/adigator/'));
+addpath(genpath('~/Documents/MATLAB/adigator/'));
