@@ -50,6 +50,9 @@ classdef Diff_React_Constraint < Constraint
         end
 
         function [R, R_prime] = Reaction_Function(this, u, x)
+            if ~isvector(u)
+                error("The PDE cannot currently handle multiple inputs of state. Please input one state at a time!");
+            end
             R = u.^2;
             R_prime = 2 * diag(u);
         end

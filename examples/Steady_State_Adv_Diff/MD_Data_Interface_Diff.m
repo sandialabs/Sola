@@ -40,11 +40,16 @@ classdef MD_Data_Interface_Diff < MD_Data_Interface
             end
         end
 
-        function this = MD_Data_Interface_Diff(ensemble_id_k, ensemble_id_i, design_type)
-            if nargin > 0
-                this.ensemble_id_k = ensemble_id_k;
-                this.ensemble_id_i = ensemble_id_i;
-                this.design_type = design_type;
+        function this = MD_Data_Interface_Diff(varargin)
+            switch nargin
+                case 0
+                    % do nothing
+                case 2
+                    [this.u_opt, this.z_opt] = deal(varargin{:});
+                case 3
+                    [this.ensemble_id_k, this.ensemble_id_i, this.design_type] = deal(varargin{:});
+                otherwise
+                    error("Please enter the correct number of inputs into MD_Data_Interface_Diff.");
             end
         end
 

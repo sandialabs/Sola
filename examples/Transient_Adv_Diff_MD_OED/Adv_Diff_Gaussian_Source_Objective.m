@@ -49,7 +49,7 @@ classdef Adv_Diff_Gaussian_Source_Objective < Dynamic_Objective
             this.M = M;
             this.reg_coeff = reg_coeff;
 
-            % Trapazoid rule for time integration
+            % Trapezoid rule for time integration
             time_weights = ones(n_t, 1);
             time_weights(1) = .5 * time_weights(1);
             time_weights(end) = .5 * time_weights(end);
