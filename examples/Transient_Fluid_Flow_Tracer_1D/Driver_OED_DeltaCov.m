@@ -2,7 +2,7 @@
 OED_Setup;
 
 % Perform Offline OED Computations - USES data_interface
-md_oed = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
+md_oed = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
 md_oed.Offline_Computation();
 
 %% Perform OED
@@ -11,7 +11,6 @@ Z = [];
 D = [];
 betas = [];
 Jhat_DC_oed = zeros(N, 1);
-oed_reg_coeff = 0;
 z_bars = zeros(n, N);
 beta_bars = zeros(num_evals, N);
 beta_0 = randn(num_evals, 1);
@@ -31,18 +30,10 @@ for p = 1:N
             alpha_k_num = M_z_norm(z_bar - z_bars(:, p - 2))^2;
         end
         alpha_k = alpha_k_num / alpha_k_denom;
-        nonlcon = @(beta) deal(M_z_norm(md_hessian_analysis.evecs * (beta - beta_bar))^2 - alpha_k_num, [], ...
-                               2 * md_hessian_analysis.evecs' * z_prior_interface.Apply_M_z(md_hessian_analysis.evecs * (beta - beta_bar)), []);
-
         md_oed.Set_Covariance_Coefficient(alpha_k);
-        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design_Con_v1(beta_0, alpha_d, betas, beta_bar, nonlcon);
-        tdisp("OED completed");
-        z_p = z_p(:, end);
-        beta_new = md_hessian_analysis.evecs \ (z_p - z_lofi); % NEW
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, betas, beta_bar, alpha_k_num);
         betas = [betas; beta_new];
-        % disp(norm(z_p - z_bar) / norm(z_bar));
-        % disp(beta_new - beta_bar);
-        % disp(delta_beta);
+        z_p = z_p(:, end);
     end
 
     % Obtain Discrepancies
@@ -116,54 +107,3 @@ plot(flip(z_bars(:, 5)), "b-", "DisplayName", "$\overline{z}$", "LineWidth", 3);
 xlabel("$x$", "Interpreter", "latex");
 ylabel("$c_0$", "Interpreter", "latex");
 legend("location", "northeast", "Interpreter", "latex");
-
-%% Results Great
-% Step 1:
-% -------------
-% Objective of z_bar:     8.467
-% Percent Improvement:    76.13%
-
-% Step 2:
-% -------------
-% Objective of z_bar:     6.061
-% Percent Improvement:    32.93%
-
-% Step 3:
-% -------------
-% Objective of z_bar:     4.929
-% Percent Improvement:    23.09%
-
-% Step 4:
-% -------------
-% Objective of z_bar:     3.030
-% Percent Improvement:    50.34%
-
-% Step 5:
-% -------------
-% Objective of z_bar:     2.295
-% Percent Improvement:    39.28%
-
-% Step 6:
-% -------------
-% Objective of z_bar:     2.299
-% Percent Improvement:    -0.34%
-
-% Step 7:
-% -------------
-% Objective of z_bar:     2.291
-% Percent Improvement:    0.66%
-
-% Step 8:
-% -------------
-% Objective of z_bar:     2.287
-% Percent Improvement:    0.37%
-
-% Step 9:
-% -------------
-% Objective of z_bar:     2.285
-% Percent Improvement:    0.22%
-
-% Step 10:
-% -------------
-% Objective of z_bar:     2.283
-% Percent Improvement:    0.15%

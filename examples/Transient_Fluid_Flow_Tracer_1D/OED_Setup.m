@@ -51,30 +51,31 @@ fprintf('Objective of z_hifi: \t%.3f\n\n', Jhat_hifi);
 data_interface = MD_Data_Interface_Tracer(u_lofi, z_lofi);
 
 % Generate Priors for u and z
-% alpha_u = 0*(1.e-5)^2;
-% alpha_d = 0*(1.e-2)^2 * alpha_u;
-% beta_t = 0*50;
 alpha_z = 51.5;
 alpha_u = 1.5277e-04;
 alpha_d = 3.6663e-09;
 beta_t = 0.0228;
+u_hyperparam_interface = MD_u_Hyperparameter_Interface_Tracer(n_t, n_y, true);
+
+% Automated Hyperparameter evaluation
+% alpha_u = 0;
+% alpha_d = 0;
+% beta_t = 0;
 % z_prior_interface = MD_Elliptic_z_Prior_Interface_Tracer(alpha_z, opt_lofi);
 % determine_z_hyperparams = MD_Determine_z_Hyperparameters(data_interface, z_hyperparam_interface, u_prior_interface);
 % determine_z_hyperparams.Determine_beta_z(); %0.0031
 % z_prior_interface = MD_Elliptic_z_Prior_Interface_Tracer(1, opt_lofi);
 % determine_z_hyperparams.Determine_alpha_z(z_prior_interface);
+% u_hyperparam_interface = MD_u_Hyperparameter_Interface(true);
+% u_prior_interface_new = MD_Numeric_Laplacian_u_Prior_Interface(pde_meshing.S, pde_meshing.M, data_interface, u_hyperparam_interface);
+% u_hyperparam_interface.Set_beta_t(beta_t);
+% u_hyperparam_interface.Set_alpha_u(alpha_u);
+% u_hyperparam_interface.Set_alpha_d(alpha_d);
+
 % Set Transient Prior
 n_t = 25;
 n_y = 31;
 T = 0.1;
-% u_hyperparam_interface = MD_u_Hyperparameter_Interface(true);
-u_hyperparam_interface = MD_u_Hyperparameter_Interface_Tracer(n_t, n_y, true);
-
-% u_prior_interface_new = MD_Numeric_Laplacian_u_Prior_Interface(pde_meshing.S, pde_meshing.M, data_interface, u_hyperparam_interface);
-
-% u_hyperparam_interface.Set_beta_t(beta_t);
-% u_hyperparam_interface.Set_alpha_u(alpha_u);
-% u_hyperparam_interface.Set_alpha_d(alpha_d);
 Z = load("results_great.mat", "Z_oed").Z_oed;
 % D = Evaluate_Discrepancy(Z);
 D = load("results_great.mat", "D_oed").D_oed;
@@ -104,11 +105,6 @@ tdisp("Starting Hessian GEVP computation");
 md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
 tdisp("Completed Hessian GEVP computation");
 
-% Get OED Interface ready
-alpha_zd = 1.e-1;
-beta_zd = 1.e-1;
-oed_interface = MD_OED_Interface_Tracer(data_interface, con_lofi, alpha_zd, beta_zd);
-
 % Get best possible z under projected problem
 z_best_proj = z_lofi + md_hessian_analysis.evecs * (md_hessian_analysis.evecs \ (z_hifi - z_lofi));
 Jhat_best_proj = Jhat_hifi_fn(z_best_proj);
@@ -118,50 +114,3 @@ fprintf("\nStep 0:\n-------------\n");
 fprintf('Objective of z_lofi: \t%.3f\n', Jhat_lofi);
 fprintf('Objective of z_hifi: \t%.3f\n', Jhat_hifi);
 fprintf('Objective of z_proj: \t%.3f\n\n', Jhat_best_proj);
-
-% Computing Hessian GEVP...
-
-% Step 0:
-% -------------
-% Objective of z_lofi:    31.774
-% Objective of z_hifi:    1.158
-% Objective of z_proj:    8.750
-
-% Step 1:
-% -------------
-% Objective of z_bar:     12.445
-% Percent Improvement:    63.14%
-
-% Step 2:
-% -------------
-% Objective of z_bar:     10.555
-% Percent Improvement:    16.74%
-
-% Step 3:
-% -------------
-% Objective of z_bar:     10.293
-% Percent Improvement:    2.79%
-
-% Step 4:
-% -------------
-% Objective of z_bar:     10.069
-% Percent Improvement:    2.45%
-
-% Step 5:
-% -------------
-% Objective of z_bar:     9.879
-% Percent Improvement:    2.13%
-
-% Best possible value w/ zero: 9.8724
-
-% figure;
-% hold on;
-% shift_val = 9.8724
-% xlim([0 N]);
-% % yline(1.158, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
-% yline(31.774-shift_val, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
-% plot(0:N, [Jhat_lofi; 12.445; 10.555; 10.293; 10.069; 9.879]-shift_val, ".-", "Color", "#BAB86C", "DisplayName", "DeltaCov OED");
-% xlabel("Evaluations ($N$)", "Interpreter", "latex");
-% ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
-% legend("location", "east", "Interpreter", "latex");
-% title("Optimization Objective over Evals");

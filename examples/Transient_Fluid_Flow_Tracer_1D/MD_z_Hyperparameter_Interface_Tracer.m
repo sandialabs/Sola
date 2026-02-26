@@ -12,10 +12,6 @@ classdef MD_z_Hyperparameter_Interface_Tracer < MD_z_Hyperparameter_Interface
             nodes = this.x;
         end
 
-        % function [u] = State_Solve(this, z)
-        %     u = this.con_lofi.State_Solve(z);
-        % end
-
         function this = MD_z_Hyperparameter_Interface_Tracer(x)
             this@MD_z_Hyperparameter_Interface('spatial field');
             this.x = x;
@@ -25,12 +21,3 @@ classdef MD_z_Hyperparameter_Interface_Tracer < MD_z_Hyperparameter_Interface
     end
 
 end
-
-% function [nodes] = Load_Spatial_Node_Data(this)
-%             nodes = this.x;
-%         end
-
-%         function this = MD_z_Hyperparameter_Interface_Diff(x)
-%             this@MD_z_Hyperparameter_Interface('spatial field');
-%             this.x = x;
-%         end
