@@ -6,7 +6,7 @@ OED_Setup;
 load("oed-results.mat");
 
 % Perform Offline OED Computations - USES data_interface
-md_oed = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
+md_oed = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
 md_oed.Offline_Computation();
 V = md_hessian_analysis.evecs;
 alpha_k_denom = trace(z_prior_interface.Apply_W_z_Inverse(z_prior_interface.M));

@@ -1,4 +1,4 @@
-classdef MD_OED_DeltaCov < handle
+classdef MD_OED < handle
 
     properties
         opt_prob_interface
@@ -15,7 +15,7 @@ classdef MD_OED_DeltaCov < handle
 
     methods
 
-        function this = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis)
+        function this = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis)
             arguments
                 opt_prob_interface MD_Opt_Prob_Interface
                 data_interface MD_Data_Interface

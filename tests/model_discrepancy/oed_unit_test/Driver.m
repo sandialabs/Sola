@@ -1,4 +1,4 @@
-%%
+%% Warning: Outdated
 clear;
 close all;
 addpath(genpath('../../../src'));

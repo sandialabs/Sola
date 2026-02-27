@@ -4,7 +4,7 @@ addpath(genpath('../../../src'));
 OED_Setup;
 
 % Perform Offline OED Computations - USES data_interface
-md_oed = MD_OED_DeltaCov(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
+md_oed = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
 md_oed.Offline_Computation();
 
 rng(0);
