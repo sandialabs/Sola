@@ -36,7 +36,7 @@ classdef MD_Data_Interface_lumped_mass_unit_test < MD_Data_Interface
             this.n_y = n_y;
             this.n_t = n_t;
             this.x = linspace(0, 1, n_y)';
-            this.t = linspace(0,1,n_t)';
+            this.t = linspace(0, 1, n_t)';
         end
 
     end

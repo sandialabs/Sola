@@ -12,7 +12,7 @@ m = 51;
 data_interface = MD_OUU_Data_Interface_synthetic_test_OUU();
 data_interface.Load_Data();
 
-Xi = load('Optimization_Results.mat','Xi').Xi;
+Xi = load('Optimization_Results.mat', 'Xi').Xi;
 N = size(Xi, 2);
 obj = Synthetic_Test_OUU_Objective(m);
 cons = cell(N, 1);
@@ -57,15 +57,15 @@ error = [error; local_error];
 % W_theta(1:m, (m + 1):end) = kron(us_prior_interface.W_u, v');
 % W_theta((m + 1):end, 1:m) = kron(us_prior_interface.W_u, v);
 % W_theta((m + 1):end, (m + 1):end) = kron(us_prior_interface.W_u, z_prior_interface.W_z + v * v');
-% 
+%
 % test1 = kron(W_theta, ensemble_weighting.W_s) * theta_test;
-% 
+%
 % theta_test_rs = reshape(theta_test, N, m * (m + 1))';
 % test2 = ensemble_weighting.W_s * theta_test_rs' * W_theta;
 % test2 = test2(:);
 % local_error = norm(test1 - test2) / norm(test1);
 % error = [error; local_error];
-% 
+%
 % E = zeros(N, N);
 % for i = 1:N
 %     for j = 1:N

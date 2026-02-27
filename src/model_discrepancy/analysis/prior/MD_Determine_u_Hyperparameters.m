@@ -43,9 +43,9 @@ classdef MD_Determine_u_Hyperparameters < handle
             delta1 = this.data_interface.D(I, 1);
             d1_norm_sq = delta1' * u_prior_interface.Apply_M_u(delta1);
 
-            if isa(u_prior_interface,"MD_Numeric_Laplacian_u_Prior_Interface")
+            if isa(u_prior_interface, "MD_Numeric_Laplacian_u_Prior_Interface")
                 u_op_trace = sum(u_prior_interface.sing_vals.^2);
-            elseif isa(u_prior_interface,"MD_Lumped_Mass_u_Prior_Interface")
+            elseif isa(u_prior_interface, "MD_Lumped_Mass_u_Prior_Interface")
                 if this.trace_estimator_sample_size > 0
                     laplacian_like_prop = MD_Laplacian_Like_Operator_Properties();
                     u_op_trace = laplacian_like_prop.Randomized_Inv_Operator_Trace_Estimation(u_prior_interface, this.trace_estimator_sample_size);
@@ -53,12 +53,12 @@ classdef MD_Determine_u_Hyperparameters < handle
                     nodes = this.u_hyperparam_interface.Load_Spatial_Node_Data();
                     nodes = nodes{this.u_hyperparam_interface.component_id};
                     laplacian_like_prop = MD_Laplacian_Like_Operator_Properties();
-                    u_op_trace = laplacian_like_prop.Get_Rectangular_Domain_Squared_Inv_Operator_Trace(this.u_hyperparam_interface.beta_u,nodes);
+                    u_op_trace = laplacian_like_prop.Get_Rectangular_Domain_Squared_Inv_Operator_Trace(this.u_hyperparam_interface.beta_u, nodes);
                 end
-            elseif isa(u_prior_interface,"MD_Transient_Elliptic_u_Prior_Interface")
-                if isa(u_prior_interface.spatial_prior_cov,"MD_Numeric_Laplacian_u_Prior_Interface")
+            elseif isa(u_prior_interface, "MD_Transient_Elliptic_u_Prior_Interface")
+                if isa(u_prior_interface.spatial_prior_cov, "MD_Numeric_Laplacian_u_Prior_Interface")
                     u_op_trace = sum(u_prior_interface.spatial_prior_cov.sing_vals.^2);
-                elseif isa(u_prior_interface.spatial_prior_cov,"MD_Lumped_Mass_u_Prior_Interface")
+                elseif isa(u_prior_interface.spatial_prior_cov, "MD_Lumped_Mass_u_Prior_Interface")
                     if this.trace_estimator_sample_size > 0
                         laplacian_like_prop = MD_Laplacian_Like_Operator_Properties();
                         u_op_trace = laplacian_like_prop.Randomized_Inv_Operator_Trace_Estimation(u_prior_interface.spatial_prior_cov, this.trace_estimator_sample_size);
@@ -66,7 +66,7 @@ classdef MD_Determine_u_Hyperparameters < handle
                         nodes = this.u_hyperparam_interface.Load_Spatial_Node_Data();
                         nodes = nodes{this.u_hyperparam_interface.component_id};
                         laplacian_like_prop = MD_Laplacian_Like_Operator_Properties();
-                        u_op_trace = laplacian_like_prop.Get_Rectangular_Domain_Squared_Inv_Operator_Trace(this.u_hyperparam_interface.beta_u,nodes);
+                        u_op_trace = laplacian_like_prop.Get_Rectangular_Domain_Squared_Inv_Operator_Trace(this.u_hyperparam_interface.beta_u, nodes);
                     end
                 end
                 u_op_trace = u_op_trace * sum(u_prior_interface.transient_prior_cov.evals);

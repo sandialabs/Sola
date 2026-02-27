@@ -86,10 +86,10 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
                     u_tmp2 = u_tmp1 * this.transient_prior_cov.evecs * diag(sqrt(this.transient_prior_cov.evals));
                     u_tmp3 = 0 * u_tmp2;
                     for j = 1:this.transient_prior_cov.n_t
-                        u_tmp3(:,j) = this.spatial_prior_cov.Apply_W_u_Acute_Plus_scalar_M_u_Inverse(u_tmp2(:,j),scalar*this.transient_prior_cov.evals(j));
+                        u_tmp3(:, j) = this.spatial_prior_cov.Apply_W_u_Acute_Plus_scalar_M_u_Inverse(u_tmp2(:, j), scalar * this.transient_prior_cov.evals(j));
                     end
                     u_tmp4 = u_tmp3 * diag(sqrt(this.transient_prior_cov.evals)) * this.transient_prior_cov.evecs';
-                    u_out(:,k) = u_tmp4(:);
+                    u_out(:, k) = u_tmp4(:);
                 end
 
             end
@@ -152,8 +152,8 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
                 m = n_t * this.transient_prior_cov.n_y;
                 u_out = 0.0 * zeros(m, num_samples);
                 for k = 1:size(u_out, 2)
-                    I = ((k-1)*n_t + 1):(k*n_t);
-                    u_tmp = spatial_samples(:,I) * diag(sqrt(this.transient_prior_cov.evals)) * this.transient_prior_cov.evecs';
+                    I = ((k - 1) * n_t + 1):(k * n_t);
+                    u_tmp = spatial_samples(:, I) * diag(sqrt(this.transient_prior_cov.evals)) * this.transient_prior_cov.evecs';
                     u_out(:, k) = u_tmp(:);
                 end
 
@@ -184,18 +184,18 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
 
                 n_y = this.transient_prior_cov.n_y;
                 n_t = this.transient_prior_cov.n_t;
-                u_out = zeros(n_t*n_y,num_samples);
+                u_out = zeros(n_t * n_y, num_samples);
 
-                spatial_samples = zeros(n_y,n_t,num_samples);
+                spatial_samples = zeros(n_y, n_t, num_samples);
                 for j = 1:n_t
-                    spatial_samples(:,j,:) = this.spatial_prior_cov.Sample_with_Covariance_W_u_Acute_Plus_scalar_M_u_Inverse(num_samples,scalar*this.transient_prior_cov.evals(j));
+                    spatial_samples(:, j, :) = this.spatial_prior_cov.Sample_with_Covariance_W_u_Acute_Plus_scalar_M_u_Inverse(num_samples, scalar * this.transient_prior_cov.evals(j));
                 end
 
                 for k = 1:num_samples
-                    u_tmp = spatial_samples(:,:,k) * diag(sqrt(this.transient_prior_cov.evals)) * this.transient_prior_cov.evecs';
+                    u_tmp = spatial_samples(:, :, k) * diag(sqrt(this.transient_prior_cov.evals)) * this.transient_prior_cov.evecs';
                     u_out(:, k) = u_tmp(:);
                 end
-                
+
             end
         end
 

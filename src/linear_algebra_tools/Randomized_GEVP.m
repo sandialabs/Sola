@@ -66,7 +66,7 @@ classdef Randomized_GEVP < handle
             % The commented line below is superior to the two lines above.
             % However, the approach above is preferable for parallel
             % implmentations and hence is there for comparison.
-            %[Q_Z, R_Z] = qr(Z, "econ");
+            % [Q_Z, R_Z] = qr(Z, "econ");
 
             if strcmp(type, 'weighting')
                 W_Q_Z = this.Apply_Weighting_Operator(Q_Z);

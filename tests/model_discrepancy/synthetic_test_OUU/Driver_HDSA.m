@@ -11,7 +11,7 @@ m = 51;
 data_interface = MD_OUU_Data_Interface_synthetic_test_OUU();
 data_interface.Load_Data();
 
-Xi = load('Optimization_Results.mat','Xi').Xi;
+Xi = load('Optimization_Results.mat', 'Xi').Xi;
 N = size(Xi, 2);
 obj = Synthetic_Test_OUU_Objective(m);
 cons = cell(N, 1);
@@ -83,7 +83,7 @@ if ~suppress_figures
 
     k = 20;
     u = data_interface.Reshape_State_to_Mat(delta_samples{i}(:, k));
-    c =ensemble_weighting.C(1, :);
+    c = ensemble_weighting.C(1, :);
     c_normalized = (c - min(c)) / (max(c) - min(c));
     n = size(u, 2);
     figure;

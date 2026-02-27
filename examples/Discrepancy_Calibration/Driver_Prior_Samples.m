@@ -47,9 +47,8 @@ alpha_u = alpha_u_pert / 100 * u_hyperparam_interface.alpha_u;
 u_prior_interface.Set_alpha_u(alpha_u);
 beta_u = beta_u_pert / 100 * u_hyperparam_interface.beta_u;
 u_prior_interface.Set_beta_u(beta_u);
-u_vec = 0*D(:,1);
+u_vec = 0 * D(:, 1);
 u_prior_interface.Compute_E_u_Inverse_GSVD(u_hyperparam_interface.gsvd_num_sing_vals, u_hyperparam_interface.gsvd_oversampling, u_hyperparam_interface.gsvd_num_subspace_iter, u_vec);
-
 
 alpha_z = alpha_z_pert / 100 * z_hyperparam_interface.alpha_z;
 z_prior_interface.Set_alpha_z(alpha_z);
