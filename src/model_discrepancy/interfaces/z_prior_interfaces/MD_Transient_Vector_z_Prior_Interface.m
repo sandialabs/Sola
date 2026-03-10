@@ -49,13 +49,13 @@ classdef MD_Transient_Vector_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
                 z_out(I, :) = this.V * diag(sqrt(this.lambda)) * randn(this.n_t, num_samples);
             end
 
-           % This piece of code replicates the HdsaLib implementation
-           % for k = 1:num_samples  
-           %      omega = randn(this.num_controls,this.n_t)';
-           %      tmp = this.V * diag(sqrt(this.lambda)) * omega;
-           %      tmp = tmp';
-           %      z_out(:,k) = tmp(:);
-           %  end
+            % This piece of code replicates the HdsaLib implementation
+            % for k = 1:num_samples
+            %      omega = randn(this.num_controls,this.n_t)';
+            %      tmp = this.V * diag(sqrt(this.lambda)) * omega;
+            %      tmp = tmp';
+            %      z_out(:,k) = tmp(:);
+            %  end
         end
 
     end
@@ -95,7 +95,7 @@ classdef MD_Transient_Vector_z_Prior_Interface < MD_Elliptic_z_Prior_Interface
             this.beta_t = beta_t_new;
             this.E_t = this.beta_t * this.S + this.M;
             [this.V, this.lambda] = eig(this.E_t, this.M, 'vector');
-            this.V = this.V(:,end:-1:1);
+            this.V = this.V(:, end:-1:1);
             this.lambda = this.lambda(end:-1:1);
         end
 

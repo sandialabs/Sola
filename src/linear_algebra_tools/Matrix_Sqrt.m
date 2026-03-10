@@ -45,7 +45,7 @@ classdef Matrix_Sqrt < handle
             vec_out = zeros(n, d);
             A = @(v) this.Preconditioner_Apply(this.Matrix_Apply(this.Preconditioner_Transpose_Apply(v)));
             tol = 1.e-8;
-            relres = cell(d,1);
+            relres = cell(d, 1);
             for k = 1:d
                 [tmp, relres{k}] = this.krylov_sqrt(A, vec_in(:, k), n, tol);
                 vec_out(:, k) = this.Preconditioner_Inverse_Apply(tmp);

@@ -1,15 +1,16 @@
 classdef MD_Laplacian_Like_Operator_Properties < handle
 
     properties
-  
+
     end
 
     methods
+
         function this = MD_Laplacian_Like_Operator_Properties()
 
         end
 
-        function [val] = Get_Rectangular_Domain_Squared_Inv_Operator_Trace(this,beta,nodes)
+        function [val] = Get_Rectangular_Domain_Squared_Inv_Operator_Trace(this, beta, nodes)
 
             if size(nodes, 2) == 1
                 Lx = max(nodes(:, 1)) - min(nodes(:, 1));
@@ -25,13 +26,13 @@ classdef MD_Laplacian_Like_Operator_Properties < handle
                 disp('Get_Squared_Inv_Operator_Trace error: Dimensions greater than 2 are not supported.');
             end
 
-            val = sum((1./e).^2);
+            val = sum((1 ./ e).^2);
         end
 
-        function [val] = Randomized_Inv_Operator_Trace_Estimation(this,u_prior_interface, num_samples)
+        function [val] = Randomized_Inv_Operator_Trace_Estimation(this, u_prior_interface, num_samples)
             u_out = u_prior_interface.Sample_with_Covariance_W_u_Acute_Inverse(num_samples);
             tmp = u_prior_interface.Apply_M_u(u_out);
-            val = (1/num_samples) * sum(diag(u_out' * tmp));
+            val = (1 / num_samples) * sum(diag(u_out' * tmp));
         end
 
     end

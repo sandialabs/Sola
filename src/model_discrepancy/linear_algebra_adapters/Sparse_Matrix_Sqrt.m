@@ -29,10 +29,10 @@ classdef Sparse_Matrix_Sqrt < Matrix_Sqrt
     %% Constructor
     methods
 
-        function this = Sparse_Matrix_Sqrt(A,L)
+        function this = Sparse_Matrix_Sqrt(A, L)
             arguments
                 A {mustBeNumeric}
-                L {mustBeNumeric} = 1;
+                L {mustBeNumeric} = 1
             end
             this.A = A;
             this.L = L;

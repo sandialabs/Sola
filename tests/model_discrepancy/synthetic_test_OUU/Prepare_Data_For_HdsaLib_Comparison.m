@@ -22,7 +22,7 @@ fileID = fopen('Z.txt', 'w');
 fprintf(fileID, '%f %f\n', data_interface.Z');
 fclose(fileID);
 
-Xi = load('Optimization_Results.mat','Xi').Xi;
+Xi = load('Optimization_Results.mat', 'Xi').Xi;
 N = size(Xi, 2);
 obj = Synthetic_Test_OUU_Objective(m);
 cons = cell(N, 1);

@@ -30,12 +30,12 @@ classdef MD_Lumped_Mass_u_Prior_Interface < MD_Scaled_u_Prior_Interface
 
         function [u_out] = Apply_W_u_Acute_Inverse(this, u_in)
             tmp1 = this.Apply_E_u_Inverse_Transpose(u_in);
-            tmp2 = diag(this.M_lumped_diag)*tmp1;
+            tmp2 = diag(this.M_lumped_diag) * tmp1;
             u_out = this.Apply_E_u_Inverse(tmp2);
         end
 
         function [u_out] = Sample_with_Covariance_W_u_Acute_Inverse(this, num_samples)
-            omega = randn(this.n_u,num_samples);
+            omega = randn(this.n_u, num_samples);
             vec = diag(sqrt(this.M_lumped_diag)) * omega;
             u_out = this.Apply_E_u_Inverse(vec);
         end
@@ -52,7 +52,7 @@ classdef MD_Lumped_Mass_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             else
                 W_u_Acute_Plus_scalar_M_u_sqrt = Sparse_Matrix_Sqrt(A);
             end
-            omega = randn(this.n_u,num_samples);
+            omega = randn(this.n_u, num_samples);
             tmp = W_u_Acute_Plus_scalar_M_u_sqrt.Matrix_Sqrt_Apply(omega);
             u_out = this.Apply_W_u_Acute_Plus_scalar_M_u_Inverse(tmp, scalar);
         end
@@ -76,10 +76,10 @@ classdef MD_Lumped_Mass_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             this.u_hyperparam_interface = u_hyperparam_interface;
             this.determine_u_hyperparams = MD_Determine_u_Hyperparameters(data_interface, u_hyperparam_interface);
             this.is_sparse = issparse(this.M);
-            this.n_u = size(this.M,1);
+            this.n_u = size(this.M, 1);
             this.use_sampling_prec = true;
 
-            this.M_lumped_diag = this.M * ones(size(this.M,1),1);
+            this.M_lumped_diag = this.M * ones(size(this.M, 1), 1);
 
             if this.u_hyperparam_interface.beta_u == 0.0
                 this.determine_u_hyperparams.Determine_beta_u();
@@ -111,7 +111,7 @@ classdef MD_Lumped_Mass_u_Prior_Interface < MD_Scaled_u_Prior_Interface
                 this.R = chol(this.E_u);
             end
 
-            this.W_u_acute = this.E_u' * sparse(diag(1./this.M_lumped_diag)) * this.E_u;
+            this.W_u_acute = this.E_u' * sparse(diag(1 ./ this.M_lumped_diag)) * this.E_u;
         end
 
         function [u_out] = Apply_E_u_Inverse(this, u_in)

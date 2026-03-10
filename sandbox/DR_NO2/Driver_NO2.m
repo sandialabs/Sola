@@ -50,19 +50,19 @@ tmp = linsolve(E, randn(m, n));
 scaling = .4 * mean(abs(T)) / mean(abs(tmp(:)));
 T_samples = T + scaling * tmp;
 
-z_samples = zeros(m,n);
-D_samples = zeros(m,m,n);
-grad_norm = zeros(n,1);
+z_samples = zeros(m, n);
+D_samples = zeros(m, m, n);
+grad_norm = zeros(n, 1);
 for k = 1:n
-    [~, z_samples(:, k),D_samples(:,:,k),grad_norm(k)] = Optimal_Solution_Map(T_samples(:, k), z);
+    [~, z_samples(:, k), D_samples(:, :, k), grad_norm(k)] = Optimal_Solution_Map(T_samples(:, k), z);
 end
-I = find(grad_norm<1.e-7);
-T_samples = T_samples(:,I) - T;
-z_samples = z_samples(:,I) - z;
-D_samples = D_samples(:,:,I);
+I = find(grad_norm < 1.e-7);
+T_samples = T_samples(:, I) - T;
+z_samples = z_samples(:, I) - z;
+D_samples = D_samples(:, :, I);
 
 %%
-[U, Sigma, V] = svd(mean(D_samples,3));
+[U, Sigma, V] = svd(mean(D_samples, 3));
 r = 32;
 Ur = U(:, 1:r);
 Sigmar = Sigma(1:r, 1:r);
@@ -79,8 +79,8 @@ end
 %%
 
 % Define the number of hidden layers and neurons in each layer
-p = 0; 
-neurons_per_layer = r; 
+p = 0;
+neurons_per_layer = r;
 
 % Create a feedforward neural network
 net = feedforwardnet(repmat(neurons_per_layer, 1, p)); % p layers with r neurons each
@@ -88,9 +88,9 @@ net.biasConnect = false(1, net.numLayers); % Disable bias for all layers
 net.trainFcn = 'trainlm'; % Levenberg-Marquardt backpropagation
 
 % Divide data into training, validation, and test sets
-net.divideParam.trainRatio = 80/100; % 70% for training
-net.divideParam.valRatio = 20/100;   % 15% for validation
-net.divideParam.testRatio = 0/100;  % 15% for testing
+net.divideParam.trainRatio = 80 / 100; % 70% for training
+net.divideParam.valRatio = 20 / 100;   % 15% for validation
+net.divideParam.testRatio = 0 / 100;  % 15% for testing
 
 % % Set training parameters
 % net.trainParam.epochs = 1000;          % Maximum number of epochs
@@ -109,11 +109,11 @@ T_test = T + scaling * tmp;
 
 z_approx = z + Ur * L * Vr' * (T_test - T);
 [~, z_test, ~] = Optimal_Solution_Map(T_test, z);
-z_no2 = z + Ur*net(Vr'*(T_test - T));
+z_no2 = z + Ur * net(Vr' * (T_test - T));
 
 figure;
 hold on;
-plot(x, T_samples(:,1), 'LineWidth', 3, 'color', [.9, .9, .9]);
+plot(x, T_samples(:, 1), 'LineWidth', 3, 'color', [.9, .9, .9]);
 plot(x, T_test, 'LineWidth', 3, 'color', 'magenta');
 plot(x, T_samples, 'LineWidth', 3, 'color', [.9, .9, .9]);
 plot(x, T_test, 'LineWidth', 3, 'color', 'magenta');
@@ -125,7 +125,7 @@ set(gcf, 'Color', 'White');
 
 figure;
 hold on;
-plot(x, z_samples(:,1), 'LineWidth', 3, 'color', [.9, .9, .9]);
+plot(x, z_samples(:, 1), 'LineWidth', 3, 'color', [.9, .9, .9]);
 plot(x, z_test, 'LineWidth', 3, 'color', 'magenta');
 plot(x, z_no2, 'LineWidth', 3, 'color', 'cyan');
 plot(x, z_approx, 'LineWidth', 3, 'color', 'red');
@@ -135,7 +135,6 @@ plot(x, z_no2, 'LineWidth', 3, 'color', 'cyan');
 plot(x, z_approx, 'LineWidth', 3, 'color', 'red');
 xlabel('$x$', 'Interpreter', 'latex');
 ylabel('$z$', 'Interpreter', 'latex');
-legend({'Training Data', 'Testing Data', 'NO2 Prediction','Linear Approx'}, 'location', 'best', 'Interpreter', 'latex');
+legend({'Training Data', 'Testing Data', 'NO2 Prediction', 'Linear Approx'}, 'location', 'best', 'Interpreter', 'latex');
 set(gca, 'FontSize', 24);
 set(gcf, 'Color', 'White');
-

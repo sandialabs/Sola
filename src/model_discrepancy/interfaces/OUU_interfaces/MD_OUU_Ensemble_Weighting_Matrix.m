@@ -19,7 +19,6 @@ classdef MD_OUU_Ensemble_Weighting_Matrix < handle
 
     methods (Access = public)
 
-
         function this = MD_OUU_Ensemble_Weighting_Matrix(md_ouu_data_interface, us_prior_interface, max_marginal_var_percent, min_cond_var_percent, assume_independent)
             arguments
                 md_ouu_data_interface MD_OUU_Data_Interface
@@ -35,7 +34,7 @@ classdef MD_OUU_Ensemble_Weighting_Matrix < handle
             this.assume_independent = assume_independent;
 
             if this.assume_independent
-                ens_size = size(this.md_ouu_data_interface.Reshape_State_to_Mat(this.md_ouu_data_interface.D(:,1)),2);
+                ens_size = size(this.md_ouu_data_interface.Reshape_State_to_Mat(this.md_ouu_data_interface.D(:, 1)), 2);
                 this.W_s = eye(ens_size);
                 this.W_s_inv = eye(ens_size);
                 this.R_inv = eye(ens_size);
@@ -46,27 +45,27 @@ classdef MD_OUU_Ensemble_Weighting_Matrix < handle
         end
 
         function [] = Compute_Matrices(this)
-            ens_size = size(this.md_ouu_data_interface.Reshape_State_to_Mat(this.md_ouu_data_interface.D(:,1)),2);
-            N = size(this.md_ouu_data_interface.D,2);
-            this.Eta = zeros(ens_size,ens_size,N);
+            ens_size = size(this.md_ouu_data_interface.Reshape_State_to_Mat(this.md_ouu_data_interface.D(:, 1)), 2);
+            N = size(this.md_ouu_data_interface.D, 2);
+            this.Eta = zeros(ens_size, ens_size, N);
             for i = 1:N
-                d = this.md_ouu_data_interface.Reshape_State_to_Mat(this.md_ouu_data_interface.D(:,i));
+                d = this.md_ouu_data_interface.Reshape_State_to_Mat(this.md_ouu_data_interface.D(:, i));
                 for s = 1:ens_size
                     for k = 1:ens_size
-                        this.Eta(s,k,i) = (d(:,s) - d(:,k))' * this.us_prior_interface.Apply_M_u(d(:,s) - d(:,k));
+                        this.Eta(s, k, i) = (d(:, s) - d(:, k))' * this.us_prior_interface.Apply_M_u(d(:, s) - d(:, k));
                     end
-                    this.Eta(s,s,i) = d(:,s)' * this.us_prior_interface.Apply_M_u(d(:,s));
+                    this.Eta(s, s, i) = d(:, s)' * this.us_prior_interface.Apply_M_u(d(:, s));
                 end
             end
-            this.Eta = mean(this.Eta,3) + 1.e-16;
+            this.Eta = mean(this.Eta, 3) + 1.e-16;
 
-            [~,i] = min(sum(this.Eta,1));
-            tmp = this.Eta(i,:);
+            [~, i] = min(sum(this.Eta, 1));
+            tmp = this.Eta(i, :);
             tmp(i) = Inf;
-            [~,j] = min(tmp);
+            [~, j] = min(tmp);
 
-            A = diag(sqrt(diag(this.Eta))) * (1./this.Eta) * diag(sqrt(diag(this.Eta)));
-            obj_fun = @(reg_coeff) this.Min_Cond_Var_Obj(A,reg_coeff,i,j);
+            A = diag(sqrt(diag(this.Eta))) * (1 ./ this.Eta) * diag(sqrt(diag(this.Eta)));
+            obj_fun = @(reg_coeff) this.Min_Cond_Var_Obj(A, reg_coeff, i, j);
 
             x0 = 0.1;
             lb = 0;
@@ -77,41 +76,41 @@ classdef MD_OUU_Ensemble_Weighting_Matrix < handle
             this.Set_Matrices(reg_coeff);
         end
 
-        function [] = Set_Matrices(this,reg_coeff)
-            
+        function [] = Set_Matrices(this, reg_coeff)
+
             this.reg_opt = reg_coeff;
-            A = diag(sqrt(diag(this.Eta))) * (1./this.Eta) * diag(sqrt(diag(this.Eta)));
+            A = diag(sqrt(diag(this.Eta))) * (1 ./ this.Eta) * diag(sqrt(diag(this.Eta)));
             [this.W_s, this.W_s_inv, this.R_inv, this.C] = this.Assemble_Matrices(A, this.reg_opt);
 
-            [~,i] = min(sum(this.Eta,1));
-            tmp = this.Eta(i,:);
+            [~, i] = min(sum(this.Eta, 1));
+            tmp = this.Eta(i, :);
             tmp(i) = Inf;
-            [~,j] = min(tmp);
+            [~, j] = min(tmp);
 
-            this.reg_opt_min_cond_var_percent = (this.W_s_inv(i,i) - this.W_s_inv(i,j)^2/this.W_s_inv(j,j)) / this.W_s_inv(i,i);
+            this.reg_opt_min_cond_var_percent = (this.W_s_inv(i, i) - this.W_s_inv(i, j)^2 / this.W_s_inv(j, j)) / this.W_s_inv(i, i);
 
-            if abs(this.reg_opt_min_cond_var_percent - this.min_cond_var_percent)/abs(this.reg_opt_min_cond_var_percent) > 1.e-2
-                disp(['min_cond_var_percent was set to ', num2str(this.min_cond_var_percent), ' but a value of ',num2str(this.reg_opt_min_cond_var_percent),' was achieved'])
+            if abs(this.reg_opt_min_cond_var_percent - this.min_cond_var_percent) / abs(this.reg_opt_min_cond_var_percent) > 1.e-2
+                disp(['min_cond_var_percent was set to ', num2str(this.min_cond_var_percent), ' but a value of ', num2str(this.reg_opt_min_cond_var_percent), ' was achieved']);
             end
         end
 
         function [Ws, Wsinv, Rinv, C] = Assemble_Matrices(this, A, reg_coeff)
-            ens_size = size(A,1);
+            ens_size = size(A, 1);
             C = reg_coeff * (A - eye(ens_size)) + eye(ens_size);
             Ws = diag(diag(C) + 2 * sum(C, 2)) - 2 * C;
             R = chol(Ws);
             Rinv = linsolve(R, eye(ens_size));
             Wsinv = Rinv * Rinv';
 
-            scaling = this.max_marginal_var_percent/max(diag(Wsinv));
+            scaling = this.max_marginal_var_percent / max(diag(Wsinv));
             Wsinv = scaling * Wsinv;
             Ws = (1 / scaling) * Ws;
             Rinv = sqrt(scaling) * Rinv;
         end
 
-        function [val] = Min_Cond_Var_Obj(this,A,reg_coeff,i,j)
-            [~,Wsinv] = Assemble_Matrices(this, A, reg_coeff);
-            val = (Wsinv(i,i) - Wsinv(i,j)^2/Wsinv(j,j) - this.min_cond_var_percent*Wsinv(i,i))^2;
+        function [val] = Min_Cond_Var_Obj(this, A, reg_coeff, i, j)
+            [~, Wsinv] = Assemble_Matrices(this, A, reg_coeff);
+            val = (Wsinv(i, i) - Wsinv(i, j)^2 / Wsinv(j, j) - this.min_cond_var_percent * Wsinv(i, i))^2;
         end
 
     end
