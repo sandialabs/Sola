@@ -34,60 +34,6 @@ classdef MD_Continuation_Update < handle
             this.step_size = 1 / num_continuation_steps;
         end
 
-        function [u, z] = Posterior_Update_Mean(this)
-            u = zeros(length(this.u_opt), this.num_continuation_steps + 1);
-            z = zeros(length(this.z_opt), this.num_continuation_steps + 1);
-            t = linspace(0, 1, this.num_continuation_steps + 1);
-
-            u(:, 1) = this.u_opt;
-            z(:, 1) = this.z_opt;
-
-            for k = 1:this.num_continuation_steps
-                Btheta_n = this.Apply_B(u(:, k), z(:, k), t(k));
-                z_pert = -this.Apply_Parameterized_RS_Hessian_Inverse(Btheta_n, u(:, k), z(:, k), t(k));
-                z(:, k + 1) = z(:, k) + this.step_size * z_pert;
-                u(:, k + 1) = this.opt_prob_interface.State_Solve(z(:, k + 1));
-            end
-        end
-
-        function [u, z] = Posterior_Update_Mean_PC(this)
-            u = zeros(length(this.u_opt), this.num_continuation_steps + 1);
-            z = zeros(length(this.z_opt), this.num_continuation_steps + 1);
-            t = linspace(0, 1, this.num_continuation_steps + 1);
-
-            u(:, 1) = this.u_opt;
-            z(:, 1) = this.z_opt;
-
-            for k = 1:this.num_continuation_steps
-                Btheta_n = this.Apply_B(u(:, k), z(:, k), t(k));
-                z_pert = -this.Apply_Parameterized_RS_Hessian_Inverse(Btheta_n, u(:, k), z(:, k), t(k));
-                z_pred = z(:, k) + this.step_size * z_pert;
-                u_pred = this.opt_prob_interface.State_Solve(z_pred);
-
-                Jz_val = this.Gradient_J_z(u_pred, z_pred, t(k + 1));
-                z(:, k + 1) = z_pred - this.Apply_Parameterized_RS_Hessian_Inverse(Jz_val, u_pred, z_pred, t(k + 1));
-                u(:, k + 1) = this.opt_prob_interface.State_Solve(z(:, k + 1));
-            end
-        end
-
-        function [u, z, beta] = Posterior_Update_Mean_beta(this)
-            u = zeros(length(this.u_opt), this.num_continuation_steps + 1);
-            z = zeros(length(this.z_opt), this.num_continuation_steps + 1);
-            t = linspace(0, 1, this.num_continuation_steps + 1);
-            beta = zeros(length(this.md_hessian_analysis.evals), this.num_continuation_steps + 1);
-
-            u(:, 1) = this.u_opt;
-            z(:, 1) = this.z_opt;
-
-            for k = 1:this.num_continuation_steps
-                Btheta_n = this.Apply_B_beta(u(:, k), beta(:, k), t(k));
-                beta_pert = -this.Apply_Parameterized_RS_Hessian_Inverse_beta(Btheta_n, u(:, k), beta(:, k), t(k));
-                beta(:, k + 1) = beta(:, k) + this.step_size * beta_pert;
-                z(:, k + 1) = this.z_opt + this.md_hessian_analysis.evecs * beta(:, k + 1);
-                u(:, k + 1) = this.opt_prob_interface.State_Solve(z(:, k + 1));
-            end
-        end
-
         function [u, z, beta] = Posterior_Update_Mean_PC_beta(this)
             u = zeros(length(this.u_opt), this.num_continuation_steps + 1);
             z = zeros(length(this.z_opt), this.num_continuation_steps + 1);
@@ -135,6 +81,9 @@ classdef MD_Continuation_Update < handle
         end
 
         function [Btheta_n] = Apply_B_beta(this, u_n, beta_n, t_n)
+            % disp(size(this.z_opt))
+            % disp(size(this.md_hessian_analysis.evecs))
+            % disp(size(beta_n))
             z_n = this.z_opt + this.md_hessian_analysis.evecs * beta_n;
             Btheta_n = this.md_hessian_analysis.evecs' * this.Apply_B(u_n, z_n, t_n);
         end
@@ -191,18 +140,6 @@ classdef MD_Continuation_Update < handle
             Btheta_n = z_tmp1 + z_tmp2 + z_tmp3;
         end
 
-        function [z_out] = Apply_Parameterized_RS_Hessian_Inverse(this, z_in, u_n, z_n, t_n)
-            z_out = 0 * z_in;
-            for k = 1:size(z_in, 2)
-                tol = 1.e-7;
-                max_iter = length(z_n) + 5;
-                [z_out(:, k), flag, relres, iter, resvec] = pcg(@(x)this.Apply_Parameterized_RS_Hessian(x, u_n, z_n, t_n), z_in(:, k), tol, max_iter);
-                if flag ~= 0
-                    disp('CG did not converge');
-                end
-            end
-        end
-
         function [z_out] = Apply_Parameterized_RS_Hessian(this, z_in, u_n, z_n, t_n)
             delta = this.Discrepancy_Evaluation(z_n, t_n);
 
@@ -216,6 +153,7 @@ classdef MD_Continuation_Update < handle
             z_out = z_out + this.Apply_Discrepancy_z_Jacobian_transpose(u_tmp2, t_n);
 
             u_tmp3 = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian(z_in, z_n);
+            % disp(size(u_tmp3))
             u_tmp4 = this.opt_prob_interface.Apply_Misfit_Hessian(u_tmp3, u_n + delta, z_n);
             z_out = z_out + this.Apply_Discrepancy_z_Jacobian_transpose(u_tmp4, t_n);
         end
@@ -291,6 +229,74 @@ classdef MD_Continuation_Update < handle
             end
             z_out = (1 / this.md_post_sampling.post_data.alpha_d) * z_out;
         end
+
+        % REMOVED FUNCTIONS (REFERENCE)
+
+        % function [u, z] = Posterior_Update_Mean(this)
+        %     u = zeros(length(this.u_opt), this.num_continuation_steps + 1);
+        %     z = zeros(length(this.z_opt), this.num_continuation_steps + 1);
+        %     t = linspace(0, 1, this.num_continuation_steps + 1);
+
+        %     u(:, 1) = this.u_opt;
+        %     z(:, 1) = this.z_opt;
+
+        %     for k = 1:this.num_continuation_steps
+        %         Btheta_n = this.Apply_B(u(:, k), z(:, k), t(k));
+        %         z_pert = -this.Apply_Parameterized_RS_Hessian_Inverse(Btheta_n, u(:, k), z(:, k), t(k));
+        %         z(:, k + 1) = z(:, k) + this.step_size * z_pert;
+        %         u(:, k + 1) = this.opt_prob_interface.State_Solve(z(:, k + 1));
+        %     end
+        % end
+
+        % function [u, z] = Posterior_Update_Mean_PC(this)
+        %     u = zeros(length(this.u_opt), this.num_continuation_steps + 1);
+        %     z = zeros(length(this.z_opt), this.num_continuation_steps + 1);
+        %     t = linspace(0, 1, this.num_continuation_steps + 1);
+
+        %     u(:, 1) = this.u_opt;
+        %     z(:, 1) = this.z_opt;
+
+        %     for k = 1:this.num_continuation_steps
+        %         Btheta_n = this.Apply_B(u(:, k), z(:, k), t(k));
+        %         z_pert = -this.Apply_Parameterized_RS_Hessian_Inverse(Btheta_n, u(:, k), z(:, k), t(k));
+        %         z_pred = z(:, k) + this.step_size * z_pert;
+        %         u_pred = this.opt_prob_interface.State_Solve(z_pred);
+
+        %         Jz_val = this.Gradient_J_z(u_pred, z_pred, t(k + 1));
+        %         z(:, k + 1) = z_pred - this.Apply_Parameterized_RS_Hessian_Inverse(Jz_val, u_pred, z_pred, t(k + 1));
+        %         u(:, k + 1) = this.opt_prob_interface.State_Solve(z(:, k + 1));
+        %     end
+        % end
+
+        % function [u, z, beta] = Posterior_Update_Mean_beta(this)
+        %     u = zeros(length(this.u_opt), this.num_continuation_steps + 1);
+        %     z = zeros(length(this.z_opt), this.num_continuation_steps + 1);
+        %     t = linspace(0, 1, this.num_continuation_steps + 1);
+        %     beta = zeros(length(this.md_hessian_analysis.evals), this.num_continuation_steps + 1);
+
+        %     u(:, 1) = this.u_opt;
+        %     z(:, 1) = this.z_opt;
+
+        %     for k = 1:this.num_continuation_steps
+        %         Btheta_n = this.Apply_B_beta(u(:, k), beta(:, k), t(k));
+        %         beta_pert = -this.Apply_Parameterized_RS_Hessian_Inverse_beta(Btheta_n, u(:, k), beta(:, k), t(k));
+        %         beta(:, k + 1) = beta(:, k) + this.step_size * beta_pert;
+        %         z(:, k + 1) = this.z_opt + this.md_hessian_analysis.evecs * beta(:, k + 1);
+        %         u(:, k + 1) = this.opt_prob_interface.State_Solve(z(:, k + 1));
+        %     end
+        % end
+
+        % function [z_out] = Apply_Parameterized_RS_Hessian_Inverse(this, z_in, u_n, z_n, t_n)
+        %     z_out = 0 * z_in;
+        %     for k = 1:size(z_in, 2)
+        %         tol = 1.e-7;
+        %         max_iter = length(z_n) + 5;
+        %         [z_out(:, k), flag, relres, iter, resvec] = pcg(@(x)this.Apply_Parameterized_RS_Hessian(x, u_n, z_n, t_n), z_in(:, k), tol, max_iter);
+        %         if flag ~= 0
+        %             disp('CG did not converge');
+        %         end
+        %     end
+        % end
 
     end
 

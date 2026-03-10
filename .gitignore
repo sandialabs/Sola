@@ -19,7 +19,7 @@ rw3dm/
 *.png
 *tmp.m
 *.h5
-!tests/*.mat
+!tests/**/*.mat
 
 ### Boilerplate latex ignore file:
 ## Latex Ignore:
