@@ -19,7 +19,7 @@ classdef Mass_Spring_Coupled < Dynamic_Constraint
             P_z(1, 1) = 1;
             this.P_z = P_z;
 
-            this.m = zeros(7,1);
+            this.m = zeros(7, 1);
             this.m(1) = 1;
             this.m(2) = 1;
             this.m(3) = 1;
@@ -27,8 +27,8 @@ classdef Mass_Spring_Coupled < Dynamic_Constraint
             this.m(5) = .5;
             this.m(6) = .5;
             this.m(7) = .5;
-            
-            this.k = zeros(6,1);
+
+            this.k = zeros(6, 1);
             this.k(1) = 1;
             this.k(2) = 10;
             this.k(3) = 10;
@@ -36,7 +36,7 @@ classdef Mass_Spring_Coupled < Dynamic_Constraint
             this.k(5) = 1;
             this.k(6) = 1;
 
-            this.F = zeros(3,1);
+            this.F = zeros(3, 1);
             this.F(1) = 1;
             this.F(2) = 1;
             this.F(3) = 1;
@@ -63,50 +63,50 @@ classdef Mass_Spring_Coupled < Dynamic_Constraint
             v = y(2:2:end);
 
             fx = v;
-            fv = zeros(7,1);
-            fv(1) = (1 / this.m(1)) * ( this.k(1) *(x(2) - x(1)) - Fz );
-            fv(2) = (1 / this.m(2)) * ( this.k(1)*(x(1)-x(2)) + this.k(2)*(x(3)-x(2)) + this.k(3)*(x(4)-x(2)) + this.k(4)*(x(5)-x(2)) );
-            fv(3) = (1 / this.m(3)) * ( this.k(2)*(x(2)-x(3)) + this.k(5)*(x(6)-x(3)) );
-            fv(4) = (1 / this.m(4)) * ( this.k(3)*(x(2)-x(4)) + this.k(6)*(x(7)-x(4)));
-            fv(5) = (1 / this.m(5)) * ( this.k(4)*(x(2)-x(5)) + this.F(1)*t);
-            fv(6) = (1 / this.m(6)) * ( this.k(5)*(x(3)-x(6)) + this.F(2)*t);
-            fv(7) = (1 / this.m(7)) * ( this.k(6)*(x(4)-x(7)) + this.F(3)*t);
+            fv = zeros(7, 1);
+            fv(1) = (1 / this.m(1)) * (this.k(1) * (x(2) - x(1)) - Fz);
+            fv(2) = (1 / this.m(2)) * (this.k(1) * (x(1) - x(2)) + this.k(2) * (x(3) - x(2)) + this.k(3) * (x(4) - x(2)) + this.k(4) * (x(5) - x(2)));
+            fv(3) = (1 / this.m(3)) * (this.k(2) * (x(2) - x(3)) + this.k(5) * (x(6) - x(3)));
+            fv(4) = (1 / this.m(4)) * (this.k(3) * (x(2) - x(4)) + this.k(6) * (x(7) - x(4)));
+            fv(5) = (1 / this.m(5)) * (this.k(4) * (x(2) - x(5)) + this.F(1) * t);
+            fv(6) = (1 / this.m(6)) * (this.k(5) * (x(3) - x(6)) + this.F(2) * t);
+            fv(7) = (1 / this.m(7)) * (this.k(6) * (x(4) - x(7)) + this.F(3) * t);
 
-            f = [fx,fv]';
+            f = [fx, fv]';
             f = f(:);
 
             f_y = zeros(14, 14);
-            f_y(1:2:end,2:2:end) = eye(7);
+            f_y(1:2:end, 2:2:end) = eye(7);
 
-            fv_x = zeros(7,7);
+            fv_x = zeros(7, 7);
 
             fv_x(1, 1) = (1 / this.m(1)) * (-this.k(1));
             fv_x(1, 2) = (1 / this.m(1)) * (this.k(1));
 
-            fv_x(2,1) = (1 / this.m(2)) * this.k(1);
-            fv_x(2,2) = (1 / this.m(2)) * (-this.k(1) - this.k(2) - this.k(3) - this.k(4));
-            fv_x(2,3) = (1 / this.m(2)) * this.k(2);
-            fv_x(2,4) = (1 / this.m(2)) * this.k(3);
-            fv_x(2,5) = (1 / this.m(2)) * this.k(4);
+            fv_x(2, 1) = (1 / this.m(2)) * this.k(1);
+            fv_x(2, 2) = (1 / this.m(2)) * (-this.k(1) - this.k(2) - this.k(3) - this.k(4));
+            fv_x(2, 3) = (1 / this.m(2)) * this.k(2);
+            fv_x(2, 4) = (1 / this.m(2)) * this.k(3);
+            fv_x(2, 5) = (1 / this.m(2)) * this.k(4);
 
-            fv_x(3,2) = (1 / this.m(3)) * this.k(2);
-            fv_x(3,3) = (1 / this.m(3)) * (-this.k(2)-this.k(5));
-            fv_x(3,6) = (1 / this.m(3)) * this.k(5);
+            fv_x(3, 2) = (1 / this.m(3)) * this.k(2);
+            fv_x(3, 3) = (1 / this.m(3)) * (-this.k(2) - this.k(5));
+            fv_x(3, 6) = (1 / this.m(3)) * this.k(5);
 
-            fv_x(4,2) = (1 / this.m(4)) * this.k(3);
-            fv_x(4,4) = (1 / this.m(4)) * (-this.k(3)-this.k(6));
-            fv_x(4,7) = (1 / this.m(4)) * this.k(6);
+            fv_x(4, 2) = (1 / this.m(4)) * this.k(3);
+            fv_x(4, 4) = (1 / this.m(4)) * (-this.k(3) - this.k(6));
+            fv_x(4, 7) = (1 / this.m(4)) * this.k(6);
 
-            fv_x(5,2) = (1 / this.m(5)) * this.k(4);
-            fv_x(5,5) = (1 / this.m(5)) * (-this.k(4));
+            fv_x(5, 2) = (1 / this.m(5)) * this.k(4);
+            fv_x(5, 5) = (1 / this.m(5)) * (-this.k(4));
 
-            fv_x(6,3) = (1 / this.m(6)) * this.k(5);
-            fv_x(6,6) = (1 / this.m(6)) * (-this.k(5));
+            fv_x(6, 3) = (1 / this.m(6)) * this.k(5);
+            fv_x(6, 6) = (1 / this.m(6)) * (-this.k(5));
 
-            fv_x(7,4) = (1 / this.m(7)) * this.k(6);
-            fv_x(7,7) = (1 / this.m(7)) * (-this.k(6));
+            fv_x(7, 4) = (1 / this.m(7)) * this.k(6);
+            fv_x(7, 7) = (1 / this.m(7)) * (-this.k(6));
 
-            f_y(2:2:end,1:2:end) = fv_x;
+            f_y(2:2:end, 1:2:end) = fv_x;
 
             f_z = zeros(14, length(z));
             f_z(2, :) = -(1 / this.m(1)) * this.P_z' * coeffs;
@@ -115,7 +115,7 @@ classdef Mass_Spring_Coupled < Dynamic_Constraint
 
         function [h, h_z] = h(this, z)
             h = zeros(14, 1);
-            h_z = zeros(14,length(z));
+            h_z = zeros(14, length(z));
         end
 
         function [Mv] = f_yy_Apply(this, v, y, z, t, lambda)

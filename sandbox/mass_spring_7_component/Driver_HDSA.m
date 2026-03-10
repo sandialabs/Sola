@@ -8,7 +8,7 @@ rng(2451423);
 
 T = 8;
 N = 100;
-obj_hifi = Mass_Spring_Objective_HiFi(T,N);
+obj_hifi = Mass_Spring_Objective_HiFi(T, N);
 obj_lofi = Mass_Spring_Objective_LoFi(obj_hifi);
 con_hifi = Mass_Spring_Coupled(T, N);
 con_lofi = Mass_Spring_LoFi(con_hifi);
@@ -28,7 +28,7 @@ z_prior_interface = MD_Elliptic_z_Prior_Interface_Mass_Spring(alpha_z, opt_lofi)
 % %%
 % num_prior_samples = 500;
 % md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
-% 
+%
 % prior_delta_samples = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
 % figure;
 % hold on;
@@ -37,7 +37,7 @@ z_prior_interface = MD_Elliptic_z_Prior_Interface_Mass_Spring(alpha_z, opt_lofi)
 % xlabel('Time');
 % ylabel('$x_1$', 'Interpreter', 'latex');
 % set(gca, 'fontsize', 18);
-% 
+%
 % figure;
 % hold on;
 % plot(t, prior_delta_samples(2:2:end, :), 'LineWidth', 3, 'color', [.9, .9, .9]);
@@ -45,13 +45,13 @@ z_prior_interface = MD_Elliptic_z_Prior_Interface_Mass_Spring(alpha_z, opt_lofi)
 % xlabel('Time');
 % ylabel('$v_1$', 'Interpreter', 'latex');
 % set(gca, 'fontsize', 18);
-% 
+%
 % z_samples = z_prior_interface.Sample_with_Covariance_W_z_Inverse(5);
 % figure;
 % hold on;
 % plot(t(2:end), z_samples, 'LineWidth', 3);
 % set(gca, 'fontsize', 18);
-% 
+%
 % %%
 % md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 % alpha_d = 1.e-1;
@@ -61,7 +61,7 @@ z_prior_interface = MD_Elliptic_z_Prior_Interface_Mass_Spring(alpha_z, opt_lofi)
 % Z_test(:, 1:2) = Z;
 % Z_test(:, 3) = 500 * ones(N - 1, 1);
 % [delta_mean, delta_samples] = md_post_sampling.Posterior_Discrepancy_Samples(Z_test);
-% 
+%
 % figure;
 % hold on;
 % plot(t(2:end), Z_test(:, 1), 'LineWidth', 3);
@@ -69,7 +69,7 @@ z_prior_interface = MD_Elliptic_z_Prior_Interface_Mass_Spring(alpha_z, opt_lofi)
 % plot(t(2:end), Z_test(:, 3), 'LineWidth', 3);
 % legend({'z_1', 'z_2', 'z_3'});
 % set(gca, 'fontsize', 18);
-% 
+%
 % figure;
 % hold on;
 % plot(t, md_post_sampling.post_data.D(1:2:end, 1), 'color', 'black', 'LineWidth', 3);
@@ -82,7 +82,7 @@ z_prior_interface = MD_Elliptic_z_Prior_Interface_Mass_Spring(alpha_z, opt_lofi)
 % xlabel('Time');
 % ylabel('$x_1$', 'Interpreter', 'latex');
 % set(gca, 'fontsize', 18);
-% 
+%
 % figure;
 % hold on;
 % plot(t, md_post_sampling.post_data.D(2:2:end, 1), 'color', 'black', 'LineWidth', 3);
@@ -95,7 +95,7 @@ z_prior_interface = MD_Elliptic_z_Prior_Interface_Mass_Spring(alpha_z, opt_lofi)
 % xlabel('Time');
 % ylabel('$v_1$', 'Interpreter', 'latex');
 % set(gca, 'fontsize', 18);
-% 
+%
 % figure;
 % hold on;
 % plot(t, md_post_sampling.post_data.D(1:2:end, 2), 'color', 'black', 'LineWidth', 3);
@@ -108,7 +108,7 @@ z_prior_interface = MD_Elliptic_z_Prior_Interface_Mass_Spring(alpha_z, opt_lofi)
 % xlabel('Time');
 % ylabel('$x_1$', 'Interpreter', 'latex');
 % set(gca, 'fontsize', 18);
-% 
+%
 % figure;
 % hold on;
 % plot(t, md_post_sampling.post_data.D(2:2:end, 2), 'color', 'black', 'LineWidth', 3);
@@ -121,7 +121,7 @@ z_prior_interface = MD_Elliptic_z_Prior_Interface_Mass_Spring(alpha_z, opt_lofi)
 % xlabel('Time');
 % ylabel('$v_1$', 'Interpreter', 'latex');
 % set(gca, 'fontsize', 18);
-% 
+%
 % figure;
 % hold on;
 % plot(t, delta_mean{3}(1:2:end), '--', 'color', 'red', 'LineWidth', 3);
@@ -132,7 +132,7 @@ z_prior_interface = MD_Elliptic_z_Prior_Interface_Mass_Spring(alpha_z, opt_lofi)
 % xlabel('Time');
 % ylabel('$x_1$', 'Interpreter', 'latex');
 % set(gca, 'fontsize', 18);
-% 
+%
 % figure;
 % hold on;
 % plot(t, delta_mean{3}(2:2:end), '--', 'color', 'red', 'LineWidth', 3);
@@ -143,18 +143,18 @@ z_prior_interface = MD_Elliptic_z_Prior_Interface_Mass_Spring(alpha_z, opt_lofi)
 % xlabel('Time');
 % ylabel('$v_1$', 'Interpreter', 'latex');
 % set(gca, 'fontsize', 18);
-% 
+%
 % %%
 % opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
 % md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
-% 
+%
 % num_evals = 17;
 % oversampling = 20;
 % md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
-% 
+%
 % md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 % [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
-% 
+%
 % figure;
 % hold on;
 % plot(t(2:end), z_lofi, 'color', 'black', 'LineWidth', 3);
@@ -168,7 +168,7 @@ z_prior_interface = MD_Elliptic_z_Prior_Interface_Mass_Spring(alpha_z, opt_lofi)
 % plot(t(2:end), z_update_mean, '--', 'color', 'red', 'LineWidth', 3);
 % legend({'Low-fidelity control', 'High-fidelity control', 'Update'});
 % set(gca, 'fontsize', 18);
-% 
+%
 % %%
 % Jhat_update_samples = zeros(num_post_samples, 1);
 % for k = 1:num_post_samples
@@ -177,5 +177,5 @@ z_prior_interface = MD_Elliptic_z_Prior_Interface_Mass_Spring(alpha_z, opt_lofi)
 % Jhat_hifi = opt_hifi.Jhat(z_hifi);
 % Jhat_lofi = opt_hifi.Jhat(z_lofi);
 % Jhat_update = opt_hifi.Jhat(z_update_mean);
-% 
+%
 % save('HDSA_Results.mat');

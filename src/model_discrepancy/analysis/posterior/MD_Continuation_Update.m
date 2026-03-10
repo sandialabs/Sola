@@ -73,17 +73,13 @@ classdef MD_Continuation_Update < handle
             u = this.opt_prob_interface.State_Solve(z);
             delta = this.Discrepancy_Evaluation(z, 1);
 
-            [val, ~, grad_z] = this.opt_prob_interface.sabl_opt.obj.J(u + delta, z);
-            state_grad = this.opt_prob_interface.Misfit_Gradient(u + delta, z);
-            z_tmp1 = this.Apply_Discrepancy_z_Jacobian_transpose(state_grad, 1);
-            z_tmp2 = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(state_grad, z);
+            [val, grad_u, grad_z] = this.opt_prob_interface.Misfit_Function(u + delta, z);
+            z_tmp1 = this.Apply_Discrepancy_z_Jacobian_transpose(grad_u, 1);
+            z_tmp2 = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(grad_u, z);
             grad = grad_z + z_tmp1 + z_tmp2;
         end
 
         function [Btheta_n] = Apply_B_beta(this, u_n, beta_n, t_n)
-            % disp(size(this.z_opt))
-            % disp(size(this.md_hessian_analysis.evecs))
-            % disp(size(beta_n))
             z_n = this.z_opt + this.md_hessian_analysis.evecs * beta_n;
             Btheta_n = this.md_hessian_analysis.evecs' * this.Apply_B(u_n, z_n, t_n);
         end
@@ -118,10 +114,9 @@ classdef MD_Continuation_Update < handle
         function [z_out] = Gradient_J_z(this, u_n, z_n, t_n)
             % Useful for performing finite-difference checks
             delta = this.Discrepancy_Evaluation(z_n, t_n);
-            [~, ~, grad_z] = this.opt_prob_interface.sabl_opt.obj.J(u_n + delta, z_n);
-            state_grad = this.opt_prob_interface.Misfit_Gradient(u_n + delta, z_n);
-            z_tmp1 = this.Apply_Discrepancy_z_Jacobian_transpose(state_grad, t_n);
-            z_tmp2 = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(state_grad, z_n);
+            [~, grad_u, grad_z] = this.opt_prob_interface.Misfit_Function(u_n + delta, z_n);
+            z_tmp1 = this.Apply_Discrepancy_z_Jacobian_transpose(grad_u, t_n);
+            z_tmp2 = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(grad_u, z_n);
             z_out = grad_z + z_tmp1 + z_tmp2;
         end
 
@@ -230,7 +225,7 @@ classdef MD_Continuation_Update < handle
             z_out = (1 / this.md_post_sampling.post_data.alpha_d) * z_out;
         end
 
-        % REMOVED FUNCTIONS (REFERENCE)
+        % REMOVED FUNCTIONS (Reference for translation purposes)
 
         % function [u, z] = Posterior_Update_Mean(this)
         %     u = zeros(length(this.u_opt), this.num_continuation_steps + 1);
