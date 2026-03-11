@@ -38,12 +38,13 @@ classdef MD_Elliptic_u_Prior_Interface_Mass_Spring < MD_Elliptic_u_Prior_Interfa
             S(end, end) = .5 * S(end, end);
             S = (1 / h) * S;
 
-            I = eye(2);
-            I(2, 2) = 4;
+            I = eye(4);
             this.E_u = (5.e-2) * kron(S, I) + kron(this.M, I);
-            this.E_u(1:2, :) = 0;
+            this.E_u(1:4, :) = 0;
             this.E_u(1, 1) = 10;
-            this.E_u(2, 2) = 40;
+            this.E_u(2, 2) = 10;
+            this.E_u(3, 3) = 10;
+            this.E_u(4, 4) = 10;
 
             num_sing_vals = 100;
             oversampling = 0;

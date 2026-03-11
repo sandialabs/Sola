@@ -4,7 +4,7 @@ clc;
 addpath(genpath('../../src'));
 rng(1423);
 
-T = 8;
+T = 5;
 N = 100;
 obj_hifi = Mass_Spring_Objective_HiFi(T,N);
 obj_lofi = Mass_Spring_Objective_LoFi(obj_hifi);

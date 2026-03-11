@@ -60,8 +60,11 @@ classdef MD_Elliptic_z_Prior_Interface_Mass_Spring < MD_Elliptic_z_Prior_Interfa
             S(end, end) = .5 * S(end, end);
             S = (1 / h) * S;
 
-            this.P_z = sabl_opt.con.P_z;
+            this.P_z = sabl_opt.con.mass_spring_coupled.P_z;
             this.E_z = (1.e-1) * S + this.M;
+            this.E_z(:,1) = 0;
+            this.E_z(1,:) = 0;
+            this.E_z(1,1) = 50;
         end
 
     end

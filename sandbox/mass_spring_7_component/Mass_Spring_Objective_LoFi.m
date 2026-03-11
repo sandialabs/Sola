@@ -13,7 +13,7 @@ classdef Mass_Spring_Objective_LoFi < Dynamic_Objective
             n_z = 1;
             this = this@Dynamic_Objective(n_y, n_z, mass_spring_obj_hifi.T, mass_spring_obj_hifi.n_t);
 
-            this.reg_coeff = 1.e-6;
+            this.reg_coeff = mass_spring_obj_hifi.reg_coeff;
 
             P_z = eye(mass_spring_obj_hifi.n_t);
             P_z = P_z(:, 2:end);

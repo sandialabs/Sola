@@ -12,7 +12,7 @@ classdef Mass_Spring_Objective_HiFi < Dynamic_Objective
             n_z = 1;
             this = this@Dynamic_Objective(n_y, n_z, T, N);
 
-            this.reg_coeff = 1.e-6;
+            this.reg_coeff = 1.e-4;
 
             P_z = eye(N);
             P_z = P_z(:, 2:end);
