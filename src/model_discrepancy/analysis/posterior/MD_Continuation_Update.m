@@ -34,7 +34,7 @@ classdef MD_Continuation_Update < handle
             this.step_size = 1 / num_continuation_steps;
         end
 
-        function [u, z, beta] = Posterior_Update_Mean_PC_beta(this)
+        function [u, z, beta] = Posterior_Update_Mean(this)
             u = zeros(length(this.u_opt), this.num_continuation_steps + 1);
             z = zeros(length(this.z_opt), this.num_continuation_steps + 1);
             t = linspace(0, 1, this.num_continuation_steps + 1);
@@ -94,6 +94,7 @@ classdef MD_Continuation_Update < handle
                     disp('CG did not converge');
                     disp(flag);
                 end
+                disp(iter);
             end
         end
 
@@ -130,7 +131,7 @@ classdef MD_Continuation_Update < handle
             z_tmp2 = this.Apply_Discrepancy_z_Jacobian_transpose(u_tmp2, t_n);
 
             state_grad = this.opt_prob_interface.Misfit_Gradient(u_n + delta, z_n);
-            z_tmp3 = this.Apply_Discrepancy_z_theta_Hessian(state_grad);
+            z_tmp3 = this.Apply_Discrepancy_z_theta_Mean(state_grad);
 
             Btheta_n = z_tmp1 + z_tmp2 + z_tmp3;
         end
@@ -148,7 +149,6 @@ classdef MD_Continuation_Update < handle
             z_out = z_out + this.Apply_Discrepancy_z_Jacobian_transpose(u_tmp2, t_n);
 
             u_tmp3 = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian(z_in, z_n);
-            % disp(size(u_tmp3))
             u_tmp4 = this.opt_prob_interface.Apply_Misfit_Hessian(u_tmp3, u_n + delta, z_n);
             z_out = z_out + this.Apply_Discrepancy_z_Jacobian_transpose(u_tmp4, t_n);
         end
@@ -211,18 +211,8 @@ classdef MD_Continuation_Update < handle
             u_out = (1 / this.md_post_sampling.post_data.alpha_d) * u_out;
         end
 
-        function [z_out] = Apply_Discrepancy_z_theta_Hessian(this, u)
-            N = this.md_post_sampling.post_data.N;
-            z_out = 0 * this.z_opt;
-            for ell = 1:N
-                z_out = z_out + (u' * this.md_post_sampling.post_data.u_ell(:, ell)) * this.Mz_Wz_inv_Mz_Z_minus_z_opt(:, ell);
-                for i = 1:N
-                    coeff = this.md_post_sampling.post_data.b_i_ell(i, ell) * (u' * this.md_post_sampling.post_data.u_i_ell{i}(:, ell));
-                    vec = this.Mz_Wz_inv_Mz_yi(:, i);
-                    z_out = z_out - coeff * vec;
-                end
-            end
-            z_out = (1 / this.md_post_sampling.post_data.alpha_d) * z_out;
+        function [z_out] = Apply_Discrepancy_z_theta_Mean(this, u_in)
+            z_out = this.Apply_Discrepancy_z_Jacobian_transpose(u_in, 1.0);
         end
 
         % REMOVED FUNCTIONS (Reference for translation purposes)

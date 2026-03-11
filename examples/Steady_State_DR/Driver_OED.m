@@ -52,7 +52,7 @@ for p = 1:N
     % Obtain Optimal Solution Update via Continuation
     num_continuation_steps = 3;
     md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
-    [u_cont, z_cont, betas_cont] = md_cont_update.Posterior_Update_Mean_PC_beta();
+    [u_cont, z_cont, betas_cont] = md_cont_update.Posterior_Update_Mean();
     z_bar = z_cont(:, end);
     z_bars(:, p) = z_bar;
     beta_bar = betas_cont(:, end);

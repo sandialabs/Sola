@@ -69,7 +69,7 @@ MV_norm = @(beta) M_z_norm(md_hessian_analysis.evecs * beta);
 for num_continuation_steps = 1:max_cont_steps
     disp(num_continuation_steps);
     md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
-    [~, z_cont, beta_cont] = md_cont_update.Posterior_Update_Mean_PC_beta();
+    [~, z_cont, beta_cont] = md_cont_update.Posterior_Update_Mean();
     betas{num_continuation_steps} = beta_cont(:, end);
     zs{num_continuation_steps} = z_cont(:, end);
     [Jhat_post(num_continuation_steps), grad_beta] = md_cont_update.Jhat_Posterior_beta(beta_cont(:, end));

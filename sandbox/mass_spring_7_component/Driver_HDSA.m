@@ -138,7 +138,6 @@ xlabel('Time');
 ylabel('$v_2$', 'Interpreter', 'latex');
 set(gca, 'fontsize', 18);
 
- 
 figure;
 hold on;
 plot(t, delta_mean{2}(1:4:end), '--', 'color', 'red', 'LineWidth', 3);
@@ -183,7 +182,6 @@ xlabel('Time');
 ylabel('$v_2$', 'Interpreter', 'latex');
 set(gca, 'fontsize', 18);
 
-
 %%
 opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
@@ -218,29 +216,29 @@ Jhat_hifi = opt_hifi.Jhat(z_star);
 Jhat_lofi = opt_hifi.Jhat(z_tilde);
 Jhat_update = opt_hifi.Jhat(z_update_mean);
 
-figure,
-hold on
-plot([Jhat_lofi,Jhat_lofi],[0,100], 'color', 'black', 'LineWidth', 3)
-plot([Jhat_hifi,Jhat_hifi],[0,100], 'color', 'cyan', 'LineWidth', 3)
-plot([Jhat_update,Jhat_update],[0,100], 'color', 'red', 'LineWidth', 3)
-histogram(Jhat_update_samples)
-plot([Jhat_lofi,Jhat_lofi],[0,100], 'color', 'black', 'LineWidth', 3)
-plot([Jhat_hifi,Jhat_hifi],[0,100], 'color', 'cyan', 'LineWidth', 3)
-plot([Jhat_update,Jhat_update],[0,100], 'color', 'red', 'LineWidth', 3)
+figure;
+hold on;
+plot([Jhat_lofi, Jhat_lofi], [0, 100], 'color', 'black', 'LineWidth', 3);
+plot([Jhat_hifi, Jhat_hifi], [0, 100], 'color', 'cyan', 'LineWidth', 3);
+plot([Jhat_update, Jhat_update], [0, 100], 'color', 'red', 'LineWidth', 3);
+histogram(Jhat_update_samples);
+plot([Jhat_lofi, Jhat_lofi], [0, 100], 'color', 'black', 'LineWidth', 3);
+plot([Jhat_hifi, Jhat_hifi], [0, 100], 'color', 'cyan', 'LineWidth', 3);
+plot([Jhat_update, Jhat_update], [0, 100], 'color', 'red', 'LineWidth', 3);
 legend({'Low-fidelity objective', 'High-fidelity objective', 'Update objective'});
 set(gca, 'fontsize', 18);
 
-figure,
-hold on
-plot([Jhat_lofi,Jhat_lofi],[0,100], 'color', 'black', 'LineWidth', 3)
-plot([Jhat_hifi,Jhat_hifi],[0,100], 'color', 'cyan', 'LineWidth', 3)
-plot([Jhat_update,Jhat_update],[0,100], 'color', 'red', 'LineWidth', 3)
-histogram(Jhat_update_samples)
-plot([Jhat_lofi,Jhat_lofi],[0,100], 'color', 'black', 'LineWidth', 3)
-plot([Jhat_hifi,Jhat_hifi],[0,100], 'color', 'cyan', 'LineWidth', 3)
-plot([Jhat_update,Jhat_update],[0,100], 'color', 'red', 'LineWidth', 3)
+figure;
+hold on;
+plot([Jhat_lofi, Jhat_lofi], [0, 100], 'color', 'black', 'LineWidth', 3);
+plot([Jhat_hifi, Jhat_hifi], [0, 100], 'color', 'cyan', 'LineWidth', 3);
+plot([Jhat_update, Jhat_update], [0, 100], 'color', 'red', 'LineWidth', 3);
+histogram(Jhat_update_samples);
+plot([Jhat_lofi, Jhat_lofi], [0, 100], 'color', 'black', 'LineWidth', 3);
+plot([Jhat_hifi, Jhat_hifi], [0, 100], 'color', 'cyan', 'LineWidth', 3);
+plot([Jhat_update, Jhat_update], [0, 100], 'color', 'red', 'LineWidth', 3);
 legend({'Low-fidelity objective', 'High-fidelity objective', 'Update objective'});
-xlim([0,0.05])
+xlim([0, 0.05]);
 set(gca, 'fontsize', 18);
 
 save('HDSA_Results.mat');

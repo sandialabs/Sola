@@ -31,7 +31,7 @@ md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversa
 %%
 num_continuation_steps = 3;
 md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
-[u_cont, z_cont, betas_cont] = md_cont_update.Posterior_Update_Mean_PC_beta();
+[u_cont, z_cont, betas_cont] = md_cont_update.Posterior_Update_Mean();
 z_bar = z_cont(:, end);
 beta_bar = betas_cont(:, end);
 
@@ -43,3 +43,9 @@ if ref_diff > 1.e-9
     disp('model_discrepancy_continuation difference:');
     disp(ref_diff);
 end
+
+% norm(md_cont_update.Apply_Discrepancy_z_theta_Hessian(u_cont_ref(:, end)))
+% norm(md_cont_update.Apply_Discrepancy_z_Jacobian_transpose(u_cont_ref(:, end), 1.0))
+% u_n = u_cont_ref(:, end);
+% norm(md_cont_update.Apply_Parameterized_RS_Hessian_Inverse_beta(beta_bar, u_n, beta_bar, 0.5))
+% norm(md_cont_update.Apply_Parameterized_RS_Hessian_Inverse_beta_noCG(beta_bar, u_n, beta_bar, 0.5))
