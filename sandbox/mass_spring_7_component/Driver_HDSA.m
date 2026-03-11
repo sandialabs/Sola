@@ -8,7 +8,7 @@ rng(2451423);
 
 T = 5;
 N = 100;
-obj_hifi = Mass_Spring_Objective_HiFi(T,N);
+obj_hifi = Mass_Spring_Objective_HiFi(T, N);
 obj_lofi = Mass_Spring_Objective_LoFi(obj_hifi);
 con_hifi = Mass_Spring_Coupled(T, N);
 con_lofi = Mass_Spring_LoFi(con_hifi);

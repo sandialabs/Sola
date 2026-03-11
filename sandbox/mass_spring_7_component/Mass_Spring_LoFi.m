@@ -31,17 +31,17 @@ classdef Mass_Spring_LoFi < Dynamic_Constraint
 
             f = zeros(4, 1);
             f(1) = v1;
-            f(2) = (1 / this.m1) * ( this.k*(x2-x1) - Fz );
+            f(2) = (1 / this.m1) * (this.k * (x2 - x1) - Fz);
             f(3) = v2;
-            f(4) = (1 / this.m2) * ( this.k*(x1-x2) + this.F );
+            f(4) = (1 / this.m2) * (this.k * (x1 - x2) + this.F);
 
             f_y = zeros(4, 4);
             f_y(1, 2) = 1;
             f_y(2, 1) = (1 / this.m1) * (-this.k);
             f_y(2, 3) = (1 / this.m1) * (this.k);
-            f_y(3,4) = 1;
-            f_y(4,1) = (1 / this.m2) * (this.k);
-            f_y(4,3) = (1 / this.m2) * (-this.k);
+            f_y(3, 4) = 1;
+            f_y(4, 1) = (1 / this.m2) * (this.k);
+            f_y(4, 3) = (1 / this.m2) * (-this.k);
 
             f_z = zeros(4, length(z));
             f_z(2, :) = -(1 / this.m1) * this.mass_spring_coupled.P_z' * coeffs;
