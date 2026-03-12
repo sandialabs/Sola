@@ -48,7 +48,7 @@ classdef MD_Opt_Prob_Interface_Sabl < MD_Opt_Prob_Interface
             u_out = -this.sabl_opt.con.c_u_Inverse_Apply(tmp, this.u_current, z);
         end
 
-        function [val, grad_u, grad_z] = Misfit_Function(this, u, z)
+        function [val, grad_u, grad_z] = Objective_Function(this, u, z)
             [val, grad_u, grad_z] = this.sabl_opt.obj.J(u, z);
         end
 

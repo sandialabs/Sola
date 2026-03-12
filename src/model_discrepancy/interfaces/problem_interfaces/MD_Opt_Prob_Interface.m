@@ -20,10 +20,15 @@ classdef MD_Opt_Prob_Interface < handle
     %% Virtual functions for user implementation
     methods
 
-        % This function must be implemented to enable OED algorithm
+        % The following functions must be implemented to enable Continuation algorithm
         function [u_out] = Apply_Solution_Operator_z_Jacobian(this, z_in, z)
             u_out = [];
-            disp('Apply_Solution_Operator_z_Jacobian must be implemented to use OED algorithm');
+            disp('Apply_Solution_Operator_z_Jacobian must be implemented to use the continuation algorithm');
+        end
+
+        function [val, grad_u, grad_z] = Objective_Function(this, u, z)
+            [val, grad_u, grad_z] = deal([]);
+            disp('Objective_Function must be implemented to use the continuation algorithm');
         end
 
     end

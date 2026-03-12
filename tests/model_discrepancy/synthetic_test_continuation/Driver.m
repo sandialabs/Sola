@@ -49,3 +49,24 @@ end
 % u_n = u_cont_ref(:, end);
 % norm(md_cont_update.Apply_Parameterized_RS_Hessian_Inverse_beta(beta_bar, u_n, beta_bar, 0.5))
 % norm(md_cont_update.Apply_Parameterized_RS_Hessian_Inverse_beta_noCG(beta_bar, u_n, beta_bar, 0.5))
+
+% u_n = u_cont_ref(:, end);
+% beta_in = beta_bar;
+% beta_n = beta_bar;
+% t_n = 0.5;
+
+% I = eye(length(beta_n));
+% H = I;
+% for i = 1:size(beta_n, 1)
+%     H(:, i) = md_cont_update.Apply_Parameterized_RS_Hessian_beta(I(:, i), u_n, beta_n, t_n);
+% end
+% beta_out_full = H \ beta_in;
+
+% [beta_out, flag, relres, iter, resvec] = pcg(@(x) H * x, beta_in, 1e-7, length(beta_n)+10);
+% if flag ~= 0
+%     disp('CG did not converge');
+%     disp(flag);
+% end
+% disp(iter);
+% disp(relres);
+% disp(100*norm(beta_out - beta_out_full)/norm(beta_out_full))

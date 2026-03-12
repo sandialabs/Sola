@@ -36,7 +36,7 @@ classdef MD_Opt_Prob_Interface_synthetic_test_with_hessian_gevp < MD_Opt_Prob_In
             u = z.^3;
         end
 
-        function [val, grad_u, grad_z] = Misfit_Function(this, u, z)
+        function [val, grad_u, grad_z] = Objective_Function(this, u, z)
             grad_u = this.M * (u - (1 + this.x).^3);
             val = (u - (1 + this.x).^3)' * grad_u;
             grad_z = zeros(size(z));
