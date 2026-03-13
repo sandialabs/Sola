@@ -1,7 +1,6 @@
 %% Clear workspace and add path.
 clear;
 close all;
-%clc;
 addpath('../../src/optimization');
 addpath('../../src/model_reduction/operators');
 rng(1129);
@@ -107,8 +106,6 @@ for j = 2:n_t
     checkdiffs(diffs_zy);
     checkdiffs(diffs_zz);
 end
-
-%clc;
 
 %% Helper functions
 

@@ -1,6 +1,5 @@
 clear;
 close all;
-%clc;
 addpath('../../src/model_reduction');
 
 %% Test parameters

@@ -1,7 +1,9 @@
+fprintf(1,'\nExecuting tests for linear_algebra_tools:\n');
+
 cd Randomized_GEVP/;
-Driver;
+Test_1;
 cd ..;
 
 cd Matrix_Sqrt/;
-Driver;
+Test_1;
 cd ..;

@@ -1,5 +1,7 @@
+fprintf(1,'\nExecuting tests for model_discrepancy:\n');
+
 cd hyperparam_2D/;
-Driver_HDSA;
+Test_1;
 cd ..;
 
 % cd oed_unit_test/;
@@ -7,54 +9,54 @@ cd ..;
 % cd ..;
 
 cd PDE_Test_Problem/;
-Driver_HDSA;
+Test_1;
 cd ..;
 
 cd synthetic_test/;
-Driver;
+Test_1;
 cd ..;
 
 cd synthetic_test_control_vec/;
-Driver;
+Test_1;
 cd ..;
 
 cd synthetic_test_elliptic_prior/;
-Driver;
+Test_1;
 cd ..;
 
 cd synthetic_test_hessian_gevp/;
-Driver;
+Test_1;
 cd ..;
 
 cd synthetic_test_hyperparam_1D/;
-Driver;
+Test_1;
 cd ..;
 
 cd synthetic_test_lumped_mass/;
-Driver_MD;
+Test_1;
 cd ..;
 
 cd synthetic_test_multi_state/;
-Driver;
+Test_1;
 cd ..;
 
 cd synthetic_test_transient/;
-Driver;
+Test_1;
 cd ..;
 
 cd lumped_mass_unit_test/;
-Driver_Unit_Test;
+Test_1;
 cd ..;
 
 cd transient_control_synthetic_test/;
-Driver;
+Test_1;
 cd ..;
 
 cd transient_multi_state_synthetic_test/;
-Driver;
+Test_1;
 cd ..;
 
-cd transient_test_problem/;
-Driver_Unit_Test_1;
-Driver_Unit_Test_2;
+cd Transient_Test_Problem/;
+Test_1;
+Test_2;
 cd ..;

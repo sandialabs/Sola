@@ -1,7 +1,9 @@
+fprintf(1,'\nExecuting tests for optimal_experimental_design:\n');
+
 cd Poisson/;
-Driver_Unit_Test;
+Test_1;
 cd ..;
 
 cd Adv_Diff/;
-Driver;
+Test_1;
 cd ..;

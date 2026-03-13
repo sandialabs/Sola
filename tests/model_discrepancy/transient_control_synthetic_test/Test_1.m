@@ -60,7 +60,7 @@ ref_diff = max(ref_diff, norm(z_hyperparam_interface.beta_t - ref.z_hyperparam_i
 ref_diff = max(ref_diff, norm(md_hessian_analysis.evals - ref.md_hessian_analysis.evals) / norm(ref.md_hessian_analysis.evals));
 
 if ref_diff > 1.e-9
-    fprintf(2,'\nModel discrepancy transient_control_synthetic_test failed.\n');
+    fprintf(2,'\nmodel_discrepancy/transient_control_synthetic_test failed.\n');
 else
-    fprintf(1,'\nModel discrepancy transient_control_synthetic_test passed.\n');
+    fprintf(1,'\nmodel_discrepancy/transient_control_synthetic_test passed.\n');
 end

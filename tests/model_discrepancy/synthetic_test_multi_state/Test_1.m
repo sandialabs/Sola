@@ -116,7 +116,7 @@ z_samples_ref = load('reference_solution.mat').z_update_samples;
 ref_diff = max(norm(z_mean_ref - z_update_mean) / norm(z_update_mean), norm(z_update_samples - z_samples_ref) / norm(z_update_samples));
 
 if ref_diff > 1.e-9
-    fprintf(2,'\nModel discrepancy synthetic_test_multi_state failed.\n');
+    fprintf(2,'\nmodel_discrepancy/synthetic_test_multi_state failed.\n');
 else
-    fprintf(1,'\nModel discrepancy synthetic_test_multi_state passed.\n');
+    fprintf(1,'\nmodel_discrepancy/synthetic_test_multi_state passed.\n');
 end

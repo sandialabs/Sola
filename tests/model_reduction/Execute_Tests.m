@@ -1,6 +1,4 @@
-clear;
-close all;
-
+fprintf(1,'\nExecuting tests for model_reduction:\n');
 % Output to screen will identify failed tests, no output means all tests passed
 
 test_POD = true;

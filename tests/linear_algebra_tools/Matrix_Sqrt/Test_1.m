@@ -12,8 +12,8 @@ M_v = mat_sqrt_test.Matrix_Sqrt_Apply(Msqrt_v);
 error = norm(M_v - M * v) / norm(M * v);
 
 if error > 1.e-8
-    fprintf(2,'\nLinear algebra tools Matrix_Sqrt failed.\n');
+    fprintf(2,'\nlinear_algebra_tools/Matrix_Sqrt failed.\n');
 else
-    fprintf(1,'\nLinear algebra tools Matrix_Sqrt passed.\n');
+    fprintf(1,'\nlinear_algebra_tools/Matrix_Sqrt passed.\n');
 end
 

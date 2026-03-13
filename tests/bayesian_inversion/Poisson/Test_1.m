@@ -23,9 +23,9 @@ error = 0;
 error = max(error, norm(u_sol - u_map));
 error = max(error, norm(z_sol - z_map));
 if error > 1.e-11
-    fprintf(2,'\nBayesian inversion Poisson failed.\n');
+    fprintf(2,'\nbayesian_inversion/Poisson failed.\n');
 else
-    fprintf(1,'\nBayesian inversion Poisson passed.\n');
+    fprintf(1,'\nbayesian_inversion/Poisson  passed.\n');
 end
 
 

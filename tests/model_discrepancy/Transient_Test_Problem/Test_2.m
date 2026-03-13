@@ -106,7 +106,7 @@ sampling_error = [sampling_error, sampling_local_error];
 %%
 
 if (max(error) > 5.e-7) || (max(sampling_error) > 5.e-2)
-    fprintf(2,'\nModel discrepancy Transient_Test_Problem Unit_Test_2 failed.\n');
+    fprintf(2,'\nmodel_discrepancy/Transient_Test_Problem Unit_Test_2 failed.\n');
 else
-    fprintf(1,'\nModel discrepancy Transient_Test_Problem Unit_Test_2 passed.\n');
+    fprintf(1,'\nmodel_discrepancy/Transient_Test_Problem Unit_Test_2 passed.\n');
 end

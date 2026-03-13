@@ -1,7 +1,9 @@
+fprintf(1,'\nExecuting tests for automatic_differentiation:\n');
+
 cd Thermal/;
-Driver_Unit_Test;
+Test_1;
 cd ..;
 
 cd Transient_Thermal/;
-Driver_Unit_Test;
+Test_1;
 cd ..;

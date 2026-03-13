@@ -70,7 +70,7 @@ z_samples_ref = load('reference_solution.mat').z_update_samples;
 ref_diff = max(norm(z_mean_ref - z_update_mean) / norm(z_update_mean), norm(z_update_samples - z_samples_ref) / norm(z_update_samples));
 
 if ref_diff > 1.e-7
-    fprintf(2,'\nModel discrepancy transient_multi_state_synthetic_test failed.\n');
+    fprintf(2,'\nmodel_discrepancy/transient_multi_state_synthetic_test failed.\n');
 else
-    fprintf(1,'\nModel discrepancy transient_multi_state_synthetic_test passed.\n');
+    fprintf(1,'\nmodel_discrepancy/transient_multi_state_synthetic_test passed.\n');
 end

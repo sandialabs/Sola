@@ -32,8 +32,8 @@ error = max(error, norm(u_sol - u_map));
 error = max(error, norm(z_sol - z_map));
 error = max(error, norm(Z_sol - Z_prior));
 if error > 1.e-11
-    fprintf(2,'\nBayesian inversion Adv_Diff failed.\n');
+    fprintf(2,'\nbayesian_inversion/Adv_Diff failed.\n');
 else
-    fprintf(1,'\nBayesian inversion Adv_Diff passed.\n');
+    fprintf(1,'\nbayesian_inversion/Adv_Diff passed.\n');
 end
 % save('Solution_Adv_Diff.mat','u_map','z_map','Z_prior')

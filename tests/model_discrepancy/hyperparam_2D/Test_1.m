@@ -28,7 +28,7 @@ ref_diff = norm(u_hyperparams.alpha_u - ref.u_hyperparams.alpha_u);
 ref_diff = max(ref_diff, norm(u_hyperparams.beta_u - ref.u_hyperparams.beta_u));
 
 if ref_diff > 1.e-9
-    fprintf(2,'\nModel discrepancy hyperparam_2D failed.\n');
+    fprintf(2,'\nmodel_discrepancy/hyperparam_2D failed.\n');
 else
-    fprintf(1,'\nModel discrepancy hyperparam_2D passed.\n');
+    fprintf(1,'\nmodel_discrepancy/hyperparam_2D passed.\n');
 end

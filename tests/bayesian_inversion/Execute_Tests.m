@@ -1,11 +1,13 @@
+fprintf(1,'\nExecuting tests for bayesian_inversion:\n');
+
 cd Example_1/;
-Driver;
+Test_1;
 cd ..;
 
 cd Poisson/;
-Driver_Opt;
+Test_1;
 cd ..;
 
 cd Adv_Diff/;
-Driver;
+Test_1;
 cd ..;
