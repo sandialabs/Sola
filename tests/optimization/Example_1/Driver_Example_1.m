@@ -28,23 +28,9 @@ z_sol = constants(4:5);
 err = 0;
 err = max(err, norm(u_sol - u));
 err = max(err, norm(z_sol - z));
+
 if err > 1e-12
-    disp('Error in example 1');
-    disp(err);
-    disp('');
-    disp('Calculated state');
-    disp(u);
-    disp('Calculated control');
-    disp(z);
-    disp('Calculated objective value');
-    [val, gradu, gradz] = obj.J(u, z);
-    disp(val);
-    disp('');
-    disp('True state');
-    disp(u_sol);
-    disp('True control');
-    disp(z_sol);
-    disp('Objective value at true solution');
-    [val, gradu, gradz] = obj.J(u_sol, z_sol);
-    disp(val);
+    fprintf(2,'\nOptimization Example 1 failed.\n');
+else
+    fprintf(1,'\nOptimization Example 1 passed.\n');
 end

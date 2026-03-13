@@ -149,7 +149,9 @@ if print_output
 end
 
 if error > 1.e-11
-    disp('Error in automatic differentiation Thermal example');
+    fprintf(2,'\nAutomatic differentiation Thermal example failed.\n');
+else
+    fprintf(1,'\nAutomatic differentiation Thermal example passed.\n');
 end
 
 con_AD.Clear_AD();

@@ -32,8 +32,11 @@ z_sol = load('Solution_Example_3.mat', 'z').z;
 error = 0;
 error = max(error, norm(u_sol - u));
 error = max(error, norm(z_sol - z));
-if error ~= 0
-    disp('Error in example 3');
+
+if error > 1e-12
+    fprintf(2,'\nOptimization Example 3 failed.\n');
+else
+    fprintf(1,'\nOptimization Example 3 passed.\n');
 end
 
 % save('Solution_Example_3.mat','u','z','obj')

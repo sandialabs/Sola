@@ -1,6 +1,5 @@
 clear;
 close all;
-clc;
 addpath(genpath('../../src'));
 rng(1423435);
 
@@ -23,8 +22,11 @@ z_sol = load('Solution_Poisson.mat', 'z_map').z_map;
 error = 0;
 error = max(error, norm(u_sol - u_map));
 error = max(error, norm(z_sol - z_map));
-if error ~= 0
-    disp('Error in Bayesian Inversion Poisson');
+if error > 1.e-11
+    fprintf(2,'\nBayesian inversion Poisson failed.\n');
+else
+    fprintf(1,'\nBayesian inversion Poisson passed.\n');
 end
+
 
 % save('Solution_Poisson.mat','u_map','z_map')

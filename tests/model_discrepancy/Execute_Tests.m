@@ -56,4 +56,5 @@ cd ..;
 
 cd transient_test_problem/;
 Driver_Unit_Test_1;
+Driver_Unit_Test_2;
 cd ..;

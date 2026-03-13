@@ -134,5 +134,7 @@ if print_output
 end
 
 if error > 1.e-9
-    disp('Error in optimal experimental design Poisson example');
+    fprintf(2,'\nOptimal experimental design Poisson failed.\n');
+else
+    fprintf(1,'\nOptimal experimental design Poisson passed.\n');
 end

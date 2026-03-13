@@ -1,7 +1,7 @@
 %% Clear workspace and add path.
 clear;
 close all;
-clc;
+%clc;
 addpath('../../src/model_reduction/');
 rng(1117);
 

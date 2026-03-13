@@ -1,6 +1,5 @@
 clear;
 close all;
-clc;
 
 % Output to screen will identify failed tests, no output means all tests passed
 
@@ -21,6 +20,7 @@ if test_roms
     run Test_OpInf_ROM_Constraint_ddts;
 end
 
-disp('All model_reduction tests passed!');
+
+fprintf(1,'\nModel reduction tests passed.\n');
 
 clear;

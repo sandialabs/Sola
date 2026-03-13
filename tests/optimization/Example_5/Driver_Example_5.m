@@ -37,12 +37,11 @@ z_sol = load('Solution_Example_5.mat', 'z').z;
 error = 0;
 error = max(error, norm(u_sol - u) / norm(u_sol));
 error = max(error, norm(z_sol - z) / norm(z_sol));
-if error > 1.e-6
-    disp('Error in example 5');
-    disp('Computed objective:');
-    disp(num2str(obj.J(u, z), '%.8e'));
-    disp('Saved objective:');
-    disp(num2str(obj.J(u_sol, z_sol), '%.8e'));
+
+if error > 1e-6
+    fprintf(2,'\nOptimization Example 5 failed.\n');
+else
+    fprintf(1,'\nOptimization Example 5 passed.\n');
 end
 
 % save('Solution_Example_5.mat','u','z','obj')

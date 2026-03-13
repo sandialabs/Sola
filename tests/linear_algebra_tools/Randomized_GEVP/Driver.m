@@ -30,6 +30,7 @@ evals_ref = load('reference_solution.mat', 'evals').evals;
 ref_diff = max(norm(evals_ref - evals), norm(evecs_ref - evecs));
 
 if ref_diff > 1.e-14
-    disp('Randomized_GEVP test difference:');
-    disp(ref_diff);
+    fprintf(2,'\nLinear algebra tools Randomized_GEVP failed.\n');
+else
+    fprintf(1,'\nLinear algebra tools Randomized_GEVP passed.\n');
 end

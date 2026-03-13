@@ -31,6 +31,8 @@ u_ref = load('reference_solution.mat', 'u').u;
 z_ref = load('reference_solution.mat', 'z').z;
 
 error = max(norm(u - u_ref), norm(z - z_ref));
-if error > 1.e-12
-    disp('Error in Optimization_Under_Uncertainty: Example_1');
+if error > 1e-12
+    fprintf(2,'\nOptimization under uncertainty Example 1 failed.\n');
+else
+    fprintf(1,'\nOptimization under uncertainty Example 1 passed.\n');
 end

@@ -121,7 +121,9 @@ ref_diff = max(ref_diff, norm(z_update_samples - z_samples_ref) / norm(z_update_
 ref_diff = max(ref_diff, norm(delta_samples_ref{1} - delta_samples{1}, 'fro') / norm(delta_samples_ref{1}, 'fro'));
 ref_diff = max(ref_diff, norm(delta_samples_ref{2} - delta_samples{2}, 'fro') / norm(delta_samples_ref{2}, 'fro'));
 ref_diff = max(ref_diff, norm(delta_samples_ref{3} - delta_samples{3}, 'fro') / norm(delta_samples_ref{3}, 'fro'));
+
 if ref_diff > 1.e-9
-    disp('model_discrepancy_sythetic_test_lumped_mass:');
-    disp(ref_diff);
+    fprintf(2,'\nModel discrepancy synthetic_test_lumped_mass failed.\n');
+else
+    fprintf(1,'\nModel discrepancy synthetic_test_lumped_mass passed.\n');
 end

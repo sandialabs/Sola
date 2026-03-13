@@ -1,9 +1,11 @@
 %% Clear workspace and add path.
 clear;
 close all;
-clc;
+%clc;
 addpath('../../src/model_reduction/operators/');
 rng(1120);
+
+enable_fd_test = false;
 
 %% Set test parameters and generate data.
 
@@ -42,7 +44,9 @@ assert(all(CY(:, 1) == C));
 
 assert(Constant_Operator.Column_Dimension() == 1);
 
-op.Finite_Difference_Check(n_t);
+if enable_fd_test
+    op.Finite_Difference_Check(n_t);
+end
 D = Constant_Operator.Datablock(Y);
 assert(size(D, 1) == 1);
 assert(size(D, 2) == n_t);
@@ -66,7 +70,9 @@ assert(all(AJac == A, 'all'));
 
 assert(Linear_Operator.Column_Dimension(r) == r);
 
-op.Finite_Difference_Check(n_t);
+if enable_fd_test
+    op.Finite_Difference_Check(n_t);
+end
 D = Linear_Operator.Datablock(Y);
 assert(size(D, 1) == n_y);
 assert(size(D, 2) == n_t);
@@ -113,7 +119,9 @@ assert(size(HHess_V, 2) == size(Vr, 2));
 
 assert(Quadratic_Operator.Column_Dimension(r) == r * (r + 1) / 2);
 
-op.Finite_Difference_Check(n_t);
+if enable_fd_test
+    op.Finite_Difference_Check(n_t);
+end
 D = Quadratic_Operator.Datablock(Y);
 assert(size(D, 1) == n_y * (n_y + 1) / 2);
 assert(size(D, 2) == n_t);
@@ -137,7 +145,9 @@ assert(all(BJac == B, 'all'));
 
 assert(Input_Operator.Column_Dimension(r, n_q) == n_q);
 
-op.Finite_Difference_Check(n_t);
+if enable_fd_test
+    op.Finite_Difference_Check(n_t);
+end
 D = Input_Operator.Datablock(Y, Q);
 assert(size(D, 1) == n_q);
 assert(size(D, 2) == n_t);

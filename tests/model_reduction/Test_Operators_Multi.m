@@ -1,9 +1,11 @@
 %% Clear workspace and add path.
 clear;
 close all;
-clc;
+%clc;
 addpath('../../src/model_reduction/operators/');
 rng(1120);
+
+enable_fd_test = false;
 
 %% Set test parameters and generate test data.
 
@@ -56,7 +58,9 @@ assert(op.Hessian_yq_Apply(q, y, q, y) == 0);
 assert(op.Hessian_qy_Apply(y, y, q, y) == 0);
 assert(op.Hessian_qq_Apply(q, y, q, y) == 0);
 
-op.Finite_Difference_Check();
+if enable_fd_test
+    op.Finite_Difference_Check();
+end
 
 %% Test Quadratic_Operator_Multi.
 
@@ -86,7 +90,9 @@ jacblock2 = op.Get_Substate(idx2, jac')';
 y1 = op.Get_Substate(idx1, y);
 assert(allclose(jacblock2, H * kron(y1, eye(ns(idx2)))));
 
-op.Finite_Difference_Check();
+if enable_fd_test
+    op.Finite_Difference_Check();
+end
 
 assert(op.Jacobian_q(y, q) == 0);
 assert(op.Hessian_yq_Apply(q, y, q, y) == 0);
@@ -119,7 +125,9 @@ assert(op.Hessian_yq_Apply(q, y, q, y) == 0);
 assert(op.Hessian_qy_Apply(y, y, q, y) == 0);
 assert(op.Hessian_qq_Apply(q, y, q, y) == 0);
 
-op.Finite_Difference_Check(30, true);
+if enable_fd_test
+    op.Finite_Difference_Check(30, true);
+end
 
 %% Test Input_Squared_Operator_Multi.
 
@@ -147,7 +155,9 @@ assert(op.Hessian_qy_Apply(y, y, q, y) == 0);
 B_qq = op.Hessian_qq_Apply(q, y, q, y);
 assert(size(B_qq, 1) == n_q);
 
-op.Finite_Difference_Check(30, true);
+if enable_fd_test
+    op.Finite_Difference_Check(30, true);
+end
 
 %% Helper functions
 

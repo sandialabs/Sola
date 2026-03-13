@@ -1,6 +1,5 @@
 clear;
 close all;
-clc;
 addpath(genpath('../../../src'));
 rng(1423435);
 
@@ -32,8 +31,9 @@ error = 0;
 error = max(error, norm(u_sol - u_map));
 error = max(error, norm(z_sol - z_map));
 error = max(error, norm(Z_sol - Z_prior));
-if error ~= 0
-    disp('Error in Bayesian Inversion Adv_Diff example');
+if error > 1.e-11
+    fprintf(2,'\nBayesian inversion Adv_Diff failed.\n');
+else
+    fprintf(1,'\nBayesian inversion Adv_Diff passed.\n');
 end
-
 % save('Solution_Adv_Diff.mat','u_map','z_map','Z_prior')

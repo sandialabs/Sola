@@ -146,7 +146,7 @@ diff = [diff; local_diff];
 
 %%
 if max(diff) > 1.e-8
-    disp('Error in lumped_mass_unit_test');
-    disp('maximum of diff:');
-    disp(max(diff));
+    fprintf(2,'\nModel discrepancy lumped_mass_unit_test failed.\n');
+else
+    fprintf(1,'\nModel discrepancy lumped_mass_unit_test passed.\n');
 end

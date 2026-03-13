@@ -24,7 +24,7 @@ transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyper
 opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
 u_hyperparam_interface.alpha_u = 1.e-2;
 u_hyperparam_interface.beta_u = 2.e-2;
-spatial_u_prior_interface = MD_Laplacian_u_Prior_Interface(opt.con.S, opt.con.M, data_interface, u_hyperparam_interface);
+spatial_u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(opt.con.S, opt.con.M, data_interface, u_hyperparam_interface);
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_u_prior_interface, transient_prior_cov);
 
 error = 0;
@@ -105,10 +105,8 @@ sampling_error = [sampling_error, sampling_local_error];
 
 %%
 
-if max(error) > 5.e-7
-    disp('Error in model_discrepancy/Transient_Test_Problem/Driver_Unit_Test_1');
-end
-
-if max(sampling_error) > 5.e-2
-    disp('Error in model_discrepancy/Transient_Test_Problem/Driver_Unit_Test_1');
+if (max(error) > 5.e-7) || (max(sampling_error) > 5.e-2)
+    fprintf(2,'\nModel discrepancy Transient_Test_Problem Unit_Test_2 failed.\n');
+else
+    fprintf(1,'\nModel discrepancy Transient_Test_Problem Unit_Test_2 passed.\n');
 end

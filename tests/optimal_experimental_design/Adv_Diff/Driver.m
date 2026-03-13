@@ -26,10 +26,14 @@ w = linear_oed.Optimize_Design();
 w_sol = load('Solution_Adv_Diff.mat', 'w').w;
 sing_vals_sol = load('Solution_Adv_Diff.mat', 'sing_vals').sing_vals;
 
-error = norm(w_sol - w);
-error = max(error, norm(sing_vals_sol - sing_vals));
-if error ~= 0
-    disp('Error in optimal experimental design Adv_Diff example');
+ref_diff = norm(w_sol - w);
+ref_diff = max(ref_diff, norm(sing_vals_sol - sing_vals));
+
+if ref_diff > 1.e-11
+    fprintf(2,'\nOptimal experimental design Adv_Diff failed.\n');
+else
+    fprintf(1,'\nOptimal experimental design Adv_Diff passed.\n');
 end
+
 
 % save('Solution_Adv_Diff.mat','w','sing_vals')

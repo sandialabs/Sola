@@ -1,7 +1,7 @@
 %% Set up
 clear;
 close all;
-clc;
+
 addpath(genpath('../../../src'));
 load Optimization_Results.mat;
 rng(2451423);
@@ -28,6 +28,7 @@ ref_diff = norm(u_hyperparams.alpha_u - ref.u_hyperparams.alpha_u);
 ref_diff = max(ref_diff, norm(u_hyperparams.beta_u - ref.u_hyperparams.beta_u));
 
 if ref_diff > 1.e-9
-    disp('hyperparam_2D difference:');
-    disp(ref_diff);
+    fprintf(2,'\nModel discrepancy hyperparam_2D failed.\n');
+else
+    fprintf(1,'\nModel discrepancy hyperparam_2D passed.\n');
 end

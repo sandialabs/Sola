@@ -107,7 +107,9 @@ end
 z_mean_ref = load('reference_solution.mat').z_update_mean;
 z_samples_ref = load('reference_solution.mat').z_update_samples;
 ref_diff = max(norm(z_mean_ref - z_update_mean) / norm(z_update_mean), norm(z_update_samples - z_samples_ref) / norm(z_update_samples));
+
 if ref_diff > 1.e-9
-    disp('model_discrepancy_sythetic_test_with_gsvd difference:');
-    disp(ref_diff);
+    fprintf(2,'\nModel discrepancy synthetic_test_elliptic_prior failed.\n');
+else
+    fprintf(1,'\nModel discrepancy synthetic_test_elliptic_prior passed.\n');
 end

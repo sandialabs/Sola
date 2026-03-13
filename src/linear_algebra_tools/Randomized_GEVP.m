@@ -61,12 +61,15 @@ classdef Randomized_GEVP < handle
 
         function [Q, WQ, R] = CholQR(this, Z, type)
 
-            R_Z = chol(Z' * Z);
-            Q_Z = Z * linsolve(R_Z, eye(size(R_Z, 1)));
-            % The commented line below is superior to the two lines above.
-            % However, the approach above is preferable for parallel
+            % The "catch" code is superior to the "try" code.
+            % However, the "try" code is preferable for parallel
             % implmentations and hence is there for comparison.
-            % [Q_Z, R_Z] = qr(Z, "econ");
+            try 
+                R_Z = chol(Z' * Z);
+                Q_Z = Z * linsolve(R_Z, eye(size(R_Z, 1)));
+            catch
+                [Q_Z, R_Z] = qr(Z, "econ");
+            end
 
             if strcmp(type, 'weighting')
                 W_Q_Z = this.Apply_Weighting_Operator(Q_Z);

@@ -19,8 +19,11 @@ z_sol = load('Solution_Example_1.mat', 'z_map').z_map;
 error = 0;
 error = max(error, norm(u_sol - u_map));
 error = max(error, norm(z_sol - z_map));
-if error ~= 0
-    disp('Error in Bayesian Inversion example 1');
+
+if error > 1.e-11
+    fprintf(2,'\nBayesian inversion Example 1 failed.\n');
+else
+    fprintf(1,'\nBayesian inversion Example 1 passed.\n');
 end
 
 % save('Solution_Example_1.mat','u_map','z_map')

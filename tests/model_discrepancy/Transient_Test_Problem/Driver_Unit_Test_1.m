@@ -109,10 +109,8 @@ sampling_error = [sampling_error, sampling_local_error];
 
 %%
 
-if max(error) > 5.e-7
-    disp('Error in model_discrepancy/Transient_Test_Problem/Driver_Unit_Test_1');
-end
-
-if max(sampling_error) > .03
-    disp('Error in model_discrepancy/Transient_Test_Problem/Driver_Unit_Test_1');
+if (max(error) > 5.e-7) || (max(sampling_error) > .03)
+    fprintf(2,'\nModel discrepancy Transient_Test_Problem Unit_Test_1 failed.\n');
+else
+    fprintf(1,'\nModel discrepancy Transient_Test_Problem Unit_Test_1 passed.\n');
 end
