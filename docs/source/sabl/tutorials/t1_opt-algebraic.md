@@ -823,7 +823,6 @@ In this case, the solution to the optimization problem is $\u = (\alpha_1,\alpha
 clear;
 close all;
 clc;
-run('~/Software/SABL/src/Set_Paths');   % MODIFY THIS TO MATCH YOUR PATH TO SABL.
 rng(1342);                              % Random seed for reproducing results (optional).
 
 %% Instantiate the objective and constraints.

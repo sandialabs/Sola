@@ -1,7 +1,6 @@
 clear;
 close all;
 clc;
-run('../../src/Set_Paths');
 
 reg_coeff = load('HiFi_Opt_Results.mat', 'obj').obj.reg_coeff;
 

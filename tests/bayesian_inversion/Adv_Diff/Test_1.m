@@ -1,6 +1,5 @@
 clear;
 close all;
-addpath(genpath('../../../src'));
 rng(1423435);
 
 %%%%% Create on instance of this problem under Bayesian inversion and another under OED %%%%%

@@ -1,7 +1,6 @@
 clear;
 close all;
 clc;
-run('../../src/Set_Paths');
 
 %% Experiment parameters.
 

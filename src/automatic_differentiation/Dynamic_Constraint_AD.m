@@ -49,6 +49,7 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
         ic_Jac_zero
         ic_Hess_zero
         path_name
+        example_path
     end
 
     methods (Abstract, Access = public)
@@ -208,6 +209,8 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
         end
 
         function [] = Clear_AD(this)
+            evalc("rmpath(this.path_name)");
+            evalc("rmpath(this.example_path)");
             evalc("rmdir(this.path_name,'s')");
         end
 
@@ -223,7 +226,8 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
                 mkdir(this.path_name);
             end
 
-            addpath('.');
+            this.example_path = pwd();
+            addpath(this.example_path);
             addpath(this.path_name);
             cd(this.path_name);
 

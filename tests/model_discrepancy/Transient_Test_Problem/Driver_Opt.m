@@ -1,7 +1,6 @@
 clear;
 close all;
 clc;
-addpath(genpath('../../../src'));
 
 n_y = 50;
 n_t = 11;

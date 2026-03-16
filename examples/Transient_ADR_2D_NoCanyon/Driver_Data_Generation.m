@@ -1,7 +1,6 @@
 clear;
 close all;
 clc;
-run('../../src/Set_Paths');
 
 % Beforehand: use pdeModeler to generate geometry and mesh.
 % save('mesh.mat', 'geometry', 'bcs', 'points', 'edges', 'triangles');

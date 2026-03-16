@@ -1,7 +1,6 @@
 %% Clear workspace and add path.
 clear;
 close all;
-addpath('../../src/model_reduction/operators/');
 rng(1120);
 
 enable_fd_test = false;

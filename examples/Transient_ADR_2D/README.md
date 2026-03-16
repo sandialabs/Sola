@@ -213,7 +213,6 @@ This section explains [Driver_Opt_OpInf_Multi.m](./Driver_Opt_OpInf_Multi.m), a 
 clear;
 close all;
 clc;
-run('../../src/Set_Paths');
 
 %% Experiment parameters.
 

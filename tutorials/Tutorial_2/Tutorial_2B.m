@@ -2,7 +2,6 @@
 clear;
 close all;
 clc;
-run('~/Software/SABL/src/Set_Paths');
 rng(1342);                              % Random seed for reproducing results (optional).
 
 %% Instantiate the objective and constraints.

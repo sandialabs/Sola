@@ -1,6 +1,5 @@
 clear;
 close all;
-addpath(genpath('../../../src'));
 rng(132253);
 
 n_y = 50;

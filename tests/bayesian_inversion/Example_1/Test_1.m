@@ -1,6 +1,5 @@
 clear;
 close all;
-addpath(genpath('../../../src'));
 rng(1342);
 
 % Instantiate the Example_1 object

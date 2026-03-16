@@ -1,8 +1,6 @@
 %% Clear workspace and add path.
 clear;
 close all;
-addpath(genpath('../../../src/optimization/'));
-addpath(genpath('../../../src/parametric_sensitivities/'));
 rng(1342);
 
 %% Instantiate the optimization problem.

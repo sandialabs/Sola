@@ -1,7 +1,6 @@
 %% Clear workspace and add path.
 clear;
 close all;
-addpath('../../src/model_reduction/');
 rng(1117);
 
 %% Get test data.

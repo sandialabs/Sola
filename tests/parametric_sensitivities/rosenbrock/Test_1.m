@@ -1,6 +1,5 @@
 clear;
 close all;
-addpath(genpath('../../../src'));
 
 execute_fd_check = false;
 suppress_plotting = true;

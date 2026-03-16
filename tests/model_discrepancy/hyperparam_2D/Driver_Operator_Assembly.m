@@ -1,7 +1,6 @@
 clear;
 close all;
 clc;
-addpath(genpath('../../src'));
 
 diff_coeff = 1;
 adv_coeff = 10;

@@ -1,6 +1,5 @@
 clear;
 close all;
-addpath('../../../src/optimization/');
 rng(132);
 
 n_y = 3;

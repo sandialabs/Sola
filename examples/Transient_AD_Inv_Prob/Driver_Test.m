@@ -1,7 +1,6 @@
 clear;
 close all;
 clc;
-run('../../src/Set_Paths');
 
 n_y = 50;
 n_z = n_y;

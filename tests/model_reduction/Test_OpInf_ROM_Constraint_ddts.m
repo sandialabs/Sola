@@ -1,6 +1,5 @@
 clear;
 close all;
-addpath('../../src/model_reduction');
 
 %% Test parameters
 

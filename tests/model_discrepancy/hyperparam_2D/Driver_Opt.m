@@ -1,7 +1,6 @@
 clear;
 close all;
 clc;
-addpath(genpath('../../src'));
 rng(3524513);
 
 load('Assembled_Operators.mat');

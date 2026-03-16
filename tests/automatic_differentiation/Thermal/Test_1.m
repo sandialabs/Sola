@@ -1,6 +1,5 @@
 clear;
 close all;
-run('../../../src/Set_Paths');
 rng(12);
 
 print_output = false;

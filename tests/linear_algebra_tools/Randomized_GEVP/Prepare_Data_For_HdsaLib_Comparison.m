@@ -1,6 +1,5 @@
 clear;
 close all;
-addpath(genpath('../../../src'));
 rng(1431242);
 
 random_numbers = randn(10^5, 1);

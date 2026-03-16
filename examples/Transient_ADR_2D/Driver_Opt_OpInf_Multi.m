@@ -1,7 +1,6 @@
 clear;
 close all;
 clc;
-run('../../src/Set_Paths');
 rng(2024);
 
 %% Experiment parameters.

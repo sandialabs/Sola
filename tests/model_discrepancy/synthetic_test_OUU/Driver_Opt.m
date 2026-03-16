@@ -2,7 +2,6 @@
 clear;
 close all;
 clc;
-addpath(genpath('../../../src'));
 rng(1342);
 
 %% Instantiate the optimization problem.

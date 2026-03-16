@@ -2,7 +2,6 @@
 clear;
 close all;
 clc;
-run('../../src/Set_Paths');
 
 %% Define the optimization objective and the high-fidelity constraint.
 

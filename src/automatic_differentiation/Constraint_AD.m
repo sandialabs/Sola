@@ -17,6 +17,7 @@ classdef Constraint_AD < Constraint
         Hess_zero
         verbose         % If ``true``, print automatic differentiation info.
         path_name
+        example_path
     end
 
     methods (Abstract, Access = public)
@@ -192,6 +193,8 @@ classdef Constraint_AD < Constraint
         end
 
         function [] = Clear_AD(this)
+            evalc("rmpath(this.path_name)");
+            evalc("rmpath(this.example_path)");
             evalc("rmdir(this.path_name,'s')");
         end
 
@@ -207,7 +210,8 @@ classdef Constraint_AD < Constraint
                 mkdir(this.path_name);
             end
 
-            addpath('.');
+            this.example_path = pwd();
+            addpath(this.example_path);
             addpath(this.path_name);
             cd(this.path_name);
 

@@ -2,7 +2,6 @@
 clear;
 close all;
 clc;
-run('../../src/Set_Paths');
 
 % Load data from surrogate optimization.
 load Optimization_Results.mat;

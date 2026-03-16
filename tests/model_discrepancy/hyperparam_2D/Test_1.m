@@ -2,7 +2,6 @@
 clear;
 close all;
 
-addpath(genpath('../../../src'));
 load Optimization_Results.mat;
 rng(2451423);
 

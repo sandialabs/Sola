@@ -445,7 +445,6 @@ The following script, `Tutorial_2.m`, instantiates `Tutorial_2_Objective` and `T
 clear;
 close all;
 clc;
-run('~/Software/SABL/src/Set_Paths');   % MODIFY THIS TO MATCH YOUR PATH TO SABL.
 rng(18);                                % Random seed for reproducing results (optional).
 
 %% Instantiate the objective and constraints.
@@ -908,7 +907,6 @@ See `tutorials/Tutorial_2/Tutorial_2B_Objective.m` in the source code for the `P
 clear;
 close all;
 clc;
-run('~/Software/SABL/src/Set_Paths');
 rng(1342);                              % Random seed for reproducing results (optional).
 
 %% Instantiate the objective and constraints.

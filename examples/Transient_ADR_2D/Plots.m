@@ -1,7 +1,6 @@
 clear;
 close all;
 clc;
-run('../../src/Set_Paths');
 
 %% Plot configuration.
 set(0, 'DefaultAxesFontName', 'Times New Roman');

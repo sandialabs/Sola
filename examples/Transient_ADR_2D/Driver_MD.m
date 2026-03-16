@@ -2,7 +2,6 @@
 clear;
 close all;
 clc;
-run('../../src/Set_Paths');
 rng(13424);
 
 suppress_figures = false;

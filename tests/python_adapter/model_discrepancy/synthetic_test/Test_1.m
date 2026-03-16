@@ -1,7 +1,6 @@
 clear;
 close all;
 rng(13244)
-addpath(genpath('../../../../src'));
 
 update_python = false;
 

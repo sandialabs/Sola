@@ -1,7 +1,6 @@
 %%
 clear;
 close all;
-addpath(genpath('../../src'));
 rng(121234);
 
 suppress_figures = true;
