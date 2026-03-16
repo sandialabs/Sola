@@ -1,7 +1,8 @@
+%%
 clear;
 close all;
-clc;
-addpath(genpath('../../../../src'));
+addpath(genpath('../../../src'));
+rng(121234);
 
 update_python = false;
 
@@ -10,49 +11,60 @@ if update_python
     update_python = true;
 end
 
-suppress_figures = false;
+suppress_figures = true;
 
-m = int64(51);
+m = 51;
 x = linspace(0, 1, m)';
 
-mod = py.importlib.import_module('MD_Data_Interface_Python_Synthetic_Test');
+mod = py.importlib.import_module('Assemble_Mass_and_Stiffness');
 if update_python
     py.importlib.reload(mod);
 end
-data_interface_python = mod.MD_Data_Interface_Python_Synthetic_Test(m);
-data_interface = MD_Data_Interface_Py(data_interface_python);
-data_interface.Load_Data();
+mass_and_stiff = mod.Assemble_Mass_and_Stiffness(m);
+M = double(mass_and_stiff.M);
+S = double(mass_and_stiff.S);
 
-mod = py.importlib.import_module('MD_Opt_Prob_Interface_Python_Synthetic_Test');
+mod = py.importlib.import_module('MD_Data_Interface_Python_synthetic_test');
 if update_python
     py.importlib.reload(mod);
 end
-opt_prob_interface_python = mod.MD_Opt_Prob_Interface_Python_Synthetic_Test(m);
+data_interface_python = mod.MD_Data_Interface_Python_synthetic_test(m);
+data_interface = MD_Data_Interface_Py(data_interface_python);
+
+mod = py.importlib.import_module('MD_Opt_Prob_Interface_Python_synthetic_test');
+if update_python
+    py.importlib.reload(mod);
+end
+opt_prob_interface_python = mod.MD_Opt_Prob_Interface_Python_synthetic_test(m);
 opt_prob_interface = MD_Opt_Prob_Interface_Py(opt_prob_interface_python);
 
-mod = py.importlib.import_module('MD_u_Prior_Interface_Python_Synthetic_Test');
+mod = py.importlib.import_module('MD_u_Hyperparameter_Interface_Python_synthetic_test');
 if update_python
     py.importlib.reload(mod);
 end
-u_prior_interface_python = mod.MD_u_Prior_Interface_Python_Synthetic_Test(m);
-u_prior_interface = MD_u_Prior_Interface_Py(u_prior_interface_python);
+u_hyperparam_interface_python = mod.MD_u_Hyperparameter_Interface_Python_synthetic_test(m);
+u_hyperparam_interface  = MD_u_Hyperparameter_Interface_Py(u_hyperparam_interface_python, false);
 
-mod = py.importlib.import_module('MD_z_Prior_Interface_Python_Synthetic_Test');
+mod = py.importlib.import_module('MD_z_Hyperparameter_Interface_Python_synthetic_test');
 if update_python
     py.importlib.reload(mod);
 end
-z_prior_interface_python = mod.MD_z_Prior_Interface_Python_Synthetic_Test(m);
-z_prior_interface = MD_z_Prior_Interface_Py(z_prior_interface_python);
+z_hyperparam_interface_python = mod.MD_z_Hyperparameter_Interface_Python_synthetic_test(m);
+z_hyperparam_interface  = MD_z_Hyperparameter_Interface_Py(z_hyperparam_interface_python, 'spatial field', 100);
 
+u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface);
+z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(S, M, data_interface, z_hyperparam_interface, u_prior_interface);
+
+%%
 num_prior_samples = 100;
 md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 
 %%
-delta_samples = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
+delta_prior_samples_zopt = md_prior_sampling.Prior_Discrepancy_Samples_at_z_opt(num_prior_samples);
 
 if ~suppress_figures
     figure;
-    plot(x, delta_samples, 'LineWidth', 3, 'color', [.9, .9, .9]);
+    plot(x, delta_prior_samples_zopt, 'LineWidth', 3, 'color', [.9, .9, .9]);
 end
 
 z = zeros(m, 3);
@@ -70,9 +82,8 @@ end
 
 %%
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
-alpha_d = 1.e-5;
 num_post_samples = 100;
-md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
+md_post_sampling.Compute_Posterior_Data(u_hyperparam_interface.alpha_d, num_post_samples);
 Z_test = randn(m, 3);
 Z_test(:, 1:2) = md_post_sampling.post_data.Z;
 Z_test(:, 3) = 1.5 * ones(m, 1);
@@ -108,9 +119,11 @@ if ~suppress_figures
     plot(x, delta_mean{3}, '--', 'color', 'red', 'LineWidth', 3);
 
 end
+
 %%
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 md_update = MD_Update(md_post_sampling, md_hessian_analysis);
+
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();
 
 if ~suppress_figures
@@ -125,4 +138,16 @@ if ~suppress_figures
     plot(x, (1 + x) / (1.2^(1 / 3)), 'color', 'black', 'LineWidth', 3);
     plot(x, 1 + x, 'color', 'cyan', 'LineWidth', 3);
     plot(x, z_update_mean, '--', 'color', 'red', 'LineWidth', 3);
+end
+
+%%
+%save('reference_solution.mat','z_update_mean')
+
+z_mean_ref = load('reference_solution.mat').z_update_mean;
+ref_diff = norm(z_mean_ref - z_update_mean);
+
+if ref_diff > 1.e-9
+    fprintf(2,'\npython_adapter/model_discrepancy/synthetic_test_with_hyperparam_auto_1D failed.\n');
+else
+    fprintf(1,'\npython_adapter/model_discrepancy/synthetic_test_with_hyperparam_auto_1D passed.\n');
 end

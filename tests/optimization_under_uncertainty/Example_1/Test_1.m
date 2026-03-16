@@ -1,7 +1,6 @@
 %% Clear workspace and add path.
 clear;
 close all;
-clc;
 addpath('../../../src/optimization_under_uncertainty/');
 rng(1342);
 

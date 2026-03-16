@@ -1,23 +1,19 @@
-%%
 clear;
 close all;
+rng(13244)
 addpath(genpath('../../../../src'));
-rng(121234);
 
-update_python = true;
+update_python = false;
 
 if update_python
     clear classes;
     update_python = true;
 end
 
-suppress_figures = false;
+suppress_figures = true;
 
 m = int64(51);
 x = linspace(0, 1, m)';
-
-alpha_u = 1 / (2^2);
-alpha_z = 1 / (100^2);
 
 mod = py.importlib.import_module('MD_Data_Interface_Python_Synthetic_Test');
 if update_python
@@ -34,25 +30,19 @@ end
 opt_prob_interface_python = mod.MD_Opt_Prob_Interface_Python_Synthetic_Test(m);
 opt_prob_interface = MD_Opt_Prob_Interface_Py(opt_prob_interface_python);
 
-mod = py.importlib.import_module('MD_Elliptic_u_Prior_Interface_Python_Synthetic_Test');
+mod = py.importlib.import_module('MD_u_Prior_Interface_Python_Synthetic_Test');
 if update_python
     py.importlib.reload(mod);
 end
-u_prior_interface_python = mod.MD_Elliptic_u_Prior_Interface_Python_Synthetic_Test(m);
-u_prior_interface = MD_Elliptic_u_Prior_Interface_Py(u_prior_interface_python, alpha_u);
+u_prior_interface_python = mod.MD_u_Prior_Interface_Python_Synthetic_Test(m);
+u_prior_interface = MD_u_Prior_Interface_Py(u_prior_interface_python);
 
-mod = py.importlib.import_module('MD_Elliptic_z_Prior_Interface_Python_Synthetic_Test');
+mod = py.importlib.import_module('MD_z_Prior_Interface_Python_Synthetic_Test');
 if update_python
     py.importlib.reload(mod);
 end
-z_prior_interface_python = mod.MD_Elliptic_z_Prior_Interface_Python_Synthetic_Test(m, alpha_z);
-z_prior_interface = MD_Elliptic_z_Prior_Interface_Py(z_prior_interface_python, alpha_z);
-
-num_sing_vals = 50;
-oversampling = 1;
-num_subspace_iters = 2;
-u_vec = zeros(m, 1);
-u_prior_interface.Compute_E_u_Inverse_GSVD(num_sing_vals, oversampling, num_subspace_iters, u_vec);
+z_prior_interface_python = mod.MD_z_Prior_Interface_Python_Synthetic_Test(m);
+z_prior_interface = MD_z_Prior_Interface_Py(z_prior_interface_python);
 
 num_prior_samples = 100;
 md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior_interface);
@@ -118,7 +108,6 @@ if ~suppress_figures
     plot(x, delta_mean{3}, '--', 'color', 'red', 'LineWidth', 3);
 
 end
-
 %%
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 md_update = MD_Update(md_post_sampling, md_hessian_analysis);
@@ -136,4 +125,16 @@ if ~suppress_figures
     plot(x, (1 + x) / (1.2^(1 / 3)), 'color', 'black', 'LineWidth', 3);
     plot(x, 1 + x, 'color', 'cyan', 'LineWidth', 3);
     plot(x, z_update_mean, '--', 'color', 'red', 'LineWidth', 3);
+end
+
+%%
+%save('reference_solution.mat','z_update_mean')
+
+z_mean_ref = load('reference_solution.mat').z_update_mean;
+ref_diff = norm(z_mean_ref - z_update_mean);
+
+if ref_diff > 1.e-9
+    fprintf(2,'\npython_adapter/model_discrepancy/synthetic_test failed.\n');
+else
+    fprintf(1,'\npython_adapter/model_discrepancy/synthetic_test passed.\n');
 end

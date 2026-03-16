@@ -4,9 +4,9 @@ cd hyperparam_2D/;
 Test_1;
 cd ..;
 
-% cd oed_unit_test/;
-% Driver;
-% cd ..;
+cd lumped_mass_unit_test/;
+Test_1;
+cd ..;
 
 cd PDE_Test_Problem/;
 Test_1;
@@ -41,10 +41,6 @@ Test_1;
 cd ..;
 
 cd synthetic_test_transient/;
-Test_1;
-cd ..;
-
-cd lumped_mass_unit_test/;
 Test_1;
 cd ..;
 
