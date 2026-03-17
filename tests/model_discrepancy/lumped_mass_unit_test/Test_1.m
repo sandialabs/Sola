@@ -145,7 +145,7 @@ diff = [diff; local_diff];
 
 %%
 if max(diff) > 1.e-8
-    fprintf(2,'\nmodel_discrepancy/lumped_mass_unit_test failed.\n');
+    fprintf(2, '\nmodel_discrepancy/lumped_mass_unit_test failed.\n');
 else
-    fprintf(1,'\nmodel_discrepancy/lumped_mass_unit_test passed.\n');
+    fprintf(1, '\nmodel_discrepancy/lumped_mass_unit_test passed.\n');
 end

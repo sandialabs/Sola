@@ -37,10 +37,10 @@ N = 200;
 evalc('[z_k_fe, grad_k_fe] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_pert, N)');
 evalc('[z_k_me, grad_k_me] = sen.Pseudo_Time_Continuation_Modified_Euler(theta_pert, N)');
 
-error = max( norm(z_pert - z_k_fe(:,end)) , norm(z_pert-z_k_me(:,end)) );
+error = max(norm(z_pert - z_k_fe(:, end)), norm(z_pert - z_k_me(:, end)));
 
 if error > 1.e-6
-    fprintf(2,'\nparametric_sensitivities/Example_1 failed.\n');
+    fprintf(2, '\nparametric_sensitivities/Example_1 failed.\n');
 else
-    fprintf(1,'\nparametric_sensitivities/Example_1 passed.\n');
+    fprintf(1, '\nparametric_sensitivities/Example_1 passed.\n');
 end

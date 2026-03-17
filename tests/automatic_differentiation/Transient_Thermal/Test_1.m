@@ -153,9 +153,9 @@ end
 
 %%
 if error > 1.e-9
-    fprintf(2,'\nautomatic_differentiation/Transient_Thermal failed.\n');
+    fprintf(2, '\nautomatic_differentiation/Transient_Thermal failed.\n');
 else
-    fprintf(1,'\nautomatic_differentiation/Transient_Thermal passed.\n');
+    fprintf(1, '\nautomatic_differentiation/Transient_Thermal passed.\n');
 end
 
 con_AD.Clear_AD();

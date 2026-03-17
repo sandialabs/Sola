@@ -38,9 +38,9 @@ error = max(error, norm(u_sol - u) / norm(u_sol));
 error = max(error, norm(z_sol - z) / norm(z_sol));
 
 if error > 1e-6
-    fprintf(2,'\noptimization/Example_5 failed.\n');
+    fprintf(2, '\noptimization/Example_5 failed.\n');
 else
-    fprintf(1,'\noptimization/Example_5 passed.\n');
+    fprintf(1, '\noptimization/Example_5 passed.\n');
 end
 
 % save('Solution_Example_5.mat','u','z','obj')

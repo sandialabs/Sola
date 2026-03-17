@@ -122,7 +122,7 @@ ref_diff = max(ref_diff, norm(delta_samples_ref{2} - delta_samples{2}, 'fro') / 
 ref_diff = max(ref_diff, norm(delta_samples_ref{3} - delta_samples{3}, 'fro') / norm(delta_samples_ref{3}, 'fro'));
 
 if ref_diff > 1.e-9
-    fprintf(2,'\nmodel_discrepancy/synthetic_test_lumped_mass failed.\n');
+    fprintf(2, '\nmodel_discrepancy/synthetic_test_lumped_mass failed.\n');
 else
-    fprintf(1,'\nmodel_discrepancy/synthetic_test_lumped_mass passed.\n');
+    fprintf(1, '\nmodel_discrepancy/synthetic_test_lumped_mass passed.\n');
 end

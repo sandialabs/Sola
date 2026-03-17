@@ -1,4 +1,4 @@
-fprintf(1,'\nExecuting tests for bayesian_inversion:\n');
+fprintf(1, '\nExecuting tests for bayesian_inversion:\n');
 
 cd Example_1/;
 Test_1;

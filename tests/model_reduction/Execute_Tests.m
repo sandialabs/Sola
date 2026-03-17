@@ -1,4 +1,4 @@
-fprintf(1,'\nExecuting tests for model_reduction:\n');
+fprintf(1, '\nExecuting tests for model_reduction:\n');
 % Output to screen will identify failed tests, no output means all tests passed
 
 test_POD = true;
@@ -18,7 +18,6 @@ if test_roms
     run Test_OpInf_ROM_Constraint_ddts;
 end
 
-
-fprintf(1,'\nModel reduction tests passed.\n');
+fprintf(1, '\nModel reduction tests passed.\n');
 
 clear;

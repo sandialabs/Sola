@@ -29,10 +29,9 @@ ref_diff = norm(w_sol - w);
 ref_diff = max(ref_diff, norm(sing_vals_sol - sing_vals));
 
 if ref_diff > 1.e-11
-    fprintf(2,'\noptimal_experimental_design/Adv_Diff failed.\n');
+    fprintf(2, '\noptimal_experimental_design/Adv_Diff failed.\n');
 else
-    fprintf(1,'\noptimal_experimental_design/Adv_Diff passed.\n');
+    fprintf(1, '\noptimal_experimental_design/Adv_Diff passed.\n');
 end
-
 
 % save('Solution_Adv_Diff.mat','w','sing_vals')

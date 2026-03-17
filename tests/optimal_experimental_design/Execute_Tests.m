@@ -1,4 +1,4 @@
-fprintf(1,'\nExecuting tests for optimal_experimental_design:\n');
+fprintf(1, '\nExecuting tests for optimal_experimental_design:\n');
 
 cd Poisson/;
 Test_1;

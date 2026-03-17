@@ -21,7 +21,7 @@ test_optimization_under_uncertainty = true;
 test_parametric_sensitivities = true;
 test_python_adapter = true;
 
-save('Test_Settings.mat')
+save('Test_Settings.mat');
 
 if test_automatic_differentiation
     cd automatic_differentiation/;

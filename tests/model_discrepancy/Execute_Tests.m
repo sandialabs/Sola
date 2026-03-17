@@ -1,4 +1,4 @@
-fprintf(1,'\nExecuting tests for model_discrepancy:\n');
+fprintf(1, '\nExecuting tests for model_discrepancy:\n');
 
 cd hyperparam_2D/;
 Test_1;

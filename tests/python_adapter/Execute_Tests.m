@@ -1,4 +1,4 @@
-fprintf(1,'\nExecuting tests for python_adapater:\n');
+fprintf(1, '\nExecuting tests for python_adapater:\n');
 
 cd model_discrepancy/synthetic_test/;
 Test_1;

@@ -64,7 +64,7 @@ classdef Randomized_GEVP < handle
             % The "catch" code is superior to the "try" code.
             % However, the "try" code is preferable for parallel
             % implmentations and hence is there for comparison.
-            try 
+            try
                 R_Z = chol(Z' * Z);
                 Q_Z = Z * linsolve(R_Z, eye(size(R_Z, 1)));
             catch

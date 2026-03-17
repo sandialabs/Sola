@@ -1,4 +1,4 @@
-fprintf(1,'\nExecuting tests for parametric_sensitivities:\n');
+fprintf(1, '\nExecuting tests for parametric_sensitivities:\n');
 
 cd Example_1/;
 Test_1;

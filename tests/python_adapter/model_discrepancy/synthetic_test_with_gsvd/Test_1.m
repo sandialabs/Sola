@@ -138,14 +138,13 @@ if ~suppress_figures
 end
 
 %%
-%save('reference_solution.mat','z_update_mean')
+% save('reference_solution.mat','z_update_mean')
 
 z_mean_ref = load('reference_solution.mat').z_update_mean;
 ref_diff = norm(z_mean_ref - z_update_mean);
 
 if ref_diff > 1.e-9
-    fprintf(2,'\npython_adapter/model_discrepancy/synthetic_test_with_gsvd failed.\n');
+    fprintf(2, '\npython_adapter/model_discrepancy/synthetic_test_with_gsvd failed.\n');
 else
-    fprintf(1,'\npython_adapter/model_discrepancy/synthetic_test_with_gsvd passed.\n');
+    fprintf(1, '\npython_adapter/model_discrepancy/synthetic_test_with_gsvd passed.\n');
 end
-

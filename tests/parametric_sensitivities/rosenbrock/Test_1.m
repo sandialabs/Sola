@@ -33,14 +33,13 @@ evalc('[z_k_fe, grad_k_fe] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_st
 N_me = 30;
 evalc('[z_k_me, grad_k_me] = sen.Pseudo_Time_Continuation_Modified_Euler(theta_star, N_me)');
 
-error = max( norm(z_star - z_k_fe(:,end)) , norm(z_star-z_k_me(:,end)) );
+error = max(norm(z_star - z_k_fe(:, end)), norm(z_star - z_k_me(:, end)));
 
 if error > 1.e-4
-    fprintf(2,'\nparametric_sensitivities/rosenbrock failed.\n');
+    fprintf(2, '\nparametric_sensitivities/rosenbrock failed.\n');
 else
-    fprintf(1,'\nparametric_sensitivities/rosenbrock passed.\n');
+    fprintf(1, '\nparametric_sensitivities/rosenbrock passed.\n');
 end
-
 
 if ~suppress_plotting
 

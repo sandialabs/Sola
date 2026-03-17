@@ -28,7 +28,7 @@ err = max(err, norm(u_sol - u));
 err = max(err, norm(z_sol - z));
 
 if err > 1e-12
-    fprintf(2,'\noptimization/Example_1 failed.\n');
+    fprintf(2, '\noptimization/Example_1 failed.\n');
 else
-    fprintf(1,'\noptimization/Example_1 passed.\n');
+    fprintf(1, '\noptimization/Example_1 passed.\n');
 end

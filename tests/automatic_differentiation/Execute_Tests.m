@@ -1,4 +1,4 @@
-fprintf(1,'\nExecuting tests for automatic_differentiation:\n');
+fprintf(1, '\nExecuting tests for automatic_differentiation:\n');
 
 cd Thermal/;
 Test_1;
