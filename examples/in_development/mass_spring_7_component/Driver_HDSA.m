@@ -12,7 +12,7 @@ obj_hifi = Mass_Spring_Objective_HiFi(T, N);
 obj_lofi = Mass_Spring_Objective_LoFi(obj_hifi);
 con_hifi = Mass_Spring_Coupled(T, N);
 con_lofi = Mass_Spring_LoFi(con_hifi);
-opt_hifi = Reduced_Space_Optimization(obj_hifi, con_hifi);
+opt_hifi = Reduced_Space_Optimization(obj_hifi,con_hifi);
 opt_lofi = Reduced_Space_Optimization(obj_lofi, con_lofi);
 t = con_hifi.t_mesh;
 
