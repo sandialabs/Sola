@@ -2,6 +2,7 @@
 clear;
 close all;
 rng(121234);
+addpath(genpath('../../../src'));
 
 suppress_figures = true;
 
