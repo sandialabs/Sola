@@ -24,7 +24,6 @@ md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 [delta_mean, delta_samples] = md_post_sampling.Posterior_Discrepancy_Samples(data_interface.z_opt);
 delta_mean = delta_mean{1};
 delta_samples = delta_samples{1};
-[delta_mean_2, delta_samples_2] = md_post_sampling.Posterior_Discrepancy_Sample(data_interface.z_opt, 2);
 
 % disp(norm(u_out - u_out_fd)/norm(u_out))
 rng(121234); % REPEATED TO ENSURE GEVP IS NOT PRONE TO CHANGES ABOVE
@@ -50,34 +49,37 @@ if ref_diff > 1.e-9
     disp(ref_diff);
 end
 
-% h = 1e-9;
-% J0 = md_cont_update.Discrepancy_Evaluation_Sample(z_n, t_n, sample_idx);
-% J1 = md_cont_update.Discrepancy_Evaluation_Sample(z_n+h*v, t_n, sample_idx);
-% Jv_fd = (J1-J0)/(h);
-% disp(norm(Jv - Jv_fd)/norm(Jv))
 % ------
-
-rng(2);
-
+% Setup
+rng(1);
 z_n = data_interface.z_opt + 1;
 t_n = 1.0;
 sample_idx = 1;
 v = randn(size(data_interface.z_opt));
 w = randn(size(data_interface.u_opt));
 
-% Apply J and J^T
-Jv = md_cont_update.Apply_Discrepancy_z_Jacobian_Sample(z_n, v, t_n, sample_idx);
-JT_w = md_cont_update.Apply_Discrepancy_z_Jacobian_transpose_Sample(z_n, w, t_n, sample_idx);
+% Test Discrepancy evaluations
+delta_mean_1 = md_cont_update.Discrepancy_Evaluation(data_interface.z_opt, 1.0);
+delta_samples_1 = md_cont_update.Discrepancy_Evaluation_Sample(data_interface.z_opt, 1.0, 1);
+% fprintf('Rel. err in discrep @ mean:   %.3e\n', norm(delta_mean_1 - delta_mean)/norm(delta_mean))
+% fprintf('Rel. err in discrep @ sample:   %.3e\n', norm(delta_samples_1 - delta_samples(:, 1))/norm(delta_samples(:, 1)))
 
-% Inner products (standard Euclidean)
+% Finite Difference check for Apply_Discrepancy_z_Jacobian_Sample
+Jv = md_cont_update.Apply_Discrepancy_z_Jacobian_Sample(z_n, v, t_n, sample_idx);
+h = 1e-6;
+J0 = md_cont_update.Discrepancy_Evaluation_Sample(z_n, t_n, sample_idx);
+J1 = md_cont_update.Discrepancy_Evaluation_Sample(z_n + h * v, t_n, sample_idx);
+Jv_fd = (J1 - J0) / (h);
+% fprintf('Rel. err in finite difference: %.3e\n', norm(Jv - Jv_fd)/norm(Jv))
+
+% Adjoint check for Apply_Discrepancy_z_Jacobian_transpose_Sample
+JT_w = md_cont_update.Apply_Discrepancy_z_Jacobian_transpose_Sample(z_n, w, t_n, sample_idx);
 lhs = Jv(:)' * w(:);
 rhs = v(:)' * JT_w(:);
+% fprintf('Rel. err in adjoint operator: %.3e\n', abs(lhs - rhs) / abs(lhs));
 
-abs_err = abs(lhs - rhs);
-rel_err = abs_err / max(1, max(abs(lhs), abs(rhs)));
-
-fprintf('Transpose test: <Jv,w> = %.16e, <v,J^T w> = %.16e\n', lhs, rhs);
-fprintf('abs err = %.3e, rel err = %.3e\n', abs_err, rel_err);
+[u_k, z_k, beta_k] = md_cont_update.Posterior_Update_Sample(sample_idx);
+[u_ks, z_ks, beta_ks] = md_cont_update.Posterior_Update_Samples();
 
 % norm(md_cont_update.Apply_Discrepancy_z_theta_Hessian(u_cont_ref(:, end)))
 % norm(md_cont_update.Apply_Discrepancy_z_Jacobian_transpose(u_cont_ref(:, end), 1.0))

@@ -206,7 +206,7 @@ classdef MD_Continuation_Update < handle
             num_samples = this.md_post_sampling.post_data.num_samples;
             u_ks = zeros(length(this.u_opt), num_samples);
             z_ks = zeros(length(this.z_opt), num_samples);
-            beta_ks = zeros(length(this.md_hessian_analysis.eval), num_samples);
+            beta_ks = zeros(length(this.md_hessian_analysis.evals), num_samples);
             for sample_idx = 1:num_samples
                 [u_k, z_k, beta_k] = this.Posterior_Update_Sample(sample_idx);
                 u_ks(:, sample_idx) = u_k;
@@ -219,7 +219,7 @@ classdef MD_Continuation_Update < handle
         function [u_k, z_k, beta_k] = Posterior_Update_Sample(this, sample_idx)
             t = linspace(0, 1, this.num_continuation_steps + 1);
             u_k = this.u_opt;
-            beta_k = zeros(length(this.md_hessian_analysis.evals));
+            beta_k = zeros(length(this.md_hessian_analysis.evals), 1);
 
             for k = 1:this.num_continuation_steps
                 % Predictive step for beta
@@ -271,7 +271,7 @@ classdef MD_Continuation_Update < handle
             beta_out = 0 * beta_in;
             for k = 1:size(beta_in, 2)
                 tol = 1.e-7;
-                max_iter = length(beta_n) + 10;
+                max_iter = length(beta_n) * 2;
                 [beta_out(:, k), flag, relres, iter, resvec] = pcg(@(x)this.Apply_Parameterized_RS_Hessian_beta_Sample(x, u_n, beta_n, t_n, sample_idx), beta_in(:, k), tol, max_iter);
                 if flag ~= 0
                     disp(['CG did not converge; flag: ', num2str(flag), ', relres: ', num2str(relres)]);
@@ -288,7 +288,7 @@ classdef MD_Continuation_Update < handle
         % [Verify]
         function [z_out] = Gradient_J_z_Sample(this, u_n, z_n, t_n, sample_idx)
             delta = this.Discrepancy_Evaluation_Sample(z_n, t_n, sample_idx);
-            [~, grad_u, grad_z] = this.opt_prob_interface.Objective_Function_Sample(u_n + delta, z_n, sample_idx);
+            [~, grad_u, grad_z] = this.opt_prob_interface.Objective_Function(u_n + delta, z_n);
             z_tmp1 = this.Apply_Discrepancy_z_Jacobian_transpose_Sample(z_n, grad_u, t_n, sample_idx);
             z_tmp2 = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(grad_u, z_n);
             z_out = grad_z + z_tmp1 + z_tmp2;
@@ -330,9 +330,9 @@ classdef MD_Continuation_Update < handle
 
         % Verify
         function [u_out] = Discrepancy_Evaluation_Sample(this, z_n, t_n, sample_idx)
-            u_out_mean = Discrepancy_Evaluation(z_n, t_n);
-            dz = z - this.z_opt;
-            Mz_dz = this.md_post_sampling.z_prior_interface.Apply_M_z(z - this.z_opt);
+            u_out_mean = this.Discrepancy_Evaluation(z_n, t_n);
+            dz = z_n - this.z_opt;
+            Mz_dz = this.md_post_sampling.z_prior_interface.Apply_M_z(dz);
             Wz_inv_Mz_dz = this.md_post_sampling.z_prior_interface.Apply_W_z_Inverse(Mz_dz);
 
             delta_sample = zeros(size(u_out_mean));
@@ -411,7 +411,7 @@ classdef MD_Continuation_Update < handle
             u_out = this.Discrepancy_Evaluation_Sample(z_n, 1.0, sample_idx);
         end
 
-        function [z_out] = Apply_Discrepancy_z_theta_Sample(this, z_n, u_in)
+        function [z_out] = Apply_Discrepancy_z_theta_Sample(this, z_n, u_in, sample_idx)
             % Simplifies since discrepancy is linear in theta
             z_out = this.Apply_Discrepancy_z_Jacobian_transpose_Sample(z_n, u_in, 1.0, sample_idx);
         end
