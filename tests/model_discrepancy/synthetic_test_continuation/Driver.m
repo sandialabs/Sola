@@ -2,7 +2,6 @@
 clear;
 close all;
 rng(121234);
-addpath(genpath('../../../src'));
 
 suppress_figures = true;
 
@@ -18,16 +17,23 @@ md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior
 
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 alpha_d = 1.e-5;
-num_post_samples = 1;
+num_post_samples = 10;
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 
+% Check individual sample code
+[delta_mean, delta_samples] = md_post_sampling.Posterior_Discrepancy_Samples(data_interface.z_opt);
+delta_mean = delta_mean{1};
+delta_samples = delta_samples{1};
+[delta_mean_2, delta_samples_2] = md_post_sampling.Posterior_Discrepancy_Sample(data_interface.z_opt, 2);
+
+% disp(norm(u_out - u_out_fd)/norm(u_out))
+rng(121234); % REPEATED TO ENSURE GEVP IS NOT PRONE TO CHANGES ABOVE
 opt_prob_interface = MD_Opt_Prob_Interface_synthetic_test_with_hessian_gevp(m);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 
 num_evals = 20;
 oversampling = 10;
 md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
-
 %%
 num_continuation_steps = 3;
 md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
@@ -38,11 +44,40 @@ beta_bar = betas_cont(:, end);
 u_cont_ref = load('reference_solution.mat').u_cont;
 z_cont_ref = load('reference_solution.mat').z_cont;
 betas_cont_ref = load('reference_solution.mat').betas_cont;
-ref_diff = max([norm(u_cont_ref - u_cont) / norm(u_cont), norm(z_cont_ref - z_cont) / norm(z_cont), norm(betas_cont_ref - betas_cont) / norm(betas_cont)]);
+ref_diff = max([norm(u_cont_ref - u_cont) / norm(u_cont_ref), norm(z_cont_ref - z_cont) / norm(z_cont_ref), norm(betas_cont_ref - betas_cont) / norm(betas_cont_ref)]);
 if ref_diff > 1.e-9
     disp('model_discrepancy_continuation difference:');
     disp(ref_diff);
 end
+
+% h = 1e-9;
+% J0 = md_cont_update.Discrepancy_Evaluation_Sample(z_n, t_n, sample_idx);
+% J1 = md_cont_update.Discrepancy_Evaluation_Sample(z_n+h*v, t_n, sample_idx);
+% Jv_fd = (J1-J0)/(h);
+% disp(norm(Jv - Jv_fd)/norm(Jv))
+% ------
+
+rng(2);
+
+z_n = data_interface.z_opt + 1;
+t_n = 1.0;
+sample_idx = 1;
+v = randn(size(data_interface.z_opt));
+w = randn(size(data_interface.u_opt));
+
+% Apply J and J^T
+Jv = md_cont_update.Apply_Discrepancy_z_Jacobian_Sample(z_n, v, t_n, sample_idx);
+JT_w = md_cont_update.Apply_Discrepancy_z_Jacobian_transpose_Sample(z_n, w, t_n, sample_idx);
+
+% Inner products (standard Euclidean)
+lhs = Jv(:)' * w(:);
+rhs = v(:)' * JT_w(:);
+
+abs_err = abs(lhs - rhs);
+rel_err = abs_err / max(1, max(abs(lhs), abs(rhs)));
+
+fprintf('Transpose test: <Jv,w> = %.16e, <v,J^T w> = %.16e\n', lhs, rhs);
+fprintf('abs err = %.3e, rel err = %.3e\n', abs_err, rel_err);
 
 % norm(md_cont_update.Apply_Discrepancy_z_theta_Hessian(u_cont_ref(:, end)))
 % norm(md_cont_update.Apply_Discrepancy_z_Jacobian_transpose(u_cont_ref(:, end), 1.0))

@@ -75,15 +75,3 @@ legend("location", "east", "Interpreter", "latex");
 % title("Optimization Objective over Evals");
 % saveas(gcf, "oed-rand-proj-new.eps", "epsc");
 % save('driver-oed-compare-proj.mat')
-
-figure;
-plot(1:N, Jhat_rand', ".", "Color", [1 1 1] - 0.5 * (1 - [0.7 0.8 0.9]), "MarkerSize", 25, "HandleVisibility", "off");
-hold on;
-plot(1:N, mean(Jhat_rand'), ".--", "Color", [0.7 0.8 0.9], "MarkerSize", 25, "HandleVisibility", "off");
-plot(0:N, [Jhat_lofi; Jhat_DC_oed], ".-", "Color", "#BAB86C", "DisplayName", "OED");
-plot(1, Jhat_DC_oed(1), ".", "Color", [0.7 0.8 0.9], "MarkerSize", 25, "DisplayName", "Random");
-yline(Jhat_lofi, "r--", "DisplayName", "$\hat{J}(\tilde{z})$", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
-xlim([0 N]);
-xlabel("Evaluations ($N$)", "Interpreter", "latex");
-ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
-legend("location", "east", "Interpreter", "latex");

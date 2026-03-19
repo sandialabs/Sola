@@ -23,6 +23,7 @@ alpha_d = 1.e-5;
 num_post_samples = 1;
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 
+rng(121234);
 opt_prob_interface = MD_Opt_Prob_Interface_synthetic_test_with_hessian_gevp(m);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 
