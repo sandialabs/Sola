@@ -50,6 +50,11 @@ fprintf('Objective of z_hifi: \t%.3f\n\n', Jhat_hifi);
 % Set Data Interface
 data_interface = MD_Data_Interface_Tracer(u_lofi, z_lofi);
 
+% Set Transient Prior
+n_t = 25;
+n_y = 31;
+T = 0.1;
+
 % Generate Priors for u and z
 alpha_z = 51.5;
 alpha_u = 1.5277e-04;
@@ -72,13 +77,10 @@ u_hyperparam_interface = MD_u_Hyperparameter_Interface_Tracer(n_t, n_y, true);
 % u_hyperparam_interface.Set_alpha_u(alpha_u);
 % u_hyperparam_interface.Set_alpha_d(alpha_d);
 
-% Set Transient Prior
-n_t = 25;
-n_y = 31;
-T = 0.1;
-Z = load("results_great.mat", "Z_oed").Z_oed;
+% Load Data
+Z = load("hyperparam_data.mat", "Z_oed").Z_oed;
 % D = Evaluate_Discrepancy(Z);
-D = load("results_great.mat", "D_oed").D_oed;
+D = load("hyperparam_data.mat", "D_oed").D_oed;
 data_interface.Set_Z_and_D(Z, D);
 
 spatial_u_prior_interface = MD_Elliptic_u_Prior_Interface_Tracer(alpha_u, opt_lofi);

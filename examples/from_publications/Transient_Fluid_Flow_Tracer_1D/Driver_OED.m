@@ -39,7 +39,7 @@ for p = 1:N
     % Obtain Discrepancies
     tdisp("Evaluating discrepancy");
     Z = [Z z_p];
-    D_p = Evaluate_Discrepancy(con_hifi, con_lofi, z_p);
+    D_p = Evaluate_Discrepancy(con_hifi, con_lofi, max(z_p, 0));
     D = [D D_p];
     data_interface.Set_Z_and_D(Z, D);
     tdisp("Discrepancy evaluated");
@@ -81,20 +81,21 @@ if true
     yline(1e-4 * Jhat_lofi, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
     plot(0:5, 1e-4 * [Jhat_lofi; Jhat_DC_oed(1:5)], ".-", "Color", "#BAB86C", "DisplayName", "Solution Updates");
     xlabel("Evaluations ($N$)", "Interpreter", "latex");
-    ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
+    ylabel("High-fidelity objective", "Interpreter", "latex");
     legend("location", "east", "Interpreter", "latex");
+    saveas(gca, 'NS-1', 'epsc');
     % title("Optimization Objective over Evals");
 end
 
-figure;
-semilogy(0:5, 1e-4 * ([Jhat_lofi; Jhat_DC_oed(1:5)] - Jhat_hifi), ".-", "Color", "#BAB86C", "DisplayName", "Solution Updates");
-hold on;
-xlim([0 5]);
-% yline(1e-4 * Jhat_hifi, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
-yline(1e-4 * Jhat_lofi, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
-xlabel("Evaluations ($N$)", "Interpreter", "latex");
-ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
-legend("location", "east", "Interpreter", "latex");
+% figure;
+% semilogy(0:5, 1e-4 * ([Jhat_lofi; Jhat_DC_oed(1:5)] - Jhat_hifi), ".-", "Color", "#BAB86C", "DisplayName", "Solution Updates");
+% hold on;
+% xlim([0 5]);
+% % yline(1e-4 * Jhat_hifi, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
+% yline(1e-4 * Jhat_lofi, "r--", "DisplayName", "Lo-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
+% xlabel("Evaluations ($N$)", "Interpreter", "latex");
+% ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
+% legend("location", "east", "Interpreter", "latex");
 
 Z_oed = Z;
 D_oed = D;
@@ -103,7 +104,8 @@ figure;
 hold on;
 plot(flip(z_lofi), "Color", [0.7 0.7 0.7], "DisplayName", "$\tilde{z}$", "LineWidth", 3);
 plot(flip(z_hifi), "k-", "DisplayName", "$z_{\rm hifi}$", "LineWidth", 3);
-plot(flip(z_bars(:, 5)), "b-", "DisplayName", "$\overline{z}$", "LineWidth", 3);
+plot(flip(z_bars(:, 5)), "b-", "DisplayName", "$\overline{z}_5$", "LineWidth", 3);
 xlabel("$x$", "Interpreter", "latex");
-ylabel("$c_0$", "Interpreter", "latex");
+ylabel("$c(x, 0)$", "Interpreter", "latex");
 legend("location", "northeast", "Interpreter", "latex");
+saveas(gca, 'NS-2', 'epsc');
