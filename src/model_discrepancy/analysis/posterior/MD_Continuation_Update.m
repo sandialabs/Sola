@@ -27,8 +27,8 @@ classdef MD_Continuation_Update < handle
             this.Mz_Wz_inv_Mz_yi = 0 * this.Mz_Wz_inv_Mz_Z_minus_z_opt;
             this.si = zeros(1, this.md_post_sampling.post_data.N);
             for i = 1:this.md_post_sampling.post_data.N
-                this.Mz_Wz_inv_Mz_yi(:, i) = this.md_post_sampling.post_data.Mz_Wz_inv_Mz_Z * this.md_post_sampling.post_data.g_vecs(:, i) ...
-                    - sum(this.md_post_sampling.post_data.g_vecs(:, i)) * this.md_post_sampling.post_data.Mz_Wz_inv_Mz_z_opt;
+                this.Mz_Wz_inv_Mz_yi(:, i) = this.md_post_sampling.post_data.Mz_Wz_inv_Mz_Z * this.md_post_sampling.post_data.g_vecs(:, i) - ...
+                    sum(this.md_post_sampling.post_data.g_vecs(:, i)) * this.md_post_sampling.post_data.Mz_Wz_inv_Mz_z_opt;
                 this.si(i) = sum(this.md_post_sampling.post_data.g_vecs(:, i)) - this.z_opt' * this.Mz_Wz_inv_Mz_yi(:, i);
             end
 
@@ -129,8 +129,8 @@ classdef MD_Continuation_Update < handle
                 tol = 1.e-7;
                 max_iter = 2 * length(beta_n) + 10;
                 [beta_out(:, k), flag, relres] = pcg( ...
-                    @(x)this.Apply_Parameterized_RS_Hessian_beta(x, u_n, beta_n, t_n, discOps), ...
-                    beta_in(:, k), tol, max_iter);
+                                                     @(x)this.Apply_Parameterized_RS_Hessian_beta(x, u_n, beta_n, t_n, discOps), ...
+                                                     beta_in(:, k), tol, max_iter);
 
                 if flag ~= 0
                     disp(['CG did not converge; flag: ', num2str(flag), ', relres: ', num2str(relres)]);
@@ -141,7 +141,7 @@ classdef MD_Continuation_Update < handle
         function [beta_out] = Apply_Parameterized_RS_Hessian_beta(this, beta_in, u_n, beta_n, t_n, discOps)
             z_n = this.z_opt + this.md_hessian_analysis.evecs * beta_n;
             beta_out = this.md_hessian_analysis.evecs' * this.Apply_Parameterized_RS_Hessian( ...
-                this.md_hessian_analysis.evecs * beta_in, u_n, z_n, t_n, discOps);
+                                                                                             this.md_hessian_analysis.evecs * beta_in, u_n, z_n, t_n, discOps);
         end
 
         function [z_out] = Gradient_J_z(this, u_n, z_n, t_n, discOps)
@@ -194,10 +194,10 @@ classdef MD_Continuation_Update < handle
         function discOps = Get_Discrepancy_Ops(this, sample_idx)
             num_samples = this.md_post_sampling.post_data.num_samples;
             assert(sample_idx >= 0 && sample_idx <= num_samples && floor(sample_idx) == sample_idx, ...
-                'sample_idx must be an integer in [0, num_samples].');
+                   'sample_idx must be an integer in [0, num_samples].');
 
             if sample_idx == 0
-                discOps.Eval      = @(z,t) this.Discrepancy_Evaluation_Mean(z, t);
+                discOps.Eval      = @(z, t) this.Discrepancy_Evaluation_Mean(z, t);
                 discOps.ApplyJz   = @(z, dz, t) this.Apply_Discrepancy_z_Jacobian_Mean(z, dz, t);
                 discOps.ApplyJzT  = @(z, u,  t) this.Apply_Discrepancy_z_Jacobian_transpose_Mean(z, u, t);
 
@@ -205,7 +205,7 @@ classdef MD_Continuation_Update < handle
                 discOps.ApplyJtheta   = @(z) this.Discrepancy_Evaluation_Mean(z, 1.0);
                 discOps.ApplyJzthetaT = @(z, u) this.Apply_Discrepancy_z_Jacobian_transpose_Mean(z, u, 1.0);
             else
-                discOps.Eval      = @(z,t) this.Discrepancy_Evaluation_Sample(z, t, sample_idx);
+                discOps.Eval      = @(z, t) this.Discrepancy_Evaluation_Sample(z, t, sample_idx);
                 discOps.ApplyJz   = @(z, dz, t) this.Apply_Discrepancy_z_Jacobian_Sample(z, dz, t, sample_idx);
                 discOps.ApplyJzT  = @(z, u,  t) this.Apply_Discrepancy_z_Jacobian_transpose_Sample(z, u, t, sample_idx);
 
@@ -282,10 +282,10 @@ classdef MD_Continuation_Update < handle
             end
             delta_sample = sqrt(this.md_post_sampling.post_data.alpha_d) * delta_sample;
 
-            tmp = Mz_dz' * Wz_inv_Mz_dz ...
-                - Wz_inv_Mz_dz' * this.md_post_sampling.post_data.Mz_Zc * linsolve( ...
-                    this.md_post_sampling.post_data.Zc_Mz_Wz_inv_Mz_Zc, ...
-                    this.md_post_sampling.post_data.Mz_Zc' * Wz_inv_Mz_dz);
+            tmp = Mz_dz' * Wz_inv_Mz_dz - ...
+                Wz_inv_Mz_dz' * this.md_post_sampling.post_data.Mz_Zc * linsolve( ...
+                                                                                 this.md_post_sampling.post_data.Zc_Mz_Wz_inv_Mz_Zc, ...
+                                                                                 this.md_post_sampling.post_data.Mz_Zc' * Wz_inv_Mz_dz);
 
             if tmp < -1.e-11
                 disp('Error in Posterior Discrepancy Sample: delta breve coeff < 0');
@@ -312,8 +312,8 @@ classdef MD_Continuation_Update < handle
             Wz_inv_Mz_dz = this.md_post_sampling.z_prior_interface.Apply_W_z_Inverse(Mz_dz);
 
             tmp_rhs = Wz_inv_Mz_dz - this.md_post_sampling.post_data.Wz_inv_Mz_Zc * linsolve( ...
-                this.md_post_sampling.post_data.Zc_Mz_Wz_inv_Mz_Zc, ...
-                this.md_post_sampling.post_data.Mz_Zc' * Wz_inv_Mz_dz);
+                                                                                             this.md_post_sampling.post_data.Zc_Mz_Wz_inv_Mz_Zc, ...
+                                                                                             this.md_post_sampling.post_data.Mz_Zc' * Wz_inv_Mz_dz);
 
             tmp = Mz_dz' * tmp_rhs;
             if tmp < -1.e-11
@@ -344,8 +344,8 @@ classdef MD_Continuation_Update < handle
             Wz_inv_Mz_dz = this.md_post_sampling.z_prior_interface.Apply_W_z_Inverse(Mz_dz);
 
             tmp_rhs = Wz_inv_Mz_dz - this.md_post_sampling.post_data.Wz_inv_Mz_Zc * linsolve( ...
-                this.md_post_sampling.post_data.Zc_Mz_Wz_inv_Mz_Zc, ...
-                this.md_post_sampling.post_data.Mz_Zc' * Wz_inv_Mz_dz);
+                                                                                             this.md_post_sampling.post_data.Zc_Mz_Wz_inv_Mz_Zc, ...
+                                                                                             this.md_post_sampling.post_data.Mz_Zc' * Wz_inv_Mz_dz);
 
             tmp = Mz_dz' * tmp_rhs;
             if tmp < -1.e-11

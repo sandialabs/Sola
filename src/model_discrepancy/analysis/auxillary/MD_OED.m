@@ -67,8 +67,9 @@ classdef MD_OED < handle
             end
             p = length(beta_0) / size(this.offline_data.V, 2);
             fun = @(beta_new) this.Evaluate_OED_Objective_Seq([betas; beta_new], alpha_d, beta_bar, p);
-            tmp = @(b) this.offline_data.V' * this.z_prior_interface.Apply_M_z(this.offline_data.V * (b - beta_bar));
-            nonlcon = @(b) deal((b - beta_bar)' * tmp(b) - constr_radius, [], 2 * tmp(b), []);
+            center_b = @(b) reshape(b, [], p) - beta_bar;
+            tmp = @(b) this.offline_data.V' * this.z_prior_interface.Apply_M_z(this.offline_data.V * center_b(b));
+            nonlcon = @(b) deal(trace(center_b(b)' * tmp(b) - constr_radius), [], reshape(2 * tmp(b), [], 1), []);
             beta_new = fmincon(fun, beta_0, [], [], [], [], [], [], nonlcon, options);
             Z_new = this.data_interface.z_opt + this.offline_data.V * reshape(beta_new, size(this.offline_data.V, 2), []);
         end

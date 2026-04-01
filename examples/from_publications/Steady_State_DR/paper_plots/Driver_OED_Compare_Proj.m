@@ -3,7 +3,7 @@ addpath(genpath('..'));
 addpath(genpath('../../../src'));
 OED_Setup;
 
-load("oed-results-con2-new.mat");
+load("oed-results.mat");
 pool = parpool("Threads", 8);
 
 %% Perform Random Data Point Comparison
@@ -61,17 +61,17 @@ delete(pool);
 
 figure;
 % yline(Jhat_hifi, "k--", "DisplayName", "Hi-Fi", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
-semilogy(1:N, Jhat_rand' - 3.086, ".", "Color", [1 1 1] - 0.5 * (1 - [0.7 0.8 0.9]), "MarkerSize", 1, "HandleVisibility", "off");
+semilogy(1:N, Jhat_rand' - 3.086, ".", "Color", [1 1 1] - 0.5 * (1 - [0.7 0.8 0.9]), "MarkerSize", 25, "HandleVisibility", "off");
 hold on;
-semilogy(1:N, mean(Jhat_rand') - 3.086, ".--", "Color", [0.7 0.8 0.9], "MarkerSize", 25, "HandleVisibility", "off");
-semilogy(0:N, [Jhat_lofi; Jhat_DC_oed] - 3.086, ".-", "Color", "#BAB86C", "DisplayName", "OED");
-semilogy(1, Jhat_DC_oed(1) - 3.086, ".", "Color", [0.7 0.8 0.9], "MarkerSize", 25, "DisplayName", "Random");
 yline(Jhat_lofi - 3.086, "r--", "DisplayName", "$\hat{J}(\tilde{z})$", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
+semilogy(1, Jhat_DC_oed(1) - 3.086, ".", "Color", [0.7 0.8 0.9], "MarkerSize", 25, "DisplayName", "Random");
+semilogy(1:N, mean(Jhat_rand') - 3.086, ".--", "Color", [0.7 0.8 0.9], "MarkerSize", 25, "DisplayName", "Random Mean");
+semilogy(0:N, [Jhat_lofi; Jhat_DC_oed] - 3.086, ".-", "Color", "#BAB86C", "DisplayName", "OED");
 xlim([0 N]);
 % plot(0:N, [Jhat_lofi; Jhat_DC_oed], ".-", "Color", "#BAB86C", "DisplayName", "DeltaCov OED");
 xlabel("Evaluations ($N$)", "Interpreter", "latex");
-ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
+ylabel("High-fidelity objective", "Interpreter", "latex");
 legend("location", "east", "Interpreter", "latex");
 % title("Optimization Objective over Evals");
-% saveas(gcf, "oed-rand-proj-new.eps", "epsc");
-% save('driver-oed-compare-proj.mat')
+saveas(gcf, "oed-rand-proj-new.eps", "epsc");
+save('driver-oed-compare-proj.mat');
