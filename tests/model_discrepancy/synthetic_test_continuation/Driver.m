@@ -43,7 +43,8 @@ beta_bar = betas_cont(:, end);
 u_cont_ref = load('reference_solution.mat').u_cont;
 z_cont_ref = load('reference_solution.mat').z_cont;
 betas_cont_ref = load('reference_solution.mat').betas_cont;
-ref_diff = max([norm(u_cont_ref - u_cont) / norm(u_cont_ref), norm(z_cont_ref - z_cont) / norm(z_cont_ref), norm(betas_cont_ref - betas_cont) / norm(betas_cont_ref)]);
+% ref_diff = max([norm(u_cont_ref - u_cont) / norm(u_cont_ref), norm(z_cont_ref - z_cont) / norm(z_cont_ref), norm(betas_cont_ref - betas_cont) / norm(betas_cont_ref)]);
+ref_diff = max([norm(u_cont_ref(:, end) - u_cont) / norm(u_cont_ref(:, end)), norm(z_cont_ref(:, end) - z_cont) / norm(z_cont_ref(:, end)), norm(betas_cont_ref(:, end) - betas_cont) / norm(betas_cont_ref(:, end))]);
 if ref_diff > 1.e-9
     disp('model_discrepancy_continuation difference:');
     disp(ref_diff);
@@ -59,7 +60,7 @@ v = randn(size(data_interface.z_opt));
 w = randn(size(data_interface.u_opt));
 
 % Test Discrepancy evaluations
-delta_mean_1 = md_cont_update.Discrepancy_Evaluation(data_interface.z_opt, 1.0);
+delta_mean_1 = md_cont_update.Discrepancy_Evaluation_Mean(data_interface.z_opt, 1.0);
 delta_samples_1 = md_cont_update.Discrepancy_Evaluation_Sample(data_interface.z_opt, 1.0, 1);
 % fprintf('Rel. err in discrep @ mean:   %.3e\n', norm(delta_mean_1 - delta_mean)/norm(delta_mean))
 % fprintf('Rel. err in discrep @ sample:   %.3e\n', norm(delta_samples_1 - delta_samples(:, 1))/norm(delta_samples(:, 1)))
@@ -78,7 +79,7 @@ lhs = Jv(:)' * w(:);
 rhs = v(:)' * JT_w(:);
 % fprintf('Rel. err in adjoint operator: %.3e\n', abs(lhs - rhs) / abs(lhs));
 
-[u_k, z_k, beta_k] = md_cont_update.Posterior_Update_Sample(sample_idx);
+% [u_k, z_k, beta_k] = md_cont_update.Posterior_Update_Sample(sample_idx);
 [u_ks, z_ks, beta_ks] = md_cont_update.Posterior_Update_Samples();
 
 % norm(md_cont_update.Apply_Discrepancy_z_theta_Hessian(u_cont_ref(:, end)))
