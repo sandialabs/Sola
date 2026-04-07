@@ -68,6 +68,8 @@ classdef MD_Determine_u_Hyperparameters < handle
                         laplacian_like_prop = MD_Laplacian_Like_Operator_Properties();
                         u_op_trace = laplacian_like_prop.Get_Rectangular_Domain_Squared_Inv_Operator_Trace(this.u_hyperparam_interface.beta_u, nodes);
                     end
+                else
+                    u_op_trace = sum(u_prior_interface.spatial_prior_cov.sing_vals.^2); % NEW!
                 end
                 u_op_trace = u_op_trace * sum(u_prior_interface.transient_prior_cov.evals);
             end

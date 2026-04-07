@@ -6,7 +6,7 @@ OED_Setup;
 load("oed-results.mat");
 
 % Perform Offline OED Computations - USES data_interface
-md_oed = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
+md_oed = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
 md_oed.Offline_Computation();
 V = md_hessian_analysis.evecs;
 alpha_k_denom = trace(z_prior_interface.Apply_W_z_Inverse(z_prior_interface.M));
@@ -29,8 +29,8 @@ alpha_k_proj = alpha_k_num / alpha_k_denom_proj;
 md_oed.Set_Covariance_Coefficient(alpha_k);
 
 % Also get optimizer's criterion:
-crit_fn = @(beta_input) md_oed.Evaluate_OED_Objective(reshape([betas_oed(:, 2:p - 1) beta_input], [], 1), alpha_d, 0, beta_bars(:, p - 1));
-crit_hifi = @(beta_input) md_oed.Evaluate_OED_Objective(reshape([betas_oed(:, 2:p - 1) beta_input], [], 1), alpha_d, 0, beta_bar_hifi);
+crit_fn = @(beta_input) md_oed.Evaluate_OED_Objective_Seq(reshape([betas_oed(:, 2:p - 1) beta_input], [], 1), alpha_d, beta_bars(:, p - 1), 1);
+crit_hifi = @(beta_input) md_oed.Evaluate_OED_Objective_Seq(reshape([betas_oed(:, 2:p - 1) beta_input], [], 1), alpha_d, beta_bar_hifi, 1);
 
 crit_DC_oed = crit_fn(betas_oed(:, p));
 crit_DC_oed_hifi = crit_hifi(betas_oed(:, p));
@@ -41,7 +41,7 @@ crit_same_pt_hifi = crit_hifi(zeros(num_evals, 1));
 
 % Obtains random points in a neighborhood of zbar from a projected subspace, where distance is dictated by covar_coeff
 % z_ps = z_bars(:, p - 1) + 1*sqrt(covar_coeff * (n / num_evals)) / W_z_norm(z_lofi) * V * randn(num_evals, num_samples);
-z_ps = z_bars(:, p - 1) + sqrt(alpha_k_proj) / W_z_norm(z_lofi) * V * randn(num_evals, 2 * num_samples);
+z_ps = z_bars(:, p - 1) + sqrt(alpha_k) / W_z_norm(z_lofi) * V * randn(num_evals, num_samples);
 z_ps = z_ps(:, 1:num_samples);
 
 for i = 1:num_samples
@@ -54,13 +54,15 @@ for i = 1:num_samples
 end
 
 figure;
-plot((crit_rand - crit_same_pt) / (crit_DC_oed - crit_same_pt),  (crit_rand_hifi - crit_same_pt_hifi) / (crit_DC_oed_hifi - crit_same_pt_hifi), ".", "Color", [0.7 0.8 0.9], "MarkerSize", 25, "HandleVisibility", "off");
+plot((crit_rand - crit_same_pt) / (crit_DC_oed - crit_same_pt),  (crit_rand_hifi - crit_same_pt_hifi) / (crit_DC_oed_hifi - crit_same_pt_hifi), ".", "Color", [0.7 0.8 0.9], "MarkerSize", 25, "DisplayName", "Random");
 hold on;
 plot((crit_DC_oed - crit_same_pt) / (crit_DC_oed - crit_same_pt), (crit_DC_oed_hifi - crit_same_pt_hifi) / (crit_DC_oed_hifi - crit_same_pt_hifi), "r*", "DisplayName", "Optimal Data Point");
 xlabel("Uncertainty reduction near $\bar{z}_k$", "Interpreter", "latex");
 ylabel("Uncertainty reduction near $z^{\star}$", "Interpreter", "latex");
-legend('Location', 'northwest');
+lgd = legend('Location', 'northwest');
+lgd.Direction = 'reverse';
 ylim([0 inf]);
+xlim([0 1]);
 % saveas(gcf, 'ScatterPlot', 'epsc');
 
 %% --ALTERNATIVE (ADDITIONAL) PLOTS--

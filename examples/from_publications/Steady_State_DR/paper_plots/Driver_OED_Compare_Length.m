@@ -4,13 +4,14 @@ addpath(genpath('../../../src'));
 OED_Setup;
 
 % Perform Offline OED Computations - USES data_interface
-md_oed = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis, oed_interface);
+md_oed = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
 md_oed.Offline_Computation();
+alpha_k_denom = trace(z_prior_interface.Apply_W_z_Inverse(z_prior_interface.M));
 
 rng(0);
 
 %% Perform Random Data Point Comparison (p = 1)
-N = 7;
+N = 6;
 p_seq = 1;
 Z = [];
 D = [];
@@ -28,14 +29,13 @@ for p = 1:N
         z_p = z_lofi;
     else
         if p == 2
-            covar_coeff = W_z_norm(z_bar - z_lofi)^2 / n;
-            delta_beta = 0.25 * abs(beta_bar);
+            alpha_k_num = M_z_norm(z_bar - z_lofi)^2;
         else
-            covar_coeff = W_z_norm(z_bar - z_bars(:, p - 2))^2 / n;
-            delta_beta = abs(beta_bar - beta_bars(:, p - 2));
+            alpha_k_num = M_z_norm(z_bar - z_bars(:, p - 2))^2;
         end
-        md_oed.Set_Covariance_Coefficient(covar_coeff);
-        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design_Con(beta_0, alpha_d, 0, betas, beta_bar, delta_beta);
+        alpha_k = alpha_k_num / alpha_k_denom;
+        md_oed.Set_Covariance_Coefficient(alpha_k);
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, betas, beta_bar, alpha_k_num);
         betas = [betas; beta_new];
     end
 
@@ -63,34 +63,34 @@ for p = 1:N
 end
 
 %% Perform Random Data Point Comparison (p = 2)
-N = 7;
+N = 6;
 p_seq = 2;
 Z = [Z(:, 1)];
 D = [D(:, 1)];
-z_bar = z_bars(:, 1);
-beta_bar = beta_bars(:, 1);
 betas = [];
 Jhat_DC_oed_2 = zeros(N, 1);
 z_bars = zeros(n, N);
 beta_bars = zeros(num_evals, N);
 beta_0 = randn(num_evals * p_seq, 1);
-beta_bars(:, 1) = beta_bar;
-z_bars(:, 1) = z_bar;
 
-for p = 2:((N - 1) / p_seq + 1)
-    fprintf('\nStep %d:\n-------------\n', 2 + (p - 2) * (p_seq));
-
-    if p == 2
-        covar_coeff = W_z_norm(z_bar - z_lofi)^2 / n;
-        delta_beta = 0.25 * abs(beta_bar);
+for p = 1:(N / p_seq)
+    fprintf('\nStep %d:\n-------------\n', 2 + (p - 1) * (p_seq));
+    if p == 1
+        alpha_k = M_z_norm(z_lofi)^2 / alpha_k_denom;
+        md_oed.Set_Covariance_Coefficient(alpha_k);
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0(num_evals + 1:end), alpha_d, betas, zeros(num_evals, 1), alpha_k_num);
+        betas = [betas; beta_new];
     else
-        covar_coeff = W_z_norm(z_bar - z_bars(:, p - 2))^2 / n;
-        delta_beta = abs(beta_bar - beta_bars(:, p - 2));
+        if p == 2
+            alpha_k_num = M_z_norm(z_bar - z_lofi)^2;
+        else
+            alpha_k_num = M_z_norm(z_bar - z_bars(:, p - 2))^2;
+        end
+        alpha_k = alpha_k_num / alpha_k_denom;
+        md_oed.Set_Covariance_Coefficient(alpha_k);
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, betas, beta_bar, alpha_k_num);
+        betas = [betas; beta_new];
     end
-
-    md_oed.Set_Covariance_Coefficient(covar_coeff);
-    [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design_Con(beta_0, alpha_d, 0, betas, beta_bar, delta_beta);
-    betas = [betas; beta_new];
 
     % Obtain Discrepancies
     Z = [Z z_p];
@@ -116,34 +116,34 @@ for p = 2:((N - 1) / p_seq + 1)
 end
 
 %% Perform Random Data Point Comparison (p = 3)
-N = 7;
+N = 6;
 p_seq = 3;
 Z = [Z(:, 1)];
 D = [D(:, 1)];
-z_bar = z_bars(:, 1);
-beta_bar = beta_bars(:, 1);
 betas = [];
 Jhat_DC_oed_3 = zeros(N, 1);
 z_bars = zeros(n, N);
 beta_bars = zeros(num_evals, N);
 beta_0 = randn(num_evals * p_seq, 1);
-beta_bars(:, 1) = beta_bar;
-z_bars(:, 1) = z_bar;
 
-for p = 2:((N - 1) / p_seq + 1)
-    fprintf('\nStep %d:\n-------------\n', 1 + (p - 1) * (p_seq));
-
-    if p == 2
-        covar_coeff = W_z_norm(z_bar - z_lofi)^2 / n;
-        delta_beta = 0.25 * abs(beta_bar);
+for p = 1:(N / p_seq)
+    fprintf('\nStep %d:\n-------------\n', 2 + (p - 1) * (p_seq));
+    if p == 1
+        alpha_k = M_z_norm(z_lofi)^2 / alpha_k_denom;
+        md_oed.Set_Covariance_Coefficient(alpha_k);
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0(num_evals + 1:end), alpha_d, betas, zeros(num_evals, 1), alpha_k_num);
+        betas = [betas; beta_new];
     else
-        covar_coeff = W_z_norm(z_bar - z_bars(:, p - 2))^2 / n;
-        delta_beta = abs(beta_bar - beta_bars(:, p - 2));
+        if p == 2
+            alpha_k_num = M_z_norm(z_bar - z_lofi)^2;
+        else
+            alpha_k_num = M_z_norm(z_bar - z_bars(:, p - 2))^2;
+        end
+        alpha_k = alpha_k_num / alpha_k_denom;
+        md_oed.Set_Covariance_Coefficient(alpha_k);
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, betas, beta_bar, alpha_k_num);
+        betas = [betas; beta_new];
     end
-
-    md_oed.Set_Covariance_Coefficient(covar_coeff);
-    [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design_Con(beta_0, alpha_d, 0, betas, beta_bar, delta_beta);
-    betas = [betas; beta_new];
 
     % Obtain Discrepancies
     Z = [Z z_p];
@@ -169,34 +169,34 @@ for p = 2:((N - 1) / p_seq + 1)
 end
 
 %% Perform Random Data Point Comparison (p = 6)
-N = 7;
+N = 6;
 p_seq = 6;
 Z = [Z(:, 1)];
 D = [D(:, 1)];
-z_bar = z_bars(:, 1);
-beta_bar = beta_bars(:, 1);
 betas = [];
 Jhat_DC_oed_6 = zeros(N, 1);
 z_bars = zeros(n, N);
 beta_bars = zeros(num_evals, N);
 beta_0 = randn(num_evals * p_seq, 1);
-beta_bars(:, 1) = beta_bar;
-z_bars(:, 1) = z_bar;
 
-for p = 2:((N - 1) / p_seq + 1)
-    fprintf('\nStep %d:\n-------------\n', 2 + (p - 2) * (p_seq));
-
-    if p == 2
-        covar_coeff = W_z_norm(z_bar - z_lofi)^2 / n;
-        delta_beta = 0.25 * abs(beta_bar);
+for p = 1:(N / p_seq)
+    fprintf('\nStep %d:\n-------------\n', 2 + (p - 1) * (p_seq));
+    if p == 1
+        alpha_k = M_z_norm(z_lofi)^2 / alpha_k_denom;
+        md_oed.Set_Covariance_Coefficient(alpha_k);
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0(num_evals + 1:end), alpha_d, betas, zeros(num_evals, 1), alpha_k_num);
+        betas = [betas; beta_new];
     else
-        covar_coeff = W_z_norm(z_bar - z_bars(:, p - 2))^2 / n;
-        delta_beta = abs(beta_bar - beta_bars(:, p - 2));
+        if p == 2
+            alpha_k_num = M_z_norm(z_bar - z_lofi)^2;
+        else
+            alpha_k_num = M_z_norm(z_bar - z_bars(:, p - 2))^2;
+        end
+        alpha_k = alpha_k_num / alpha_k_denom;
+        md_oed.Set_Covariance_Coefficient(alpha_k);
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, betas, beta_bar, alpha_k_num);
+        betas = [betas; beta_new];
     end
-
-    md_oed.Set_Covariance_Coefficient(covar_coeff);
-    [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design_Con(beta_0, alpha_d, 0, betas, beta_bar, delta_beta);
-    betas = [betas; beta_new];
 
     % Obtain Discrepancies
     Z = [Z z_p];
@@ -222,15 +222,14 @@ for p = 2:((N - 1) / p_seq + 1)
 end
 
 figure;
-subtract_qty = 3.0855;
-semilogy(0:N, [Jhat_lofi; Jhat_DC_oed_1] - subtract_qty, ".-", "Color", "#BAB86C", "DisplayName", "$p=1$");
+semilogy(0:N, [Jhat_lofi; Jhat_DC_oed_1], ".-", "Color", "#BAB86C", "DisplayName", "$p=1$");
 hold on;
-plot([0 1 1 + 2:2:N], [Jhat_lofi; Jhat_DC_oed_1(1); nonzeros(Jhat_DC_oed_2)] - subtract_qty, "r.-", "DisplayName", "$p=2$");
-plot([0 1 1 + 3:3:N], [Jhat_lofi; Jhat_DC_oed_1(1); nonzeros(Jhat_DC_oed_3)] - subtract_qty, "g.-", "DisplayName", "$p=3$");
-plot([0 1 N], [Jhat_lofi; Jhat_DC_oed_1(1); nonzeros(Jhat_DC_oed_6)] - subtract_qty, "k.-", "DisplayName", "$p=6$");
-yline(Jhat_lofi - subtract_qty, "r--", "DisplayName", "$\hat{J}(\tilde{z})$", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
+plot([0 2:2:N], [Jhat_lofi; nonzeros(Jhat_DC_oed_2)], "r.-", "DisplayName", "$p=2$");
+plot([0 3:3:N], [Jhat_lofi; nonzeros(Jhat_DC_oed_3)], "g.-", "DisplayName", "$p=3$");
+plot([0 N], [Jhat_lofi; nonzeros(Jhat_DC_oed_6)], "k.-", "DisplayName", "$p=6$");
+yline(Jhat_lofi, "r--", "DisplayName", "$\hat{J}(\tilde{z})$", "LineWidth", 3, "Layer", "Bottom", "Alpha", 1);
 xlim([0 N]);
+ylim([3.0855 inf]);
 xlabel("Evaluations ($N$)", "Interpreter", "latex");
-ylabel("Objective $\hat{J}(\cdot)$", "Interpreter", "latex");
+ylabel("High-fidelity objective", "Interpreter", "latex");
 legend("location", "best", "Interpreter", "latex");
-title("Optimization Objective over Evals");

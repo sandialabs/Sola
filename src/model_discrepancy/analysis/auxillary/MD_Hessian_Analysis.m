@@ -6,6 +6,10 @@ classdef MD_Hessian_Analysis < handle
         z_current
         evecs
         evals
+
+        % NEW
+        V_apply
+        V_transpose_apply
     end
 
     methods
@@ -17,12 +21,16 @@ classdef MD_Hessian_Analysis < handle
             end
             this.opt_prob_interface = opt_prob_interface;
             this.z_prior_interface = z_prior_interface;
+            this.V_apply = @(x) x;
+            this.V_transpose_apply = @(x) x;
         end
 
         function [] = Compute_Hessian_GEVP(this, z, num_evals, oversampling)
             gevp = Hessian_GEVP(this.opt_prob_interface, this.z_prior_interface, z);
             [this.evecs, this.evals] = gevp.Compute_Hessian_GEVP(num_evals, oversampling);
             this.z_current = z;
+            this.V_apply = @(x) this.evecs * x;
+            this.V_transpose_apply = @(x) this.evecs' * x;
         end
 
         function [z_out] = Apply_RS_Hessian_Inverse(this, z_in, z)

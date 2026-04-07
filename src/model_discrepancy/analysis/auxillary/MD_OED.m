@@ -39,8 +39,13 @@ classdef MD_OED < handle
         function this = Offline_Computation(this)
 
             this.offline_data = struct;
-            this.offline_data.V = this.md_hessian_analysis.evecs;
-            this.offline_data.r = length(this.md_hessian_analysis.evals);
+            if isempty(this.md_hessian_analysis.evals)
+                this.offline_data.r = length(this.data_interface.z_opt);
+                this.offline_data.V = eye(this.offline_data.r);
+            else
+                this.offline_data.V = this.md_hessian_analysis.evecs;
+                this.offline_data.r = length(this.md_hessian_analysis.evals);
+            end
 
             Mz_V = this.z_prior_interface.Apply_M_z(this.offline_data.V);
             Wz_inv_Mz_V = this.z_prior_interface.Apply_W_z_Inverse(Mz_V);
@@ -65,12 +70,13 @@ classdef MD_OED < handle
             else
                 options = optimoptions('fmincon', 'Display', 'None', 'MaxIterations', 5000, 'SpecifyObjectiveGradient', true, 'SpecifyConstraintGradient', true);
             end
-            p = length(beta_0) / size(this.offline_data.V, 2);
+            p = length(beta_0) / this.offline_data.r;
             fun = @(beta_new) this.Evaluate_OED_Objective_Seq([betas; beta_new], alpha_d, beta_bar, p);
-            tmp = @(b) this.offline_data.V' * this.z_prior_interface.Apply_M_z(this.offline_data.V * (b - beta_bar));
-            nonlcon = @(b) deal((b - beta_bar)' * tmp(b) - constr_radius, [], 2 * tmp(b), []);
+            center_b = @(b) reshape(b, [], p) - beta_bar;
+            tmp = @(b) this.offline_data.V' * this.z_prior_interface.Apply_M_z(this.offline_data.V * center_b(b));
+            nonlcon = @(b) deal(trace(center_b(b)' * tmp(b) - constr_radius), [], reshape(2 * tmp(b), [], 1), []);
             beta_new = fmincon(fun, beta_0, [], [], [], [], [], [], nonlcon, options);
-            Z_new = this.data_interface.z_opt + this.offline_data.V * reshape(beta_new, size(this.offline_data.V, 2), []);
+            Z_new = this.data_interface.z_opt + this.offline_data.V * reshape(beta_new, this.offline_data.r, []);
         end
 
         function [val, grad] = Evaluate_OED_Objective_Seq(this, beta, alpha_d, beta_bar, p)

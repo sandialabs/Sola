@@ -67,6 +67,11 @@ classdef MD_Opt_Prob_Interface_Python < MD_Opt_Prob_Interface
             end
         end
 
+        function [val, grad_u, grad_z] = Objective_Function(this, u, z)
+            [val, tmp, grad_z] = this.sabl_opt.obj.J(u, z);
+            grad_u = this.Misfit_Gradient(u, z);
+        end
+
     end
 
 end
