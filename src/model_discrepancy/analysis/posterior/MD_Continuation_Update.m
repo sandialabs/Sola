@@ -12,6 +12,7 @@ classdef MD_Continuation_Update < handle
         Mz_Wz_inv_Mz_Z_minus_z_opt
         Mz_Wz_inv_Mz_yi
         si
+        r % NEW
     end
 
     methods
@@ -22,6 +23,13 @@ classdef MD_Continuation_Update < handle
             this.opt_prob_interface = md_hessian_analysis.opt_prob_interface;
             this.u_opt = md_post_sampling.data_interface.u_opt;
             this.z_opt = md_post_sampling.data_interface.z_opt;
+
+            % If evals doesn't exist, then set r = n_z
+            if isempty(md_hessian_analysis.evals)
+                this.r = length(this.z_opt);
+            else
+                this.r = length(md_hessian_analysis.evals);
+            end
 
             this.Mz_Wz_inv_Mz_Z_minus_z_opt = this.md_post_sampling.post_data.Mz_Wz_inv_Mz_Z - this.md_post_sampling.post_data.Mz_Wz_inv_Mz_z_opt;
             this.Mz_Wz_inv_Mz_yi = 0 * this.Mz_Wz_inv_Mz_Z_minus_z_opt;
@@ -51,7 +59,7 @@ classdef MD_Continuation_Update < handle
             num_samples = this.md_post_sampling.post_data.num_samples;
             u_ks = zeros(length(this.u_opt), num_samples);
             z_ks = zeros(length(this.z_opt), num_samples);
-            beta_ks = zeros(length(this.md_hessian_analysis.evals), num_samples);
+            beta_ks = zeros(this.r, num_samples);
 
             for sample_idx = 1:num_samples
                 discOps = this.Get_Discrepancy_Ops(sample_idx);
@@ -70,7 +78,7 @@ classdef MD_Continuation_Update < handle
             t = linspace(0, 1, this.num_continuation_steps + 1);
 
             u_k = this.u_opt;
-            beta_k = zeros(length(this.md_hessian_analysis.evals), 1);
+            beta_k = zeros(this.r, 1);
             z_k = this.z_opt;
 
             for k = 1:this.num_continuation_steps
@@ -80,16 +88,16 @@ classdef MD_Continuation_Update < handle
                 beta_pred = beta_k + this.step_size * beta_pert;
 
                 % Predictive step for z and u
-                z_pred = this.z_opt + this.md_hessian_analysis.evecs * beta_pred;
+                z_pred = this.z_opt + this.md_hessian_analysis.V_apply(beta_pred);
                 u_pred = this.opt_prob_interface.State_Solve(z_pred);
 
                 % Corrective step for beta
-                Jbeta_val = this.md_hessian_analysis.evecs' * this.Gradient_J_z(u_pred, z_pred, t(k + 1), discOps);
+                Jbeta_val = this.md_hessian_analysis.V_transpose_apply(this.Gradient_J_z(u_pred, z_pred, t(k + 1), discOps));
                 beta_new = beta_pred - this.Apply_Parameterized_RS_Hessian_Inverse_beta(Jbeta_val, u_pred, beta_pred, t(k + 1), discOps);
 
                 % Update state
                 beta_k = beta_new;
-                z_k = this.z_opt + this.md_hessian_analysis.evecs * beta_new;
+                z_k = this.z_opt + this.md_hessian_analysis.V_apply(beta_new);
                 u_k = this.opt_prob_interface.State_Solve(z_k);
             end
         end
@@ -99,9 +107,9 @@ classdef MD_Continuation_Update < handle
         % ------------------------------------------------------------
 
         function [val, grad] = Jhat_Posterior_beta(this, beta, discOps)
-            z = this.z_opt + this.md_hessian_analysis.evecs * beta;
+            z = this.z_opt + this.md_hessian_analysis.V_apply(beta);
             [val, J_grad_z] = this.Jhat_Posterior(z, discOps);
-            grad = this.md_hessian_analysis.evecs' * J_grad_z;
+            grad = this.md_hessian_analysis.V_transpose_apply(J_grad_z);
         end
 
         function [val, grad] = Jhat_Posterior(this, z, discOps)
@@ -119,8 +127,8 @@ classdef MD_Continuation_Update < handle
         % ------------------------------------------------------------
 
         function [Btheta_n] = Apply_B_beta(this, u_n, beta_n, t_n, discOps)
-            z_n = this.z_opt + this.md_hessian_analysis.evecs * beta_n;
-            Btheta_n = this.md_hessian_analysis.evecs' * this.Apply_B(u_n, z_n, t_n, discOps);
+            z_n = this.z_opt + this.md_hessian_analysis.V_apply(beta_n);
+            Btheta_n = this.md_hessian_analysis.V_transpose_apply(this.Apply_B(u_n, z_n, t_n, discOps));
         end
 
         function [beta_out] = Apply_Parameterized_RS_Hessian_Inverse_beta(this, beta_in, u_n, beta_n, t_n, discOps)
@@ -139,9 +147,8 @@ classdef MD_Continuation_Update < handle
         end
 
         function [beta_out] = Apply_Parameterized_RS_Hessian_beta(this, beta_in, u_n, beta_n, t_n, discOps)
-            z_n = this.z_opt + this.md_hessian_analysis.evecs * beta_n;
-            beta_out = this.md_hessian_analysis.evecs' * this.Apply_Parameterized_RS_Hessian( ...
-                                                                                             this.md_hessian_analysis.evecs * beta_in, u_n, z_n, t_n, discOps);
+            z_n = this.z_opt + this.md_hessian_analysis.V_apply(beta_n);
+            beta_out = this.md_hessian_analysis.V_transpose_apply(this.Apply_Parameterized_RS_Hessian(this.md_hessian_analysis.V_apply(beta_in), u_n, z_n, t_n, discOps));
         end
 
         function [z_out] = Gradient_J_z(this, u_n, z_n, t_n, discOps)
@@ -198,7 +205,7 @@ classdef MD_Continuation_Update < handle
 
             if sample_idx == 0
                 discOps.Eval      = @(z, t) this.Discrepancy_Evaluation_Mean(z, t);
-                discOps.ApplyJz   = @(z, dz, t) this.Apply_Discrepancy_z_Jacobian_Mean(z, dz, t);
+                discOps.ApplyJz   = @(z, z_in, t) this.Apply_Discrepancy_z_Jacobian_Mean(z, z_in, t);
                 discOps.ApplyJzT  = @(z, u,  t) this.Apply_Discrepancy_z_Jacobian_transpose_Mean(z, u, t);
 
                 % Linear-in-theta simplifications (mean)
@@ -206,7 +213,7 @@ classdef MD_Continuation_Update < handle
                 discOps.ApplyJzthetaT = @(z, u) this.Apply_Discrepancy_z_Jacobian_transpose_Mean(z, u, 1.0);
             else
                 discOps.Eval      = @(z, t) this.Discrepancy_Evaluation_Sample(z, t, sample_idx);
-                discOps.ApplyJz   = @(z, dz, t) this.Apply_Discrepancy_z_Jacobian_Sample(z, dz, t, sample_idx);
+                discOps.ApplyJz   = @(z, z_in, t) this.Apply_Discrepancy_z_Jacobian_Sample(z, z_in, t, sample_idx);
                 discOps.ApplyJzT  = @(z, u,  t) this.Apply_Discrepancy_z_Jacobian_transpose_Sample(z, u, t, sample_idx);
 
                 % Linear-in-theta simplifications (sample)
