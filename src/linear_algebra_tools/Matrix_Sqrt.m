@@ -47,12 +47,16 @@ classdef Matrix_Sqrt < handle
             tol = 1.e-8;
             relres = cell(d, 1);
             for k = 1:d
-                [tmp, relres{k}] = this.krylov_sqrt(A, vec_in(:, k), n, tol);
+                [tmp, relres{k}] = this.Krylov_Sqrt(A, vec_in(:, k), n, tol);
                 vec_out(:, k) = this.Preconditioner_Inverse_Apply(tmp);
             end
+
+            % Note that the preconditioner implies that
+            % Matrix_Sqrt_Apply(Matrix_Sqrt_Apply(v)) ~= Matrix_Apply(v)
+            % because the preconditioned system is a factor, i.e., A=S*S^T, but not a square root
         end
 
-        function [x12, relres] = krylov_sqrt(this, A, b, maxiter, tol)
+        function [x12, relres] = Krylov_Sqrt(this, A, b, maxiter, tol)
             % This function computes A^{1/2}b using Lanczos approach
             % described in Algorithm 2.2 of
             %   "Quantifying Uncertainties in Bayesian Linear Inverse Problems using
