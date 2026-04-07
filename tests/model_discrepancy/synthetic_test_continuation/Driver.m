@@ -30,7 +30,7 @@ md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, n
 [u_ks, z_ks, beta_ks] = md_cont_update.Posterior_Update_Samples();
 ref_sol = load('reference_solution.mat');
 
-disp(md_cont_update.Jhat_Posterior(z_cont, md_cont_update.Get_Discrepancy_Ops(0)));
+% disp(md_cont_update.Jhat_Posterior(z_cont, md_cont_update.Get_Discrepancy_Ops(0)));
 % TODO: Fix it so that those functions are exposed
 rel_err = @(val_est, val_true) norm(val_est - val_true) / norm(val_true);
 u_cont_err = rel_err(u_cont, ref_sol.u_cont);

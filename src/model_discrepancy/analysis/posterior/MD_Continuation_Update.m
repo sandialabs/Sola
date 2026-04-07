@@ -7,7 +7,6 @@ classdef MD_Continuation_Update < handle
         u_opt
         z_opt
         num_continuation_steps
-        step_size
 
         Mz_Wz_inv_Mz_Z_minus_z_opt
         Mz_Wz_inv_Mz_yi
@@ -23,38 +22,23 @@ classdef MD_Continuation_Update < handle
             this.opt_prob_interface = md_hessian_analysis.opt_prob_interface;
             this.u_opt = md_post_sampling.data_interface.u_opt;
             this.z_opt = md_post_sampling.data_interface.z_opt;
-
-            % If evals doesn't exist, then set r = n_z
             if isempty(md_hessian_analysis.evals)
                 this.r = length(this.z_opt);
             else
                 this.r = length(md_hessian_analysis.evals);
             end
-
-            this.Mz_Wz_inv_Mz_Z_minus_z_opt = this.md_post_sampling.post_data.Mz_Wz_inv_Mz_Z - this.md_post_sampling.post_data.Mz_Wz_inv_Mz_z_opt;
-            this.Mz_Wz_inv_Mz_yi = 0 * this.Mz_Wz_inv_Mz_Z_minus_z_opt;
-            this.si = zeros(1, this.md_post_sampling.post_data.N);
-            for i = 1:this.md_post_sampling.post_data.N
-                this.Mz_Wz_inv_Mz_yi(:, i) = this.md_post_sampling.post_data.Mz_Wz_inv_Mz_Z * this.md_post_sampling.post_data.g_vecs(:, i) - ...
-                    sum(this.md_post_sampling.post_data.g_vecs(:, i)) * this.md_post_sampling.post_data.Mz_Wz_inv_Mz_z_opt;
-                this.si(i) = sum(this.md_post_sampling.post_data.g_vecs(:, i)) - this.z_opt' * this.Mz_Wz_inv_Mz_yi(:, i);
-            end
-
             this.num_continuation_steps = num_continuation_steps;
-            this.step_size = 1 / num_continuation_steps;
         end
 
         % ------------------------------------------------------------
-        % High-level API
+        % High-level functions
         % ------------------------------------------------------------
 
-        % Returns final (u,z,beta) for posterior mean
         function [u, z, beta] = Posterior_Update_Mean(this)
             discOps = this.Get_Discrepancy_Ops(0);
             [u, z, beta] = this.Posterior_Update_Core(discOps);
         end
 
-        % Returns final (u,z,beta) for each posterior sample
         function [u_ks, z_ks, beta_ks] = Posterior_Update_Samples(this)
             num_samples = this.md_post_sampling.post_data.num_samples;
             u_ks = zeros(length(this.u_opt), num_samples);
@@ -85,7 +69,7 @@ classdef MD_Continuation_Update < handle
                 % Predictive step for beta
                 Btheta_n = this.Apply_B_beta(u_k, beta_k, t(k), discOps);
                 beta_pert = -this.Apply_Parameterized_RS_Hessian_Inverse_beta(Btheta_n, u_k, beta_k, t(k), discOps);
-                beta_pred = beta_k + this.step_size * beta_pert;
+                beta_pred = beta_k + (1 / this.num_continuation_steps) * beta_pert;
 
                 % Predictive step for z and u
                 z_pred = this.z_opt + this.md_hessian_analysis.V_apply(beta_pred);
@@ -204,168 +188,22 @@ classdef MD_Continuation_Update < handle
                    'sample_idx must be an integer in [0, num_samples].');
 
             if sample_idx == 0
-                discOps.Eval      = @(z, t) this.Discrepancy_Evaluation_Mean(z, t);
-                discOps.ApplyJz   = @(z, z_in, t) this.Apply_Discrepancy_z_Jacobian_Mean(z, z_in, t);
-                discOps.ApplyJzT  = @(z, u,  t) this.Apply_Discrepancy_z_Jacobian_transpose_Mean(z, u, t);
+                discOps.Eval      = @(z, t) t * this.md_post_sampling.Discrepancy_Evaluation_Mean(z);
+                discOps.ApplyJz   = @(z, z_in, t) t * this.md_post_sampling.Apply_Discrepancy_z_Jacobian_Mean(z_in);
+                discOps.ApplyJzT  = @(z, u,  t) t * this.md_post_sampling.Apply_Discrepancy_z_Jacobian_transpose_Mean(u);
 
                 % Linear-in-theta simplifications (mean)
-                discOps.ApplyJtheta   = @(z) this.Discrepancy_Evaluation_Mean(z, 1.0);
-                discOps.ApplyJzthetaT = @(z, u) this.Apply_Discrepancy_z_Jacobian_transpose_Mean(z, u, 1.0);
+                discOps.ApplyJtheta   = @(z) this.md_post_sampling.Discrepancy_Evaluation_Mean(z);
+                discOps.ApplyJzthetaT = @(z, u) this.md_post_sampling.Apply_Discrepancy_z_Jacobian_transpose_Mean(u);
             else
-                discOps.Eval      = @(z, t) this.Discrepancy_Evaluation_Sample(z, t, sample_idx);
-                discOps.ApplyJz   = @(z, z_in, t) this.Apply_Discrepancy_z_Jacobian_Sample(z, z_in, t, sample_idx);
-                discOps.ApplyJzT  = @(z, u,  t) this.Apply_Discrepancy_z_Jacobian_transpose_Sample(z, u, t, sample_idx);
+                discOps.Eval      = @(z, t) t * this.md_post_sampling.Discrepancy_Evaluation_Sample(z, sample_idx);
+                discOps.ApplyJz   = @(z, z_in, t) t * this.md_post_sampling.Apply_Discrepancy_z_Jacobian_Sample(z, z_in, sample_idx);
+                discOps.ApplyJzT  = @(z, u,  t) t * this.md_post_sampling.Apply_Discrepancy_z_Jacobian_transpose_Sample(z, u, sample_idx);
 
                 % Linear-in-theta simplifications (sample)
-                discOps.ApplyJtheta   = @(z) this.Discrepancy_Evaluation_Sample(z, 1.0, sample_idx);
-                discOps.ApplyJzthetaT = @(z, u) this.Apply_Discrepancy_z_Jacobian_transpose_Sample(z, u, 1.0, sample_idx);
+                discOps.ApplyJtheta   = @(z) this.md_post_sampling.Discrepancy_Evaluation_Sample(z, sample_idx);
+                discOps.ApplyJzthetaT = @(z, u) this.md_post_sampling.Apply_Discrepancy_z_Jacobian_transpose_Sample(z, u, sample_idx);
             end
-        end
-
-        % ------------------------------------------------------------
-        % Discrepancy kernels: Mean
-        % ------------------------------------------------------------
-
-        function [u_out] = Discrepancy_Evaluation_Mean(this, z_n, t_n)
-            N = this.md_post_sampling.post_data.N;
-            u_out = 0 * this.u_opt;
-            for ell = 1:N
-                coeff = this.md_post_sampling.post_data.a_ell(ell) + z_n' * this.Mz_Wz_inv_Mz_Z_minus_z_opt(:, ell);
-                u_out = u_out + coeff * this.md_post_sampling.post_data.u_ell(:, ell);
-                for i = 1:N
-                    coeff = this.md_post_sampling.post_data.b_i_ell(i, ell) * (this.si(i) + z_n' * this.Mz_Wz_inv_Mz_yi(:, i));
-                    u_out = u_out - coeff * this.md_post_sampling.post_data.u_i_ell{i}(:, ell);
-                end
-            end
-            u_out = (t_n / this.md_post_sampling.post_data.alpha_d) * u_out;
-        end
-
-        % Signature includes z_n for uniformity with the sample version (mean ignores z_n)
-        function [u_out] = Apply_Discrepancy_z_Jacobian_Mean(this, z_n, z_in, t_n) %#ok<INUSD>
-            N = this.md_post_sampling.post_data.N;
-            u = zeros(size(this.u_opt));
-            for ell = 1:N
-                u = u + (this.Mz_Wz_inv_Mz_Z_minus_z_opt(:, ell)' * z_in) * this.md_post_sampling.post_data.u_ell(:, ell);
-                for i = 1:N
-                    coeff = this.md_post_sampling.post_data.b_i_ell(i, ell) * (this.Mz_Wz_inv_Mz_yi(:, i)' * z_in);
-                    u = u - coeff * this.md_post_sampling.post_data.u_i_ell{i}(:, ell);
-                end
-            end
-
-            u_out = t_n * (1 / this.md_post_sampling.post_data.alpha_d) * u;
-        end
-
-        % Signature includes z_n for uniformity with the sample version (mean ignores z_n)
-        function [z_out] = Apply_Discrepancy_z_Jacobian_transpose_Mean(this, z_n, u_in, t_n) %#ok<INUSD>
-            N = this.md_post_sampling.post_data.N;
-            z = zeros(size(this.z_opt));
-            for ell = 1:N
-                z = z + (this.md_post_sampling.post_data.u_ell(:, ell)' * u_in) * this.Mz_Wz_inv_Mz_Z_minus_z_opt(:, ell);
-                for i = 1:N
-                    coeff = this.md_post_sampling.post_data.b_i_ell(i, ell) * (this.md_post_sampling.post_data.u_i_ell{i}(:, ell)' * u_in);
-                    z = z - coeff * this.Mz_Wz_inv_Mz_yi(:, i);
-                end
-            end
-
-            z_out = t_n * (1 / this.md_post_sampling.post_data.alpha_d) * z;
-        end
-
-        % ------------------------------------------------------------
-        % Discrepancy kernels: Sample
-        % ------------------------------------------------------------
-
-        function [u_out] = Discrepancy_Evaluation_Sample(this, z_n, t_n, sample_idx)
-            u_out_mean = this.Discrepancy_Evaluation_Mean(z_n, t_n);
-            dz = z_n - this.z_opt;
-
-            Mz_dz = this.md_post_sampling.z_prior_interface.Apply_M_z(dz);
-            Wz_inv_Mz_dz = this.md_post_sampling.z_prior_interface.Apply_W_z_Inverse(Mz_dz);
-
-            delta_sample = zeros(size(u_out_mean));
-            for i = 1:this.md_post_sampling.post_data.N
-                sgi = sum(this.md_post_sampling.post_data.g_vecs(:, i));
-                coeff = (1 / sqrt(this.md_post_sampling.post_data.Mu(i, i))) * (sgi + this.Mz_Wz_inv_Mz_yi(:, i)' * dz);
-                delta_sample = delta_sample + coeff * this.md_post_sampling.post_data.ui_hat{i}(:, sample_idx);
-            end
-            delta_sample = sqrt(this.md_post_sampling.post_data.alpha_d) * delta_sample;
-
-            tmp = Mz_dz' * Wz_inv_Mz_dz - ...
-                Wz_inv_Mz_dz' * this.md_post_sampling.post_data.Mz_Zc * linsolve( ...
-                                                                                 this.md_post_sampling.post_data.Zc_Mz_Wz_inv_Mz_Zc, ...
-                                                                                 this.md_post_sampling.post_data.Mz_Zc' * Wz_inv_Mz_dz);
-
-            if tmp < -1.e-11
-                disp('Error in Posterior Discrepancy Sample: delta breve coeff < 0');
-            end
-
-            breve_coeff = sqrt(abs(tmp));
-            delta_sample = delta_sample + breve_coeff * this.md_post_sampling.post_data.u_breve(:, sample_idx);
-
-            u_out = u_out_mean + t_n * delta_sample;
-        end
-
-        function [u_out] = Apply_Discrepancy_z_Jacobian_Sample(this, z_n, z_in, t_n, sample_idx)
-            % Note: z_n is needed since sampling is nonlinear in z via gamma(z) in delta_breve
-            u_out_mean = this.Apply_Discrepancy_z_Jacobian_Mean(z_n, z_in, t_n);
-
-            u = zeros(size(u_out_mean));
-            for i = 1:this.md_post_sampling.post_data.N
-                coeff = (1 / sqrt(this.md_post_sampling.post_data.Mu(i, i))) * (this.Mz_Wz_inv_Mz_yi(:, i)' * z_in);
-                u = u + coeff * this.md_post_sampling.post_data.ui_hat{i}(:, sample_idx);
-            end
-            u = sqrt(this.md_post_sampling.post_data.alpha_d) * u;
-
-            Mz_dz = this.md_post_sampling.z_prior_interface.Apply_M_z(z_n - this.z_opt);
-            Wz_inv_Mz_dz = this.md_post_sampling.z_prior_interface.Apply_W_z_Inverse(Mz_dz);
-
-            tmp_rhs = Wz_inv_Mz_dz - this.md_post_sampling.post_data.Wz_inv_Mz_Zc * linsolve( ...
-                                                                                             this.md_post_sampling.post_data.Zc_Mz_Wz_inv_Mz_Zc, ...
-                                                                                             this.md_post_sampling.post_data.Mz_Zc' * Wz_inv_Mz_dz);
-
-            tmp = Mz_dz' * tmp_rhs;
-            if tmp < -1.e-11
-                disp('Error in Posterior Discrepancy Samples: delta breve coeff < 0');
-            end
-
-            Mz_z_in = this.md_post_sampling.z_prior_interface.Apply_M_z(z_in);
-            denom = sqrt(abs(tmp) + (1e-15)^2); % tiny regularization
-            breve_coeff_deriv = (Mz_z_in' * tmp_rhs) / denom;
-            u = u + breve_coeff_deriv * this.md_post_sampling.post_data.u_breve(:, sample_idx);
-
-            u_out = u_out_mean + t_n * u;
-        end
-
-        function [z_out] = Apply_Discrepancy_z_Jacobian_transpose_Sample(this, z_n, u_in, t_n, sample_idx)
-            % Note: z_n is needed since sampling is nonlinear in z via gamma(z) in delta_breve
-            z_out_mean = this.Apply_Discrepancy_z_Jacobian_transpose_Mean(z_n, u_in, t_n);
-
-            z = zeros(size(z_out_mean));
-            for i = 1:this.md_post_sampling.post_data.N
-                ui_hat_idx = this.md_post_sampling.post_data.ui_hat{i}(:, sample_idx);
-                coeff = (1 / sqrt(this.md_post_sampling.post_data.Mu(i, i))) * (ui_hat_idx' * u_in);
-                z = z + coeff * this.Mz_Wz_inv_Mz_yi(:, i);
-            end
-            z = sqrt(this.md_post_sampling.post_data.alpha_d) * z;
-
-            Mz_dz = this.md_post_sampling.z_prior_interface.Apply_M_z(z_n - this.z_opt);
-            Wz_inv_Mz_dz = this.md_post_sampling.z_prior_interface.Apply_W_z_Inverse(Mz_dz);
-
-            tmp_rhs = Wz_inv_Mz_dz - this.md_post_sampling.post_data.Wz_inv_Mz_Zc * linsolve( ...
-                                                                                             this.md_post_sampling.post_data.Zc_Mz_Wz_inv_Mz_Zc, ...
-                                                                                             this.md_post_sampling.post_data.Mz_Zc' * Wz_inv_Mz_dz);
-
-            tmp = Mz_dz' * tmp_rhs;
-            if tmp < -1.e-11
-                disp('Error in Posterior Discrepancy Samples: delta breve coeff < 0');
-            end
-
-            denom = sqrt(abs(tmp) + (1e-15)^2); % tiny regularization
-            breve_coeff_grad = this.md_post_sampling.z_prior_interface.Apply_M_z(tmp_rhs) / denom;
-
-            u_breve_idx = this.md_post_sampling.post_data.u_breve(:, sample_idx);
-            z = z + (u_breve_idx' * u_in) * breve_coeff_grad;
-
-            z_out = z_out_mean + t_n * z;
         end
 
     end
