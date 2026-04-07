@@ -36,6 +36,11 @@ classdef Sparse_Matrix_Sqrt < Matrix_Sqrt
             end
             this.A = A;
             this.L = L;
+            % We should have A \approx L * L^T
+
+            % Note that the preconditioner implies that
+            % Matrix_Sqrt_Apply(Matrix_Sqrt_Apply(v)) ~= Matrix_Apply(v)
+            % because the preconditioned system is a factor, i.e., A=S*S^T, but not a square root
         end
 
     end

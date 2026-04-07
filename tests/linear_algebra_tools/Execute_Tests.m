@@ -7,3 +7,7 @@ cd ..;
 cd Matrix_Sqrt/;
 Test_1;
 cd ..;
+
+cd Sparse_Matrix_Sqrt/;
+Test_1;
+cd ..;
