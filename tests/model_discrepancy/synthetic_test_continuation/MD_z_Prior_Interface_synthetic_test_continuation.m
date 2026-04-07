@@ -1,4 +1,4 @@
-classdef MD_z_Prior_Interface_synthetic_test_with_hessian_gevp < MD_z_Prior_Interface
+classdef MD_z_Prior_Interface_synthetic_test_continuation < MD_z_Prior_Interface
 
     properties
         m  % Mesh resolution
@@ -32,7 +32,7 @@ classdef MD_z_Prior_Interface_synthetic_test_with_hessian_gevp < MD_z_Prior_Inte
 
     methods
 
-        function this = MD_z_Prior_Interface_synthetic_test_with_hessian_gevp(m)
+        function this = MD_z_Prior_Interface_synthetic_test_continuation(m)
             this.m = m;
             this.x = linspace(0, 1, m)';
 

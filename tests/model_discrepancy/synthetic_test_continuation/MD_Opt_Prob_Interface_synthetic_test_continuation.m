@@ -1,4 +1,4 @@
-classdef MD_Opt_Prob_Interface_synthetic_test_with_hessian_gevp < MD_Opt_Prob_Interface
+classdef MD_Opt_Prob_Interface_synthetic_test_continuation < MD_Opt_Prob_Interface
 
     properties
         m
@@ -46,7 +46,7 @@ classdef MD_Opt_Prob_Interface_synthetic_test_with_hessian_gevp < MD_Opt_Prob_In
 
     methods
 
-        function this = MD_Opt_Prob_Interface_synthetic_test_with_hessian_gevp(m)
+        function this = MD_Opt_Prob_Interface_synthetic_test_continuation(m)
             this.m = m;
             this.x = linspace(0, 1, m)';
 
