@@ -16,6 +16,10 @@ cd synthetic_test/;
 Test_1;
 cd ..;
 
+cd synthetic_test_continuation/;
+Test_1;
+cd ..;
+
 cd synthetic_test_control_vec/;
 Test_1;
 cd ..;

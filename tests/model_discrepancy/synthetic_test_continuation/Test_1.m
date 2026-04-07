@@ -41,9 +41,11 @@ z_ks_err = rel_err(z_ks, ref_sol.z_ks);
 beta_ks_err = rel_err(beta_ks, ref_sol.beta_ks);
 
 ref_diff = max([u_cont_err, z_cont_err, beta_cont_err, u_ks_err, z_ks_err, beta_ks_err]);
+
 if ref_diff > 1.e-9
-    disp('model_discrepancy_continuation difference:');
-    disp(ref_diff);
+    fprintf(2, '\nmodel_discrepancy/synthetic_test_continuation failed.\n');
+else
+    fprintf(1, '\nmodel_discrepancy/synthetic_test_continuation passed.\n');
 end
 
 % ------
