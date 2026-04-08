@@ -72,7 +72,7 @@ for num_continuation_steps = 1:max_cont_steps
     [~, z_cont, beta_cont] = md_cont_update.Posterior_Update_Mean();
     betas{num_continuation_steps} = beta_cont(:, end);
     zs{num_continuation_steps} = z_cont(:, end);
-    [Jhat_post(num_continuation_steps), grad_beta] = md_cont_update.Jhat_Posterior_beta(beta_cont(:, end));
+    [Jhat_post(num_continuation_steps), grad_beta] = md_cont_update.Parameterized_RS_Objective_beta(beta_cont(:, end));
     Jhat_grad_norm(num_continuation_steps) = MV_norm(grad_beta);
 end
 
@@ -83,7 +83,7 @@ options = optimoptions(@fminunc, ...
                        'SpecifyObjectiveGradient', true);
 
 beta0 = beta_cont(:, end);
-[beta_opt, Jhat_post_opt, ~, ~, Jhat_grad_opt, ~] = fminunc(@(beta) md_cont_update.Jhat_Posterior_beta(beta), beta0, options);
+[beta_opt, Jhat_post_opt, ~, ~, Jhat_grad_opt, ~] = fminunc(@(beta) md_cont_update.Parameterized_RS_Objective_beta(beta), beta0, options);
 z_opt = z_lofi + md_hessian_analysis.evecs * beta_opt;
 Jhat_grad_norm_opt = MV_norm(Jhat_grad_opt);
 
@@ -97,7 +97,7 @@ for i = 1:max_cont_steps
 end
 
 rel_z_dist_lofi = M_z_norm(z_lofi - z_opt);
-[Jhat_post_lofi, grad_beta_lofi] = md_cont_update.Jhat_Posterior_beta(0 * beta_cont(:, end));
+[Jhat_post_lofi, grad_beta_lofi] = md_cont_update.Parameterized_RS_Objective_beta(0 * beta_cont(:, end));
 Jhat_err_lofi = (Jhat_post_lofi - Jhat_post_opt) / Jhat_post_opt;
 figure;
 semilogy(0:max_cont_steps, [Jhat_err_lofi Jhat_err], ".-");

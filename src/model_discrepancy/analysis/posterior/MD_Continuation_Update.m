@@ -7,11 +7,7 @@ classdef MD_Continuation_Update < handle
         u_opt
         z_opt
         num_continuation_steps
-
-        Mz_Wz_inv_Mz_Z_minus_z_opt
-        Mz_Wz_inv_Mz_yi
-        si
-        r % NEW
+        r
     end
 
     methods
@@ -70,39 +66,17 @@ classdef MD_Continuation_Update < handle
                 beta_pred = beta_k + (1 / this.num_continuation_steps) * beta_pert;
 
                 % Predictive step for z and u
-                z_pred = this.z_opt + this.md_hessian_analysis.V_apply(beta_pred);
+                z_pred = this.z_opt + this.md_hessian_analysis.Apply_V(beta_pred);
                 u_pred = this.opt_prob_interface.State_Solve(z_pred);
 
                 % Corrective step for beta
-                Jbeta_val = this.md_hessian_analysis.V_transpose_apply(this.Gradient_J_z(u_pred, z_pred, t(k + 1), sample_idx));
-                beta_new = beta_pred - this.Apply_Parameterized_RS_Hessian_Inverse_beta(Jbeta_val, u_pred, beta_pred, t(k + 1), sample_idx);
+                grad = this.md_hessian_analysis.Apply_V_Transpose(this.Parameterized_RS_Objective_Gradient(u_pred, z_pred, t(k + 1), sample_idx));
+                beta_k = beta_pred - this.Apply_Parameterized_RS_Hessian_Inverse_beta(grad, u_pred, beta_pred, t(k + 1), sample_idx);
 
                 % Update state
-                beta_k = beta_new;
-                z_k = this.z_opt + this.md_hessian_analysis.V_apply(beta_new);
+                z_k = this.z_opt + this.md_hessian_analysis.Apply_V(beta_k);
                 u_k = this.opt_prob_interface.State_Solve(z_k);
             end
-        end
-
-        % ------------------------------------------------------------
-        % Objective helpers (optional; kept for completeness)
-        % ------------------------------------------------------------
-
-        function [val, grad] = Jhat_Posterior_beta(this, beta, sample_idx)
-            z = this.z_opt + this.md_hessian_analysis.V_apply(beta);
-            [val, J_grad_z] = this.Jhat_Posterior(z, sample_idx);
-            grad = this.md_hessian_analysis.V_transpose_apply(J_grad_z);
-        end
-
-        function [val, grad] = Jhat_Posterior(this, z, sample_idx)
-            disc_ops = this.Get_Discrepancy_Ops(sample_idx);
-            u = this.opt_prob_interface.State_Solve(z);
-            delta = disc_ops.Eval(z, 1);
-
-            [val, grad_u, grad_z] = this.opt_prob_interface.Objective_Function(u + delta, z);
-            z_tmp1 = disc_ops.ApplyJzT(z, grad_u, 1);
-            z_tmp2 = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(grad_u, z);
-            grad = grad_z + z_tmp1 + z_tmp2;
         end
 
         % ------------------------------------------------------------
@@ -110,8 +84,8 @@ classdef MD_Continuation_Update < handle
         % ------------------------------------------------------------
 
         function [Btheta_n] = Apply_B_beta(this, u_n, beta_n, t_n, sample_idx)
-            z_n = this.z_opt + this.md_hessian_analysis.V_apply(beta_n);
-            Btheta_n = this.md_hessian_analysis.V_transpose_apply(this.Apply_B(u_n, z_n, t_n, sample_idx));
+            z_n = this.z_opt + this.md_hessian_analysis.Apply_V(beta_n);
+            Btheta_n = this.md_hessian_analysis.Apply_V_Transpose(this.Apply_B(u_n, z_n, t_n, sample_idx));
         end
 
         function [beta_out] = Apply_Parameterized_RS_Hessian_Inverse_beta(this, beta_in, u_n, beta_n, t_n, sample_idx)
@@ -130,31 +104,31 @@ classdef MD_Continuation_Update < handle
         end
 
         function [beta_out] = Apply_Parameterized_RS_Hessian_beta(this, beta_in, u_n, beta_n, t_n, sample_idx)
-            z_n = this.z_opt + this.md_hessian_analysis.V_apply(beta_n);
-            beta_out = this.md_hessian_analysis.V_transpose_apply(this.Apply_Parameterized_RS_Hessian(this.md_hessian_analysis.V_apply(beta_in), u_n, z_n, t_n, sample_idx));
+            z_n = this.z_opt + this.md_hessian_analysis.Apply_V(beta_n);
+            beta_out = this.md_hessian_analysis.Apply_V_Transpose(this.Apply_Parameterized_RS_Hessian(this.md_hessian_analysis.Apply_V(beta_in), u_n, z_n, t_n, sample_idx));
         end
 
-        function [z_out] = Gradient_J_z(this, u_n, z_n, t_n, sample_idx)
+        function [grad] = Parameterized_RS_Objective_Gradient(this, u_n, z_n, t_n, sample_idx)
             disc_ops = this.Get_Discrepancy_Ops(sample_idx);
             delta = disc_ops.Eval(z_n, t_n);
             [~, grad_u, grad_z] = this.opt_prob_interface.Objective_Function(u_n + delta, z_n);
-            z_tmp1 = disc_ops.ApplyJzT(z_n, grad_u, t_n);
+            z_tmp1 = disc_ops.Apply_z_Jacobian_Transpose(z_n, grad_u, t_n);
             z_tmp2 = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(grad_u, z_n);
-            z_out = grad_z + z_tmp1 + z_tmp2;
+            grad = grad_z + z_tmp1 + z_tmp2;
         end
 
         function [Btheta_n] = Apply_B(this, u_n, z_n, t_n, sample_idx)
             disc_ops = this.Get_Discrepancy_Ops(sample_idx);
             delta = disc_ops.Eval(z_n, t_n);
 
-            u_tmp1 = disc_ops.ApplyJtheta(z_n);
+            u_tmp1 = disc_ops.Apply_theta_Jacobian(z_n);
             u_tmp2 = this.opt_prob_interface.Apply_Misfit_Hessian(u_tmp1, u_n + delta, z_n);
             z_tmp1 = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(u_tmp2, z_n);
 
-            z_tmp2 = disc_ops.ApplyJzT(z_n, u_tmp2, t_n);
+            z_tmp2 = disc_ops.Apply_z_Jacobian_Transpose(z_n, u_tmp2, t_n);
 
             state_grad = this.opt_prob_interface.Misfit_Gradient(u_n + delta, z_n);
-            z_tmp3 = disc_ops.ApplyJzthetaT(z_n, state_grad);
+            z_tmp3 = disc_ops.Apply_z_theta_Hessian(z_n, state_grad);
 
             Btheta_n = z_tmp1 + z_tmp2 + z_tmp3;
         end
@@ -166,15 +140,15 @@ classdef MD_Continuation_Update < handle
             z_out = this.opt_prob_interface.Apply_RS_Hessian(z_in, z_n);
             z_out = z_out(:);
 
-            u_tmp1 = disc_ops.ApplyJz(z_n, z_in, t_n);
+            u_tmp1 = disc_ops.Apply_z_Jacobian(z_n, z_in, t_n);
             u_tmp2 = this.opt_prob_interface.Apply_Misfit_Hessian(u_tmp1, u_n + delta, z_n);
             z_out = z_out + this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(u_tmp2, z_n);
 
-            z_out = z_out + disc_ops.ApplyJzT(z_n, u_tmp2, t_n);
+            z_out = z_out + disc_ops.Apply_z_Jacobian_Transpose(z_n, u_tmp2, t_n);
 
             u_tmp3 = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian(z_in, z_n);
             u_tmp4 = this.opt_prob_interface.Apply_Misfit_Hessian(u_tmp3, u_n + delta, z_n);
-            z_out = z_out + disc_ops.ApplyJzT(z_n, u_tmp4, t_n);
+            z_out = z_out + disc_ops.Apply_z_Jacobian_Transpose(z_n, u_tmp4, t_n);
         end
 
         % ------------------------------------------------------------
@@ -188,17 +162,38 @@ classdef MD_Continuation_Update < handle
 
             if sample_idx == 0 % Mean
                 disc_ops.Eval          = @(z, t) t * this.md_post_sampling.Discrepancy_Evaluation_Mean(z);
-                disc_ops.ApplyJz       = @(z, z_in, t) t * this.md_post_sampling.Apply_Discrepancy_z_Jacobian_Mean(z_in);
-                disc_ops.ApplyJzT      = @(z, u, t) t * this.md_post_sampling.Apply_Discrepancy_z_Jacobian_transpose_Mean(u);
-                disc_ops.ApplyJtheta   = @(z) this.md_post_sampling.Discrepancy_Evaluation_Mean(z);
-                disc_ops.ApplyJzthetaT = @(z, u) this.md_post_sampling.Apply_Discrepancy_z_Jacobian_transpose_Mean(u);
+                disc_ops.Apply_z_Jacobian       = @(z, z_in, t) t * this.md_post_sampling.Apply_Discrepancy_z_Jacobian_Mean(z_in);
+                disc_ops.Apply_z_Jacobian_Transpose      = @(z, u, t) t * this.md_post_sampling.Apply_Discrepancy_z_Jacobian_Transpose_Mean(u);
+                disc_ops.Apply_theta_Jacobian   = @(z) this.md_post_sampling.Discrepancy_Evaluation_Mean(z);
+                disc_ops.Apply_z_theta_Hessian = @(z, u) this.md_post_sampling.Apply_Discrepancy_z_Jacobian_Transpose_Mean(u);
             else
                 disc_ops.Eval          = @(z, t) t * this.md_post_sampling.Discrepancy_Evaluation_Sample(z, sample_idx);
-                disc_ops.ApplyJz       = @(z, z_in, t) t * this.md_post_sampling.Apply_Discrepancy_z_Jacobian_Sample(z, z_in, sample_idx);
-                disc_ops.ApplyJzT      = @(z, u, t) t * this.md_post_sampling.Apply_Discrepancy_z_Jacobian_transpose_Sample(z, u, sample_idx);
-                disc_ops.ApplyJtheta   = @(z) this.md_post_sampling.Discrepancy_Evaluation_Sample(z, sample_idx);
-                disc_ops.ApplyJzthetaT = @(z, u) this.md_post_sampling.Apply_Discrepancy_z_Jacobian_transpose_Sample(z, u, sample_idx);
+                disc_ops.Apply_z_Jacobian       = @(z, z_in, t) t * this.md_post_sampling.Apply_Discrepancy_z_Jacobian_Sample(z, z_in, sample_idx);
+                disc_ops.Apply_z_Jacobian_Transpose      = @(z, u, t) t * this.md_post_sampling.Apply_Discrepancy_z_Jacobian_Transpose_Sample(z, u, sample_idx);
+                disc_ops.Apply_theta_Jacobian   = @(z) this.md_post_sampling.Discrepancy_Evaluation_Sample(z, sample_idx);
+                disc_ops.Apply_z_theta_Hessian = @(z, u) this.md_post_sampling.Apply_Discrepancy_z_Jacobian_Transpose_Sample(z, u, sample_idx);
             end
+        end
+
+        % ------------------------------------------------------------
+        % Objective helpers (optional; kept for completeness)
+        % ------------------------------------------------------------
+
+        function [val, grad] = Parameterized_RS_Objective_beta(this, beta, sample_idx)
+            z = this.z_opt + this.md_hessian_analysis.Apply_V(beta);
+            [val, grad_z] = this.Parameterized_RS_Objective(z, sample_idx);
+            grad = this.md_hessian_analysis.Apply_V_Transpose(grad_z);
+        end
+
+        function [val, grad] = Parameterized_RS_Objective(this, z, sample_idx)
+            disc_ops = this.Get_Discrepancy_Ops(sample_idx);
+            u = this.opt_prob_interface.State_Solve(z);
+            delta = disc_ops.Eval(z, 1);
+
+            [val, grad_u, grad_z] = this.opt_prob_interface.Objective_Function(u + delta, z);
+            z_tmp1 = disc_ops.Apply_z_Jacobian_Transpose(z, grad_u, 1);
+            z_tmp2 = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(grad_u, z);
+            grad = grad_z + z_tmp1 + z_tmp2;
         end
 
     end

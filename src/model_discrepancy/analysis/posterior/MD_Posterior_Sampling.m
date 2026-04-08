@@ -6,8 +6,6 @@ classdef MD_Posterior_Sampling < handle
         z_prior_interface
         post_data
         z_opt
-
-        % NEW
         Mz_Wz_inv_Mz_Z_minus_z_opt
         Mz_Wz_inv_Mz_yi
         si
@@ -112,7 +110,7 @@ classdef MD_Posterior_Sampling < handle
             u_out = (1 / this.post_data.alpha_d) * u;
         end
 
-        function [z_out] = Apply_Discrepancy_z_Jacobian_transpose_Mean(this, u_in)
+        function [z_out] = Apply_Discrepancy_z_Jacobian_Transpose_Mean(this, u_in)
             N = this.post_data.N;
             z = zeros(size(this.z_opt));
             for ell = 1:N
@@ -191,9 +189,9 @@ classdef MD_Posterior_Sampling < handle
             u_out = u_out_mean + u;
         end
 
-        function [z_out] = Apply_Discrepancy_z_Jacobian_transpose_Sample(this, z_n, u_in, sample_idx)
+        function [z_out] = Apply_Discrepancy_z_Jacobian_Transpose_Sample(this, z_n, u_in, sample_idx)
             % Note: z_n is needed since sampling is nonlinear in z via gamma(z) in delta_breve
-            z_out_mean = this.Apply_Discrepancy_z_Jacobian_transpose_Mean(u_in);
+            z_out_mean = this.Apply_Discrepancy_z_Jacobian_Transpose_Mean(u_in);
 
             z = zeros(size(z_out_mean));
             for i = 1:this.post_data.N
