@@ -10,10 +10,10 @@ M = (1 / 6) * h * M;
 M = sparse(M);
 L = ichol(M);
 
-mat_sqrt_test = Sparse_Matrix_Sqrt(M,L);
+mat_sqrt_test = Sparse_Matrix_Sqrt(M, L);
 
-v = linspace(0,1,m)';
-[Msqrt_v,rel_res] = mat_sqrt_test.Matrix_Sqrt_Apply(v);
+v = linspace(0, 1, m)';
+[Msqrt_v, rel_res] = mat_sqrt_test.Matrix_Sqrt_Apply(v);
 
 Linv = L \ eye(m);
 S = L * sqrtm(Linv * M * Linv');
