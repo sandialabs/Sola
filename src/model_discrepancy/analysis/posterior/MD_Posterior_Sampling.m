@@ -82,14 +82,14 @@ classdef MD_Posterior_Sampling < handle
         % Discrepancy kernels: Mean
         % ------------------------------------------------------------
 
-        function [u_out] = Discrepancy_Evaluation_Mean(this, z_n)
+        function [u_out] = Discrepancy_Evaluation_Mean(this, z)
             N = this.post_data.N;
             u_out = zeros(size(this.data_interface.u_opt));
             for ell = 1:N
-                coeff = this.post_data.a_ell(ell) + z_n' * this.Mz_Wz_inv_Mz_Z_minus_z_opt(:, ell);
+                coeff = this.post_data.a_ell(ell) + z' * this.Mz_Wz_inv_Mz_Z_minus_z_opt(:, ell);
                 u_out = u_out + coeff * this.post_data.u_ell(:, ell);
                 for i = 1:N
-                    coeff = this.post_data.b_i_ell(i, ell) * (this.si(i) + z_n' * this.Mz_Wz_inv_Mz_yi(:, i));
+                    coeff = this.post_data.b_i_ell(i, ell) * (this.si(i) + z' * this.Mz_Wz_inv_Mz_yi(:, i));
                     u_out = u_out - coeff * this.post_data.u_i_ell{i}(:, ell);
                 end
             end
@@ -128,9 +128,9 @@ classdef MD_Posterior_Sampling < handle
         % Discrepancy kernels: Sample
         % ------------------------------------------------------------
 
-        function [u_out] = Discrepancy_Evaluation_Sample(this, z_n, sample_idx)
-            u_out_mean = this.Discrepancy_Evaluation_Mean(z_n);
-            dz = z_n - this.z_opt;
+        function [u_out] = Discrepancy_Evaluation_Sample(this, z, sample_idx)
+            u_out_mean = this.Discrepancy_Evaluation_Mean(z);
+            dz = z - this.z_opt;
 
             Mz_dz = this.z_prior_interface.Apply_M_z(dz);
             Wz_inv_Mz_dz = this.z_prior_interface.Apply_W_z_Inverse(Mz_dz);
@@ -158,7 +158,7 @@ classdef MD_Posterior_Sampling < handle
             u_out = u_out_mean + delta_sample;
         end
 
-        function [u_out] = Apply_Discrepancy_z_Jacobian_Sample(this, z_n, z_in, sample_idx)
+        function [u_out] = Apply_Discrepancy_z_Jacobian_Sample(this, z_in, z_n, sample_idx)
             % Note: z_n is needed since sampling is nonlinear in z via gamma(z) in delta_breve
             u_out_mean = this.Apply_Discrepancy_z_Jacobian_Mean(z_in);
 
@@ -189,7 +189,7 @@ classdef MD_Posterior_Sampling < handle
             u_out = u_out_mean + u;
         end
 
-        function [z_out] = Apply_Discrepancy_z_Jacobian_Transpose_Sample(this, z_n, u_in, sample_idx)
+        function [z_out] = Apply_Discrepancy_z_Jacobian_Transpose_Sample(this, u_in, z_n, sample_idx)
             % Note: z_n is needed since sampling is nonlinear in z via gamma(z) in delta_breve
             z_out_mean = this.Apply_Discrepancy_z_Jacobian_Transpose_Mean(u_in);
 
