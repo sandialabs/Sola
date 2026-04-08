@@ -2,7 +2,8 @@ clear;
 close all;
 clc;
 
-addpath(genpath('../../src'));
+addpath(genpath('..'));
+addpath(genpath('../../../src'));
 load('HDSA_Results.mat');
 
 working_path = pwd;

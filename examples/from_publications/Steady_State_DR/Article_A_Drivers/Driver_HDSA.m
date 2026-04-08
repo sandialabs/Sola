@@ -2,7 +2,8 @@
 clear;
 close all;
 clc;
-addpath(genpath('../../src'));
+addpath(genpath('..'));
+addpath(genpath('../../../src'));
 load Optimization_Results.mat;
 
 obj = Diff_React_Objective(m, reg_coeff);

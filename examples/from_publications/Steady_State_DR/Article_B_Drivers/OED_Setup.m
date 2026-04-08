@@ -1,5 +1,6 @@
 % Clear Workspace and Add Interfaces to Path
-addpath(genpath('../../src'));
+addpath(genpath('..'));
+addpath(genpath('../../../src'));
 rng(0);
 
 % Set Default Font Axes and Line Width

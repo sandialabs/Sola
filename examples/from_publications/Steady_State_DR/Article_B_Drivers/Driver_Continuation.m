@@ -1,6 +1,4 @@
 % Setup OED
-addpath(genpath('..'));
-addpath(genpath('../../../src'));
 OED_Setup;
 
 % NOTE: THIS USES RANDOM DATA!

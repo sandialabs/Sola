@@ -1,6 +1,4 @@
 % Get the OED Setup ready
-addpath(genpath('..'));
-addpath(genpath('../../../src'));
 OED_Setup;
 
 % Perform Offline OED Computations - USES data_interface
