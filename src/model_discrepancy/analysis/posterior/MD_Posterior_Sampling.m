@@ -158,8 +158,8 @@ classdef MD_Posterior_Sampling < handle
             u_out = u_out_mean + delta_sample;
         end
 
-        function [u_out] = Apply_Discrepancy_z_Jacobian_Sample(this, z_in, z_n, sample_idx)
-            % Note: z_n is needed since sampling is nonlinear in z via gamma(z) in delta_breve
+        function [u_out] = Apply_Discrepancy_z_Jacobian_Sample(this, z_in, z, sample_idx)
+            % Note: z is needed since sampling is nonlinear in z via gamma(z) in delta_breve
             u_out_mean = this.Apply_Discrepancy_z_Jacobian_Mean(z_in);
 
             u = zeros(size(u_out_mean));
@@ -169,7 +169,7 @@ classdef MD_Posterior_Sampling < handle
             end
             u = sqrt(this.post_data.alpha_d) * u;
 
-            Mz_dz = this.z_prior_interface.Apply_M_z(z_n - this.z_opt);
+            Mz_dz = this.z_prior_interface.Apply_M_z(z - this.z_opt);
             Wz_inv_Mz_dz = this.z_prior_interface.Apply_W_z_Inverse(Mz_dz);
 
             tmp_rhs = Wz_inv_Mz_dz - this.post_data.Wz_inv_Mz_Zc * linsolve( ...
@@ -189,19 +189,19 @@ classdef MD_Posterior_Sampling < handle
             u_out = u_out_mean + u;
         end
 
-        function [z_out] = Apply_Discrepancy_z_Jacobian_Transpose_Sample(this, u_in, z_n, sample_idx)
-            % Note: z_n is needed since sampling is nonlinear in z via gamma(z) in delta_breve
+        function [z_out] = Apply_Discrepancy_z_Jacobian_Transpose_Sample(this, u_in, z, sample_idx)
+            % Note: z is needed since sampling is nonlinear in z via gamma(z) in delta_breve
             z_out_mean = this.Apply_Discrepancy_z_Jacobian_Transpose_Mean(u_in);
 
-            z = zeros(size(z_out_mean));
+            z_out_sample = zeros(size(z_out_mean));
             for i = 1:this.post_data.N
                 ui_hat_idx = this.post_data.ui_hat{i}(:, sample_idx);
                 coeff = (1 / sqrt(this.post_data.Mu(i, i))) * (ui_hat_idx' * u_in);
-                z = z + coeff * this.Mz_Wz_inv_Mz_yi(:, i);
+                z_out_sample = z_out_sample + coeff * this.Mz_Wz_inv_Mz_yi(:, i);
             end
-            z = sqrt(this.post_data.alpha_d) * z;
+            z_out_sample = sqrt(this.post_data.alpha_d) * z_out_sample;
 
-            Mz_dz = this.z_prior_interface.Apply_M_z(z_n - this.z_opt);
+            Mz_dz = this.z_prior_interface.Apply_M_z(z - this.z_opt);
             Wz_inv_Mz_dz = this.z_prior_interface.Apply_W_z_Inverse(Mz_dz);
 
             tmp_rhs = Wz_inv_Mz_dz - this.post_data.Wz_inv_Mz_Zc * linsolve( ...
@@ -217,9 +217,9 @@ classdef MD_Posterior_Sampling < handle
             breve_coeff_grad = this.z_prior_interface.Apply_M_z(tmp_rhs) / denom;
 
             u_breve_idx = this.post_data.u_breve(:, sample_idx);
-            z = z + (u_breve_idx' * u_in) * breve_coeff_grad;
+            z_out_sample = z_out_sample + (u_breve_idx' * u_in) * breve_coeff_grad;
 
-            z_out = z_out_mean + z;
+            z_out = z_out_mean + z_out_sample;
         end
 
     end
