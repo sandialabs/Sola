@@ -81,6 +81,11 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
     methods
 
         function this = MD_Continuation_Sensitivity_Operators(md_post_sampling, md_hessian_analysis)
+            arguments
+                md_post_sampling MD_Posterior_Sampling
+                md_hessian_analysis MD_Hessian_Analysis
+            end
+
             this.md_post_sampling = md_post_sampling;
             this.post_data = md_post_sampling.post_data;
             this.md_hessian_analysis = md_hessian_analysis;

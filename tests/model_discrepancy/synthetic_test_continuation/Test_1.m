@@ -41,45 +41,7 @@ beta_ks_err = rel_err(beta_ks, ref_sol.beta_ks);
 ref_diff = max([u_cont_err, z_cont_err, beta_cont_err, u_ks_err, z_ks_err, beta_ks_err]);
 
 if ref_diff > 1.e-9
-    fprintf(2, '\nmodel_discrepancy/synthetic_test_continuation failed.\n');
+    fprintf(2, '\nmodel_discrepancy/synthetic_test_continuation Test 1 failed.\n');
 else
-    fprintf(1, '\nmodel_discrepancy/synthetic_test_continuation passed.\n');
-end
-
-% ------
-if false
-    % Setup
-    rng(1);
-    z_n = data_interface.z_opt + 1;
-    t_n = 1.0;
-    sample_idx = 1;
-    v = randn(size(data_interface.z_opt));
-    w = randn(size(data_interface.u_opt));
-    sen_op = MD_Continuation_Sensitivity_Operators(md_post_sampling, md_hessian_analysis);
-
-    % Check individual sample code
-    [delta_mean, delta_samples] = md_post_sampling.Posterior_Discrepancy_Samples(data_interface.z_opt);
-    delta_mean = delta_mean{1};
-    delta_samples = delta_samples{1};
-
-    % Test Discrepancy evaluations
-    delta_mean_1 = sen_op.Discrepancy_Evaluation_Mean(data_interface.z_opt);
-    delta_samples_1 = sen_op.Discrepancy_Evaluation_Sample(data_interface.z_opt, 1);
-    fprintf('Rel. err in discrep @ mean:   %.3e\n', norm(delta_mean_1 - delta_mean) / norm(delta_mean));
-    fprintf('Rel. err in discrep @ sample:   %.3e\n', norm(delta_samples_1 - delta_samples(:, 1)) / norm(delta_samples(:, 1)));
-
-    % Finite Difference check for Apply_Discrepancy_z_Jacobian_Sample
-    Jv = sen_op.Apply_Discrepancy_z_Jacobian_Sample(z_n, v, sample_idx);
-    h = 1e-6;
-    J0 = sen_op.Discrepancy_Evaluation_Sample(z_n, sample_idx);
-    J1 = sen_op.Discrepancy_Evaluation_Sample(z_n + h * v, sample_idx);
-    Jv_fd = (J1 - J0) / (h);
-    fprintf('Rel. err in finite difference: %.3e\n', norm(Jv - Jv_fd) / norm(Jv));
-
-    % Adjoint check for Apply_Discrepancy_z_Jacobian_transpose_Sample
-    JT_w = sen_op.Apply_Discrepancy_z_Jacobian_Transpose_Sample(z_n, w, sample_idx);
-    lhs = Jv(:)' * w(:);
-    rhs = v(:)' * JT_w(:);
-    fprintf('Rel. err in adjoint operator: %.3e\n', abs(lhs - rhs) / abs(lhs));
-
+    fprintf(1, '\nmodel_discrepancy/synthetic_test_continuation Test 1 passed.\n');
 end
