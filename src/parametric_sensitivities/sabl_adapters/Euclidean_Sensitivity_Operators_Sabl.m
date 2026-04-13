@@ -1,4 +1,4 @@
-classdef Sensitivity_Operators_Sabl < Sensitivity_Operators
+classdef Euclidean_Sensitivity_Operators_Sabl < Euclidean_Sensitivity_Operators
 
     properties
         obj                 % Instance of a subclass of :class:`Objective`.
@@ -13,7 +13,7 @@ classdef Sensitivity_Operators_Sabl < Sensitivity_Operators
 
     methods
 
-        function this = Sensitivity_Operators_Sabl(obj, pcon)
+        function this = Euclidean_Sensitivity_Operators_Sabl(obj, pcon)
             % Parameters
             % ----------
             % obj
@@ -32,7 +32,7 @@ classdef Sensitivity_Operators_Sabl < Sensitivity_Operators
             end
         end
 
-        function [grad, val] = Gradient(this, z, theta)
+        function [grad, val] = Euclidean_Gradient(this, z, theta)
             if isempty(this.current_z)
                 u = this.pcon.Parameterized_State_Solve(z, theta);
                 [val, grad_u, grad_z] = this.obj.J(u, z);
@@ -62,7 +62,7 @@ classdef Sensitivity_Operators_Sabl < Sensitivity_Operators
             end
         end
 
-        function [z_out] = Apply_Hessian(this, z_in, z, theta)
+        function [z_out] = Euclidean_Apply_Hessian(this, z_in, z, theta)
             this.Update(z, theta);
             w = this.pcon.Parameterized_c_z_Apply(z_in, this.current_u, this.current_z, this.current_theta);
             mu = this.pcon.Parameterized_c_u_Inverse_Apply(-w, this.current_u, this.current_z, this.current_theta);
@@ -81,7 +81,7 @@ classdef Sensitivity_Operators_Sabl < Sensitivity_Operators
             z_out = xJ + xc;
         end
 
-        function [z_out] = Apply_B(this, theta_in, z, theta)
+        function [z_out] = Euclidean_Apply_B(this, theta_in, z, theta)
             this.Update(z, theta);
             w = this.pcon.Parameterized_c_theta_Apply(theta_in, this.current_u, this.current_z, this.current_theta);
             xi = this.pcon.Parameterized_c_u_Inverse_Apply(-w, this.current_u, this.current_z, this.current_theta);

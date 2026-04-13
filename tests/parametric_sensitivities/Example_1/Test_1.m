@@ -21,9 +21,9 @@ evalc('pcon.Parameterized_Finite_Difference_Constraint_Check(u, z, theta)');
 z0 = rand(2, 1);
 evalc('[~, z_nom] = opt.Optimize(z0)');
 
-sen_op = Sensitivity_Operators_Sabl(obj, pcon);
+sen_op = Euclidean_Sensitivity_Operators_Sabl(obj, pcon);
 qn_prec = Quasi_Newton_Preconditioner();
-sen = Pseudo_Time_Continuation(z_nom, theta_nom, sen_op, qn_prec);
+sen = Pseudo_Time_Continuation(z_nom, sen_op, qn_prec);
 
 evalc('sen_op.Finite_Difference_Gradient_Check(z, theta)');
 evalc('sen_op.Finite_Difference_Hessian_Check(z, theta)');
@@ -34,8 +34,9 @@ opt.con.theta_current = theta_pert;
 evalc('[~, z_pert] = opt.Optimize(z_nom)');
 
 N = 200;
-evalc('[z_k_fe, grad_k_fe] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_pert, N)');
-evalc('[z_k_me, grad_k_me] = sen.Pseudo_Time_Continuation_Modified_Euler(theta_pert, N)');
+theta_traj = Euclidean_Auxillary_Parameter_Trajectory(N, theta_nom, theta_pert);
+evalc('[z_k_fe, grad_k_fe] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_traj)');
+evalc('[z_k_me, grad_k_me] = sen.Pseudo_Time_Continuation_Modified_Euler(theta_traj)');
 
 error = max(norm(z_pert - z_k_fe(:, end)), norm(z_pert - z_k_me(:, end)));
 

@@ -22,16 +22,18 @@ z_bar = ones(3, 1);
 
 sen_op = Sensitivity_Operators_Rosenbrock(rosenbrock);
 qn_prec = Quasi_Newton_Preconditioner();
-sen = Pseudo_Time_Continuation(z_bar, theta_bar, sen_op, qn_prec);
+sen = Pseudo_Time_Continuation(z_bar, sen_op, qn_prec);
 
 theta_star = 1.2 * ones(d - 1, 1);
 evalc('z_star = rosenbrock.Solve_Optimization_Problem(z_bar, theta_star, verbose)');
 
 N_fe = 60;
-evalc('[z_k_fe, grad_k_fe] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_star, N_fe)');
+theta_traj = Euclidean_Auxillary_Parameter_Trajectory(N_fe, theta_bar, theta_star);
+evalc('[z_k_fe, grad_k_fe] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_traj)');
 
 N_me = 30;
-evalc('[z_k_me, grad_k_me] = sen.Pseudo_Time_Continuation_Modified_Euler(theta_star, N_me)');
+theta_traj = Euclidean_Auxillary_Parameter_Trajectory(N_me, theta_bar, theta_star);
+evalc('[z_k_me, grad_k_me] = sen.Pseudo_Time_Continuation_Modified_Euler(theta_traj)');
 
 error = max(norm(z_star - z_k_fe(:, end)), norm(z_star - z_k_me(:, end)));
 
