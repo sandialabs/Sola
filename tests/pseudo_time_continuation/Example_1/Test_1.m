@@ -41,7 +41,7 @@ evalc('[z_k_me, grad_k_me] = sen.Pseudo_Time_Continuation_Modified_Euler(theta_t
 error = max(norm(z_pert - z_k_fe(:, end)), norm(z_pert - z_k_me(:, end)));
 
 if error > 1.e-6
-    fprintf(2, '\nparametric_sensitivities/Example_1 failed.\n');
+    fprintf(2, '\npseudo_time_continuation/Example_1 failed.\n');
 else
-    fprintf(1, '\nparametric_sensitivities/Example_1 passed.\n');
+    fprintf(1, '\npseudo_time_continuation/Example_1 passed.\n');
 end

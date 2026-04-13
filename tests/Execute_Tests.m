@@ -18,7 +18,7 @@ test_model_reduction = true;
 test_optimal_experimental_design = true;
 test_optimization = true;
 test_optimization_under_uncertainty = true;
-test_parametric_sensitivities = true;
+test_pseudo_time_continuation = true;
 test_python_adapter = true;
 
 save('Test_Settings.mat');
@@ -87,8 +87,8 @@ end
 
 clear;
 load('Test_Settings.mat');
-if test_parametric_sensitivities
-    cd parametric_sensitivities/;
+if test_pseudo_time_continuation
+    cd pseudo_time_continuation/;
     run Execute_Tests.m;
     cd ../;
 end

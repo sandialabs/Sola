@@ -1,8 +1,6 @@
 clear;
-hto;
 close all;
 clc;
-addpath('../../src/');
 rng(154);
 
 write_figure_to_file = false;
@@ -22,11 +20,12 @@ z_bar = load('Optimization_Results.mat', 'z_opt').z_opt;
 
 theta_star = 1.0 + 0.2 * (1 - con.x).^2;
 
-sen_op = Sensitivity_Operators_Sabl(bayes_inv.obj, con);
+sen_op = Euclidean_Sensitivity_Operators_Sabl(bayes_inv.obj, con);
 qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
-sen = Pseudo_Time_Continuation(z_bar, theta_bar, sen_op, qn_prec);
+sen = Pseudo_Time_Continuation(z_bar, sen_op, qn_prec);
 sen.use_qn_prec = false;
-[z_k_linear_approx, grad_k_linear_approx] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_star, 1);
+theta_traj = Euclidean_Auxillary_Parameter_Trajectory(1, theta_bar, theta_star);
+[z_k_linear_approx, grad_k_linear_approx] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_traj);
 
 num_state_solves_linear_approx = con.num_state_solves;
 num_adjoint_solves_linear_approx = con.num_adjoint_solves;
@@ -64,13 +63,14 @@ for k = 1:length(N_range)
     con.num_state_solves = 0;
     con.num_adjoint_solves = 0;
 
-    sen_op = Sensitivity_Operators_Sabl(bayes_inv.obj, con);
+    sen_op = Euclidean_Sensitivity_Operators_Sabl(bayes_inv.obj, con);
     qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
-    sen = Pseudo_Time_Continuation(z_bar, theta_bar, sen_op, qn_prec);
+    sen = Pseudo_Time_Continuation(z_bar, sen_op, qn_prec);
     sen.use_qn_prec = false;
 
     N_fe = N_range(k);
-    [z_k_fe, grad_k_fe] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_star, N_fe);
+    theta_traj = Euclidean_Auxillary_Parameter_Trajectory(N_fe, theta_bar, theta_star);
+    [z_k_fe, grad_k_fe] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_traj);
 
     num_state_solves_fe = con.num_state_solves;
     num_adjoint_solves_fe = con.num_adjoint_solves;
@@ -82,13 +82,14 @@ for k = 1:length(N_range)
     con.num_state_solves = 0;
     con.num_adjoint_solves = 0;
 
-    sen_op = Sensitivity_Operators_Sabl(bayes_inv.obj, con);
+    sen_op = Euclidean_Sensitivity_Operators_Sabl(bayes_inv.obj, con);
     qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
-    sen = Pseudo_Time_Continuation(z_bar, theta_bar, sen_op, qn_prec);
+    sen = Pseudo_Time_Continuation(z_bar, sen_op, qn_prec);
     sen.use_qn_prec = false;
 
     N_me =  N_range(k) / 2;
-    [z_k_me, grad_k_me] = sen.Pseudo_Time_Continuation_Modified_Euler(theta_star, N_me);
+    theta_traj = Euclidean_Auxillary_Parameter_Trajectory(N_me, theta_bar, theta_star);
+    [z_k_me, grad_k_me] = sen.Pseudo_Time_Continuation_Modified_Euler(theta_traj);
 
     num_state_solves_me = con.num_state_solves;
     num_adjoint_solves_me = con.num_adjoint_solves;
@@ -100,10 +101,10 @@ for k = 1:length(N_range)
     con.num_state_solves = 0;
     con.num_adjoint_solves = 0;
 
-    sen_op = Sensitivity_Operators_Sabl(bayes_inv.obj, con);
+    sen_op = Euclidean_Sensitivity_Operators_Sabl(bayes_inv.obj, con);
     qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
-    qn_prec.tau = inf;
-    sen = Pseudo_Time_Continuation(z_bar, theta_bar, sen_op, qn_prec);
+    qn_prec.max_size = 0;
+    sen = Pseudo_Time_Continuation(z_bar, sen_op, qn_prec);
 
     rank = 8;
     oversampling = 10;
@@ -114,7 +115,8 @@ for k = 1:length(N_range)
     sen.sen_op.current_theta = theta;
 
     N_fe =  N_range(k);
-    [z_k_fe, grad_k_fe] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_star, N_fe);
+    theta_traj = Euclidean_Auxillary_Parameter_Trajectory(N_fe, theta_bar, theta_star);
+    [z_k_fe, grad_k_fe] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_traj);
 
     num_state_solves_fe = con.num_state_solves;
     num_adjoint_solves_fe = con.num_adjoint_solves;
@@ -126,10 +128,10 @@ for k = 1:length(N_range)
     con.num_state_solves = 0;
     con.num_adjoint_solves = 0;
 
-    sen_op = Sensitivity_Operators_Sabl(bayes_inv.obj, con);
+    sen_op = Euclidean_Sensitivity_Operators_Sabl(bayes_inv.obj, con);
     qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
-    qn_prec.tau = inf;
-    sen = Pseudo_Time_Continuation(z_bar, theta_bar, sen_op, qn_prec);
+    qn_prec.max_size = 0;
+    sen = Pseudo_Time_Continuation(z_bar, sen_op, qn_prec);
 
     rank = 8;
     oversampling = 10;
@@ -140,7 +142,8 @@ for k = 1:length(N_range)
     sen.sen_op.current_theta = theta;
 
     N_me =  N_range(k) / 2;
-    [z_k_me, grad_k_me] = sen.Pseudo_Time_Continuation_Modified_Euler(theta_star, N_me);
+    theta_traj = Euclidean_Auxillary_Parameter_Trajectory(N_me, theta_bar, theta_star);
+    [z_k_me, grad_k_me] = sen.Pseudo_Time_Continuation_Modified_Euler(theta_traj);
 
     num_state_solves_me = con.num_state_solves;
     num_adjoint_solves_me = con.num_adjoint_solves;
@@ -152,9 +155,9 @@ for k = 1:length(N_range)
     con.num_state_solves = 0;
     con.num_adjoint_solves = 0;
 
-    sen_op = Sensitivity_Operators_Sabl(bayes_inv.obj, con);
+    sen_op = Euclidean_Sensitivity_Operators_Sabl(bayes_inv.obj, con);
     qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
-    sen = Pseudo_Time_Continuation(z_bar, theta_bar, sen_op, qn_prec);
+    sen = Pseudo_Time_Continuation(z_bar, sen_op, qn_prec);
 
     rank = 8;
     oversampling = 10;
@@ -165,7 +168,8 @@ for k = 1:length(N_range)
     sen.sen_op.current_theta = theta;
 
     N_fe =  N_range(k);
-    [z_k_fe, grad_k_fe] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_star, N_fe);
+    theta_traj = Euclidean_Auxillary_Parameter_Trajectory(N_fe, theta_bar, theta_star);
+    [z_k_fe, grad_k_fe] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_traj);
 
     num_state_solves_fe = con.num_state_solves;
     num_adjoint_solves_fe = con.num_adjoint_solves;
@@ -177,9 +181,9 @@ for k = 1:length(N_range)
     con.num_state_solves = 0;
     con.num_adjoint_solves = 0;
 
-    sen_op = Sensitivity_Operators_Sabl(bayes_inv.obj, con);
+    sen_op = Euclidean_Sensitivity_Operators_Sabl(bayes_inv.obj, con);
     qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
-    sen = Pseudo_Time_Continuation(z_bar, theta_bar, sen_op, qn_prec);
+    sen = Pseudo_Time_Continuation(z_bar, sen_op, qn_prec);
 
     rank = 8;
     oversampling = 10;
@@ -190,7 +194,8 @@ for k = 1:length(N_range)
     sen.sen_op.current_theta = theta;
 
     N_me = N_range(k) / 2;
-    [z_k_me, grad_k_me] = sen.Pseudo_Time_Continuation_Modified_Euler(theta_star, N_me);
+    theta_traj = Euclidean_Auxillary_Parameter_Trajectory(N_me, theta_bar, theta_star);
+    [z_k_me, grad_k_me] = sen.Pseudo_Time_Continuation_Modified_Euler(theta_traj);
 
     num_state_solves_me = con.num_state_solves;
     num_adjoint_solves_me = con.num_adjoint_solves;

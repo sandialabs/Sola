@@ -20,9 +20,9 @@ bayes_inv.opt.fun_tol = 1.e-10;
 bayes_inv.opt.opt_tol = 1.e-10;
 z_bar = load('Optimization_Results.mat', 'z_opt').z_opt;
 
-sen_op = Sensitivity_Operators_Sabl(bayes_inv.obj, con);
+sen_op = Euclidean_Sensitivity_Operators_Sabl(bayes_inv.obj, con);
 qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
-sen = Pseudo_Time_Continuation(z_bar, theta_bar, sen_op, qn_prec);
+sen = Pseudo_Time_Continuation(z_bar, sen_op, qn_prec);
 
 theta_star = 1.0 + 0.2 * (1 - con.x).^2;
 
@@ -36,7 +36,8 @@ sen.sen_op.current_lambda = lambda;
 sen.sen_op.current_theta = theta;
 
 N_fe = 15;
-[z_k_fe, grad_k_fe] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_star, N_fe);
+theta_traj = Euclidean_Auxillary_Parameter_Trajectory(N_fe, theta_bar, theta_star);
+[z_k_fe, grad_k_fe] = sen.Pseudo_Time_Continuation_Forward_Euler(theta_traj);
 num_state_solves_fe = con.num_state_solves;
 num_adjoint_solves_fe = con.num_adjoint_solves;
 
@@ -53,7 +54,8 @@ sen.sen_op.current_lambda = lambda;
 sen.sen_op.current_theta = theta;
 
 N_me = 10;
-[z_k_me, grad_k_me] = sen.Pseudo_Time_Continuation_Modified_Euler(theta_star, N_me);
+theta_traj = Euclidean_Auxillary_Parameter_Trajectory(N_me, theta_bar, theta_star);
+[z_k_me, grad_k_me] = sen.Pseudo_Time_Continuation_Modified_Euler(theta_traj);
 num_state_solves_me = con.num_state_solves;
 num_adjoint_solves_me = con.num_adjoint_solves;
 
@@ -61,7 +63,7 @@ con.num_state_solves = 0;
 con.num_adjoint_solves = 0;
 
 %%
-grad_norm_nom = norm(sen_op.Gradient(z_bar, theta_bar));
+grad_norm_nom = norm(sen_op.Euclidean_Gradient(z_bar, theta_bar));
 bayes_inv.con.theta_current = theta_star;
 [~, z_star] = bayes_inv.Compute_MAP_Point(z_bar);
 
