@@ -5,24 +5,33 @@ classdef Pseudo_Time_Continuation < handle
         sen_op
         qn_prec
         use_qn_prec
+        print_output
+        print_iter
     end
 
     methods
 
-        function this = Pseudo_Time_Continuation(z_bar, sen_op, qn_prec)
+        function this = Pseudo_Time_Continuation(z_bar, sen_op, qn_prec, print_output, print_iter)
             this.z_bar = z_bar;
             this.sen_op = sen_op;
             this.qn_prec = qn_prec;
             this.use_qn_prec = true;
+            if nargin < 4
+                this.print_output = false;
+            else
+                this.print_output = print_output;
+            end
+            if nargin < 5
+                this.print_iter = false;
+            else
+                this.print_iter = print_iter;
+            end
         end
 
         function [z_out] = Apply_Inverse_Hessian(this, z_in, z, theta_traj, time_index)
 
             tol = 1.e-6;
             max_iter = length(z_in);
-
-            print_iter = false;
-            print_output = true;
 
             z_out = 0 * z_in;
             r = z_in;
@@ -34,7 +43,7 @@ classdef Pseudo_Time_Continuation < handle
 
             while (sqrt(scalar) > rel_tol) && (norm(r) > rel_tol) && (iter < max_iter)
                 iter = iter + 1;
-                if print_iter
+                if this.print_iter
                     disp(['Iteration = ', num2str(iter)]);
                     disp(['Sqrt(rho) = ', num2str(sqrt(scalar))]);
                     disp(['Norm(r) = ', num2str(norm(r))]);
@@ -53,7 +62,7 @@ classdef Pseudo_Time_Continuation < handle
                 p = v + (scalar / scalar_old) * p;
             end
 
-            if print_output
+            if this.print_output
                 disp(['Total iterations = ', num2str(iter)]);
                 disp(['Relative Residual = ', num2str(norm(r) / norm(z_in))]);
             end
