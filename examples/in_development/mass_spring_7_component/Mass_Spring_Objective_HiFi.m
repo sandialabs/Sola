@@ -30,7 +30,7 @@ classdef Mass_Spring_Objective_HiFi < Dynamic_Objective
         end
 
         function [val] = target(this, t)
-            val = (1.e-3) * t.^4;
+            val = 0.0;
         end
 
         function [val, grad_y] = g(this, y, t)

@@ -208,6 +208,22 @@ legend({'Low-fidelity control', 'High-fidelity control', 'Update'});
 set(gca, 'fontsize', 18);
 
 %%
+u_lofi = con_hifi.State_Solve(z_tilde);
+u_update = con_hifi.State_Solve(z_update_mean);
+u_hifi = con_hifi.State_Solve(z_star);
+u_lofi_t = reshape(u_lofi, [], N)';
+u_update_t = reshape(u_update, [], N)';
+u_hifi_t = reshape(u_hifi, [], N)';
+
+figure;
+hold on;
+plot(t, u_lofi_t(:, 1), 'color', 'black', 'LineWidth', 3);
+plot(t, u_hifi_t(:, 1), 'color', 'cyan', 'LineWidth', 3);
+plot(t, u_update_t(:, 1), '--', 'color', 'red', 'LineWidth', 3);
+legend({'Low-fidelity controlled state', 'High-fidelity controlled state' 'Update controlled state'});
+set(gca, 'fontsize', 18);
+
+%%
 Jhat_update_samples = zeros(num_post_samples, 1);
 for k = 1:num_post_samples
     Jhat_update_samples(k) = opt_hifi.Jhat(z_update_samples(:, k));
