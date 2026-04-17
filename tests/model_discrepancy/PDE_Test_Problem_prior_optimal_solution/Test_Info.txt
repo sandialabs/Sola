@@ -1,0 +1,3 @@
+This examples tests:
+* MD_Prior_Opt_Solution_Sampling
+    - Generate_Prior_Opt_Solution_Samples

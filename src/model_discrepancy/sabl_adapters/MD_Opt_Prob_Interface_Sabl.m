@@ -64,7 +64,7 @@ classdef MD_Opt_Prob_Interface_Sabl < MD_Opt_Prob_Interface
             end
             this@MD_Opt_Prob_Interface();
             this.sabl_opt = sabl_opt;
-            this.z_current = md_data_interface.z_opt;
+            this.z_current = md_data_interface.Load_Optimal_z();
             [~, ~, this.hessian_data] = this.sabl_opt.Jhat(this.z_current);
             this.m = (length(this.hessian_data) - length(this.z_current)) / 2;
             this.u_current = this.hessian_data(1:this.m);
