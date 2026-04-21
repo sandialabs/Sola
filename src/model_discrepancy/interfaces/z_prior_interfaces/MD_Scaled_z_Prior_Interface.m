@@ -1,3 +1,8 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%      Sola - Sandbox for Outer Loop Analysis         %%%%%%%%%
+%%%%%%%%% Questions? Contact Joseph Hart (joshart@sandia.gov) %%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 classdef MD_Scaled_z_Prior_Interface < MD_z_Prior_Interface
 
     %%%%%%%%%%%%%%%%% Express covariance matrix as W_z^{-1} = alpha_z * \acute{W}_z^{-1} so that alpha_z may be isolated %%%%%%%%%%%%%%%%%

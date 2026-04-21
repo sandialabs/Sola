@@ -1,16 +1,19 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%      Sola - Sandbox for Outer Loop Analysis         %%%%%%%%%
+%%%%%%%%% Questions? Contact Joseph Hart (joshart@sandia.gov) %%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 clear;
 close all;
 clc;
 
 % The automatic_differentiation module depends on adigator.
-% Set "test_automatic_differentiation=false" to disable the test
-% if adigator is not available.
+% Set "test_automatic_differentiation=true" to enable the test
 
 % The python_adapter module depends on specific versions of python
-% and Matlab. Set "test_python_adapter=false" to disable the test
-% if the correct versions are not available.
+% and Matlab. Set "test_python_adapter=true" to enable the test
 
-test_automatic_differentiation = true;
+test_automatic_differentiation = false;
 test_bayesian_inversion = true;
 test_linear_algebra_tools = true;
 test_model_discrepancy = true;
@@ -19,7 +22,22 @@ test_optimal_experimental_design = true;
 test_optimization = true;
 test_optimization_under_uncertainty = true;
 test_pseudo_time_continuation = true;
-test_python_adapter = true;
+test_python_adapter = false;
+
+if ~test_automatic_differentiation
+    fprintf([ ...
+             '     \n', ...
+             '     I am not testing the source code under sola/src/automatic_differentiation. \n', ...
+             '     If ADiGator has been installed, modify the boolean variable test_automatic_differentiation to enable the test. \n', ...
+             '     \n']);
+end
+
+if ~test_python_adapter
+    fprintf([ ...
+             '     I am not testing the source code under sola/src/python_adapter. \n', ...
+             '     If the necessary Matlab and Python versions are installed, modify the boolean variable test_python_adapter to enable the test. \n', ...
+             '     \n']);
+end
 
 save('Test_Settings.mat');
 

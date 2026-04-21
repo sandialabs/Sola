@@ -1,11 +1,11 @@
-# Sandbox for Adjoint-Based outer Loop analysis (SABL)
+# Sandbox for Outer Loop Analysis (Sola)
 
 This MATLAB library solves equality constrained optimization problems in reduced space with derivative (1st and 2nd) based optimization computed via adjoints.
 In addition, it automatically enables hyper-differential sensitivity analysis with respect to model discrepancy.
 
 ## File Structure
 
-- [**src/**](./src/): Source code defining class interfaces similar to the `MrHyDE` C++ framework.
+- [**src/**](./src/): Source code defining class interfaces and codes for outer loop analysis.
 - [**examples/**](./examples/): Applications / examples with real physics.
 - [**tests/**](./tests/): Unit tests and toy examples for verification.
 - [**docs/**](./docs/): Documentation, powered by `sphinx`.
@@ -51,7 +51,3 @@ To run the formatter without a commit:
 ```bash
 ./.pre-commit-formatting-hook
 ```
-
-## References
-
-[Wolf](https://icons8.com/icon/37544/werewolf) icon by [Icons8](https://icons8.com).
