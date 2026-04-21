@@ -10,7 +10,7 @@ classdef MD_OED < handle
         data_interface
         u_prior_interface
         z_prior_interface
-        md_hessian_analysis
+        hessian_analysis
 
         offline_data
         verbosity
@@ -20,19 +20,19 @@ classdef MD_OED < handle
 
     methods
 
-        function this = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis)
+        function this = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, hessian_analysis)
             arguments
                 opt_prob_interface MD_Opt_Prob_Interface
                 data_interface MD_Data_Interface
                 u_prior_interface MD_u_Prior_Interface
                 z_prior_interface MD_z_Prior_Interface
-                md_hessian_analysis MD_Hessian_Analysis
+                hessian_analysis MD_Hessian_Analysis
             end
             this.opt_prob_interface = opt_prob_interface;
             this.data_interface = data_interface;
             this.u_prior_interface = u_prior_interface;
             this.z_prior_interface = z_prior_interface;
-            this.md_hessian_analysis = md_hessian_analysis;
+            this.hessian_analysis = hessian_analysis;
             this.verbosity = false;
             this.covar_coeff = 1;
         end
@@ -44,12 +44,12 @@ classdef MD_OED < handle
         function this = Offline_Computation(this)
 
             this.offline_data = struct;
-            if isempty(this.md_hessian_analysis.evals)
+            if isempty(this.hessian_analysis.evals)
                 this.offline_data.r = length(this.data_interface.z_opt);
                 this.offline_data.V = eye(this.offline_data.r);
             else
-                this.offline_data.V = this.md_hessian_analysis.evecs;
-                this.offline_data.r = length(this.md_hessian_analysis.evals);
+                this.offline_data.V = this.hessian_analysis.evecs;
+                this.offline_data.r = length(this.hessian_analysis.evals);
             end
 
             Mz_V = this.z_prior_interface.Apply_M_z(this.offline_data.V);

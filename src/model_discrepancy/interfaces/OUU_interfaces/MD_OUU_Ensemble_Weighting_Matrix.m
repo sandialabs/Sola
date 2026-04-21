@@ -6,7 +6,7 @@
 classdef MD_OUU_Ensemble_Weighting_Matrix < handle
 
     properties
-        md_ouu_data_interface
+        ouu_data_interface
         us_prior_interface
         max_marginal_var_percent
         min_cond_var_percent
@@ -24,22 +24,22 @@ classdef MD_OUU_Ensemble_Weighting_Matrix < handle
 
     methods (Access = public)
 
-        function this = MD_OUU_Ensemble_Weighting_Matrix(md_ouu_data_interface, us_prior_interface, max_marginal_var_percent, min_cond_var_percent, assume_independent)
+        function this = MD_OUU_Ensemble_Weighting_Matrix(ouu_data_interface, us_prior_interface, max_marginal_var_percent, min_cond_var_percent, assume_independent)
             arguments
-                md_ouu_data_interface MD_OUU_Data_Interface
+                ouu_data_interface MD_OUU_Data_Interface
                 us_prior_interface MD_u_Prior_Interface
                 max_marginal_var_percent (1, 1) {mustBeNumeric} = 1.0
                 min_cond_var_percent (1, 1) {mustBeNumeric} = 0.1
                 assume_independent {boolean} = false
             end
-            this.md_ouu_data_interface = md_ouu_data_interface;
+            this.ouu_data_interface = ouu_data_interface;
             this.us_prior_interface = us_prior_interface;
             this.max_marginal_var_percent = max_marginal_var_percent;
             this.min_cond_var_percent = min_cond_var_percent;
             this.assume_independent = assume_independent;
 
             if this.assume_independent
-                ens_size = size(this.md_ouu_data_interface.Reshape_State_to_Mat(this.md_ouu_data_interface.D(:, 1)), 2);
+                ens_size = size(this.ouu_data_interface.Reshape_State_to_Mat(this.ouu_data_interface.D(:, 1)), 2);
                 this.W_s = eye(ens_size);
                 this.W_s_inv = eye(ens_size);
                 this.R_inv = eye(ens_size);
@@ -50,11 +50,11 @@ classdef MD_OUU_Ensemble_Weighting_Matrix < handle
         end
 
         function [] = Compute_Matrices(this)
-            ens_size = size(this.md_ouu_data_interface.Reshape_State_to_Mat(this.md_ouu_data_interface.D(:, 1)), 2);
-            N = size(this.md_ouu_data_interface.D, 2);
+            ens_size = size(this.ouu_data_interface.Reshape_State_to_Mat(this.ouu_data_interface.D(:, 1)), 2);
+            N = size(this.ouu_data_interface.D, 2);
             this.Eta = zeros(ens_size, ens_size, N);
             for i = 1:N
-                d = this.md_ouu_data_interface.Reshape_State_to_Mat(this.md_ouu_data_interface.D(:, i));
+                d = this.ouu_data_interface.Reshape_State_to_Mat(this.ouu_data_interface.D(:, i));
                 for s = 1:ens_size
                     for k = 1:ens_size
                         this.Eta(s, k, i) = (d(:, s) - d(:, k))' * this.us_prior_interface.Apply_M_u(d(:, s) - d(:, k));

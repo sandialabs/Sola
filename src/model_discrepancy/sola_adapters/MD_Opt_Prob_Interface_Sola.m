@@ -62,14 +62,14 @@ classdef MD_Opt_Prob_Interface_Sola < MD_Opt_Prob_Interface
     %% Constructor and helper function
     methods
 
-        function this = MD_Opt_Prob_Interface_Sola(sola_opt, md_data_interface)
+        function this = MD_Opt_Prob_Interface_Sola(sola_opt, data_interface)
             arguments
                 sola_opt Reduced_Space_Optimization
-                md_data_interface MD_Data_Interface
+                data_interface MD_Data_Interface
             end
             this@MD_Opt_Prob_Interface();
             this.sola_opt = sola_opt;
-            this.z_current = md_data_interface.Load_Optimal_z();
+            this.z_current = data_interface.Load_Optimal_z();
             [~, ~, this.hessian_data] = this.sola_opt.Jhat(this.z_current);
             this.m = (length(this.hessian_data) - length(this.z_current)) / 2;
             this.u_current = this.hessian_data(1:this.m);
