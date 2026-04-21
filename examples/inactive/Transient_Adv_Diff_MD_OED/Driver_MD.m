@@ -26,7 +26,7 @@ data_interface.Load_Data();
 hyperparams = MD_Hyperparameters_Transient_Adv_Diff(data_interface, n_y);
 
 hyperparams.beta_t = 50;
-transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(hyperparams, T, n_t, n_y);
+transient_prior_cov = MD_Transient_Prior_Covariance_Sola(hyperparams, T, n_t, n_y);
 
 alpha_u = (1 / 1)^2;
 spatial_u_prior_interface = MD_Elliptic_u_Prior_Interface_Adv_Diff(alpha_u, opt_lofi);
@@ -90,7 +90,7 @@ if ~suppress_figures
 end
 
 %%
-opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
+opt_prob_interface = MD_Opt_Prob_Interface_Sola(opt_lofi, data_interface);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 num_evals = 26;
 oversampling = 20;

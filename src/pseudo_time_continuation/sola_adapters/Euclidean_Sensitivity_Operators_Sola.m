@@ -3,7 +3,7 @@
 %%%%%%%%% Questions? Contact Joseph Hart (joshart@sandia.gov) %%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-classdef Euclidean_Sensitivity_Operators_Sabl < Euclidean_Sensitivity_Operators
+classdef Euclidean_Sensitivity_Operators_Sola < Euclidean_Sensitivity_Operators
 
     properties
         obj                 % Instance of a subclass of :class:`Objective`.
@@ -18,7 +18,7 @@ classdef Euclidean_Sensitivity_Operators_Sabl < Euclidean_Sensitivity_Operators
 
     methods
 
-        function this = Euclidean_Sensitivity_Operators_Sabl(obj, pcon)
+        function this = Euclidean_Sensitivity_Operators_Sola(obj, pcon)
             % Parameters
             % ----------
             % obj

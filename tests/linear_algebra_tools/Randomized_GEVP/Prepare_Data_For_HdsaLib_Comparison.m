@@ -21,4 +21,4 @@ num_evals = 20;
 oversampling = 20;
 [evecs, evals] = gevp.Compute_GEVP(num_evals, oversampling);
 
-save('Sabl_Output.mat', 'evecs', 'evals');
+save('Sola_Output.mat', 'evecs', 'evals');

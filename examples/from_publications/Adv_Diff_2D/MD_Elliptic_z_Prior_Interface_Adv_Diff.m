@@ -48,12 +48,12 @@ classdef  MD_Elliptic_z_Prior_Interface_Adv_Diff < MD_Elliptic_z_Prior_Interface
             z_out = sqrt(this.alpha_z) * this.Apply_E_z_Inverse(tmp);
         end
 
-        function this = MD_Elliptic_z_Prior_Interface_Adv_Diff(alpha_z, sabl_opt)
+        function this = MD_Elliptic_z_Prior_Interface_Adv_Diff(alpha_z, sola_opt)
             this@MD_Elliptic_z_Prior_Interface(alpha_z);
 
-            this.M = sabl_opt.con.adv_diff.pde_meshing.M;
-            this.E_z = sabl_opt.con.control_basis' * this.M * sabl_opt.con.control_basis;
-            this.control_basis = sabl_opt.con.control_basis;
+            this.M = sola_opt.con.adv_diff.pde_meshing.M;
+            this.E_z = sola_opt.con.control_basis' * this.M * sola_opt.con.control_basis;
+            this.control_basis = sola_opt.con.control_basis;
         end
 
     end

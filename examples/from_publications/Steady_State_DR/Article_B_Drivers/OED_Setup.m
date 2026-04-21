@@ -46,7 +46,7 @@ W_z_norm = @(z) sqrt(z' * z_prior_interface.Apply_W_z(z));
 oed_z_error_fn = @(z) M_z_norm(z - z_hifi) / M_z_norm(z_hifi);
 
 % Hessian analysis
-opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
+opt_prob_interface = MD_Opt_Prob_Interface_Sola(opt_lofi, data_interface);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 num_evals = 4;
 oversampling = 20;

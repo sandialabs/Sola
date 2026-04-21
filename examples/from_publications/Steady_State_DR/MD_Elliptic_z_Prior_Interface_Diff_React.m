@@ -45,11 +45,11 @@ classdef MD_Elliptic_z_Prior_Interface_Diff_React < MD_Elliptic_z_Prior_Interfac
             z_out = sqrt(this.alpha_z) * linsolve(this.E_z, R' * randn(size(R, 1), num_samples));
         end
 
-        function this = MD_Elliptic_z_Prior_Interface_Diff_React(alpha_u, sabl_opt)
+        function this = MD_Elliptic_z_Prior_Interface_Diff_React(alpha_u, sola_opt)
             this@MD_Elliptic_z_Prior_Interface(alpha_u);
 
-            S = sabl_opt.con.S;
-            this.M = sabl_opt.con.M;
+            S = sola_opt.con.S;
+            this.M = sola_opt.con.M;
             this.E_z = (3.e-2) * S + this.M;
         end
 

@@ -69,7 +69,7 @@ Z_test(:, 3) = 1.5 * ones(m, 1);
 [post_delta_mean, post_delta_samples] = md_post_samples.Posterior_Discrepancy_Samples(Z_test);
 
 %%
-opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
+opt_prob_interface = MD_Opt_Prob_Interface_Sola(opt_lofi, data_interface);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 md_update = MD_Update(md_post_samples, md_hessian_analysis);
 
@@ -77,4 +77,4 @@ md_update = MD_Update(md_post_samples, md_hessian_analysis);
 
 %%
 post_delta_mean = reshape(cell2mat(post_delta_mean), 200, 3);
-save('Sabl_Output.mat', 'prior_delta', 'prior_delta_z_opt', 'post_delta_mean', 'post_delta_samples', 'post_z_mean', 'post_z_samples');
+save('Sola_Output.mat', 'prior_delta', 'prior_delta_z_opt', 'post_delta_mean', 'post_delta_samples', 'post_z_mean', 'post_z_samples');

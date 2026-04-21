@@ -47,11 +47,11 @@ classdef MD_Elliptic_z_Prior_Interface_Diff_React < MD_Elliptic_z_Prior_Interfac
             z_out = sqrt(this.alpha_z) * this.Apply_E_z_Inverse(tmp);
         end
 
-        function this = MD_Elliptic_z_Prior_Interface_Diff_React(alpha_z, sabl_opt)
+        function this = MD_Elliptic_z_Prior_Interface_Diff_React(alpha_z, sola_opt)
             this@MD_Elliptic_z_Prior_Interface(alpha_z);
 
-            S = sabl_opt.con.diff_react_lofi.pde_meshing.S;
-            this.M = sabl_opt.con.diff_react_lofi.pde_meshing.M;
+            S = sola_opt.con.diff_react_lofi.pde_meshing.S;
+            this.M = sola_opt.con.diff_react_lofi.pde_meshing.M;
             this.E_z = (1.e-1) * S + this.M;
         end
 

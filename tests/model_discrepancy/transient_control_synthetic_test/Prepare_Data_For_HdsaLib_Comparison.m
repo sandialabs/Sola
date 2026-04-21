@@ -24,7 +24,7 @@ opt_prob_interface = MD_Opt_Prob_Interface_transient_control_synthetic_test(n_y,
 
 [M, S] = Assemble_Mass_and_Stiffness(n_y);
 u_hyperparam_interface = MD_u_Hyperparameter_Interface_transient_control_synthetic_test(n_y, n_t);
-transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface, T, n_t, n_y);
+transient_prior_cov = MD_Transient_Prior_Covariance_Sola(data_interface, u_hyperparam_interface, T, n_t, n_y);
 spatial_u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface);
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_u_prior_interface, transient_prior_cov);
 
@@ -55,4 +55,4 @@ md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 [post_z_mean, post_z_samples] = md_update.Posterior_Update_Samples();
 
 %%
-save('Sabl_Output.mat', 'post_z_mean', 'post_z_samples');
+save('Sola_Output.mat', 'post_z_mean', 'post_z_samples');

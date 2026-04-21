@@ -31,7 +31,7 @@ u_hyperparam_interface_cell{1} = MD_u_Hyperparameter_Interface_transient_multi_s
 u_hyperparam_interface_cell{1}.beta_u = 0.009166435191031;
 u_hyperparam_interface_cell{1}.beta_t = 0.027499305573092;
 u_spatial_prior_interface_cell{1} = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface_cell{1});
-transient_prior_cov{1} = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface_cell{1}, 1, n_t, n_y);
+transient_prior_cov{1} = MD_Transient_Prior_Covariance_Sola(data_interface, u_hyperparam_interface_cell{1}, 1, n_t, n_y);
 u_prior_interface_cell{1} = MD_Transient_Elliptic_u_Prior_Interface(data_interface, u_spatial_prior_interface_cell{1}, transient_prior_cov{1});
 
 u_hyperparam_interface_cell{2} = MD_u_Hyperparameter_Interface_transient_multi_state_synthetic(n_y, n_t, 2);
@@ -39,7 +39,7 @@ u_hyperparam_interface_cell{2} = MD_u_Hyperparameter_Interface_transient_multi_s
 u_hyperparam_interface_cell{2}.beta_u = 0.009166435191031;
 u_hyperparam_interface_cell{2}.beta_t = 0.027499305573092;
 u_spatial_prior_interface_cell{2} = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface_cell{2});
-transient_prior_cov{2} = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface_cell{2}, 1, n_t, n_y);
+transient_prior_cov{2} = MD_Transient_Prior_Covariance_Sola(data_interface, u_hyperparam_interface_cell{2}, 1, n_t, n_y);
 u_prior_interface_cell{2} = MD_Transient_Elliptic_u_Prior_Interface(data_interface, u_spatial_prior_interface_cell{2}, transient_prior_cov{2});
 
 u_prior_interface = MD_Multi_State_u_Prior_Interface(data_interface, u_prior_interface_cell, u_hyperparam_interface_cell);
@@ -81,4 +81,4 @@ md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 
 %%
 post_delta_mean = reshape(cell2mat(post_delta_mean), 1000, 3);
-save('Sabl_Output.mat', 'prior_delta', 'prior_delta_z_opt', 'post_delta_mean', 'post_delta_samples', 'post_z_mean', 'post_z_samples');
+save('Sola_Output.mat', 'prior_delta', 'prior_delta_z_opt', 'post_delta_mean', 'post_delta_samples', 'post_z_mean', 'post_z_samples');

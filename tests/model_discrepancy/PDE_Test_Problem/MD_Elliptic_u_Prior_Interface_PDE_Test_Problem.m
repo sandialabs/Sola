@@ -28,16 +28,16 @@ classdef MD_Elliptic_u_Prior_Interface_PDE_Test_Problem < MD_Elliptic_u_Prior_In
 
     methods
 
-        function this = MD_Elliptic_u_Prior_Interface_PDE_Test_Problem(alpha_u, sabl_opt)
+        function this = MD_Elliptic_u_Prior_Interface_PDE_Test_Problem(alpha_u, sola_opt)
             this@MD_Elliptic_u_Prior_Interface(alpha_u);
 
-            this.E_u = (1 * 10^-2) * sabl_opt.con.S + sabl_opt.con.M;
-            this.M = sabl_opt.con.M;
+            this.E_u = (1 * 10^-2) * sola_opt.con.S + sola_opt.con.M;
+            this.M = sola_opt.con.M;
 
             num_sing_vals = 200;
             oversampling = 0;
             num_subspace_iters = 1;
-            u_vec = zeros(sabl_opt.con.m, 1);
+            u_vec = zeros(sola_opt.con.m, 1);
             this.Compute_E_u_Inverse_GSVD(num_sing_vals, oversampling, num_subspace_iters, u_vec);
 
         end

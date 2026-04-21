@@ -39,7 +39,7 @@ u_hyperparam_interface_cell{k}.gsvd_oversampling = 20;
 u_hyperparam_interface_cell{k}.time_variance_inflation = .05;
 u_hyperparam_interface_cell{k}.beta_u = .1;
 u_spatial_prior_interface_cell{k} = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface_cell{k});
-u_transient_prior_cov{k} = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface_cell{k}, T, n_t, n_y / 2);
+u_transient_prior_cov{k} = MD_Transient_Prior_Covariance_Sola(data_interface, u_hyperparam_interface_cell{k}, T, n_t, n_y / 2);
 u_prior_interface_cell{k} = MD_Transient_Elliptic_u_Prior_Interface(data_interface, u_spatial_prior_interface_cell{k}, u_transient_prior_cov{k});
 
 k = 2;
@@ -49,7 +49,7 @@ u_hyperparam_interface_cell{k}.gsvd_oversampling = 20;
 u_hyperparam_interface_cell{k}.time_variance_inflation = .2;
 u_hyperparam_interface_cell{k}.beta_u = .2;
 u_spatial_prior_interface_cell{k} = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface_cell{k});
-u_transient_prior_cov{k} = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface_cell{k}, T, n_t, n_y / 2);
+u_transient_prior_cov{k} = MD_Transient_Prior_Covariance_Sola(data_interface, u_hyperparam_interface_cell{k}, T, n_t, n_y / 2);
 u_prior_interface_cell{k} = MD_Transient_Elliptic_u_Prior_Interface(data_interface, u_spatial_prior_interface_cell{k}, u_transient_prior_cov{k});
 
 u_prior_interface = MD_Multi_State_u_Prior_Interface(data_interface, u_prior_interface_cell, u_hyperparam_interface_cell);

@@ -1,5 +1,5 @@
 This examples tests:
-* MD_Transient_Prior_Covariance_Sabl
+* MD_Transient_Prior_Covariance_Sola
 
 * MD_Transient_Prior_Covariance
 	- Set_beta_t

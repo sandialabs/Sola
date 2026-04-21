@@ -51,10 +51,10 @@ classdef MD_Elliptic_z_Prior_Interface_PDE_Test_Problem < MD_Elliptic_z_Prior_In
 
     methods
 
-        function this = MD_Elliptic_z_Prior_Interface_PDE_Test_Problem(alpha_z, sabl_opt)
+        function this = MD_Elliptic_z_Prior_Interface_PDE_Test_Problem(alpha_z, sola_opt)
             this@MD_Elliptic_z_Prior_Interface(alpha_z);
-            this.E_z = (10^-3) * sabl_opt.con.S + sabl_opt.con.M;
-            this.M = sabl_opt.con.M;
+            this.E_z = (10^-3) * sola_opt.con.S + sola_opt.con.M;
+            this.M = sola_opt.con.M;
         end
 
     end

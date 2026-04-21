@@ -3,7 +3,7 @@
 %%%%%%%%% Questions? Contact Joseph Hart (joshart@sandia.gov) %%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-classdef MD_Transient_Prior_Covariance_Sabl < MD_Transient_Prior_Covariance
+classdef MD_Transient_Prior_Covariance_Sola < MD_Transient_Prior_Covariance
 
     properties
 
@@ -11,7 +11,7 @@ classdef MD_Transient_Prior_Covariance_Sabl < MD_Transient_Prior_Covariance
 
     methods
 
-        function this = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface, T, n_t, n_y)
+        function this = MD_Transient_Prior_Covariance_Sola(data_interface, u_hyperparam_interface, T, n_t, n_y)
             arguments
                 data_interface MD_Data_Interface
                 u_hyperparam_interface MD_u_Hyperparameter_Interface

@@ -8,16 +8,16 @@ classdef MD_Opt_Prob_Interface_Python < MD_Opt_Prob_Interface
     properties
         z_current
         u_current
-        sabl_opt
+        sola_opt
     end
 
     methods (Access = public)
 
-        function this = MD_Opt_Prob_Interface_Python(md_interface_data, sabl_opt)
+        function this = MD_Opt_Prob_Interface_Python(md_interface_data, sola_opt)
             this@MD_Opt_Prob_Interface();
             this.z_current = md_interface_data.z_opt;
             this.u_current = md_interface_data.u_opt;
-            this.sabl_opt  = sabl_opt;
+            this.sola_opt  = sola_opt;
         end
 
         function [z_out] = Apply_Solution_Operator_z_Jacobian_Transpose(this, u_in, z)
@@ -66,14 +66,14 @@ classdef MD_Opt_Prob_Interface_Python < MD_Opt_Prob_Interface
             if norm(z - this.z_current) == 0
                 u = this.u_current;
             else
-                u = this.sabl_opt.con.State_Solve(z);
+                u = this.sola_opt.con.State_Solve(z);
                 this.u_current = u;
                 this.z_current = z;
             end
         end
 
         function [val, grad_u, grad_z] = Objective_Function(this, u, z)
-            [val, tmp, grad_z] = this.sabl_opt.obj.J(u, z);
+            [val, tmp, grad_z] = this.sola_opt.obj.J(u, z);
             grad_u = this.Misfit_Gradient(u, z);
         end
 

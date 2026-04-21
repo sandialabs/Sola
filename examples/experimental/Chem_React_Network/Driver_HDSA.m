@@ -70,7 +70,7 @@ if plot_figures
 end
 
 %%
-opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
+opt_prob_interface = MD_Opt_Prob_Interface_Sola(opt, data_interface);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 [z_update_mean, z_update_samples] = md_update.Posterior_Update_Samples();

@@ -28,10 +28,10 @@ classdef MD_Elliptic_z_Prior_Interface_Transient_Test_Problem < MD_Elliptic_z_Pr
 
     methods
 
-        function this = MD_Elliptic_z_Prior_Interface_Transient_Test_Problem(alpha_z, sabl_opt)
+        function this = MD_Elliptic_z_Prior_Interface_Transient_Test_Problem(alpha_z, sola_opt)
             this@MD_Elliptic_z_Prior_Interface(alpha_z);
-            S = sabl_opt.con.S;
-            this.M = sabl_opt.con.M;
+            S = sola_opt.con.S;
+            this.M = sola_opt.con.M;
             this.E_z = (3.e-2) * S + this.M;
         end
 

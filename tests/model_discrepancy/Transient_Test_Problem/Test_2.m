@@ -24,8 +24,8 @@ adapt_time_variance = false;
 u_hyperparam_interface = MD_u_Hyperparameter_Interface_Transient_Test_Problem(x, t, adapt_time_variance);
 u_hyperparam_interface.beta_t = 11;
 
-transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface, T, n_t, n_y);
-opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
+transient_prior_cov = MD_Transient_Prior_Covariance_Sola(data_interface, u_hyperparam_interface, T, n_t, n_y);
+opt_prob_interface = MD_Opt_Prob_Interface_Sola(opt, data_interface);
 u_hyperparam_interface.alpha_u = 1.e-2;
 u_hyperparam_interface.beta_u = 2.e-2;
 spatial_u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(opt.con.S, opt.con.M, data_interface, u_hyperparam_interface);

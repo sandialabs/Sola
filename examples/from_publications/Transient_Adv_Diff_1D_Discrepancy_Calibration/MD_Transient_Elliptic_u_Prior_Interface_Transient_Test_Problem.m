@@ -28,17 +28,17 @@ classdef MD_Transient_Elliptic_u_Prior_Interface_Transient_Test_Problem < MD_Tra
 
     methods
 
-        function this = MD_Transient_Elliptic_u_Prior_Interface_Transient_Test_Problem(alpha_u, transient_prior_cov, sabl_opt, num_sing_vals)
+        function this = MD_Transient_Elliptic_u_Prior_Interface_Transient_Test_Problem(alpha_u, transient_prior_cov, sola_opt, num_sing_vals)
             this@MD_Transient_Elliptic_u_Prior_Interface(alpha_u, transient_prior_cov);
 
-            S = sabl_opt.con.S;
-            this.M = sabl_opt.con.M;
+            S = sola_opt.con.S;
+            this.M = sola_opt.con.M;
 
             this.E_u = (2.e-2) * S + this.M;
 
-            oversampling = sabl_opt.con.n_y - num_sing_vals;
+            oversampling = sola_opt.con.n_y - num_sing_vals;
             num_subspace_iters = 1;
-            u_vec = zeros(sabl_opt.con.n_y, 1);
+            u_vec = zeros(sola_opt.con.n_y, 1);
             this.Compute_E_u_Inverse_GSVD(num_sing_vals, oversampling, num_subspace_iters, u_vec);
         end
 

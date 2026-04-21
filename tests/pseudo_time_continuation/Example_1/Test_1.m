@@ -26,7 +26,7 @@ evalc('pcon.Parameterized_Finite_Difference_Constraint_Check(u, z, theta)');
 z0 = rand(2, 1);
 evalc('[~, z_nom] = opt.Optimize(z0)');
 
-sen_op = Euclidean_Sensitivity_Operators_Sabl(obj, pcon);
+sen_op = Euclidean_Sensitivity_Operators_Sola(obj, pcon);
 qn_prec = Quasi_Newton_Preconditioner();
 sen = Pseudo_Time_Continuation(z_nom, sen_op, qn_prec);
 

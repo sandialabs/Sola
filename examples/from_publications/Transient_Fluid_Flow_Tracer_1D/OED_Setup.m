@@ -89,7 +89,7 @@ D = load("hyperparam_data.mat", "D_oed").D_oed;
 data_interface.Set_Z_and_D(Z, D);
 
 spatial_u_prior_interface = MD_Elliptic_u_Prior_Interface_Tracer(alpha_u, opt_lofi);
-transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface, T, n_t, n_y);
+transient_prior_cov = MD_Transient_Prior_Covariance_Sola(data_interface, u_hyperparam_interface, T, n_t, n_y);
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_u_prior_interface, transient_prior_cov);
 
 z_hyperparam_interface = MD_z_Hyperparameter_Interface_Tracer(x);

@@ -73,4 +73,4 @@ md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 
 %%
 post_delta_mean = reshape(cell2mat(post_delta_mean), 102, 3);
-save('Sabl_Output.mat', 'prior_delta', 'prior_delta_z_opt', 'post_delta_mean', 'post_delta_samples', 'post_z_mean', 'post_z_samples');
+save('Sola_Output.mat', 'prior_delta', 'prior_delta_z_opt', 'post_delta_mean', 'post_delta_samples', 'post_z_mean', 'post_z_samples');

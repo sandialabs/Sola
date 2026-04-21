@@ -66,7 +66,7 @@ md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 
 obj = Adv_Diff_Objective(m, reg_coeff);
 opt_lofi = Reduced_Space_Optimization(obj, con_lofi);
-opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
+opt_prob_interface = MD_Opt_Prob_Interface_Sola(opt_lofi, data_interface);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 

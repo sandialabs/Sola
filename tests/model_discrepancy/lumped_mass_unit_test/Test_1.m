@@ -25,7 +25,7 @@ u_hyperparam_interface.beta_u = 0.007702351792463;
 u_hyperparam_interface.beta_t = 0.1;
 
 spatial_u_prior_interface = MD_Lumped_Mass_u_Prior_Interface(S_s, M_s, data_interface, u_hyperparam_interface);
-transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface, T, n_t, n_y);
+transient_prior_cov = MD_Transient_Prior_Covariance_Sola(data_interface, u_hyperparam_interface, T, n_t, n_y);
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_u_prior_interface, transient_prior_cov);
 
 %%

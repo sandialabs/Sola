@@ -36,7 +36,7 @@ end
 opt = Reduced_Space_Optimization_Under_Uncertainty(obj, cons);
 x = obj.x;
 
-opt_prob_interface = MD_OUU_Opt_Prob_Interface_Sabl(data_interface, opt);
+opt_prob_interface = MD_OUU_Opt_Prob_Interface_Sola(data_interface, opt);
 
 us_prior_interface = MD_u_Prior_Interface_synthetic_test_OUU(m);
 ensemble_weighting = MD_OUU_Ensemble_Weighting_Matrix(data_interface, us_prior_interface);
@@ -77,4 +77,4 @@ md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 
 %%
 post_delta_mean = reshape(cell2mat(post_delta_mean), 1530, 3);
-save('Sabl_Output.mat', 'prior_delta', 'prior_delta_z_opt', 'post_delta_mean', 'post_delta_samples', 'post_z_mean', 'post_z_samples');
+save('Sola_Output.mat', 'prior_delta', 'prior_delta_z_opt', 'post_delta_mean', 'post_delta_samples', 'post_z_mean', 'post_z_samples');

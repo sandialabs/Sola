@@ -149,7 +149,7 @@ ylabel('$v_1$', 'Interpreter', 'latex');
 set(gca, 'fontsize', 18);
 
 %%
-opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt_lofi, data_interface);
+opt_prob_interface = MD_Opt_Prob_Interface_Sola(opt_lofi, data_interface);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 
 num_evals = 17;

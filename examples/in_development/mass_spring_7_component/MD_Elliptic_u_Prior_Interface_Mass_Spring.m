@@ -6,7 +6,7 @@
 classdef MD_Elliptic_u_Prior_Interface_Mass_Spring < MD_Elliptic_u_Prior_Interface
 
     properties
-        sabl_opt
+        sola_opt
         E_u
         M
     end
@@ -22,16 +22,16 @@ classdef MD_Elliptic_u_Prior_Interface_Mass_Spring < MD_Elliptic_u_Prior_Interfa
         end
 
         function [u_out] = Apply_M_u(this, u_in)
-            u_out = kron(eye(this.sabl_opt.con.n_y), this.M) * u_in;
+            u_out = kron(eye(this.sola_opt.con.n_y), this.M) * u_in;
         end
 
-        function this = MD_Elliptic_u_Prior_Interface_Mass_Spring(alpha_u, sabl_opt)
+        function this = MD_Elliptic_u_Prior_Interface_Mass_Spring(alpha_u, sola_opt)
             this@MD_Elliptic_u_Prior_Interface(alpha_u);
 
-            this.sabl_opt = sabl_opt;
+            this.sola_opt = sola_opt;
 
-            n_t = sabl_opt.con.n_t;
-            h = sabl_opt.con.t_mesh(2) - sabl_opt.con.t_mesh(1);
+            n_t = sola_opt.con.n_t;
+            h = sola_opt.con.t_mesh(2) - sola_opt.con.t_mesh(1);
             M = diag(4 * ones(1, n_t)) + diag(ones(1, n_t - 1), 1) + diag(ones(1, n_t - 1), -1);
             M(1, 1) = .5 * M(1, 1);
             M(end, end) = .5 * M(end, end);
@@ -54,7 +54,7 @@ classdef MD_Elliptic_u_Prior_Interface_Mass_Spring < MD_Elliptic_u_Prior_Interfa
             num_sing_vals = 100;
             oversampling = 0;
             num_subspace_iters = 1;
-            u_vec = zeros(sabl_opt.con.n_y * n_t, 1);
+            u_vec = zeros(sola_opt.con.n_y * n_t, 1);
             this.Compute_E_u_Inverse_GSVD(num_sing_vals, oversampling, num_subspace_iters, u_vec);
         end
 

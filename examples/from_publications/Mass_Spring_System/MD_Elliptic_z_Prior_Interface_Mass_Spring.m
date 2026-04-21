@@ -6,7 +6,7 @@
 classdef MD_Elliptic_z_Prior_Interface_Mass_Spring < MD_Elliptic_z_Prior_Interface
 
     properties
-        sabl_opt
+        sola_opt
         E_z
         P_z
         M
@@ -47,13 +47,13 @@ classdef MD_Elliptic_z_Prior_Interface_Mass_Spring < MD_Elliptic_z_Prior_Interfa
             z_out = linsolve(this.P_z' * this.M * this.P_z, z_in);
         end
 
-        function this = MD_Elliptic_z_Prior_Interface_Mass_Spring(alpha_z, sabl_opt)
+        function this = MD_Elliptic_z_Prior_Interface_Mass_Spring(alpha_z, sola_opt)
             this@MD_Elliptic_z_Prior_Interface(alpha_z);
 
-            this.sabl_opt = sabl_opt;
+            this.sola_opt = sola_opt;
 
-            n_t = sabl_opt.con.n_t;
-            h = sabl_opt.con.t_mesh(2) - sabl_opt.con.t_mesh(1);
+            n_t = sola_opt.con.n_t;
+            h = sola_opt.con.t_mesh(2) - sola_opt.con.t_mesh(1);
             M = diag(4 * ones(1, n_t)) + diag(ones(1, n_t - 1), 1) + diag(ones(1, n_t - 1), -1);
             M(1, 1) = .5 * M(1, 1);
             M(end, end) = .5 * M(end, end);
@@ -65,7 +65,7 @@ classdef MD_Elliptic_z_Prior_Interface_Mass_Spring < MD_Elliptic_z_Prior_Interfa
             S(end, end) = .5 * S(end, end);
             S = (1 / h) * S;
 
-            this.P_z = sabl_opt.con.P_z;
+            this.P_z = sola_opt.con.P_z;
             this.E_z = (1.e-1) * S + this.M;
         end
 

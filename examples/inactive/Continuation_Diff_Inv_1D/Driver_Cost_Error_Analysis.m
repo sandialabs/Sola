@@ -25,7 +25,7 @@ z_bar = load('Optimization_Results.mat', 'z_opt').z_opt;
 
 theta_star = 1.0 + 0.2 * (1 - con.x).^2;
 
-sen_op = Euclidean_Sensitivity_Operators_Sabl(bayes_inv.obj, con);
+sen_op = Euclidean_Sensitivity_Operators_Sola(bayes_inv.obj, con);
 qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
 sen = Pseudo_Time_Continuation(z_bar, sen_op, qn_prec);
 sen.use_qn_prec = false;
@@ -68,7 +68,7 @@ for k = 1:length(N_range)
     con.num_state_solves = 0;
     con.num_adjoint_solves = 0;
 
-    sen_op = Euclidean_Sensitivity_Operators_Sabl(bayes_inv.obj, con);
+    sen_op = Euclidean_Sensitivity_Operators_Sola(bayes_inv.obj, con);
     qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
     sen = Pseudo_Time_Continuation(z_bar, sen_op, qn_prec);
     sen.use_qn_prec = false;
@@ -87,7 +87,7 @@ for k = 1:length(N_range)
     con.num_state_solves = 0;
     con.num_adjoint_solves = 0;
 
-    sen_op = Euclidean_Sensitivity_Operators_Sabl(bayes_inv.obj, con);
+    sen_op = Euclidean_Sensitivity_Operators_Sola(bayes_inv.obj, con);
     qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
     sen = Pseudo_Time_Continuation(z_bar, sen_op, qn_prec);
     sen.use_qn_prec = false;
@@ -106,7 +106,7 @@ for k = 1:length(N_range)
     con.num_state_solves = 0;
     con.num_adjoint_solves = 0;
 
-    sen_op = Euclidean_Sensitivity_Operators_Sabl(bayes_inv.obj, con);
+    sen_op = Euclidean_Sensitivity_Operators_Sola(bayes_inv.obj, con);
     qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
     qn_prec.max_size = 0;
     sen = Pseudo_Time_Continuation(z_bar, sen_op, qn_prec);
@@ -133,7 +133,7 @@ for k = 1:length(N_range)
     con.num_state_solves = 0;
     con.num_adjoint_solves = 0;
 
-    sen_op = Euclidean_Sensitivity_Operators_Sabl(bayes_inv.obj, con);
+    sen_op = Euclidean_Sensitivity_Operators_Sola(bayes_inv.obj, con);
     qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
     qn_prec.max_size = 0;
     sen = Pseudo_Time_Continuation(z_bar, sen_op, qn_prec);
@@ -160,7 +160,7 @@ for k = 1:length(N_range)
     con.num_state_solves = 0;
     con.num_adjoint_solves = 0;
 
-    sen_op = Euclidean_Sensitivity_Operators_Sabl(bayes_inv.obj, con);
+    sen_op = Euclidean_Sensitivity_Operators_Sola(bayes_inv.obj, con);
     qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
     sen = Pseudo_Time_Continuation(z_bar, sen_op, qn_prec);
 
@@ -186,7 +186,7 @@ for k = 1:length(N_range)
     con.num_state_solves = 0;
     con.num_adjoint_solves = 0;
 
-    sen_op = Euclidean_Sensitivity_Operators_Sabl(bayes_inv.obj, con);
+    sen_op = Euclidean_Sensitivity_Operators_Sola(bayes_inv.obj, con);
     qn_prec = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv);
     sen = Pseudo_Time_Continuation(z_bar, sen_op, qn_prec);
 

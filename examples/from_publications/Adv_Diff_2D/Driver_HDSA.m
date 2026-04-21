@@ -90,7 +90,7 @@ hold on;
 histogram(sample_diff);
 
 %%
-opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
+opt_prob_interface = MD_Opt_Prob_Interface_Sola(opt, data_interface);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 
 num_evals = 1;

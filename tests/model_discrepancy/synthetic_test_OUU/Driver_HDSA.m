@@ -25,7 +25,7 @@ end
 opt = Reduced_Space_Optimization_Under_Uncertainty(obj, cons);
 x = obj.x;
 
-opt_prob_interface = MD_OUU_Opt_Prob_Interface_Sabl(data_interface, opt);
+opt_prob_interface = MD_OUU_Opt_Prob_Interface_Sola(data_interface, opt);
 us_prior_interface = MD_u_Prior_Interface_synthetic_test_OUU(m);
 
 ensemble_weighting = MD_OUU_Ensemble_Weighting_Matrix(data_interface, us_prior_interface);

@@ -24,18 +24,18 @@ classdef MD_Elliptic_u_Prior_Interface_Adv_Diff < MD_Elliptic_u_Prior_Interface
             u_out = this.M * u_in;
         end
 
-        function this = MD_Elliptic_u_Prior_Interface_Adv_Diff(alpha_u, sabl_opt)
+        function this = MD_Elliptic_u_Prior_Interface_Adv_Diff(alpha_u, sola_opt)
             this@MD_Elliptic_u_Prior_Interface(alpha_u);
 
-            S = sabl_opt.con.S;
-            this.M = sabl_opt.con.M;
+            S = sola_opt.con.S;
+            this.M = sola_opt.con.M;
 
             this.E_u = (2.e-2) * S + this.M;
 
-            num_sing_vals = sabl_opt.con.n_y;
+            num_sing_vals = sola_opt.con.n_y;
             oversampling = 0;
             num_subspace_iters = 1;
-            u_vec = zeros(sabl_opt.obj.n_y, 1);
+            u_vec = zeros(sola_opt.obj.n_y, 1);
             this.Compute_E_u_Inverse_GSVD(num_sing_vals, oversampling, num_subspace_iters, u_vec);
         end
 

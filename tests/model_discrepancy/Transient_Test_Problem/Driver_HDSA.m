@@ -28,7 +28,7 @@ t = linspace(0, T, n_t)';
 %%
 data_interface = MD_Data_Interface_Transient_Test_Problem();
 data_interface.Load_Data();
-opt_prob_interface = MD_Opt_Prob_Interface_Sabl(opt, data_interface);
+opt_prob_interface = MD_Opt_Prob_Interface_Sola(opt, data_interface);
 
 writematrix(data_interface.u_opt, 'u_opt.txt');
 writematrix(data_interface.z_opt, 'z_opt.txt');
@@ -47,7 +47,7 @@ u_hyperparam_interface.gsvd_oversampling = 0;
 u_hyperparam_interface.gsvd_num_subspace_iter = 1;
 
 spatial_u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(con.S, con.M, data_interface, u_hyperparam_interface);
-transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface, T, n_t, n_y);
+transient_prior_cov = MD_Transient_Prior_Covariance_Sola(data_interface, u_hyperparam_interface, T, n_t, n_y);
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_u_prior_interface, transient_prior_cov);
 
 z_hyperparam_interface = MD_z_Hyperparameter_Interface_Transient_Test_Problem(x, con);

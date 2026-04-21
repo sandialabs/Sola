@@ -5,7 +5,7 @@ This examples tests:
 * MD_Elliptic_z_Prior_Interface
 	- Apply_W_z_Acute
 
-* MD_Opt_Prob_Interface_Sabl
+* MD_Opt_Prob_Interface_Sola
 	- Apply_RS_Hessian
 	- Misfit_Gradient
 	- Apply_Misfit_Hessian

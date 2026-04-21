@@ -45,11 +45,11 @@ classdef MD_Elliptic_z_Prior_Interface_Tracer < MD_Elliptic_z_Prior_Interface
             z_out = sqrt(this.alpha_z) * linsolve(this.E_z, R' * randn(size(R, 1), num_samples));
         end
 
-        function this = MD_Elliptic_z_Prior_Interface_Tracer(alpha_u, sabl_opt)
+        function this = MD_Elliptic_z_Prior_Interface_Tracer(alpha_u, sola_opt)
             this@MD_Elliptic_z_Prior_Interface(alpha_u);
 
-            S = sabl_opt.con.S_z;
-            this.M = sabl_opt.con.M_z;
+            S = sola_opt.con.S_z;
+            this.M = sola_opt.con.M_z;
             this.E_z = (3.e-2) * S + this.M;
         end
 

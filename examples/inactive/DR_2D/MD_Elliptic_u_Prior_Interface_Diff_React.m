@@ -24,18 +24,18 @@ classdef MD_Elliptic_u_Prior_Interface_Diff_React < MD_Elliptic_u_Prior_Interfac
             u_out = this.M * u_in;
         end
 
-        function this = MD_Elliptic_u_Prior_Interface_Diff_React(alpha_u, sabl_opt)
+        function this = MD_Elliptic_u_Prior_Interface_Diff_React(alpha_u, sola_opt)
             this@MD_Elliptic_u_Prior_Interface(alpha_u);
 
-            S = sabl_opt.con.diff_react_lofi.pde_meshing.S;
-            this.M = sabl_opt.con.diff_react_lofi.pde_meshing.M;
+            S = sola_opt.con.diff_react_lofi.pde_meshing.S;
+            this.M = sola_opt.con.diff_react_lofi.pde_meshing.M;
 
             this.E_u = (1.e-1) * S + this.M;
 
             num_sing_vals = 800;
             oversampling = 0;
             num_subspace_iters = 1;
-            u_vec = zeros(sabl_opt.obj.m, 1);
+            u_vec = zeros(sola_opt.obj.m, 1);
             this.Compute_E_u_Inverse_GSVD(num_sing_vals, oversampling, num_subspace_iters, u_vec);
         end
 

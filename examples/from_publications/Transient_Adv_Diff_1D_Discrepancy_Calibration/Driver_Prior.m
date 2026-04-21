@@ -27,7 +27,7 @@ num_samples = 500;
 %%
 adapt_time_variance = true;
 u_hyperparam_interface = MD_u_Hyperparameter_Interface_Transient_Test_Problem(n_t, n_y, adapt_time_variance);
-transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface, T, n_t, n_y);
+transient_prior_cov = MD_Transient_Prior_Covariance_Sola(data_interface, u_hyperparam_interface, T, n_t, n_y);
 spatial_u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(con_hifi.S, con_hifi.M, data_interface, u_hyperparam_interface);
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_u_prior_interface, transient_prior_cov);
 
@@ -36,7 +36,7 @@ u_samples_adapt = u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_sampl
 %%
 adapt_time_variance = false;
 u_hyperparam_interface = MD_u_Hyperparameter_Interface_Transient_Test_Problem(n_t, n_y, adapt_time_variance);
-transient_prior_cov = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface, T, n_t, n_y);
+transient_prior_cov = MD_Transient_Prior_Covariance_Sola(data_interface, u_hyperparam_interface, T, n_t, n_y);
 spatial_u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(con_hifi.S, con_hifi.M, data_interface, u_hyperparam_interface);
 u_prior_interface = MD_Transient_Elliptic_u_Prior_Interface(data_interface, spatial_u_prior_interface, transient_prior_cov);
 

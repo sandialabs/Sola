@@ -38,5 +38,5 @@ md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, n
 [u_ks, z_ks, beta_ks] = md_cont_update.Posterior_Update_Samples();
 disp(norm(z_cont(:, end)));
 
-% save('Sabl_Output.mat', 'prior_delta', 'prior_delta_z_opt', 'post_delta_mean', 'post_delta_samples', 'post_z_mean', 'post_z_samples');
+% save('Sola_Output.mat', 'prior_delta', 'prior_delta_z_opt', 'post_delta_mean', 'post_delta_samples', 'post_z_mean', 'post_z_samples');
 save('reference_solution.mat', 'u_cont', 'z_cont', 'beta_cont', 'u_ks', 'z_ks', 'beta_ks');

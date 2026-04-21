@@ -25,7 +25,7 @@ u_prior_interface_cell = cell(2, 1);
 for k = 1:2
     u_hyperparam_interface_cell{k} = MD_u_Hyperparameter_Interface_transient_multi_state_synthetic(n_y, n_t, k);
     u_spatial_prior_interface_cell{k} = MD_Numeric_Laplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface_cell{k});
-    transient_prior_cov{k} = MD_Transient_Prior_Covariance_Sabl(data_interface, u_hyperparam_interface_cell{k}, 1, n_t, n_y);
+    transient_prior_cov{k} = MD_Transient_Prior_Covariance_Sola(data_interface, u_hyperparam_interface_cell{k}, 1, n_t, n_y);
     u_prior_interface_cell{k} = MD_Transient_Elliptic_u_Prior_Interface(data_interface, u_spatial_prior_interface_cell{k}, transient_prior_cov{k});
 end
 u_prior_interface = MD_Multi_State_u_Prior_Interface(data_interface, u_prior_interface_cell, u_hyperparam_interface_cell);
