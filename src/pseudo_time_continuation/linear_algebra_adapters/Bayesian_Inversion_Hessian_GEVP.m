@@ -48,6 +48,11 @@ classdef Bayesian_Inversion_Hessian_GEVP < Randomized_GEVP
     methods
 
         function this = Bayesian_Inversion_Hessian_GEVP(z, theta, bayes_inv)
+            arguments
+                z (:, 1) {mustBeNumeric}
+                theta (:, 1) {mustBeNumeric}
+                bayes_inv Bayesian_Inversion
+            end
             this@Randomized_GEVP(z);
             this.z = z;
             this.theta = theta;

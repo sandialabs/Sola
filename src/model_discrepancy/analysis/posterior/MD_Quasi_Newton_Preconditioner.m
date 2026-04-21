@@ -20,6 +20,9 @@ classdef MD_Quasi_Newton_Preconditioner < Quasi_Newton_Preconditioner
         end
 
         function this = MD_Quasi_Newton_Preconditioner(md_hessian_analysis)
+            arguments
+                md_hessian_analysis MD_Hessian_Analysis
+            end
             this@Quasi_Newton_Preconditioner();
             this.md_hessian_analysis = md_hessian_analysis;
         end

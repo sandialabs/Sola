@@ -29,6 +29,11 @@ classdef Quasi_Newton_Preconditioner_Bayesian_Inversion < Quasi_Newton_Precondit
         end
 
         function this = Quasi_Newton_Preconditioner_Bayesian_Inversion(z_bar, theta_bar, bayes_inv)
+            arguments
+                z_bar (:, 1) {mustBeNumeric}
+                theta_bar (:, 1) {mustBeNumeric}
+                bayes_inv Bayesian_Inversion
+            end
             this@Quasi_Newton_Preconditioner();
             this.bayes_inv = bayes_inv;
             this.gevp = Bayesian_Inversion_Hessian_GEVP(z_bar, theta_bar, bayes_inv);

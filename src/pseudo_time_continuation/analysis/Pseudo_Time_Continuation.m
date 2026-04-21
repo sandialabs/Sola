@@ -17,20 +17,19 @@ classdef Pseudo_Time_Continuation < handle
     methods
 
         function this = Pseudo_Time_Continuation(z_bar, sen_op, qn_prec, print_output, print_iter)
+            arguments
+                z_bar (:, 1) {mustBeNumeric}
+                sen_op Sensitivity_Operators
+                qn_prec Quasi_Newton_Preconditioner
+                print_output logical = false
+                print_iter logical = false
+            end
             this.z_bar = z_bar;
             this.sen_op = sen_op;
             this.qn_prec = qn_prec;
             this.use_qn_prec = true;
-            if nargin < 4
-                this.print_output = false;
-            else
-                this.print_output = print_output;
-            end
-            if nargin < 5
-                this.print_iter = false;
-            else
-                this.print_iter = print_iter;
-            end
+            this.print_output = print_output;
+            this.print_iter = print_iter;
         end
 
         function [z_out] = Apply_Inverse_Hessian(this, z_in, z, theta_traj, time_index)

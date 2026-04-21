@@ -12,6 +12,9 @@ classdef Auxillary_Parameter_Trajectory < handle
     methods
 
         function this = Auxillary_Parameter_Trajectory(N)
+            arguments
+                N (1, 1) {mustBeNumeric}
+            end
             this.N = N;
         end
 

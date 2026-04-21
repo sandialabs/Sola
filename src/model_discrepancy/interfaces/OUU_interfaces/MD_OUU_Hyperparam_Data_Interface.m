@@ -45,6 +45,9 @@ classdef MD_OUU_Hyperparam_Data_Interface < MD_Data_Interface
     methods
 
         function this = MD_OUU_Hyperparam_Data_Interface(md_ouu_data_interface)
+            arguments
+                md_ouu_data_interface MD_OUU_Data_Interface
+            end
             this.md_ouu_data_interface = md_ouu_data_interface;
         end
 

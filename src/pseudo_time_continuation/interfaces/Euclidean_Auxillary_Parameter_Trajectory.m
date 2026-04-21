@@ -14,6 +14,11 @@ classdef Euclidean_Auxillary_Parameter_Trajectory < Auxillary_Parameter_Trajecto
     methods
 
         function this = Euclidean_Auxillary_Parameter_Trajectory(N, theta_bar, theta_star)
+            arguments
+                N (1, 1) {mustBeNumeric}
+                theta_bar (:, 1) {mustBeNumeric}
+                theta_star (:, 1) {mustBeNumeric}
+            end
             this@Auxillary_Parameter_Trajectory(N);
             this.theta_bar = theta_bar;
             this.theta_star = theta_star;

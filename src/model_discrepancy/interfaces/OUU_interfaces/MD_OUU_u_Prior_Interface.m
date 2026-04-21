@@ -60,6 +60,11 @@ classdef MD_OUU_u_Prior_Interface < MD_u_Prior_Interface
         end
 
         function this = MD_OUU_u_Prior_Interface(us_prior_interface, data_interface, ensemble_weighting)
+            arguments
+                us_prior_interface MD_u_Prior_Interface
+                data_interface MD_Data_Interface
+                ensemble_weighting MD_OUU_Ensemble_Weighting_Matrix
+            end
             this.us_prior_interface = us_prior_interface;
             this.data_interface = data_interface;
             this.ensemble_weighting = ensemble_weighting;
