@@ -1,0 +1,7 @@
+This examples tests:
+* MD_Bilaplacian_u_Prior_Interface
+    - Apply_M_u
+    - Apply_W_u_Acute_Inverse
+    - Apply_W_u_Acute_Plus_scalar_M_u_Inverse
+    - Sample_with_Covariance_W_u_Acute_Inverse
+    - Sample_with_Covariance_W_u_Acute_Plus_scalar_M_u_Inverse

@@ -21,6 +21,10 @@ cd synthetic_test/;
 Test_1;
 cd ..;
 
+cd synthetic_test_bilaplacian/;
+Test_1;
+cd ..;
+
 cd synthetic_test_continuation/;
 Test_1;
 Test_2;

@@ -14,7 +14,11 @@ classdef Sparse_Matrix_Sqrt < Matrix_Sqrt
     methods (Access = public)
 
         function [vec_out] = Matrix_Apply(this, vec_in)
-            vec_out = this.A * vec_in;
+            if isa(this.A, 'function_handle')
+                vec_out = this.A(vec_in);
+            else
+                vec_out = this.A * vec_in;
+            end
         end
 
         function [vec_out] = Preconditioner_Apply(this, vec_in)
@@ -36,7 +40,7 @@ classdef Sparse_Matrix_Sqrt < Matrix_Sqrt
 
         function this = Sparse_Matrix_Sqrt(A, L)
             arguments
-                A {mustBeNumeric}
+                A {Must_Be_Matrix_Or_Function_Handle}
                 L {mustBeNumeric} = 1
             end
             this.A = A;
