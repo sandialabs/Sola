@@ -35,6 +35,12 @@ classdef MD_u_Prior_Interface < handle
             disp('MD_u_Prior_Interface::Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse must be implemented to use sampling algorithms');
         end
 
+        % Compute offline OED quantities
+        function [lambda_js] = Get_W_u_Generalized_Eigenvalues(this)
+            lambda_js = [];
+            disp('MD_u_Prior_Interface::Get_W_u_Generalized_Eigenvalues must be implemented to use OED algorithms');
+        end
+
     end
 
     %% Constructor

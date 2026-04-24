@@ -56,16 +56,7 @@ classdef MD_OED < handle
             Wz_inv_Mz_V = this.z_prior_interface.Apply_W_z_Inverse(Mz_V);
             this.offline_data.Mz_Wz_inv_Mz_V = this.z_prior_interface.Apply_M_z(Wz_inv_Mz_V);
             this.offline_data.Vt_Mz_Wz_inv_Mz_V = Mz_V' * Wz_inv_Mz_V;
-
-            try
-                sing_vecs = this.u_prior_interface.sing_vecs_output;
-                this.offline_data.xjTxj = sum(sing_vecs .* this.u_prior_interface.Apply_M_u(sing_vecs), 1)';
-                this.offline_data.lambda_js = 1 ./ (this.u_prior_interface.alpha_u * this.u_prior_interface.sing_vals.^2);
-            catch
-                sing_vecs = kron(this.u_prior_interface.spatial_prior_cov.sing_vecs_output, this.u_prior_interface.transient_prior_cov.evecs);
-                this.offline_data.xjTxj = sum(sing_vecs .* this.u_prior_interface.Apply_M_u(sing_vecs), 1)';
-                this.offline_data.lambda_js = 1 ./ (this.u_prior_interface.alpha_u * kron(this.u_prior_interface.spatial_prior_cov.sing_vals.^2, this.u_prior_interface.transient_prior_cov.evals));
-            end
+            this.offline_data.lambda = this.u_prior_interface.Get_W_u_Generalized_Eigenvalues();
 
         end
 
@@ -100,7 +91,7 @@ classdef MD_OED < handle
             p = zeros(N, 1);
 
             for i = 1:N
-                tr_Ws_Mu_Wu_inv(i) = sum(this.offline_data.xjTxj ./ (this.offline_data.lambda_js .* (mu(i) +  alpha_d * this.offline_data.lambda_js)));
+                tr_Ws_Mu_Wu_inv(i) = sum(1 ./ (this.offline_data.lambda .* (mu(i) +  alpha_d * this.offline_data.lambda)));
 
                 tmp = this.offline_data.Mz_Wz_inv_Mz_V * Mg(:, i);
                 y_P_y(i) = this.covar_coeff * (tmp' * this.z_prior_interface.Apply_W_z_Inverse(tmp));
@@ -120,7 +111,7 @@ classdef MD_OED < handle
                 grad_pi = 2 * s(i) * grad_si + grad_yPyi;
                 grad = grad + grad_pi * tr_Ws_Mu_Wu_inv(i);
 
-                tmp = -sum(this.offline_data.xjTxj ./ (this.offline_data.lambda_js .* (mu(i) + alpha_d * this.offline_data.lambda_js).^2));
+                tmp = -sum(1 ./ (this.offline_data.lambda .* (mu(i) + alpha_d * this.offline_data.lambda).^2));
                 grad = grad + p(i) * trace(tmp) * mu_jac{i};
             end
 

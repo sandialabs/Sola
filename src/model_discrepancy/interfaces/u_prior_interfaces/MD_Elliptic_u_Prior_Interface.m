@@ -63,6 +63,10 @@ classdef MD_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             u_out = this.sing_vecs_output * diag(sqrt(K)) * randn(r, num_samples);
         end
 
+        function [lambda_js] = Get_W_u_Generalized_Eigenvalues(this)
+            lambda_js = 1 ./ (this.alpha_u * this.sing_vals.^2);
+        end
+
     end
 
 end

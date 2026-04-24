@@ -7,7 +7,7 @@ classdef MD_Determine_z_Hyperparameters < handle
 
     properties
         data_interface
-        z_hypeparam_interface
+        z_hyperparam_interface
         u_prior_interface
         z_type
     end
@@ -15,17 +15,17 @@ classdef MD_Determine_z_Hyperparameters < handle
     %% Constructor
     methods
 
-        function this = MD_Determine_z_Hyperparameters(data_interface, z_hypeparam_interface, u_prior_interface)
+        function this = MD_Determine_z_Hyperparameters(data_interface, z_hyperparam_interface, u_prior_interface)
             arguments
                 data_interface MD_Data_Interface
-                z_hypeparam_interface MD_z_Hyperparameter_Interface
+                z_hyperparam_interface MD_z_Hyperparameter_Interface
                 u_prior_interface MD_u_Prior_Interface
             end
 
             this.data_interface = data_interface;
-            this.z_hypeparam_interface = z_hypeparam_interface;
+            this.z_hyperparam_interface = z_hyperparam_interface;
             this.u_prior_interface = u_prior_interface;
-            this.z_type = this.z_hypeparam_interface.z_type;
+            this.z_type = this.z_hyperparam_interface.z_type;
         end
 
     end
@@ -50,17 +50,17 @@ classdef MD_Determine_z_Hyperparameters < handle
             nu = nu.^2;
             tmp = mean((nu * evals.^4) ./ (nu * evals.^2));
 
-            if this.z_hypeparam_interface.discrepancy_percent_z_variation == 1
-                if this.z_hypeparam_interface.num_state_solves > 0
-                    z_samples = z_prior_interface.Sample_with_Covariance_W_z_Acute_Inverse(this.z_hypeparam_interface.num_state_solves);
+            if this.z_hyperparam_interface.discrepancy_percent_z_variation == 1
+                if this.z_hyperparam_interface.num_state_solves > 0
+                    z_samples = z_prior_interface.Sample_with_Covariance_W_z_Acute_Inverse(this.z_hyperparam_interface.num_state_solves);
                     mags = sqrt(diag(z_samples' * z_prior_interface.Apply_M_z(z_samples)));
                     z_samples = zopt_norm * z_samples * diag(1 ./ mags);
-                    u_samples = this.z_hypeparam_interface.State_Solve(z_samples + this.data_interface.z_opt);
+                    u_samples = this.z_hyperparam_interface.State_Solve(z_samples + this.data_interface.z_opt);
                     e = u_samples - this.data_interface.u_opt;
                     e_norm_sqr = diag(e' * this.u_prior_interface.Apply_M_u(e));
                     d1 = this.data_interface.D(:, 1);
                     d1_norm_sq = d1' * this.u_prior_interface.Apply_M_u(d1);
-                    this.z_hypeparam_interface.discrepancy_percent_z_variation = sqrt(mean(e_norm_sqr) / d1_norm_sq);
+                    this.z_hyperparam_interface.discrepancy_percent_z_variation = sqrt(mean(e_norm_sqr) / d1_norm_sq);
                 else
                     N = size(this.data_interface.Z, 2);
                     if N > 1
@@ -77,19 +77,19 @@ classdef MD_Determine_z_Hyperparameters < handle
                             d = this.data_interface.D(:, k) - d1;
                             d_pert_norm_sq(k - 1) = d' * this.u_prior_interface.Apply_M_u(d);
                         end
-                        this.z_hypeparam_interface.discrepancy_percent_z_variation = mean(sqrt((d_pert_norm_sq / d1_norm_sq) ./ (z_pert_norm_sq / z1_norm_sq)));
+                        this.z_hyperparam_interface.discrepancy_percent_z_variation = mean(sqrt((d_pert_norm_sq / d1_norm_sq) ./ (z_pert_norm_sq / z1_norm_sq)));
                     end
                 end
             end
 
-            alpha_z_new = (this.z_hypeparam_interface.discrepancy_percent_z_variation.^2) / (tmp * zopt_norm^2);
-            this.z_hypeparam_interface.Set_alpha_z(alpha_z_new);
+            alpha_z_new = (this.z_hyperparam_interface.discrepancy_percent_z_variation.^2) / (tmp * zopt_norm^2);
+            this.z_hyperparam_interface.Set_alpha_z(alpha_z_new);
         end
 
         function [e] = Compute_Eigenvalues(this, z_prior_interface)
 
             if strcmp(this.z_type, 'spatial field')
-                nodes = this.z_hypeparam_interface.Load_Spatial_Node_Data();
+                nodes = this.z_hyperparam_interface.Load_Spatial_Node_Data();
                 if size(nodes, 2) == 1
                     Lx = max(nodes(:, 1)) - min(nodes(:, 1));
                     n = length(nodes(:, 1)) - 1;
@@ -106,7 +106,7 @@ classdef MD_Determine_z_Hyperparameters < handle
             end
 
             if strcmp(this.z_type, 'transient vector')
-                t = this.z_hypeparam_interface.Load_Time_Node_Data();
+                t = this.z_hyperparam_interface.Load_Time_Node_Data();
                 L = max(t) - min(t);
                 n = length(t) - 1;
                 e = 1 + z_prior_interface.beta_t * (pi / L)^2 * (0:n).^2;
@@ -119,7 +119,7 @@ classdef MD_Determine_z_Hyperparameters < handle
         end
 
         function [] = Determine_beta_z(this)
-            nodes = this.z_hypeparam_interface.Load_Spatial_Node_Data();
+            nodes = this.z_hyperparam_interface.Load_Spatial_Node_Data();
             initial_guess = 0;
             if size(nodes, 2) == 1
                 correlation_lengths = zeros(size(this.data_interface.Z, 2), 1);
@@ -138,11 +138,11 @@ classdef MD_Determine_z_Hyperparameters < handle
             else
                 disp('Determine_beta_z error: Dimensions greater than 2 are not supported.');
             end
-            this.z_hypeparam_interface.Set_beta_z(beta_z_new);
+            this.z_hyperparam_interface.Set_beta_z(beta_z_new);
         end
 
         function [] = Determine_beta_t(this)
-            t = this.z_hypeparam_interface.Load_Time_Node_Data();
+            t = this.z_hyperparam_interface.Load_Time_Node_Data();
             initial_guess = 0;
             N = size(this.data_interface.Z, 2);
             n_t = length(t);
@@ -157,7 +157,7 @@ classdef MD_Determine_z_Hyperparameters < handle
             end
             beta_t_new = mean(correlation_lengths(:), 'omitnan')^2 / 4;
 
-            this.z_hypeparam_interface.Set_beta_t(beta_t_new);
+            this.z_hyperparam_interface.Set_beta_t(beta_t_new);
         end
 
     end

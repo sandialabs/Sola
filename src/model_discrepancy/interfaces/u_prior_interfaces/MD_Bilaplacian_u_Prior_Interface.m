@@ -44,13 +44,13 @@ classdef MD_Bilaplacian_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             Afun = @(r) this.Apply_W_u_Acute(r) + scalar * this.M * r;
             tol   = 1e-7;
             maxit = this.n_u;
-            x0    = zeros(this.n_u,1);
+            x0    = zeros(this.n_u, 1);
 
-            [u_out,flag,~,iter] = pcg(Afun, u_in, tol, maxit, Mfun, [], x0);
-            if flag ~=0
-                disp('Error in PCG')
+            [u_out, flag, ~, iter] = pcg(Afun, u_in, tol, maxit, Mfun, [], x0);
+            if flag ~= 0
+                disp('Error in PCG');
             end
-            this.W_u_Acute_Plus_scalar_M_u_Inverse_iters = [this.W_u_Acute_Plus_scalar_M_u_Inverse_iters ; iter];
+            this.W_u_Acute_Plus_scalar_M_u_Inverse_iters = [this.W_u_Acute_Plus_scalar_M_u_Inverse_iters; iter];
         end
 
         function [u_out] = Apply_W_u_Acute_Inverse(this, u_in)
@@ -76,8 +76,8 @@ classdef MD_Bilaplacian_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             end
             W_u_Acute_Plus_scalar_M_u_sqrt = Sparse_Matrix_Sqrt(Afun, L);
             omega = randn(this.n_u, num_samples);
-            [tmp,relres] = W_u_Acute_Plus_scalar_M_u_sqrt.Matrix_Sqrt_Apply(omega);
-            this.W_u_Acute_Plus_scalar_M_u_Sqrt_iters = [this.W_u_Acute_Plus_scalar_M_u_Sqrt_iters ; length(relres{1})];
+            [tmp, relres] = W_u_Acute_Plus_scalar_M_u_sqrt.Matrix_Sqrt_Apply(omega);
+            this.W_u_Acute_Plus_scalar_M_u_Sqrt_iters = [this.W_u_Acute_Plus_scalar_M_u_Sqrt_iters; length(relres{1})];
             u_out = this.Apply_W_u_Acute_Plus_scalar_M_u_Inverse(tmp, scalar);
         end
 

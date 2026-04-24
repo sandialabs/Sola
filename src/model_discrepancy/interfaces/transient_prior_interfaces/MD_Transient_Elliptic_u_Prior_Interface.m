@@ -204,6 +204,10 @@ classdef MD_Transient_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             end
         end
 
+        function [lambda] = Get_W_u_Generalized_Eigenvalues(this)
+            lambda = 1 ./ (this.alpha_u * kron(this.spatial_prior_cov.sing_vals.^2, this.transient_prior_cov.evals));
+        end
+
     end
 
 end

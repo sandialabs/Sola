@@ -27,7 +27,7 @@ u_hyperparam_interface.alpha_d = 2.177109166165424e-07;
 u_prior_interface = MD_Bilaplacian_u_Prior_Interface(S, M, data_interface, u_hyperparam_interface);
 
 scalar = 0.5;
-u_in = linspace(0,1,m)';
+u_in = linspace(0, 1, m)';
 num_samples = 1;
 
 E_u = u_prior_interface.E_u;
@@ -35,22 +35,22 @@ W_u_acute = E_u' * (M \ eye(m)) * E_u;
 
 u_out = u_prior_interface.Apply_M_u(u_in);
 test = M * u_in;
-local_error = norm(u_out - test)/norm(test);
-error = [error ; local_error];
+local_error = norm(u_out - test) / norm(test);
+error = [error; local_error];
 
-u_out = u_prior_interface.Apply_W_u_Acute_Plus_scalar_M_u_Inverse(u_in,scalar);
+u_out = u_prior_interface.Apply_W_u_Acute_Plus_scalar_M_u_Inverse(u_in, scalar);
 test = (W_u_acute + scalar * M) \ u_in;
-local_error = norm(u_out - test)/norm(test);
-error = [error ; local_error];
+local_error = norm(u_out - test) / norm(test);
+error = [error; local_error];
 
 u_out = u_prior_interface.Apply_W_u_Acute_Inverse(u_in);
 test = W_u_acute \ u_in;
-local_error = norm(u_out - test)/norm(test);
-error = [error ; local_error];
+local_error = norm(u_out - test) / norm(test);
+error = [error; local_error];
 
 u_sample_1 = u_prior_interface.Sample_with_Covariance_W_u_Acute_Inverse(num_samples);
 
-u_sample_2 = u_prior_interface.Sample_with_Covariance_W_u_Acute_Plus_scalar_M_u_Inverse(num_samples,scalar);
+u_sample_2 = u_prior_interface.Sample_with_Covariance_W_u_Acute_Plus_scalar_M_u_Inverse(num_samples, scalar);
 
 rng(121234);
 
@@ -60,8 +60,8 @@ Linv = L \ eye(m);
 S = L * sqrtm(full(Linv * M * Linv'));
 vec = S * omega;
 u_sample_1_test = E_u \ vec;
-local_error = norm(u_sample_1 - u_sample_1_test)/norm(u_sample_1_test);
-error = [error ; local_error];
+local_error = norm(u_sample_1 - u_sample_1_test) / norm(u_sample_1_test);
+error = [error; local_error];
 
 omega = randn(m, num_samples);
 A = W_u_acute + scalar * M;
@@ -72,12 +72,11 @@ S = L * sqrtm(full(Linv * A * Linv'));
 vec = S * omega;
 u_sample_2_test = A \ vec;
 
-local_error = norm(u_sample_2 - u_sample_2_test)/norm(u_sample_2_test);
-error = [error ; local_error];
+local_error = norm(u_sample_2 - u_sample_2_test) / norm(u_sample_2_test);
+error = [error; local_error];
 
 if max(error) > 1.e-7
     fprintf(2, '\nmodel_discrepancy/synthetic_test_bilaplacian failed.\n');
 else
     fprintf(1, '\nmodel_discrepancy/synthetic_test_bilaplacian passed.\n');
 end
-

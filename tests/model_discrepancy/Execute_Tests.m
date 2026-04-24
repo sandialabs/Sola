@@ -30,6 +30,10 @@ Test_1;
 Test_2;
 cd ..;
 
+cd synthetic_test_OED/;
+Test_1;
+cd ..;
+
 cd synthetic_test_control_vec/;
 Test_1;
 cd ..;
