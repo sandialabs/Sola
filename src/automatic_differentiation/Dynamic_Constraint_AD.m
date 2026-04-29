@@ -5,43 +5,8 @@
 
 classdef Dynamic_Constraint_AD < Dynamic_Constraint
     % Define constraint equations through an ordinary differential equation
-    %
-    % .. math:: \ddt\y(t) &= \f(\y(t),\z,t),
-    %  \qquad t \in [0, T], \\
-    %  \y(0) &= \h(\z),
-    %
-    % where
-    %
-    % * :math:`T > 0` is the final time,
-    % * :math:`\y(t) \in \R^{n_y}` is the state at time :math:`t`,
-    % * :math:`\z \in \R^{n_z}` is the control,
-    % * :math:`\f:\R^{n_y}\times\R^{n_z}\times\R\to\R^{n_y}` defines the ODE, and
-    % * :math:`\h:\R^{n_z}\to\R^{n_y}` prescribes the initial condition.
-    %
-    % The ODE is integrated using the first-order implicit Euler method,
-    %
-    % .. math:: \frac{1}{\delta t}(\y_{j} - \y_{j-1}) = \f(\y_{j}, \z, t_{j}),
-    %
-    % where :math:`\y_{j}\in\R^{n_y}` approximates :math:`\y(t)`
-    % at time :math:`t = t_j`. Hence, the constraints are given by
-    %
-    % .. math:: \c(\u,\z) = \left(\begin{array}{c}
-    %  \y_1 - \h(\z) \\
-    %  \y_2 - \y_1 - \delta t \f(\y_2, \z, t_2) \\
-    %  \y_3 - \y_2 - \delta t \f(\y_3, \z, t_3) \\
-    %  \vdots \\
-    %  \y_{n_t} - \y_{N-1} - \delta t \f(\y_{n_t}, \z, t_{n_t})
-    %  \end{array}\right),
-    %  \qquad
-    %  \u = \left(\begin{array}{c}
-    %  \y_1 \\ \vdots \\ \y_{n_t}
-    %  \end{array}\right).
-    %
-    % Instead of forming :math:`\c(\u,\z)` explicitly, MATLAB's ``fsolve()``
-    % is used at each time step to solve for successive :math:`\y_{j}`.
-    % The Jacobians and Hessian actions of :math:`\f` and :math:`\h` are
-    % computed via automatic differentiation from :meth:`f_AD()`
-    % and :meth:`h_AD()`, respectively.
+    % dy/dt = f(y(t),z,t),
+    %  y(0) = h(z).
 
     properties
         yt_current
@@ -60,34 +25,8 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
     methods (Abstract, Access = public)
 
         [f] = f_AD(this, y, z, t)
-        % Evaluate the ODE function :math:`\f(\y,\z,t)`.
-        %
-        % Parameters
-        % ----------
-        % y
-        %   Differential equation state :math:`\y\in\R^{n_y}`.
-        % z
-        %   Control :math:`\z\in\R^{n_z}`.
-        % t
-        %   Time :math:`t`.
-        %
-        % Returns
-        % -------
-        % f : vector
-        %   Function value :math:`\f(\y,\z,t)\in\R^{n_y}`.
 
         [h] = h_AD(this, z)
-        % Evaluate the ODE initial condition :math:`\h(\z)`.
-        %
-        % Parameters
-        % ----------
-        % z
-        %   Control :math:`\z\in\R^{n_z}`.
-        %
-        % Returns
-        % -------
-        % h : vector
-        %   Function value :math:`\h(\z)\in\R^{n_y}`.
 
     end
 
@@ -193,16 +132,12 @@ classdef Dynamic_Constraint_AD < Dynamic_Constraint
     methods (Access = public)
 
         function this = Dynamic_Constraint_AD(n_y, n_z, T, n_t)
-            % Parameters
-            % ----------
-            % n_y : int
-            %   Dimension :math:`n_y` of the state :math:`\y_{j}` at each time.
-            % n_z : int
-            %   Dimension :math:`n_z` of the control :math:`\z`.
-            % T : double
-            %   Final time :math:`T`.
-            % n_t : int
-            %   Number of nodes :math:`N` in the time mesh.
+            arguments
+                n_y int32
+                n_z int32
+                T double
+                n_t int32
+            end
             this@Dynamic_Constraint(n_y, n_z, T, n_t);
 
             this.yt_current = inf * ones(n_y, n_t);

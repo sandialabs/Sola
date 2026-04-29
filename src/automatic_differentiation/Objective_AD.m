@@ -4,20 +4,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 classdef Objective_AD < Objective
-    % Define a scalar-valued objective function
-    %
-    % .. math:: J(\u, \z) \to \R
-    %
-    % where
-    % :math:`\u \in \R^{n_u}` is the state and
-    % :math:`\z \in \R^{n_z}` is the control.
-    %
-    % The gradients and Hessian actions of :math:`J` are computed via
-    % automatic differentiation from the :meth:`J_AD()` method.
+    % Define a scalar-valued objective function J(u,z)
 
     properties
-        n_u             % Dimension :math:`n_u` of the state :math:`\u`.
-        n_z             % Dimension :math:`n_z` of the control :math:`\z`.
+        n_u             % Dimension of the state u.
+        n_z             % Dimension of the control z.
         verbose         % If ``true``, print automatic differentiation info.
         path_name
     end
@@ -25,20 +16,6 @@ classdef Objective_AD < Objective
     methods (Abstract, Access = public)
 
         [val] = J_AD(this, u, z)
-        % Evaluate the objective function :math:`J(\u,\z)`.
-        % This method is used for automatic differentiation.
-        %
-        % Parameters
-        % ----------
-        % u
-        %   State :math:`\u\in\R^{n_u}`.
-        % z
-        %   Control :math:`\z\in\R^{n_z}`.
-        %
-        % Returns
-        % -------
-        % val : double
-        %   Objective value :math:`J(\u,\z)`.
 
     end
 

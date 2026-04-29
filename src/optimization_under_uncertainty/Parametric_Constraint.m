@@ -4,10 +4,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 classdef Parametric_Constraint < Constraint
-    % Define a parametric constraint function :math:`\c(\u, \z, \theta)\to\R^{n_u}` where
-    % :math:`\u \in \R^{n_u}` is the state and
-    % :math:`\z \in \R^{n_z}` is the control and
-    % :math:`\theta \in \R^{n_theta}` are the parameters.
+    % Define a parametric constraint function c(u,z,theta)
 
     properties
         theta_current                 % Current parameter vector
@@ -18,10 +15,9 @@ classdef Parametric_Constraint < Constraint
     methods (Access = public)
 
         function this = Parametric_Constraint(theta)
-            % Parameters
-            % ----------
-            % theta
-            %   parameter, a vector.
+            arguments
+                theta (:, 1) {mustBeNumeric}
+            end
             this@Constraint();
             this.theta_current = theta;
         end
@@ -33,100 +29,14 @@ classdef Parametric_Constraint < Constraint
     methods (Abstract, Access = public)
 
         [u] = Parametric_State_Solve(this, z, theta)
-        % Given :math:`\z` and `\theta`, solve the constraint equation
-        % :math:`\c(\u,\z, \theta)=\0` for :math:`\u`, i.e., compute
-        % :math:`\u = \S(\z, \theta)`.
-        %
-        % Parameters
-        % ----------
-        % z
-        %   Control :math:`\z\in\R^{n_z}`.
-        % theta
-        %   Parameters :math:`\theta\in\R^{n_\theta}`.
-        %
-        % Returns
-        % -------
-        % u : vector
-        %   State :math:`\u = \S(\z) \in \R^{n_u}`.
 
         [u_out] = Parametric_c_u_Transpose_Inverse_Apply(this, u_in, u, z, theta)
-        % Compute the Jacobian-vector product :math:`c_u(\u,\z, \theta)\invtrp\v`,
-        % i.e., solve :math:`c_u(\u,\z,\theta)\trp\bflambda = \v`
-        % for :math:`\bflambda`.
-        %
-        % Parameters
-        % ----------
-        % u_in
-        %   Search direction :math:`\v\in\R^{n_u}`.
-        % u
-        %   State :math:`\u\in\R^{n_u}`.
-        % z
-        %   Control :math:`\z\in\R^{n_z}`.
-        % theta
-        %   Parameters :math:`\theta\in\R^{n_\theta}`.
-        %
-        % Returns
-        % -------
-        % u_out : vector
-        %   Jacobian-vector product :math:`c_u(\u,\z,\theta)\invtrp\v\in\R^{n_u}`.
 
         [z_out] = Parametric_c_z_Transpose_Apply(this, u_in, u, z, theta)
-        % Compute the Jacobian-vector product :math:`c_z(\u,\z,\theta)\trp\v`.
-        %
-        % Parameters
-        % ----------
-        % u_in
-        %   Search direction :math:`\v\in\R^{n_u}`.
-        % u
-        %   State :math:`\u\in\R^{n_u}`.
-        % z
-        %   Control :math:`\z\in\R^{n_z}`.
-        % theta
-        %   Parameters :math:`\theta\in\R^{n_\theta}`.
-        %
-        % Returns
-        % -------
-        % z_out : vector
-        %   Jacobian-vector product :math:`c_z(\u,\z,\theta)\trp\v\in\R^{n_z}`.
 
         [u_out] = Parametric_c_u_Inverse_Apply(this, u_in, u, z, theta)
-        % Compute the Jacobian-vector product :math:`c_u(\u,\z,\theta)^{-1}\v`,
-        % i.e., solve :math:`c_u(\u,\z,\theta)\bfmu = \v` for :math:`\bfmu`.
-        %
-        % Parameters
-        % ----------
-        % u_in
-        %   Search direction :math:`\v\in\R^{n_u}`.
-        % u
-        %   State :math:`\u\in\R^{n_u}`.
-        % z
-        %   Control :math:`\z\in\R^{n_z}`.
-        % theta
-        %   Parameters :math:`\theta\in\R^{n_\theta}`.
-        %
-        % Returns
-        % -------
-        % u_out : vector
-        %   Jacobian-vector product :math:`c_u(\u,\z,\theta)^{-1}\v\in\R^{n_u}`.
 
         [u_out] = Parametric_c_z_Apply(this, z_in, u, z, theta)
-        % Compute the Jacobian-vector product :math:`c_z(\u,\z,\theta)\v`.
-        %
-        % Parameters
-        % ----------
-        % z_in
-        %   Search direction :math:`\v\in\R^{n_z}`.
-        % u
-        %   State :math:`\u\in\R^{n_u}`.
-        % z
-        %   Control :math:`\z\in\R^{n_z}`.
-        % theta
-        %   Parameters :math:`\theta\in\R^{n_\theta}`.
-        %
-        % Returns
-        % -------
-        % u_out : vector
-        %   Jacobian-vector product :math:`c_z(\u,\z,\theta)\v\in\R^{n_u}`.
 
     end
 
@@ -159,23 +69,6 @@ classdef Parametric_Constraint < Constraint
     methods (Access = public)
 
         function [con] = Parametric_c(this, u, z, theta)
-            % *Semi-abstract method.*
-            % Explicitly form the constraint :math:`\c(\u,\z,\theta)`.
-            % This method is only used for finite difference checks.
-            %
-            % Parameters
-            % ----------
-            % u
-            %   State :math:`\u\in\R^{n_u}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            % theta
-            %   Parameters :math:`\theta\in\R^{n_\theta}`.
-            %
-            % Returns
-            % -------
-            % c : vector
-            %   Constraint :math:`\c(\u,\z,\theta)\in\R^{n_u}`.
             con = error('Parametric_c() not implemented');
         end
 
@@ -184,28 +77,6 @@ classdef Parametric_Constraint < Constraint
         end
 
         function [u_out] = Parametric_c_uu_Apply(this, u_in, u, z, lambda, theta)
-            % *Semi-abstract method.*
-            % Compute the vector-Hessian-vector product
-            % :math:`\bflambda\trp c_{u,u}(\u,\z,\theta)\v`.
-            %
-            % Parameters
-            % ----------
-            % u_in
-            %   Search direction :math:`\v\in\R^{n_u}`.
-            % u
-            %   State :math:`\u\in\R^{n_u}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            % lambda
-            %   Adjoint :math:`\bflambda\in\R^{n_u}`.
-            % theta
-            %   Parameters :math:`\theta\in\R^{n_\theta}`.
-            %
-            % Returns
-            % -------
-            % u_out : vector
-            %   Vector-Hessian-vector product
-            %   :math:`\bflambda\trp c_{u,u}(\u,\z,\theta)\v\in\R^{n_u}`.
             u_out = error('Parametric_c_uu_Apply() not implemented');
         end
 
@@ -214,28 +85,6 @@ classdef Parametric_Constraint < Constraint
         end
 
         function [u_out] = Parametric_c_uz_Apply(this, z_in, u, z, lambda, theta)
-            % *Semi-abstract method.*
-            % Compute the vector-Hessian-vector product
-            % :math:`\bflambda\trp c_{u,z}(\u,\z,\theta)\v`.
-            %
-            % Parameters
-            % ----------
-            % z_in
-            %   Search direction :math:`\v\in\R^{n_z}`.
-            % u
-            %   State :math:`\u\in\R^{n_u}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            % lambda
-            %   Adjoint :math:`\bflambda\in\R^{n_u}`.
-            % theta
-            %   Parameters :math:`\theta\in\R^{n_\theta}`.
-            %
-            % Returns
-            % -------
-            % u_out : vector
-            %   Vector-Hessian-vector product
-            %   :math:`\bflambda\trp c_{u,z}(\u,\z,\theta)\v\in\R^{n_u}`.
             u_out = error('Parametric_c_uz_Apply() not implemented');
         end
 
@@ -244,54 +93,10 @@ classdef Parametric_Constraint < Constraint
         end
 
         function [u_out] = Parametric_c_utheta_Apply(this, theta_in, u, z, lambda, theta)
-            % *Semi-abstract method.*
-            % Compute the vector-Hessian-vector product
-            % :math:`\bflambda\trp c_{u,\theta}(\u,\z,\theta)\v`.
-            %
-            % Parameters
-            % ----------
-            % theta_in
-            %   Search direction :math:`\v\in\R^{n_\theta}`.
-            % u
-            %   State :math:`\u\in\R^{n_u}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            % lambda
-            %   Adjoint :math:`\bflambda\in\R^{n_u}`.
-            % theta
-            %   Parameters :math:`\theta\in\R^{n_\theta}`.
-            %
-            % Returns
-            % -------
-            % u_out : vector
-            %   Vector-Hessian-vector product
-            %   :math:`\bflambda\trp c_{u,\theta}(\u,\z,\theta)\v\in\R^{n_u}`.
             u_out = error('Parametric_c_utheta_Apply() not implemented');
         end
 
         function [z_out] = Parametric_c_zu_Apply(this, u_in, u, z, lambda, theta)
-            % *Semi-abstract method.*
-            % Compute the vector-Hessian-vector product
-            % :math:`\bflambda\trp c_{z,u}(\u,\z,\theta)\v`.
-            %
-            % Parameters
-            % ----------
-            % u_in
-            %   Search direction :math:`\v\in\R^{n_u}`.
-            % u
-            %   State :math:`\u\in\R^{n_u}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            % lambda
-            %   Adjoint :math:`\bflambda\in\R^{n_u}`.
-            % theta
-            %   Parameters :math:`\theta\in\R^{n_\theta}`.
-            %
-            % Returns
-            % -------
-            % z_out : vector
-            %   Vector-Hessian-vector product
-            %   :math:`\bflambda\trp c_{z,u}(\u,\z,\theta)\v\in\R^{n_z}`.
             z_out = error('Parametric_c_zu_Apply() not implemented');
         end
 
@@ -300,28 +105,6 @@ classdef Parametric_Constraint < Constraint
         end
 
         function [z_out] = Parametric_c_zz_Apply(this, z_in, u, z, lambda, theta)
-            % *Semi-abstract method.*
-            % Compute the vector-Hessian-vector product
-            % :math:`\bflambda\trp c_{z,z}(\u,\z,\theta)\v`.
-            %
-            % Parameters
-            % ----------
-            % z_in
-            %   Search direction :math:`\v\in\R^{n_z}`.
-            % u
-            %   State :math:`\u\in\R^{n_u}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            % lambda
-            %   Adjoint :math:`\bflambda\in\R^{n_u}`.
-            % theta
-            %   Parameters :math:`\theta\in\R^{n_\theta}`.
-            %
-            % Returns
-            % -------
-            % z_out : vector
-            %   Vector-Hessian-vector product
-            %   :math:`\bflambda\trp c_{z,z}(\u,\z,\theta)\v\in\R^{n_z}`.
             z_out = error('Parametric_c_zz_Apply() not implemented');
         end
 
@@ -343,41 +126,6 @@ classdef Parametric_Constraint < Constraint
         end
 
         function [diffs_z, jacobian_z_transpose_check, diffs_u, jacobian_u_transpose_check, solve_res] = Finite_Difference_Constraint_Check(this, u, z)
-            % Check the implementation of the following via finite differences.
-            %
-            % * :meth:`c_z_Apply()` for :math:`\c_z(\u,\z)\v`.
-            % * :meth:`c_u_Inverse_Apply()` for :math:`\c_u(\u,\z)^{-1}\v`.
-            %
-            % Also check that the following functions are consistent.
-            %
-            % * :meth:`c_z_Apply()` and :meth:`c_z_Transpose_Apply()`.
-            % * :meth:`c_u_Inverse_Apply()` and :meth:`c_u_Transpose_Inverse_Apply()`.
-            %
-            % Finally, check that :meth:`State_Solve()` and :meth:`c()` are inverses.
-            %
-            % Note
-            % ----
-            % This check requires :meth:`c()` to be implemented.
-            %
-            % Parameters
-            % ----------
-            % u
-            %   State :math:`\mathbf{u} \in \mathbb{R}^{n_u}`.
-            % z
-            %   Control :math:`\mathbf{z} \in \mathbb{R}^{n_z}`.
-            %
-            % Returns
-            % -------
-            % diffs_z : vector
-            %   Finite difference errors for :math:`\c_z(\u, \z)\v`.
-            % jacobian_z_transpose_check : double
-            %   Error from comparing :math:`\c_z(\u,\z)\trp\v` with :math:`\c_z(\u,\z)\v`.
-            % diffs_u : vector
-            %   Finite difference errors for :math:`\c_u(\u, \z)\v`.
-            % jacobian_u_transpose_check : double
-            %   Error from comparing :math:`\c_u(\u,\z)\invtrp\v` with :math:`\c_u(\u,\z)^{-1}\v`.
-            % solve_res : double
-            %   Error from comparing :math:`\S(\z)` with :math:`\c(\u, \z)`.
 
             % c_z_Apply check
             c = this.c(u, z);

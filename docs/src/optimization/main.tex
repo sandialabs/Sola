@@ -106,7 +106,7 @@ where the time-dependent state is denoted by \( \y(t) \).
 
 \subsection*{Abstract classes}
 
-An abstract class defines methods that must be implemented before the class can be instantiated. In Sola, abstract classes provide a uniform interface for optimization algorithms while allowing users to supply problem-specific physics and derivatives.
+An abstract class defines methods that must be implemented before the class can be instantiated. In Sola, abstract classes provide a uniform interface for optimization algorithms while allowing users to supply problem-specific physics and derivatives. The code naming convention is that a name such as \texttt{J\_uz\_Apply} means that the method applies the $(u,z)$ second derivative matrix of $J(u,z)$ to a vector. The input and output names such as \texttt{z\_in} and \texttt{u\_out} indicate the spaces (state or optimization variable) of the input and output vectors in the matrix-vector product.
 
 \subsection*{Vectorized apply methods}
 

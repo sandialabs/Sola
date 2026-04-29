@@ -5,23 +5,11 @@
 
 classdef Reduced_Space_Optimization < handle
     % Solve a constrained optimization problem
-    %
-    % .. math::
-    %  \min_{\u,\z} J(\u,\z)
-    %  \quad \text{subject to} \quad
-    %  \c(\u,\z) = \0
-    %
+    %  \min_{u,z} J(u,z)
+    %  subject to
+    %  c(u,z) = 0
     % by solving the equivalent, unconstrained reduced-space problem
-    %
-    % .. math:: \min_\z \hat{J}(\z) := J(\S(\z), \z)
-    %
-    % where
-    % :math:`\S(\z)` solves the constraint equation :math:`\c(\u, \z) = \0`,
-    % i.e., :math:`\c(\S(\z),\z) = \0` for all admissible :math:`\z`.
-    % Here,
-    % :math:`\u \in \R^{n_u}` is the state,
-    % :math:`\z \in \R^{n_z}` is the control, and
-    % :math:`\c(\u,\z) \in \R^{n_u}` are the constraints.
+    % min_z \hat{J}(z) := J(S(z),z)
 
     properties
         obj                 % Instance of a subclass of :class:`Objective`.
@@ -44,12 +32,10 @@ classdef Reduced_Space_Optimization < handle
         %% Constructor
 
         function this = Reduced_Space_Optimization(obj, con)
-            % Parameters
-            % ----------
-            % obj
-            %   Objective function, an instance of a subclass of :class:`Objective`.
-            % con
-            %   Constraint equations, an instance of a subclass of :class:`Constraint`.
+            arguments
+                obj Objective
+                con Constraint
+            end
 
             this.obj = obj;
             this.con = con;
@@ -69,21 +55,6 @@ classdef Reduced_Space_Optimization < handle
         %% Optimization functions
 
         function [u, z] = Optimize(this, z0)
-            % Solve the optimization problem via ``fminunc()``
-            % (or ``fmincon()`` if ``z_lb`` and ``z_ub`` are set).
-            % Optimization options are given by the object properties.
-            %
-            % Parameters
-            % ----------
-            % z0
-            %   Initial guess :math:`\z_0\in\R^{n_z}` for the control.
-            %
-            % Returns
-            % -------
-            % u : vector
-            %   Optimal state :math:`\u^* \in \R^{n_u}`.
-            % z : vetor
-            %   Optimal control :math:`\z^* \in \R^{n_z}`.
 
             verb = 'iter-detailed';
             if this.verbose == false
@@ -147,26 +118,6 @@ classdef Reduced_Space_Optimization < handle
         end
 
         function [val, grad, hessian_data] = Jhat(this, z)
-            % Evaluate the reduced-space objective function
-            % :math:`\hat{J}(\z) = J(\S(\z),\z)` and its gradients.
-            %
-            % Parameters
-            % ----------
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            %
-            % Returns
-            % -------
-            % val : double
-            %   Objective value :math:`\hat{J}(\z)\in\R`.
-            % grad : vetor
-            %   Objective gradient :math:`\grad{z}\hat{J}(\z)\in\R^{n_z}`.
-            % hessian_data : vector
-            %   Concatenation of the state :math:`\u\in\R^{n_u}`,
-            %   control :math:`\z\in\R^{n_z}`,
-            %   and adjoint :math:`\bflambda\in\R^{n_u}`
-            %   to pass to :meth:`Jhat_hessVec()`.
-
             u = this.con.State_Solve(z);
             [val, grad_u, grad_z] = this.obj.J(u, z);
             lambda = this.con.c_u_Transpose_Inverse_Apply(-grad_u, u, z);
@@ -176,24 +127,8 @@ classdef Reduced_Space_Optimization < handle
         end
 
         function [z_out] = Jhat_hessVec(this, hessian_data, z_in)
-            % Compute the vector-Hessian-vector product
-            % :math:`\bflambda\trp\grad{z,z}\hat{J}(\z)\v`
-            % via an adjoint-based approach.
-            %
-            % Parameters
-            % ----------
-            % hessian_data : vector
-            %   Concatenation of the state :math:`\u\in\R^{n_u}`,
-            %   control :math:`\z\in\R^{n_z}`,
-            %   and adjoint :math:`\bflambda\in\R^{n_u}`.
-            % z_in : vector
-            %   Control direction :math:`\v\in\R^{n_z}`.
-            %
-            % Returns
-            % -------
-            % z_out : vector
-            %   Vector-Hessian-vector product
-            %   :math:`\bflambda\trp\grad{z,z}\hat{J}(\z)\v\in\R^{n_z}`.
+            % hessian_data is the concatenation of the state u,
+            %   control z, and adjoint lambda
 
             % Extract state, control, and adjoint from hessian_data.
             p = length(z_in);
@@ -202,7 +137,6 @@ classdef Reduced_Space_Optimization < handle
             z = hessian_data((m + 1):(m + p));
             lambda = hessian_data((m + p + 1):end);
 
-            % Execute Algorithm 2 or 3 for computing the Hessian-vector product.
             w = this.con.c_z_Apply(z_in, u, z);
             mu = this.con.c_u_Inverse_Apply(-w, u, z);
             yJ = this.obj.J_uu_Apply(mu, u, z) + this.obj.J_uz_Apply(z_in, u, z);
@@ -221,17 +155,6 @@ classdef Reduced_Space_Optimization < handle
         %% Finite difference tests
 
         function [diffs] = Finite_Difference_Gradient_Check(this, z)
-            % Check the implementation of :meth:`Jhat()` via finite differences.
-            %
-            % Parameters
-            % ----------
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            %
-            % Returns
-            % -------
-            % diffs : vector
-            %   Finite difference errors.
 
             [val, grad] = this.Jhat(z);
             n = length(grad);
@@ -257,17 +180,6 @@ classdef Reduced_Space_Optimization < handle
         end
 
         function [diffs] = Finite_Difference_Hessian_Check(this, z)
-            % Check the implementation of :meth:`Jhat_hessVec()` via finite differences.
-            %
-            % Parameters
-            % ----------
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            %
-            % Returns
-            % -------
-            % diffs : vector
-            %   Finite difference errors.
 
             [~, grad, hessian_data] = this.Jhat(z);
             n = length(grad);

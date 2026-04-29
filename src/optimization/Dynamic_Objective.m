@@ -4,37 +4,21 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 classdef Dynamic_Objective < Objective
-    % Define an objective function
-    %
-    % .. math:: J(\u,\z) = \int_{0}^{T} g(\u(t), t) dt + R(\z),
-    %
-    % represented by applying the trapezoidal rule to estimate the integral:
-    %
-    % .. math:: J(\u,\z) = \sum_{j=1}^{N} w_{j} g(\y_{j}, t_{j}) + R(\z).
-    %
-    % Here,
-    %
-    % * :math:`\u = (\y_{1}\trp \cdots \y_{n_t}\trp)\trp\in\R^{n_u}`
-    %   with :math:`\y_{j} \in \R^{n_y}` and :math:`n_u = n_y n_t`,
-    % * :math:`0 = t_{1} < t_{2} < \cdots < t_{n_t} = T`
-    %   with equal spacing :math:`\delta t = t_{j+1} - t_{j}`,
-    % * :math:`\z \in \R^{n_z}`,
-    % * :math:`g:\R^{n_y} \times [0, T] \to \R`,
-    % * :math:`R:\R^{n_z} \to \R`, and
-    % * :math:`w_{j} = \delta t` for :math:`j = 2, \ldots, N - 1`
-    %   and :math:`w_{1} = w_{n_t} = \frac{1}{2}\delta t`.
+    % Define an objective function J(u,z) = \int_{0}^{T} g(y(t), t) dt + R(z),
+    % represented by applying the trapezoidal rule to estimate the integral.
+    % Here, the state u is the concatentation of y at all time steps.
 
     properties
-        n_y         % Dimension :math:`n_y` of the differential equation state :math:`\y(t)`.
-        n_z         % Dimension :math:`n_z` of the control :math:`\z`.
-        n_t         % Number of nodes :math:`n_t` in the time mesh.
-        t_mesh      % Time mesh :math:`(t_1,\ldots,t_{n_t})\trp`.
-        w           % Quadrature weights :math:`(w_1,\ldots,w_{n_t})\trp` for the time integral.
+        n_y         % Dimension of y(t).
+        n_z         % Dimension of z.
+        n_t         % Number of nodes in the time mesh.
+        t_mesh      % Time mesh.
+        w           % Quadrature weights.
     end
 
     properties (Dependent)
-        T           % Final time :math:`T = t_{n_t}`.
-        n_u         % Dimension :math:`n_u = n_y n_t` of the full optimization state.
+        T           % Final time.
+        n_u         % Dimension n_u = n_y n_t of the full optimization state.
     end
 
     methods
@@ -52,23 +36,19 @@ classdef Dynamic_Objective < Objective
         %% Constructor.
 
         function this = Dynamic_Objective(n_y, n_z, T, n_t)
-            % Parameters
-            % ----------
-            % n_y : int
-            %   Dimension :math:`n_y` of the differential equation state :math:`\y(t)`.
-            % n_z : int
-            %   Dimension :math:`n_z` of the control :math:`\z`.
-            % T : double
-            %   Final time :math:`T`.
-            % n_t : int
-            %   Number of nodes :math:`n_t` in the time mesh.
-            this.n_y = n_y;                         % ODE state dimension
-            this.n_z = n_z;                         % Control dimension
-            this.n_t = n_t;                         % Number of time nodes
-            this.t_mesh = linspace(0, T, n_t)';     % Discrete time domain
+            arguments
+                n_y int32
+                n_z int32
+                T double
+                n_t int32
+            end
+            this.n_y = n_y;                     
+            this.n_z = n_z;                        
+            this.n_t = n_t;                        
+            this.t_mesh = linspace(0, T, n_t)';     
             w = ones(n_t, 1);
             w(2:end - 1) = 2;
-            this.w = T * w / sum(w);                % Quadrature weights for time integral
+            this.w = T * w / sum(w);                
         end
 
     end
@@ -78,70 +58,12 @@ classdef Dynamic_Objective < Objective
     methods (Abstract, Access = public)
 
         [val, grad_y] = g(this, y, t)
-        % Evaluate the integrand :math:`g(\y(t),t)`
-        % and its gradient :math:`\grad{y}g(\y(t),t)`.
-        %
-        % Parameters
-        % ----------
-        % y
-        %   Differential equation state :math:`\y(t)\in\R^{n_y}`.
-        % t
-        %   Time :math:`t`.
-        %
-        % Returns
-        % -------
-        % val : double
-        %   Function value :math:`g(\y(t),t)\in\R`.
-        % grad_y : vector
-        %   Function gradient :math:`\grad{y}g(\y(t),t)\in\R^{n_y}`.
 
         [val, grad_z] = R(this, z)
-        % Evaluate the regularization term :math:`R(\z)`
-        % and its gradient :math:`\grad{z}R(\z)`.
-        %
-        % Parameters
-        % ----------
-        % z
-        %   Control :math:`\z\in\R^{n_z}`.
-        %
-        % Returns
-        % -------
-        % val : double
-        %   Function value :math:`R(\z)\in\R`.
-        % grad_z : vector
-        %   Function gradient :math:`\grad{z}R(\z)\in\R^{n_z}`.
 
         [y_out] = g_yy_Apply(this, y_in, y, t)
-        % Compute the Hessian-vector product :math:`\grad{y,y}g(\y(t), t)\v`.
-        %
-        % Parameters
-        % ----------
-        % y_in
-        %   Search direction :math:`\v\in\R^{n_y}`.
-        % y
-        %   Differential equation state :math:`\y(t)\in\R^{n_y}`.
-        % t
-        %   Time :math:`t`.
-        %
-        % Returns
-        % -------
-        % y_out : vector
-        %   Hessian-vector product :math:`\grad{y,y}g(\y(t), t)\v\in\R^{n_y}`
 
         [z_out] = R_zz_Apply(this, z_in, z)
-        % Compute the Hessian-vector product :math:`\grad{z,z}R(\z)\v`.
-        %
-        % Parameters
-        % ----------
-        % z_in
-        %   Search direction :math:`\v\in\R^{n_z}`.
-        % z
-        %   Control :math:`\z\in\R^{n_z}`.
-        %
-        % Returns
-        % -------
-        % z_out : vector
-        %   Hessian-vector product :math:`\grad{z,z}R(\z)\v\in\R^{n_z}`
 
     end
 
@@ -150,23 +72,6 @@ classdef Dynamic_Objective < Objective
     methods (Access = public)
 
         function [val, grad_u, grad_z] = J(this, u, z)
-            % Evaluate the objective function and its derivatives.
-            %
-            % Parameters
-            % ----------
-            % u
-            %   State :math:`\u\in\R^{n_u}`.
-            % z
-            %   Control :math:`\z\in\R^{n_z}`.
-            %
-            % Returns
-            % -------
-            % val : double
-            %   Objective value :math:`J(\u,\z) \in \R`.
-            % grad_u : vector
-            %   Objective gradient :math:`\grad{u}J(\u,\z) \in \R^{n_u}`.
-            % grad_z : vector
-            %   Objective gradient :math:`\grad{z}J(\u,\z) \in \R^{n_z}`.
 
             val = 0;
             grad_u = 0 * u;

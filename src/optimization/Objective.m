@@ -4,15 +4,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 classdef Objective < handle
-    % Define a scalar-valued objective function
-    %
-    % .. math:: J(\u, \z) \to \R
-    %
-    % where
-    % :math:`\u \in \R^{n_u}` is the state and
-    % :math:`\z \in \R^{n_z}` is the control.
-
-    %% Constructor (empty).
+    % Define a scalar-valued objective function J(u,z)
 
     methods (Access = public)
 
@@ -25,94 +17,19 @@ classdef Objective < handle
 
     methods (Abstract, Access = public)
 
+        % val=J(u,z), grad_u and grad_z denote its gradients w.r.t u and z
         [val, grad_u, grad_z] = J(this, u, z)
-        % Evaluate the objective function :math:`J(\u,\z)` and its
-        % gradients :math:`\grad{u}J(\u,\z)` and :math:`\grad{z}J(\u,\z)`.
-        %
-        % Parameters
-        % ----------
-        % u
-        %   State :math:`\u\in\R^{n_u}`.
-        % z
-        %   Control :math:`\z\in\R^{n_z}`.
-        %
-        % Returns
-        % -------
-        % val : double
-        %   Objective value :math:`J(\u,\z)`.
-        % grad_u : vector
-        %   Objective gradient :math:`\grad{u}J(\u,\z)`.
-        % grad_z : vector
-        %   Objective gradient :math:`\grad{z}J(\u,\z)`.
+
+        % Subscripts J_** denote second derivative matrices
 
         [u_out] = J_uu_Apply(this, u_in, u, z)
-        % Compute :math:`\grad{u,u}J(\u,\z)\v`.
-        %
-        % Parameters
-        % ----------
-        % u_in
-        %   Search direction :math:`\v\in\R^{n_u}`.
-        % u
-        %   State :math:`\u\in\R^{n_u}`.
-        % z
-        %   Control :math:`\z\in\R^{n_z}`.
-        %
-        % Returns
-        % -------
-        % u_out : vector
-        %   Gradient-vector product :math:`\grad{u,u}J(\u,\z)\v\in\R^{n_u}`.
 
         [u_out] = J_uz_Apply(this, z_in, u, z)
-        % Compute :math:`\grad{u,z}J(\u,\z)\v`.
-        %
-        % Parameters
-        % ----------
-        % z_in
-        %   Search direction :math:`\v\in\R^{n_z}`.
-        % u
-        %   State :math:`\u\in\R^{n_u}`.
-        % z
-        %   Control :math:`\z\in\R^{n_z}`.
-        %
-        % Returns
-        % -------
-        % u_out : vector
-        %   Gradient-vector product :math:`\grad{u,z}J(\u,\z)\v\in\R^{n_u}`.
 
         [z_out] = J_zu_Apply(this, u_in, u, z)
-        % Compute :math:`\grad{z,u}J(\u,\z)\v`.
-        %
-        % Parameters
-        % ----------
-        % u_in
-        %   Search direction :math:`\v\in\R^{n_u}`.
-        % u
-        %   State :math:`\u\in\R^{n_u}`.
-        % z
-        %   Control :math:`\z\in\R^{n_z}`.
-        %
-        % Returns
-        % -------
-        % z_out : vector
-        %   Gradient-vector product :math:`\grad{z,u}J(\u,\z)\v\in\R^{n_z}`.
 
         [z_out] = J_zz_Apply(this, z_in, u, z)
-        % Compute :math:`\grad{z,z}J(\u,\z)\v`.
-        %
-        % Parameters
-        % ----------
-        % z_in
-        %   Search direction :math:`\v\in\R^{n_z}`.
-        % u
-        %   State :math:`\u\in\R^{n_u}`.
-        % z
-        %   Control :math:`\z\in\R^{n_z}`.
-        %
-        % Returns
-        % -------
-        % z_out : vector
-        %   Gradient-vector product :math:`\grad{z,z}J(\u,\z)\v\in\R^{n_z}`.
-
+       
     end
 
     %% Finite difference checks.
@@ -120,21 +37,7 @@ classdef Objective < handle
     methods (Access = public)
 
         function [diffs_u, diffs_z] = Finite_Difference_Gradient_Check(this, u, z)
-            % Check the implementation of :meth:`J()` via finite differences.
-            %
-            % Parameters
-            % ----------
-            % u
-            %   State :math:`\u \in \R^{n_u}`.
-            % z
-            %   Control :math:`\z \in \R^{n_z}`.
-            %
-            % Returns
-            % -------
-            % diffs_u : vector
-            %   Finite difference errors for :math:`\grad{u}J(\u,\z)`.
-            % diffs_z : vector
-            %   Finite difference errors for :math:`\grad{z}J(\u,\z)`.
+
             [val, grad_u, grad_z] = this.J(u, z);
 
             h = 10.^(-2:-1:-6);
@@ -177,30 +80,6 @@ classdef Objective < handle
         end
 
         function [diffs_uu, diffs_uz, diffs_zu, diffs_zz] = Finite_Difference_Hessian_Check(this, u, z)
-            % Check the implementation of the following via finite differences.
-            %
-            % * :meth:`J_uu_Apply()` for :math:`\grad{u,u}J(\u,\z)`.
-            % * :meth:`J_uz_Apply()` for :math:`\grad{u,z}J(\u,\z)`.
-            % * :meth:`J_zu_Apply()` for :math:`\grad{z,u}J(\u,\z)`.
-            % * :meth:`J_zz_Apply()` for :math:`\grad{z,z}J(\u,\z)`.
-            %
-            % Parameters
-            % ----------
-            % u
-            %   State :math:`\mathbf{u} \in \mathbb{R}^{n_u}`.
-            % z
-            %   Control :math:`\mathbf{z} \in \mathbb{R}^{n_z}`.
-            %
-            % Returns
-            % -------
-            % diffs_uu : vector
-            %   Finite difference errors for :math:`\grad{u,u}J(\u,\z)`.
-            % diffs_uz : vector
-            %   Finite difference errors for :math:`\grad{u,z}J(\u,\z)`.
-            % diffs_zu : vector
-            %   Finite difference errors for :math:`\grad{z,u}J(\u,\z)`.
-            % diffs_zz : vector
-            %   Finite difference errors for :math:`\grad{z,z}J(\u,\z)`.
 
             [~, grad_u, grad_z] = this.J(u, z);
             h = 10.^(-2:-1:-6);
