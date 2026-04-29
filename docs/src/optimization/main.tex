@@ -1,0 +1,133 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{titlesec}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    frame=single,
+    breaklines=true,
+    columns=fullflexible,
+    keepspaces=true
+}
+
+\title{Sola Optimization Documentation}
+\author{}
+\date{}
+
+\renewcommand{\vec}[1] {\ensuremath{\boldsymbol{#1}}}
+\def\R{\mathbb{R}}
+\def\u{\bm{u}}
+\def\t{\bm{\theta}}
+\def\z{\bm{z}}
+\def\y{\bm{y}}
+\def\cvec{\bm{c}}
+\def\fvec{\bm{f}}
+\def\0{\bm{0}}
+\def\Sop{\mathcal{S}}
+\def\Jhat{\hat{J}}
+\def\dd{\mathrm{d}}
+
+\begin{document}
+
+\maketitle
+
+\section*{Optimization Problem Formulation}
+
+Sola provides MATLAB classes for solving constrained optimization problems of the form
+\begin{equation}
+\begin{aligned} \label{eqn:opt_prob}
+    \min_{\u,\z}\; & J(\u,\z)
+    \qquad\Longleftrightarrow\qquad
+    \min_{\z}\; \Jhat(\z) = J(\Sop(\z),\z), \\
+    \text{s.t.}\; & \cvec(\u,\z)=\0,
+\end{aligned}
+\end{equation}
+where
+\[
+\u \in \R^{n_u}, \qquad \z \in \R^{n_z},
+\]
+\( \u \) is the state variable, \( \z \) is the control variable, \( J(\u,\z) \) is the objective, \( \cvec(\u,\z) \) defines the constraints, and \( \Sop(\z) \) is the state solution operator satisfying
+\[
+\cvec(\Sop(\z),\z)=\0.
+\]
+Its primary purpose is to prototype optimization constrained by differential equations, where~\eqref{eqn:opt_prob} is written in a discretized form, e.g., after spatial discretization of a partial differential equation. 
+
+Within \texttt{sola/src/optimization}, the main MATLAB classes are:
+\begin{itemize}
+    \item \texttt{Objective}: represents \( J(\u,\z) \),
+    \item \texttt{Constraint}: represents \( \cvec(\u,\z) \) and the associated solution operator \( \Sop \),
+    \item \texttt{Reduced\_Space\_Optimization}: represents and solves the reduced problem
+    \[
+    \min_{\z} J(\Sop(\z),\z).
+    \]
+\end{itemize}
+The classes \texttt{Objective} and \texttt{Constraint} have interfaces to implement the functions and their first and second derivatives.
+The class \texttt{Reduced\_Space\_Optimization} takes inputs of type \texttt{Objective} and \texttt{Constraint}, and automates the implementation of adjoint equations and interfacing with MATLAB's optimization algorithms. 
+
+Sola also provides specialized classes for a broad class of optimization problems in which the state depends on time. The interface for such time-dependent problems involves the classes:
+\begin{itemize}
+    \item \texttt{Dynamic\_Objective},
+    \item \texttt{Dynamic\_Constraint}.
+\end{itemize}
+
+\texttt{Dynamic\_Objective} is a specialized objective class for problems of the form
+\[
+J(\u,\z) = \int_0^T g(\y(t),t)\,\dd t + R(\z),
+\]
+where the time-dependent state is denoted by \( \y(t) \).
+
+\texttt{Dynamic\_Constraint} is a specialized constraint class for systems governed by ordinary differential equations of the form
+\begin{align*}
+& \frac{\dd}{\dd t}\y(t) = \fvec(\y(t),\z,t) \\
+& \y(0) = h(\z) .
+\end{align*}
+
+\section*{Implementation Notes}
+
+\subsection*{Abstract classes}
+
+An abstract class defines methods that must be implemented before the class can be instantiated. In Sola, abstract classes provide a uniform interface for optimization algorithms while allowing users to supply problem-specific physics and derivatives.
+
+\subsection*{Vectorized apply methods}
+
+Many derivative application methods must accept multiple test directions at once, arranged columnwise in a matrix. This vectorized behavior is required to interface properly with MATLAB optimization routines.
+
+\subsection*{Gauss--Newton option}
+
+When the property
+\[
+\texttt{Gauss\_Newton\_Hess = true}
+\]
+is enabled in \texttt{Reduced\_Space\_Optimization}, the optimization uses a Gauss--Newton approximation of the reduced Hessian. This can simplify implementation because certain second-derivative constraint operators are no longer required.
+
+\section*{Automatic Differentiation}
+The code in \texttt{sola/src/automatic\_differentiation} provides an interface to automate the implementation of derivatives. Specifically, it requires that ADiGator has been downloaded from \texttt{https://github.com/matt-weinstein/adigator} and installed. The classes and functions in \texttt{sola/src/automatic\_differentiation} require user implementation of the objective function and constraint, and utilize ADiGator to implement the derivatives. This is an optional module intended to facilitate rapid prototyping. However, manual implementation of the derivatives will typically give better performance.
+
+\section*{Optimization Under Uncertainty}
+The code in \texttt{sola/src/optimization\_under\_uncertainty} provides an interface to solve optimization problems of the form
+\begin{align} \label{eqn:opt_under_uncertainty}
+\min_{\z} \Jhat(\z) = \mathbb{E}_{\t} \left[ J(\Sop(\z,\t),\z) \right],
+\end{align}
+where $\t$ is a vector of uncertain parameters that enter the constraint, e.g., $\t$ corresponds to uncertainty parameters in the partial differential equation that $\Sop$ solves. In Sola, this is defined through the class \texttt{Parametric\_Constraint}, which generalizes the \texttt{Constraint} base class by including $\t$ dependence. A cell of \texttt{Parametric\_Constraint} objects, each corresponding to a different $\t$ sample, is passed into the class \texttt{Reduced\_Space\_Optimization\_Under\_Uncertainty}, which implements adjoints and interfaces with MATLAB's optimization algorithms to solve problems of the form~\eqref{eqn:opt_under_uncertainty} via a sample average approximation of the expected value in the objective function.
+
+\end{document}

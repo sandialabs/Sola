@@ -8,7 +8,7 @@ In addition, it automatically enables hyper-differential sensitivity analysis wi
 - [**src/**](./src/): Source code defining class interfaces and codes for outer loop analysis.
 - [**examples/**](./examples/): Applications / examples with real physics.
 - [**tests/**](./tests/): Unit tests and toy examples for verification.
-- [**docs/**](./docs/): Documentation, powered by `sphinx`.
+- [**docs/**](./docs/): Documentation.
 
 ## Formatting MATLAB Code (Style Enforcement)
 
@@ -28,13 +28,6 @@ Use the following commands to format the MATLAB source code.
 mh_style            # List style problems in detail without changing any files.
 mh_style --brief    # List style problems briefly without changing any files.
 mh_style --fix      # Fix style problems, overwriting offending files.
-```
-
-The following will format MATLAB code blocks in the documentation.
-
-```bash
-cd docs
-python3 format_code_blocks.py
 ```
 
 To ensure proper formatting before committing changes, install a git `pre-commit` hook with the following command.
