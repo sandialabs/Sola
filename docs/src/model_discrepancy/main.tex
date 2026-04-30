@@ -1,0 +1,187 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{titlesec}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    frame=single,
+    breaklines=true,
+    columns=fullflexible,
+    keepspaces=true
+}
+
+\title{Sola Model Discrepancy Documentation}
+\author{}
+\date{}
+
+\renewcommand{\vec}[1] {\ensuremath{\boldsymbol{#1}}}
+\def\R{\mathbb{R}}
+\def\u{\bm{u}}
+\def\t{\bm{\theta}}
+\def\z{\bm{z}}
+\def\y{\bm{y}}
+\def\cvec{\bm{c}}
+\def\fvec{\bm{f}}
+\def\0{\bm{0}}
+\def\Jhat{\hat{J}}
+\def\M{\bm{M}}
+\def\H{\bm{H}}
+\def\B{\bm{B}}
+\def\I{\bm{I}}
+\def\W{\bm{W}}
+\def\G{\bm{G}}
+\def\e{\bm{e}}
+\def\Z{\bm{Z}}
+\def\ztilde{\tilde{\z}}
+\def\d{\delta}
+
+\begin{document}
+
+\maketitle
+
+\section*{Model Discrepancy Problem Formulation}
+
+We consider optimization problems of the form
+\begin{align}
+\label{eqn:true_opt_prob}
+& \min_{\z \in \R^{n_z}} J(S(\z),\z) 
+\end{align}
+where $\z \in \R^{n_z}$ denotes an optimization variable, $S:\R^{n_z} \to \R^{n_u}$ is the solution operator for a discretized differential equation with state variable $\u \in \R^{n_u}$, and $J:\R^{n_u} \times \R^{n_z} \to \R$ is the objective function. Although we would like to solve~\eqref{eqn:true_opt_prob}, it is frequently not possible or practical due to the complexity of the high-fidelity model. Rather, we solve
+\begin{align}
+\label{eqn:approx_opt_prob}
+& \min_{\z \in \R^{n_z}} J(\tilde{S}(\z),\z) 
+\end{align}
+where $\tilde{S}:\R^{n_z} \to \R^{n_u}$ is the solution operator for a low-fidelity model. The goal in hyper-differential sensitivity analysis with respect to model discrepancy (HDSA-MD) is to update the optimal solution of~\eqref{eqn:approx_opt_prob} using a limited number of high-fidelity simulations, i.e. to approximate the optimal solution of~\eqref{eqn:true_opt_prob} without requiring evaluation of $S(\z)$ within the optimization algorithm. 
+
+To incorporate model discrepancy, consider the parameterized optimization problem
+\begin{align}
+\label{eqn:dis_approx_opt_prob_pert_rs}
+ \min_{\z \in \R^n} \hspace{1 mm} \mathcal{J}(\z,\t):=J(\tilde{S}(\z)+\d(\z,\t),\z) ,
+\end{align}
+where $\d:\R^{n_z} \times \R^{n_\theta} \to \R^{n_u}$, which we call the model discrepancy, will approximate the difference between the high and low-fidelity solution operators. That is, we parameterize the discrepancy and seek to determine a parameter vector $\t \in \R^{n_\theta}$ such that $\d(\z,\t) \approx S(\z)-\tilde{S}(\z)$. 
+
+Let $\tilde{\z}$ be a local minimizer of~\eqref{eqn:approx_opt_prob}, which coincides with~\eqref{eqn:dis_approx_opt_prob_pert_rs} when $\t=\t_0 \coloneq \vec{0}$ is chosen so that $\d(\z,\t_0) \equiv \vec{0}$. Given $N$ high-fidelity model evaluations to form a dataset $\{ \z_\ell, \vec{d}_\ell \}_{\ell=1}^N$, $\vec{d}_\ell=S(\z_\ell)-\tilde{S}(\z_\ell)$, the HDSA-MD framework consists of two steps:
+\begin{enumerate}
+\item[1.] Calibrating $\t$ so that $\d(\z_\ell,\t) \approx \vec{d}_\ell$, $\ell=1,2,\dots,N$.
+\item[2.] Propagating the calibrated $\t$ through the optimization problem~\eqref{eqn:dis_approx_opt_prob_pert_rs} to predict how the optimal solution changes with respect to the model discrepancy.
+\end{enumerate}
+
+\subsection*{Discrepancy Calibration}
+Consider the model discrepancy representation $\d:\R^{n_z} \times \R^{n_\theta} \to \R^{n_u}$ defined as
+\begin{eqnarray}
+\label{eqn:delta_kron}
+\d(\z,\t) =
+\left( \begin{array}{cc}
+\I_{n_u} & \I_{n_u} \otimes \z^\top \M_{\z}
+\end{array} \right)
+ \t
+\end{eqnarray}
+where $\I_{n_u} \in \R^{n_u \times n_u}$ is the identity matrix, and $\M_{\z} \in \R^{n \times n}$ weights the $\z$ inner products ($\M_{\z}$ is the mass matrix if $\z$ arises from finite element discretization of a function). 
+
+\begin{eqnarray}
+\label{eqn:M_theta}
+\W_{\t} =  \left( \begin{array}{cc}
+\W_{\u} & \W_{\u} \otimes \ztilde^\top \M_{\z} \\
+\W_{\u} \otimes \M_{\z} \ztilde & \W_{\u} \otimes (\W_{\z}+ \M_{\z} \ztilde  \ztilde^\top \M_{\z} )
+\end{array} \right)  \in \R^{n_\theta \times n_\theta}.
+\end{eqnarray} 
+
+Let $\vec{Z} = \begin{pmatrix} \z_1 & \z_2 & \dots & \z_N \end{pmatrix} \in R^{n_z \times N}$ be the matrix of optimization variable data, i.e. the inputs to the high-fidelity model evaluations, and define 
+\begin{align*}
+& \G= \e \e^\top + (\vec{Z} - \ztilde \e^\top)^\top \M_{\z} \W_{\z}^{-1} \M_{\z} (\vec{Z}-\ztilde \e^\top) \in \R^{N \times N},
+\end{align*}
+where $\e \in \R^N$ is the vector of ones. Let $(\vec{g}_i,\mu_i)$ denote the eigenvectors and eigenvalues of $\vec{G}$ and define
+\begin{eqnarray}
+\vec{y}_i = \vec{Z} \vec{g}_i - (\e^\top \vec{g}_i) \ztilde \qquad \text{and} \qquad s_i = (\e^\top \vec{g}_i) - \vec{y}_i^\top  \M_{\z} \W_{\z}^{-1}  \M_{\z} \ztilde 
+\end{eqnarray}
+for $i=1,2,\dots,N$. The posterior mean for the model discrepancy parameters is
+\begin{eqnarray*}
+\overline{\t} = \frac{1}{\alpha_{\vec{d}}} \sum\limits_{\ell=1}^N 
+\left[
+\left(
+\begin{array}{c}
+a_\ell \u_\ell \\
+ \u_\ell  \otimes   \W_{\z}^{-1}  \M_{\z} (\z_\ell-\ztilde) 
+ \end{array}
+\right)
+-
+\sum\limits_{i=1}^N b_{i,\ell}
+\left(
+\begin{array}{c}
+s_i \vec{u}_{i,\ell} \\
+ \vec{u}_{i,\ell} \otimes   \W_{\z}^{-1}  \M_{\z} \vec{y}_i 
+\end{array}
+\right)
+\right]
+\end{eqnarray*}
+where
+\begin{align*}
+& a_{\ell} = 1-\ztilde^\top  \M_{\z} \W_{\z}^{-1} \M_{\z} (\z_\ell-\ztilde) \qquad  & b_{i,\ell} = (\z_\ell-\ztilde)^\top  \M_{\z}\W_{\z}^{-1}  \M_{\z} \vec{Z} \vec{g}_i + (\e^\top \vec{g}_i) a_\ell \\
+& \vec{u}_\ell = \W_{\u}^{-1} \M_{\u} \vec{d}_\ell & \vec{u}_{i,\ell} = \left( \alpha_{\vec{d}} \W_{\u} + \mu_i \M_{\u} \right)^{-1} \M_{\u} \u_\ell .
+\end{align*}
+
+Samples from the posterior distribution are given by 
+\begin{eqnarray*}
+\overline{\t} + \hat{\t} + \breve{\t} 
+\end{eqnarray*}
+where 
+\begin{eqnarray*}
+\hat{\t} =  \sqrt{\alpha_{\vec{d}}} \sum\limits_{i=1}^N \frac{1}{\sqrt{\mu_i}} 
+\left(
+\begin{array}{c}
+s_i \hat{\u}_i \\
+\hat{\u}_i \otimes \M_{\z}^{-1} \W_{\z}^{-1} \vec{y}_i
+\end{array}
+\right)
+\qquad
+\text{and} 
+\qquad
+\breve{\t} = 
+\sum\limits_{k=1}^{n-N+1}
+\left(
+\begin{array}{c}
+\breve{s}_k \breve{\u}_k\\
+\breve{\u}_k \otimes \breve{\vec{y}}_k
+\end{array}
+\right),
+\end{eqnarray*}
+with
+\begin{align*}
+& \hat{\u}_i \sim \mathcal N(\vec{0},\left( \alpha_{\vec{d}} \W_{\u} + \mu_i \M_{\u} \right)^{-1} ) \qquad & \breve{s}_k= -\ztilde^\top  \M_{\z} \W_{\z}^{-\frac{1}{2}} \breve{\z}_k \\
+& \breve{\u}_k \sim \mathcal N(\vec{0}, \W_{\u}^{-1} )  & \breve{\vec{y}}_k = \W_{\z}^{-\frac{1}{2}} \breve{\z}_k .
+\end{align*}
+
+\subsection*{Propagating through the optimization problem}
+
+Applying the Implicit Function Theorem to the first order optimality conditions yields a mapping $F:\mathcal N(\t_0) \to \R^{n_z}$ that maps model discrepancy parameters in a neighborhood of $\t_0$ to the minimizer corresponding to the model discrepancy representation associated with $\t \in \mathcal N(\t_0)$. Furthermore, the Jacobian of the minimizer with respect to the model discrepancy parameters $\t$ is given by
+\begin{eqnarray}
+\label{eqn:dis_sen_op}
+\nabla_{\t} F(\vec{0}) = - \H^{-1} \B \in \R^{n_n \times n_\theta}
+\end{eqnarray}
+where $\H =\nabla_{\z,\z} \mathcal{J}(\tilde{\z},\t_0) \in \R^{n_z \times n_z}$ is the Hessian of $\mathcal{J}$ and $\B = \nabla_{\z,\t} \mathcal{J}(\tilde{\z},\t_0) \in \R^{n_z \times n_\theta}$ is the Jacobian of $\nabla_{\z} \mathcal{J}$ with respect to $\t$, both are evaluated at the low-fidelity solution $(\tilde{\z},\t_0)$. We refer to $\nabla_{\t} F$ as the post-optimality sensitivity operator.
+
+ADD TEXT ABOUT CONTINUATION
+
+\section*{Model Discrepancy Code Design}
+
+\end{document}
