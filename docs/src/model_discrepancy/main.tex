@@ -201,7 +201,7 @@ Using post-optimality linearization of the form~\eqref{eqn:post_opt_linearizatio
 The code design in \texttt{sola/src/model\_discrepancy} and \texttt{hdsalib/src/core/model\_discrepancy} is divided into two subdirectories: \texttt{interfaces} and \texttt{analysis}. Note that other subdirectories in \texttt{sola/src/model\_discrepancy} are specific to Sola for the purpose of interfacing with other components of Sola. As their names indicate, the code under \texttt{interfaces} defines the interfaces required for a user to conduct the HDSA-MD analysis and the code under \texttt{analysis} implements the algorithms to compute prior and posterior samples from the model discrepancy representation and the optimization solution. 
 
 \subsection*{Interfaces}
-Within \texttt{model\_discrepancy/interfaces}, there are six subdirectories. In its most basic form, the interfaces consist of four pure virtual base classes that define the prior precision matrices $\W_{\u}$ and $\W_{\z}$ from~\eqref{eqn:W_theta}, a class that defines the optimization problem interfaces such as derivatives of the objective function $J$ and PDE solution operator $\tilde{S}$, and a class that defines an interface to load data corresponding to the low-fidelity optimal solution and the high-fidelity solution operator evaluations. These base classes are:
+Within \texttt{model\_discrepancy/interfaces}, there are six subdirectories. In its most basic form, the interfaces consist of four abstract base classes that define the prior precision matrices $\W_{\u}$ and $\W_{\z}$ from~\eqref{eqn:W_theta}, a class that defines the optimization problem interfaces such as derivatives of the objective function $J$ and PDE solution operator $\tilde{S}$, and a class that defines an interface to load data corresponding to the low-fidelity optimal solution and the high-fidelity solution operator evaluations. These base classes are:
 \begin{enumerate}
 \item[] \texttt{MD\_u\_Prior\_Interface}
 \item[] \texttt{MD\_z\_Prior\_Interface}
@@ -219,7 +219,7 @@ Within these directories, there are several classes that form a hierarchy of cla
 $$\texttt{model\_discrepancy/interfaces/transient\_prior\_interfaces}$$ facilitates the specification of these prior covariance matrices for transient problems.
 
 The files in 
-$$\texttt{model\_discrepancy/interfaces/hyperparameter\_interfaces}$$ facilitate prior hyperparameter selection using the algorithms described in~\cite{hart2025hdsaprior}. These interfaces are not strictly required to conduct analysis, are required as inputs to some of the prior interface classes.
+$$\texttt{model\_discrepancy/interfaces/hyperparameter\_interfaces}$$ facilitate prior hyperparameter selection using the algorithms described in~\cite{hart2025hdsaprior}. These interfaces are not strictly required to conduct analysis, but they are required as inputs to some of the prior interface classes.
 
 The files in 
 $$\texttt{model\_discrepancy/interfaces/OUU\_interfaces}$$ provide an interface extension to apply HDSA-MD to certain optimization under uncertainty problems. More details regarding this part of the code are forthcoming. 
@@ -236,6 +236,11 @@ $$\texttt{sola/src/pseudo\_time\_continuation}$$
 These algorithms will be implemented in HdsaLib in the future.
 
 Lastly, the \texttt{model\_discrepancy/analysis/auxiliary} subdirectory contains classes for auxiliary analysis capabilities. This includes the computation of the Hessian decomposition used to define the projector in~\eqref{eqn:projected_post_opt_linearization}, the computation of Laplacian-like operator spectral properties used for prior hyper-parameter specification, and Bayesian optimal experimental design (OED) to select the input data $\{ \z_\ell \}_{\ell=1}^N$ for the high-fidelity model evaluations. The OED codes are currently only available in Sola, but will be implemented in HdsaLib in the future.
+
+\section*{Implementing an example}
+To conduct HDSA-MD analysis on a given example, the user must implement the abstract base classes \texttt{MD\_Opt\_Prob\_Interface}
+and \texttt{MD\_Data\_Interface} in a way that is consistent with the data structures and solvers used in the optimization problem. To implement \texttt{MD\_u\_Prior\_Interface} and \texttt{MD\_z\_Prior\_Interface} the user must choose an appropriate derived class for each interface. This choice is based on problem-specific considerations such as whether $\u$ and/or $\z$ are functions of space, time, or both. We suggest reviewing the simple examples in the test suite to see how these interfaces are instantiated and passed to the analysis classes.
+
 
 \bibliographystyle{plain}
 \bibliography{references}
