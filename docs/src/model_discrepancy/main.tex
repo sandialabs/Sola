@@ -60,7 +60,7 @@
 \maketitle
 
 \section*{Model Discrepancy Problem Formulation}
-This documentation presents the mathematics and software design used in both Sola and HdsaLib for their \texttt{model\_discrepancy} modules. These two libraries, written in objective oriented Matlab and C++, respectively, mirror one another in code design and serve as a development platform to rapidly prototype in Sola and then scale to high performance computing problems with HdsaLib. Since the directory and filename structures closely mirror one another, we will refer to directory and filenames without explicit reference to Sola or HdsaLib.
+This documentation presents the mathematics and software design used in both Sola and HdsaLib for their \texttt{model\_discrepancy} modules. These two libraries, written in object-oriented Matlab and C++, respectively, mirror one another in code design and serve as a development platform to rapidly prototype in Sola and then scale to high performance computing problems with HdsaLib. Since the directories and filenames closely mirror one another, we will refer to directories and filenames without explicit reference to Sola or HdsaLib. Where necessary, we will qualify which library is being referred to.
 
 We consider optimization problems of the form
 \begin{align}
@@ -86,7 +86,7 @@ Let $\tilde{\z}$ be a local minimizer of~\eqref{eqn:approx_opt_prob}, which coin
 \item[(i)] Calibrating $\t$ so that $\d(\z_\ell,\t) \approx \vec{d}_\ell$, $\ell=1,2,\dots,N$.
 \item[(ii)] Propagating the calibrated $\t$ through the optimization problem~\eqref{eqn:dis_approx_opt_prob_pert_rs} to predict how the optimal solution changes with respect to the model discrepancy.
 \end{enumerate}
-The calibration in step (i) is done via a Bayesian approach. Consequently, we specify a prior distribution for $\t$ and use the $N$ high-fidelity model evaluations to compute a posterior distribution for $\t$. The result of the HDSA-MD framework is (1) a posterior distribution on the model discrepancy representation, and (2) a posterior push forward distribution on the optimization variable that captures uncertainty due to the model discrepancy. The codes in the \texttt{model\_discrepancy} module facilitate the specification of the prior $\t$ distribution, the computation of samples from the posterior $\t$ distribution, and the corresponding samples from the posterior optimal solution. The $\t$ distribution samples are analyzed and interpreted by pushing them through $\d$ to consider samples of the model discrepancy representation. 
+The calibration in step (i) is done via a Bayesian approach. Consequently, we specify a prior distribution for $\t$ and use the $N$ high-fidelity model evaluations to compute a posterior distribution for $\t$. The result of the HDSA-MD framework is (1) a posterior distribution on the model discrepancy representation, and (2) a posterior pushforward distribution on the optimization variable that captures uncertainty due to the model discrepancy. The codes in the \texttt{model\_discrepancy} module facilitate the specification of the prior $\t$ distribution, the computation of samples from the posterior $\t$ distribution, and the corresponding samples from the posterior optimal solution. The $\t$ distribution samples are analyzed and interpreted by pushing them through $\d$ to consider samples of the model discrepancy representation. 
 
 In what follows, we outline the basic mathematics involved in these computations and highlight where the various aspects of the mathematics appear in the code.
 
@@ -99,7 +99,7 @@ We consider the model discrepancy representation $\d:\R^{n_z} \times \R^{n_\thet
 \end{array} \right)
  \t
 \end{eqnarray}
-where $\I_{n_u} \in \R^{n_u \times n_u}$ is the identity matrix, and $\M_{\z} \in \R^{n \times n}$ weights the $\z$ inner products ($\M_{\z}$ is the mass matrix if $\z$ arises from finite element discretization of a function). Hence, $\t \in \R^{n_\theta}$ has dimension $n_\theta = n_u (n_z+1)$. If the optimziation variable is high-dimensional, i.e., $n_z \gg 1$, then computation in dimension $n_\theta$ is intractable. However, the Kronecker product structure in~\eqref{eqn:delta} will enable computations in $\R^{n_u}$ and $\R^{n_z}$ rather than $\R^{n_\theta}$. As a result, all vectors in $\R^{n_\theta}$ will be implicitly represented via a collection of vectors in $\R^{n_u}$ and $\R^{n_z}$. This creates a degree of complexity in reading the code. However, this approach is crucial to ensuring computational efficiency.
+where $\I_{n_u} \in \R^{n_u \times n_u}$ is the identity matrix, and $\M_{\z} \in \R^{n \times n}$ weights the $\z$ inner products ($\M_{\z}$ is the mass matrix if $\z$ arises from finite element discretization of a function). Hence, $\t \in \R^{n_\theta}$ has dimension $n_\theta = n_u (n_z+1)$. If the optimization variable is high-dimensional, i.e., $n_z \gg 1$, then computation in dimension $n_\theta$ is intractable. However, the Kronecker product structure in~\eqref{eqn:delta} will enable computations in $\R^{n_u}$ and $\R^{n_z}$ rather than $\R^{n_\theta}$. As a result, all vectors in $\R^{n_\theta}$ will be implicitly represented via a collection of vectors in $\R^{n_u}$ and $\R^{n_z}$. This creates a degree of complexity in reading the code. However, this approach is crucial to ensuring computational efficiency.
 
 To calibrate the model discrepancy representation, we assume a mean-zero Gaussian prior for $\t$ whose precision matrix is
 \begin{eqnarray} \label{eqn:W_theta}
@@ -180,7 +180,7 @@ where $\mathcal N$ denotes the Gaussian distribution.
 To propagate posterior $\t$ samples through the optimization problem~\eqref{eqn:dis_approx_opt_prob_pert_rs}, we consider using post-optimality sensitivities to construct a linear approximation of the $\t$-to-optimal solution mapping. Specifically, applying the Implicit Function Theorem to the first order optimality conditions yields a mapping $F:\mathcal N(\t_0) \to \R^{n_z}$ that maps model discrepancy parameters in a neighborhood of $\t_0$ to the minimizer corresponding to the model discrepancy representation associated with $\t \in \mathcal N(\t_0)$. Furthermore, the Jacobian of the minimizer with respect to the model discrepancy parameters $\t$ is given by
 \begin{eqnarray}
 \label{eqn:dis_sen_op}
-\nabla_{\t} F(\vec{0}) = - \H^{-1} \B \in \R^{n_n \times n_\theta}
+\nabla_{\t} F(\vec{0}) = - \H^{-1} \B \in \R^{n_z \times n_\theta}
 \end{eqnarray}
 where $\H =\nabla_{\z,\z} \mathcal{J}(\tilde{\z},\t_0) \in \R^{n_z \times n_z}$ is the Hessian of $\mathcal{J}$ and $\B = \nabla_{\z,\t} \mathcal{J}(\tilde{\z},\t_0) \in \R^{n_z \times n_\theta}$ is the Jacobian of $\nabla_{\z} \mathcal{J}$ with respect to $\t$, both are evaluated at the low-fidelity solution $(\tilde{\z},\t_0)$. We refer to $\nabla_{\t} F$ as the post-optimality sensitivity operator.
 
@@ -189,18 +189,51 @@ Then samples from the optimal solution posterior distribution may be approximate
 \ztilde - \H^{-1} \B (\overline{\t} + \hat{\t} + \breve{\t}).
 \end{align}
 
-However, this may lead to having large posterior uncertainty in the optimization solution that corresponds to directions in which the objective function has small variation. To combat this, we introduce a projector that restricts the optimization solution changes to a subspace of high objective function sensitivity. Specifically, let $\H = \W_{\z} \vec{V} \vec{\Lambda} \vec{V}^\top \W_{\z}$ denote the generalized eigenvalue decomposition of the Hessian $\H$ in the $\W_{\z}$ weighted inner product. Given a truncation rank $r < n_ z$, we restrict to the subspace of the $r$ leading generalized eigenvectors and define the projector onto this subspace $\vec{P} = \vec{V}_{r} \vec{V}_{r}^\top \W_{\z}$, where $\vec{V}_{r} \in \R^{n_z \times r}$ consists of the leading $r$ generalized eigenvectors. Then we consider projected approximated optimal solution samples of the form
+However, this may lead to having large posterior uncertainty in the optimization solution that corresponds to directions in which the objective function has small variation. To combat this, we introduce a projector that restricts the optimization solution changes to a subspace of high objective function sensitivity. Specifically, let $\H = \W_{\z} \vec{V} \vec{\Lambda} \vec{V}^\top \W_{\z}$ denote the generalized eigenvalue decomposition of the Hessian $\H$ in the $\W_{\z}$ weighted inner product. Given a truncation rank $r < n_z$, we restrict to the subspace of the $r$ leading generalized eigenvectors and define the projector onto this subspace $\vec{P} = \vec{V}_{r} \vec{V}_{r}^\top \W_{\z}$, where $\vec{V}_{r} \in \R^{n_z \times r}$ consists of the leading $r$ generalized eigenvectors. Then we consider projected approximate optimal solution samples of the form
 \begin{align} \label{eqn:projected_post_opt_linearization}
 \ztilde - \vec{P} \H^{-1} \B (\overline{\t} + \hat{\t} + \breve{\t}).
 \end{align}
 
-Using post-optimality linearization of the form~\eqref{eqn:post_opt_linearization} or~\eqref{eqn:projected_post_opt_linearization} is computationally advantageous since many samples may be computed with a manage cost. However, the error resulting from the post-optimality sensitivity linearization may be detrimental. To address this, we leverage the preconditioned pseudo-time continuation approach that was introduced in~\cite{hart2026ptc} for model parameter perturbations and adapted for the model discrepancy context in~\cite{madhavan2026}. This produces a sequence of linearization that better approximates the optimization solution after a change in the model discrepancy representation.
+Using post-optimality linearization of the form~\eqref{eqn:post_opt_linearization} or~\eqref{eqn:projected_post_opt_linearization} is computationally advantageous since many samples may be computed with a manageable cost. However, the error resulting from the post-optimality sensitivity linearization may be detrimental. To address this, we leverage the preconditioned pseudo-time continuation approach that was introduced in~\cite{hart2026ptc} for model parameter perturbations and adapted for the model discrepancy context in~\cite{madhavan2026}. This produces a sequence of linearizations that better approximates the optimization solution after a change in the model discrepancy representation.
 
 \section*{Model Discrepancy Code Design}
 
-The code design in \texttt{sola/src/model\_discrepancy} and \texttt{hdsalib/src/core/model\_discrepancy} is divided into to subdirectories: \texttt{interfaces} and \texttt{analysis}. Note that other subdirectories in \texttt{sola/src/model\_discrepancy} are specific to Sola for the purpose of interfacing with other components of Sola. As their name indicates, the code under \texttt{interfaces} defines the interfaces required for a user to conduct the HDSA-MD analysis and the code under \texttt{analysis} implements the algorithms to compute prior and posterior samples from the model discrepancy representation and optimization solution. 
+The code design in \texttt{sola/src/model\_discrepancy} and \texttt{hdsalib/src/core/model\_discrepancy} is divided into two subdirectories: \texttt{interfaces} and \texttt{analysis}. Note that other subdirectories in \texttt{sola/src/model\_discrepancy} are specific to Sola for the purpose of interfacing with other components of Sola. As their names indicate, the code under \texttt{interfaces} defines the interfaces required for a user to conduct the HDSA-MD analysis and the code under \texttt{analysis} implements the algorithms to compute prior and posterior samples from the model discrepancy representation and the optimization solution. 
 
-Within \texttt{model\_discrepancy/interfaces}, there are six folders. In its most basic form, the interfaces consist of four pure virtual base classes that define the prior precision matrices $\W_{\u}$ and $\W_{\z}$ from~\eqref{eqn:W_theta}, a class that defines the optimization problem interfaces such as derivatives of the objective function $J$ and PDE solution operator $\tilde{S}$, and a class that defines an interface to load data corresponding to the low-fidelity optimal solution and the high-fidelity solution operator evaluations.
+\subsection*{Interfaces}
+Within \texttt{model\_discrepancy/interfaces}, there are six subdirectories. In its most basic form, the interfaces consist of four pure virtual base classes that define the prior precision matrices $\W_{\u}$ and $\W_{\z}$ from~\eqref{eqn:W_theta}, a class that defines the optimization problem interfaces such as derivatives of the objective function $J$ and PDE solution operator $\tilde{S}$, and a class that defines an interface to load data corresponding to the low-fidelity optimal solution and the high-fidelity solution operator evaluations. These base classes are:
+\begin{enumerate}
+\item[] \texttt{MD\_u\_Prior\_Interface}
+\item[] \texttt{MD\_z\_Prior\_Interface}
+\item[] \texttt{MD\_Opt\_Prob\_Interface}
+\item[] \texttt{MD\_Data\_Interface}
+\end{enumerate}
+
+The optimization problem interface and data interface classes are contained in the directory: 
+$$\texttt{model\_discrepancy/interfaces/problem\_interfaces}$$
+The $\u$ and $\z$ prior interfaces are contained in the directories bearing their names: 
+$$\texttt{model\_discrepancy/interfaces/u\_prior\_interfaces}$$
+ and 
+ $$\texttt{model\_discrepancy/interfaces/z\_prior\_interfaces}$$
+Within these directories, there are several classes that form a hierarchy of class inheritances to implement the priors for various problem instances. Additionally, the code in 
+$$\texttt{model\_discrepancy/interfaces/transient\_prior\_interfaces}$$ facilitates the specification of these prior covariance matrices for transient problems.
+
+The files in 
+$$\texttt{model\_discrepancy/interfaces/hyperparameter\_interfaces}$$ facilitate prior hyperparameter selection using the algorithms described in~\cite{hart2025hdsaprior}. These interfaces are not strictly required to conduct analysis, are required as inputs to some of the prior interface classes.
+
+The files in 
+$$\texttt{model\_discrepancy/interfaces/OUU\_interfaces}$$ provide an interface extension to apply HDSA-MD to certain optimization under uncertainty problems. More details regarding this part of the code are forthcoming. 
+
+\subsection*{Analysis}
+Within \texttt{model\_discrepancy/analysis}, there are three subdirectories. The files in 
+$$\texttt{model\_discrepancy/analysis/prior}$$
+implement algorithms relevant for computing samples from the prior discrepancy distribution and propagating these prior samples through the optimization problem. Similarly, the files in
+$$\texttt{model\_discrepancy/analysis/posterior}$$
+implement algorithms for computing samples from the posterior discrepancy and propagating these posterior samples through the optimization problem. 
+
+Posterior sample propagation using post-optimality linearization is implemented in the class \texttt{MD\_Update}. In Sola, there has been additional development of propagation using pseudo-time continuation. This is implemented in the class \texttt{MD\_Continuation\_Update}, along with associated classes needed to interface with codes from the pseudo-time continuation module in \texttt{sola/src/pseudo\_time\_continuation}. These algorithms will be implemented in HdsaLib in the future.
+
+Lastly, the \texttt{model\_discrepancy/analysis/auxiliary} subdirectory contains classes for auxiliary analysis capabilities. This includes the computation of the Hessian decomposition used to define the projector in~\eqref{eqn:projected_post_opt_linearization}, the computation of Laplacian-like operator spectral properties used for prior hyper-parameter specification, and Bayesian optimal experimental design (OED) to select the input data $\{ \z_\ell \}_{\ell=1}^N$ for the high-fidelity model evaluations. The OED codes are currently only available in Sola, but will be implemented in HdsaLib in the future.
 
 \bibliographystyle{plain}
 \bibliography{references}
