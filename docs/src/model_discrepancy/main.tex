@@ -231,7 +231,9 @@ implement algorithms relevant for computing samples from the prior discrepancy d
 $$\texttt{model\_discrepancy/analysis/posterior}$$
 implement algorithms for computing samples from the posterior discrepancy and propagating these posterior samples through the optimization problem. 
 
-Posterior sample propagation using post-optimality linearization is implemented in the class \texttt{MD\_Update}. In Sola, there has been additional development of propagation using pseudo-time continuation. This is implemented in the class \texttt{MD\_Continuation\_Update}, along with associated classes needed to interface with codes from the pseudo-time continuation module in \texttt{sola/src/pseudo\_time\_continuation}. These algorithms will be implemented in HdsaLib in the future.
+Posterior sample propagation using post-optimality linearization is implemented in the class \texttt{MD\_Update}. In Sola, there has been additional development of propagation using pseudo-time continuation. This is implemented in the class \texttt{MD\_Continuation\_Update}, along with associated classes needed to interface with codes from the pseudo-time continuation module in 
+$$\texttt{sola/src/pseudo\_time\_continuation}$$
+These algorithms will be implemented in HdsaLib in the future.
 
 Lastly, the \texttt{model\_discrepancy/analysis/auxiliary} subdirectory contains classes for auxiliary analysis capabilities. This includes the computation of the Hessian decomposition used to define the projector in~\eqref{eqn:projected_post_opt_linearization}, the computation of Laplacian-like operator spectral properties used for prior hyper-parameter specification, and Bayesian optimal experimental design (OED) to select the input data $\{ \z_\ell \}_{\ell=1}^N$ for the high-fidelity model evaluations. The OED codes are currently only available in Sola, but will be implemented in HdsaLib in the future.
 
