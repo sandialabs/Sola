@@ -8,7 +8,7 @@ clear;
 close all;
 clc;
 
-% Load data from surrogate optimization. test
+% Load data from surrogate optimization.
 load Optimization_Results.mat;
 
 % Set up high- and low-fidelity optimization problems.
