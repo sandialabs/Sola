@@ -63,7 +63,7 @@ plot(x, u_lofi, 'Color', 'black', 'LineWidth', 3);
 plot(x, u_before, 'Color', 'magenta', 'LineWidth', 3);
 plot(x, u_after, '--', 'Color', 'red', 'LineWidth', 3);
 legend({'True model solution', 'Surrogate model solution', ...
-        'True model with surrogate control', 'True model with updated control'});
+'True model with surrogate control', 'True model with updated control'});
 
 % Export data for plotting externally.
 save('plot_data.mat', 'x', 'z_hifi', 'z_lofi', 'z_update_mean', 'u_hifi', 'u_lofi', 'u_before', 'u_after', 'T');
