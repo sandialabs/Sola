@@ -3,7 +3,7 @@
 %%%%%%%%% Questions? Contact Joseph Hart (joshart@sandia.gov) %%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [M, S] = Assemble_Mass_and_Stiffness(m)
+function [M, S, x] = Assemble_Mass_and_Stiffness(m)
     x = linspace(0, 1, m)';
     h = x(2) - x(1);
     M = diag(4 * ones(1, m)) + diag(ones(1, m - 1), 1) + diag(ones(1, m - 1), -1);
