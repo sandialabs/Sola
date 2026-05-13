@@ -29,7 +29,7 @@ classdef Objective < handle
         [z_out] = J_zu_Apply(this, u_in, u, z)
 
         [z_out] = J_zz_Apply(this, z_in, u, z)
-       
+
     end
 
     %% Finite difference checks.

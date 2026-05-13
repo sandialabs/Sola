@@ -40,14 +40,14 @@ classdef Dynamic_Constraint < Constraint
                 n_t int32
             end
 
-            this.n_y = n_y;                        
-            this.n_z = n_z;                         
-            this.n_t = n_t;                         
-            this.t_mesh = linspace(0, T, n_t)';     
+            this.n_y = n_y;
+            this.n_z = n_z;
+            this.n_t = n_t;
+            this.t_mesh = linspace(0, T, n_t)';
             this.time_step_solver_options = optimoptions('fsolve', ...
                                                          'Display', 'none', ...
                                                          'SpecifyObjectiveGradient', true);
-            this.verbose = true;                    
+            this.verbose = true;
         end
 
     end

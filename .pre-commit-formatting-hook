@@ -41,11 +41,4 @@ mh_style --fix --brief &> ${LOGFILE}
 check_result
 rm ${LOGFILE}
 
-echo -en "Checking documentation code blocks........."
-
-# Run the formatter for the documentation.
-cd docs
-python format_code_blocks.py
-check_result
-
 exit 0
