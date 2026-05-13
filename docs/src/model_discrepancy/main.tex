@@ -34,26 +34,26 @@
 \author{}
 \date{}
 
-\renewcommand{\vec}[1] {\ensuremath{\boldsymbol{#1}}}
-\def\R{\mathbb{R}}
-\def\u{\bm{u}}
-\def\t{\bm{\theta}}
-\def\z{\bm{z}}
-\def\y{\bm{y}}
-\def\cvec{\bm{c}}
-\def\fvec{\bm{f}}
-\def\0{\bm{0}}
-\def\Jhat{\hat{J}}
-\def\M{\bm{M}}
-\def\H{\bm{H}}
-\def\B{\bm{B}}
-\def\I{\bm{I}}
-\def\W{\bm{W}}
-\def\G{\bm{G}}
-\def\e{\bm{e}}
-\def\Z{\bm{Z}}
-\def\ztilde{\tilde{\z}}
-\def\d{\delta}
+\renewcommand{\vec}[1] {\boldsymbol{#1}}
+\newcommand{\R}{\mathbb{R}}
+\renewcommand{\u}{\bm{u}}
+\renewcommand{\t}{\bm{\theta}}
+\newcommand{\z}{\bm{z}}
+\newcommand{\y}{\bm{y}}
+\newcommand{\cvec}{\bm{c}}
+\newcommand{\fvec}{\bm{f}}
+\newcommand{\0}{\bm{0}}
+\newcommand{\Jhat}{\hat{J}}
+\newcommand{\M}{\bm{M}}
+\renewcommand{\H}{\bm{H}}
+\newcommand{\B}{\bm{B}}
+\newcommand{\I}{\bm{I}}
+\newcommand{\W}{\bm{W}}
+\newcommand{\G}{\bm{G}}
+\newcommand{\e}{\bm{e}}
+\newcommand{\Z}{\bm{Z}}
+\newcommand{\ztilde}{\tilde{\z}}
+\renewcommand{\d}{\delta}
 
 \begin{document}
 
@@ -81,7 +81,7 @@ To incorporate model discrepancy, consider the parameterized optimization proble
 \end{align}
 where $\d:\R^{n_z} \times \R^{n_\theta} \to \R^{n_u}$, which we call the model discrepancy representation, will approximate the difference between the high and low-fidelity solution operators. That is, we parameterize $\d$ and seek to determine a parameter vector $\t \in \R^{n_\theta}$ such that $\d(\z,\t) \approx S(\z)-\tilde{S}(\z)$. 
 
-Let $\tilde{\z}$ be a local minimizer of~\eqref{eqn:approx_opt_prob}, which coincides with~\eqref{eqn:dis_approx_opt_prob_pert_rs} when $\t=\t_0 \coloneq \vec{0}$ is chosen so that $\d(\z,\t_0) \equiv \vec{0}$. Given $N$ high-fidelity model evaluations to form a dataset $\{ \z_\ell, \vec{d}_\ell \}_{\ell=1}^N$, $\vec{d}_\ell=S(\z_\ell)-\tilde{S}(\z_\ell)$, the HDSA-MD framework consists of two steps:
+Let $\tilde{\z}$ be a local minimizer of~\eqref{eqn:approx_opt_prob}, which coincides with~\eqref{eqn:dis_approx_opt_prob_pert_rs} when $\t=\t_0 := \vec{0}$ is chosen so that $\d(\z,\t_0) \equiv \vec{0}$. Given $N$ high-fidelity model evaluations to form a dataset $\{ \z_\ell, \vec{d}_\ell \}_{\ell=1}^N$, $\vec{d}_\ell=S(\z_\ell)-\tilde{S}(\z_\ell)$, the HDSA-MD framework consists of two steps:
 \begin{enumerate}
 \item[(i)] Calibrating $\t$ so that $\d(\z_\ell,\t) \approx \vec{d}_\ell$, $\ell=1,2,\dots,N$.
 \item[(ii)] Propagating the calibrated $\t$ through the optimization problem~\eqref{eqn:dis_approx_opt_prob_pert_rs} to predict how the optimal solution changes with respect to the model discrepancy.
