@@ -1,7 +1,0 @@
-This example is in the article:
-
-J. Hart, S. A. McQuarrie, Z. Morrow, and B. van Bloemen Waanders. Toward real-time
-optimization through model reduction and model discrepancy sensitivities. Structural and
-Multidisciplinary Optimization, 39 (2), 2026.
-
-

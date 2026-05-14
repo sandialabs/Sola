@@ -1,14 +1,14 @@
 The document "Optimization.pdf" describes the optimization problems that are solved in Sola and provides a guide for understanding the code contained in
--sola/src/optimization
--sola/src/automatic_differentation
--sola/src/optimization_under_uncertainty
+ - sola/src/optimization
+ - sola/src/automatic_differentation
+ - sola/src/optimization_under_uncertainty
 
 The remaining sola modules contained in 
--sola/src/bayesian_inversion
--sola/src/linear_algebra_tools
--sola/src/model_discrepancy
--sola/src/optimal_experimental_design
--sola/src/pseudo_time_continuation
+ - sola/src/bayesian_inversion
+ - sola/src/linear_algebra_tools
+ - sola/src/model_discrepancy
+ - sola/src/optimal_experimental_design
+ - sola/src/pseudo_time_continuation
 have not yet been documented.
 
 The code in sola/src/python_adapter is designed to implement Sola pure virtual functions using models in Python. Matlab should be the "driver" and the pure virtual functions should be implemented in a Python class. This will allow Sola to execute its outer loop algorithms where the model constraining the analysis is implemented in Python.
