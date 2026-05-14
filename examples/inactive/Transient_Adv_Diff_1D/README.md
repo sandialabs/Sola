@@ -5,14 +5,14 @@ This directory contains examples for advection-diffusion problems with one spati
 ## Contents
 
 **Optimization Classes**
-- [`Adv_Diff.m`](./Adv_Diff.m): Defines an optimization constrained by advection-diffusion dynamics where the control is a source term.
-- [`Adv_Diff_Gaussian_Source.m`](./Adv_Diff_Gaussian_Source.m): Defines an optimization problem constrained by advection-diffusion dynamics where the controls trigger Gaussian source terms.
+- [`Adv_Diff_Constraint.m`](https://github.com/sandialabs/Sola/blob/main/examples/inactive/Transient_Adv_Diff_1D/Adv_Diff_Constraint.m#L6-L999): Defines an optimization constrained by advection-diffusion dynamics where the control is a source term.
+- [`Adv_Diff_Gaussian_Source_Constraint.m`](https://github.com/sandialabs/Sola/blob/main/examples/inactive/Transient_Adv_Diff_1D/Adv_Diff_Gaussian_Source_Constraint.m#L6-L999): Defines an optimization problem constrained by advection-diffusion dynamics where the controls trigger Gaussian source terms.
 
 **Drivers**
-- [`Driver_Data_Generation.m`](./Driver_Data_Generation.m): Solve the `Adv_Diff_Gaussian_Source` state equation for several random controls.
-- [`Driver_MMS.m`](./Driver_MMS.m): Test the `Adv_Diff` state equation solver with a specific control.
-- [`Driver_Opt_Test.m`](./Driver_Opt_Test.m): Run finite difference checks for `Adv_Diff_Gaussian_Source`.
-- [`Driver_Opt.m`](./Driver_Opt.m): Solve the `Adv_Diff_Gaussian_Source` optimization problem and compare the optimal state to the target.
+- [`Driver_Data_Generation.m`](https://github.com/sandialabs/Sola/blob/main/examples/inactive/Transient_Adv_Diff_1D/Driver_Data_Generation.m#L6-L999): Solve the `Adv_Diff_Gaussian_Source` state equation for several random controls.
+- [`Driver_MMS.m`](https://github.com/sandialabs/Sola/blob/main/examples/inactive/Transient_Adv_Diff_1D/Driver_MMS.m#L6-L999): Test the `Adv_Diff` state equation solver with a specific control.
+- [`Driver_Opt_Test.m`](https://github.com/sandialabs/Sola/blob/main/examples/inactive/Transient_Adv_Diff_1D/Driver_Opt_Test.m#L6-L999): Run finite difference checks for `Adv_Diff_Gaussian_Source`.
+- [`Driver_Opt.m`](https://github.com/sandialabs/Sola/blob/main/examples/inactive/Transient_Adv_Diff_1D/Driver_Opt.m#L6-L999): Solve the `Adv_Diff_Gaussian_Source` optimization problem and compare the optimal state to the target.
 
 We detail the advection-diffusion optimization classes after a short overview of the code architecture.
 

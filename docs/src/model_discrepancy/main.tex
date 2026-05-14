@@ -210,29 +210,43 @@ Within \texttt{model\_discrepancy/interfaces}, there are six subdirectories. In 
 \end{enumerate}
 
 The optimization problem interface and data interface classes are contained in the directory: 
-$$\texttt{model\_discrepancy/interfaces/problem\_interfaces}$$
+
+\begin{center}\texttt{model\_discrepancy/interfaces/problem\_interfaces}\end{center}
+
 The $\u$ and $\z$ prior interfaces are contained in the directories bearing their names: 
-$$\texttt{model\_discrepancy/interfaces/u\_prior\_interfaces}$$
+
+\begin{center}\texttt{model\_discrepancy/interfaces/u\_prior\_interfaces}\end{center}
+
  and 
- $$\texttt{model\_discrepancy/interfaces/z\_prior\_interfaces}$$
+
+\begin{center}\texttt{model\_discrepancy/interfaces/z\_prior\_interfaces}\end{center}
+
 Within these directories, there are several classes that form a hierarchy of class inheritances to implement the priors for various problem instances. Additionally, the code in 
-$$\texttt{model\_discrepancy/interfaces/transient\_prior\_interfaces}$$ facilitates the specification of these prior covariance matrices for transient problems.
+
+\begin{center}\texttt{model\_discrepancy/interfaces/transient\_prior\_interfaces}\end{center}
+
+ facilitates the specification of these prior covariance matrices for transient problems.
 
 The files in 
-$$\texttt{model\_discrepancy/interfaces/hyperparameter\_interfaces}$$ facilitate prior hyperparameter selection using the algorithms described in~\cite{hart2025hdsaprior}. These interfaces are not strictly required to conduct analysis, but they are required as inputs to some of the prior interface classes.
+\begin{center}\texttt{model\_discrepancy/interfaces/hyperparameter\_interfaces}\end{center}
+ facilitate prior hyperparameter selection using the algorithms described in~\cite{hart2025hdsaprior}. These interfaces are not strictly required to conduct analysis, but they are required as inputs to some of the prior interface classes.
 
 The files in 
-$$\texttt{model\_discrepancy/interfaces/OUU\_interfaces}$$ provide an interface extension to apply HDSA-MD to certain optimization under uncertainty problems. More details regarding this part of the code are forthcoming. 
+\begin{center}\texttt{model\_discrepancy/interfaces/OUU\_interfaces}\end{center}
+ provide an interface extension to apply HDSA-MD to certain optimization under uncertainty problems. More details regarding this part of the code are forthcoming. 
 
 \subsection*{Analysis}
 Within \texttt{model\_discrepancy/analysis}, there are three subdirectories. The files in 
-$$\texttt{model\_discrepancy/analysis/prior}$$
+\begin{center}\texttt{model\_discrepancy/analysis/prior}\end{center}
+
 implement algorithms relevant for computing samples from the prior discrepancy distribution and propagating these prior samples through the optimization problem. Similarly, the files in
-$$\texttt{model\_discrepancy/analysis/posterior}$$
+\begin{center}\texttt{model\_discrepancy/analysis/posterior}\end{center}
+
 implement algorithms for computing samples from the posterior discrepancy and propagating these posterior samples through the optimization problem. 
 
 Posterior sample propagation using post-optimality linearization is implemented in the class \texttt{MD\_Update}. In Sola, there has been additional development of propagation using pseudo-time continuation. This is implemented in the class \texttt{MD\_Continuation\_Update}, along with associated classes needed to interface with codes from the pseudo-time continuation module in 
-$$\texttt{sola/src/pseudo\_time\_continuation}$$
+\begin{center}\texttt{sola/src/pseudo\_time\_continuation}\end{center}
+
 These algorithms will be implemented in HdsaLib in the future.
 
 Lastly, the \texttt{model\_discrepancy/analysis/auxiliary} subdirectory contains classes for auxiliary analysis capabilities. This includes the computation of the Hessian decomposition used to define the projector in~\eqref{eqn:projected_post_opt_linearization}, the computation of Laplacian-like operator spectral properties used for prior hyper-parameter specification, and Bayesian optimal experimental design (OED) to select the input data $\{ \z_\ell \}_{\ell=1}^N$ for the high-fidelity model evaluations. The OED codes are currently only available in Sola, but will be implemented in HdsaLib in the future.
