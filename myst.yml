@@ -52,13 +52,6 @@ project:
               title: Mass Spring System
             - file: examples/from_publications/Steady_State_DR/Article_Reference.md
               title: Steady State DR
-              children:
-                - file: >-
-                        examples/from_publications/Steady_State_DR/Article_A_Drivers/Article_Reference.md
-                  title: Article A Drivers
-                - file: >-
-                        examples/from_publications/Steady_State_DR/Article_B_Drivers/Article_Reference.md
-                  title: Article B Drivers
             - file: examples/from_publications/Transient_ADR_2D/README.md
               title: Transient ADR 2D
             - file: >-
@@ -67,7 +60,7 @@ project:
             - file: >-
                     examples/from_publications/Transient_Fluid_Flow_Tracer_1D/Article_Reference.md
               title: Transient Fluid Flow Tracer 1D
-    
+  bibliography: docs/src/model_discrepancy/references.bib
 site:
   template: book-theme
   options:

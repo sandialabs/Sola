@@ -1,11 +1,2 @@
 # Steady State Diffusion Reaction
-This example is in the articles:
-
-Joseph Hart, Bart van Bloemen Waanders. Hyper-differential sensitivity analysis with respect to model discrepancy: Posterior optimal solution sampling. Foundations of Data Science, 2025, 7(1): 99-133. doi: 10.3934/fods.2024027
-
-and
-
-Madhusudan Madhavan, Joseph Hart, and Bart van Bloemen Waanders. Hyper-differential sensitivity analysis with respect to model discrepancy: Sequential optimal experimental design. In review, 2026.
-
-
-The code corresponding to the first article (Hart and van Bloemen Waanders, 2025) is in the subdirectory Article_A_Drivers, and the code corresponding to the second article (Madhavan et al., 2026) is in the subdirectory Article_B_Drivers.
+This example is in the articles [@hart2024hdsasampling] and [@madhavan2026], with the corresponding codes contained in the subdirectories `Article_A_Drivers` and `Article_B_Drivers`, respectively.

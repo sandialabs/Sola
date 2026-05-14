@@ -1,13 +1,6 @@
 # Two-dimensional Transient Advection-Diffusion
 
-This example looks at a control problem for a set of two-species advection-diffusion-reaction dynamics in a two-dimensional urban canyon. This example is in the article:
-
-J. Hart, S. A. McQuarrie, Z. Morrow, and B. van Bloemen Waanders. Toward real-time
-optimization through model reduction and model discrepancy sensitivities. Structural and
-Multidisciplinary Optimization, 39 (2), 2026.
-
-
-The physical situation is a contaminant ($u_1$) which will be contained by deploying a neutralizing retardant ($u_2$).
+This example looks at a control problem for a set of two-species advection-diffusion-reaction dynamics in a two-dimensional urban canyon. This example is in the article [@hart2026toward]. The physical situation is a contaminant ($u_1$) which will be contained by deploying a neutralizing retardant ($u_2$).
 
 ## Dynamics
 

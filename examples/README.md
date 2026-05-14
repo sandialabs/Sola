@@ -2,7 +2,7 @@
 
 The examples are organized as follows:
 
- - `from_publications/`: These are examples that are in publications. Each example has a "Article_Reference.txt" file that identifies the publication that is appears in.
+ - `from_publications/`: These are examples that are in publications. Each example has an `Article_Reference.md` file that identifies the publication that is appears in.
 
  - `in_development/`: These are examples being actively developed. They will eventually be moved to "in_publications" if they appear in a publication or "inactive" otherwise.
 

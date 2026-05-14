@@ -1,6 +1,4 @@
 # Transient Fluid Flow Tracer 1D
-This example is in the article:
-
-Madhusudan Madhavan, Joseph Hart, and Bart van Bloemen Waanders. Hyper-differential sensitivity analysis with respect to model discrepancy: Sequential optimal experimental design. In Preparation.
+This example is in the article [@madhavan2026].
 
 

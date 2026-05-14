@@ -1,9 +1,4 @@
 # Advection Diffusion 1D Discrepancy Calibration
-This example is in the article:
-
-J. Hart, B. van Bloemen Waanders, Jixian Li, Timbwaoga A. J. Ouermi, and Chris R.
-Johnson. Hyper-Differential Sensitivity Analysis With Respect To Model Discrepancy:
-Prior Distributions. International Journal for Uncertainty Quantification, 16(1), 2026.
-https://doi.org/10.1615/Int.J.UncertaintyQuantification.2025059589
+This example is in the article [@hart2025hdsaprior].
 
 
