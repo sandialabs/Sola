@@ -1,16 +1,21 @@
 % RedBlackTree
-% Implementation of a red black tree. A red black tree is a self-balancing
-% binary search tree. All operations are guaranteed to be O(log n), where n
-% is the size of the tree. This implementation is based on [1, Chapter 13].
+% Implementation of a modified red black tree that acts as a dictionary. 
+% A red black tree is a self-balancing binary search tree. All operations
+% are guaranteed to be O(log n), where n is the size of the tree. This
+% implementation is based on [1, Chapter 13]. Duplicate entries for a key
+% are allowed.
 %
-% For convenience, we denote black by 0 and red by 1.
+% For convenience, we denote black by 0 and red by 1. Public access methods
+% are Insert, Find, Delete, Min, Max, PopMin, PopMax
 %
 % Source:
 %   [1] T. H. Cormen, Ed., Introduction to algorithms, 3rd ed. Cambridge,
 %       Mass: MIT Press, 2009.
+%
+% Author:
+%   - Steven Maio (smaio@sandia.gov)
 
 classdef RedBlackTree < handle
-
 
     properties
         root
@@ -30,6 +35,11 @@ classdef RedBlackTree < handle
         end
 
         function this = Insert(this, key, data)
+            % INSERT Add (key, data) pair to tree
+            %   
+            %   Arguments:
+            %       key: key of data entry
+            %       data: corresponding data
             z = RedBlackNode(key, data);
             y = this.nil;
             x = this.root;
@@ -57,20 +67,18 @@ classdef RedBlackTree < handle
         end
 
         function u = Min(this)
+            % MIN Find Min Node of Tree
+            %   Find the left most node of the tree.
             u = this.root;
             while u.left ~= this.nil
                 u = u.left;
             end
         end
 
-        function u = SubtreeMin(this, z)
-            u = z;
-            while u.left ~= this.nil
-                u = u.left;
-            end
-        end
 
         function u = Max(this)
+            % MAX Find max node of tree
+            %   Find the right most node of the tree.
             u = this.root;
             while u.right ~= this.nil
                 u = u.right;
@@ -78,6 +86,8 @@ classdef RedBlackTree < handle
         end
 
         function u = Find(this, key)
+            % FIND Find node identified by key
+            %   find the first node whose key is equal to key
             u = this.root;
             while u ~= this.nil
                 if u.key == key
@@ -91,6 +101,8 @@ classdef RedBlackTree < handle
         end
 
         function this = Delete(this, key)
+            % DELETE Delete node from tree
+            %   delete the first node identified by key
             z = this.Find(key);
             if z ~= this.nil
                 this.Delete_Node(z);
@@ -98,6 +110,7 @@ classdef RedBlackTree < handle
         end
 
         function [key, data] = PopMax(this)
+            % POPMAX return and delete right most node
             u = this.Max();
             key = u.key;
             data = u.data;
@@ -105,6 +118,7 @@ classdef RedBlackTree < handle
         end
 
         function [key, data] = PopMin(this)
+            % POPMAX return and delete left most node
             u = this.Min();
             key = u.key;
             data = u.data;
@@ -114,6 +128,13 @@ classdef RedBlackTree < handle
     end
 
     methods (Access = private)
+        function u = SubtreeMin(this, z)
+            u = z;
+            while u.left ~= this.nil
+                u = u.left;
+            end
+        end
+
         function this = Delete_Node(this, z)
             y = z;
             y_original_color = y.color;
