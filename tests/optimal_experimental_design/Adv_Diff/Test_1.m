@@ -17,7 +17,7 @@ prior = Adv_Diff_Prior_Model(con);
 
 num_trace_samples = 1000;
 reguarlization_coeff = 1.e-1;
-linear_oed = Linear_OED(likelihood, prior, con, num_trace_samples, reguarlization_coeff);
+linear_oed = Linear_OED_A_Opt(likelihood, prior, con, num_trace_samples, reguarlization_coeff);
 linear_oed.verbose = false;
 
 num_sing_vals = 50;

@@ -8,7 +8,7 @@ clear;
 close all;
 rng(1423435);
 
-print_output = false;
+print_output = true;
 
 m = 200;
 diff_coeff = 1;
@@ -21,7 +21,7 @@ prior = Poisson_Prior_Model(con);
 
 num_trace_samples = 1000;
 reguarlization_coeff = 1.e-1;
-linear_oed = Linear_OED(likelihood, prior, con, num_trace_samples, reguarlization_coeff);
+linear_oed = Linear_OED_A_Opt(likelihood, prior, con, num_trace_samples, reguarlization_coeff);
 
 max_error = 0;
 

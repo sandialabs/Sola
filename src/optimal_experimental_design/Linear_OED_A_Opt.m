@@ -3,7 +3,7 @@
 %%%%%%%%% Questions? Contact Joseph Hart (joshart@sandia.gov) %%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-classdef Linear_OED < handle
+classdef Linear_OED_A_Opt < handle
 
     % We assume a linear Bayesian inverse problem with a mean zero Gaussian noise
     % model with covariance sigma^2*I, a Gaussian prior, and a linear observation operator
@@ -35,7 +35,7 @@ classdef Linear_OED < handle
 
     methods (Access = public)
 
-        function this = Linear_OED(likelihood, inf_dim_prior, con, num_trace_samples, reguarlization_coeff)
+        function this = Linear_OED_A_Opt(likelihood, inf_dim_prior, con, num_trace_samples, reguarlization_coeff)
             this.likelihood = likelihood;
             this.inf_dim_prior = inf_dim_prior;
             this.con = con;
