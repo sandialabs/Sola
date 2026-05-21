@@ -5,12 +5,11 @@
 
 classdef Linear_OED_D_Opt < handle
 
-    % We assume a linear Bayesian inverse problem with a mean zero Gaussian noise
-    % model with covariance sigma^2*I, a Gaussian prior, and a linear observation operator
+    % We assume a linear Bayesian inverse problem with a mean zero Gaussian
+    % noise, a Gaussian prior, and a linear observation operator
     %
-    % Requires prior.Prior_Covariance_Factor_Apply to be the square root of the prior
-    % covariance operator and that cons.c_u_Transpose_Inverse_Apply is the adjoint with
-    % respect to the appropriate weighted inner product.
+    % Requires cons.c_u_Transpose_Inverse_Apply is the adjoint with respect
+    % to the appropriate weighted inner product.
     %
     % Assumes a cardinality constraint on the design and uses a greedy algorithm to
     % determine an design.
@@ -26,7 +25,8 @@ classdef Linear_OED_D_Opt < handle
         d_dim
         sigma
 
-        F
+        Fm_cov
+        G_noise
     end
 
     methods (Access = public)
@@ -42,58 +42,40 @@ classdef Linear_OED_D_Opt < handle
             this.u_dim = length(u);
             d = likelihood.Observation_Operator_Apply(u);
             this.d_dim = length(d);
-            tmp = this.likelihood.Noise_Precision_Apply(ones(this.d_dim, 1));
-            if max(tmp) - min(tmp) > 0
-                disp('Error: the noise covariance must be a scalar multiple of the identity');
-            end
-            this.sigma = sqrt(1 / mean(tmp));
 
             % Construct the operator F. This assumes that the data dimension
             % is very small in comparison to the parameter dimension
-            F = zeros(this.d_dim, this.z_dim);
+            Fm_cov = zeros(this.d_dim, this.d_dim);
+            for i = 1:this.d_dim
+                temp = zeros(this.d_dim, 1);
+                temp(i) = 1.0;
+                temp = this.likelihood.Observation_Operator_Transpose_Apply(temp);
+                temp = this.con.c_u_Transpose_Inverse_Apply(temp);
+                temp = this.prior.Prior_Covariance_Apply(temp);
+                temp = this.con.State_Solve(temp);
+                Fm_cov(i, :) = this.likelihood.Observation_Operator_Apply(temp);
+            end
+            this.Fm_cov = Fm_cov;
+
+            % Construct the noise covariance in a brute force fashion
+            noise_prec = zeros(this.d_dim, this.d_dim);
             for i = 1:this.d_dim
                 x = zeros(this.d_dim, 1);
-                x(i) = 1;
-                temp = this.likelihood.Observation_Operator_Transpose_Apply(x);
-                temp = this.con.c_u_Transpose_Inverse_Apply(temp) * this.sigma;
-                f = this.prior.Prior_Covariance_Factor_Apply(temp);
-                F(i, :) = f;
+                x(i) = 1.0;
+                noise_prec(:, i) = this.likelihood.Noise_Precision_Apply(x);
             end
-            this.F = F;
+            this.G_noise = inv(noise_prec);
         end
 
-        function [w, eig] = Optimize_Design(this)
-            w = [];
-            M = this.con.M;
-            C = RankOneUpdatesMatrix(M);
-            marginal_gains = RedBlackTree();
-            eig = 0;
+        function [val] = OED_Objective(this, w)
+            temp = det((this.Fm_cov(w, w)) + this.G_noise(w, w)) / det(this.G_noise(w, w));
+            val = 0.5 * log(temp);
+        end
 
-            for v = 1:this.d_dim
-                marginal_gains.Insert(inf, ...
-                                      struct('sensor', v, 'time', 0));
-            end
-
-            for i = 1:this.num_sensors
-                while true
-                    [gain, data] = marginal_gains.PopMax();
-                    v = data.sensor;
-                    t = data.time;
-                    f = this.F(v, :)';
-                    if t == i
-                        w(i) = v;
-                        C.Add_Update(f);
-                        eig = eig + gain;
-                        break
-                    else
-                        g = C.Inverse_Apply(f);
-                        gain = log(1 + g' * M * f);
-                        marginal_gains.Insert(gain, ...
-                                              struct('sensor', v, 'time', i));
-                    end
-                end
-            end
-            eig = eig / 2;
+        function [w] = Optimize_Design(this)
+            w = Lazy_Greedy_Solve_Cardinality_Cons(@(S) this.OED_Objective(S), ...
+                                                   this.d_dim, ...
+                                                   this.num_sensors);
         end
 
     end

@@ -27,8 +27,8 @@ classdef Poisson_Prior_Model < Prior_Model
         end
 
         function [z_out] = Prior_Covariance_Apply(this, z_in)
-            temp = this.Square_Root_Apply(z_in);
-            z_out = this.Square_Root_Apply(temp);
+            temp = this.Prior_Covariance_Factor_Apply(z_in);
+            z_out = this.Prior_Covariance_Factor_Apply(temp);
         end
 
         function [z_prior_mean] = Get_Prior_Mean(this)
