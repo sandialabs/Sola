@@ -1,5 +1,5 @@
 % RedBlackTree
-% Implementation of a modified red black tree that acts as a dictionary. 
+% Implementation of a modified red black tree that acts as a dictionary.
 % A red black tree is a self-balancing binary search tree. All operations
 % are guaranteed to be O(log n), where n is the size of the tree. This
 % implementation is based on [1, Chapter 13]. Duplicate entries for a key
@@ -24,6 +24,7 @@ classdef RedBlackTree < handle
     end
 
     methods (Access = public)
+
         function this = RedBlackTree()
             this.size = 0;
             nil = RedBlackNode(0, 0);
@@ -36,7 +37,7 @@ classdef RedBlackTree < handle
 
         function this = Insert(this, key, data)
             % INSERT Add (key, data) pair to tree
-            %   
+            %
             %   Arguments:
             %       key: key of data entry
             %       data: corresponding data
@@ -74,7 +75,6 @@ classdef RedBlackTree < handle
                 u = u.left;
             end
         end
-
 
         function u = Max(this)
             % MAX Find max node of tree
@@ -128,6 +128,7 @@ classdef RedBlackTree < handle
     end
 
     methods (Access = private)
+
         function u = SubtreeMin(this, z)
             u = z;
             while u.left ~= this.nil
@@ -141,7 +142,7 @@ classdef RedBlackTree < handle
             if z.left == this.nil
                 x = z.right;
                 this.Transplant(z, z.right);
-            elseif z.right == this.nil  
+            elseif z.right == this.nil
                 x = z.left;
                 this.Transplant(z, z.left);
             else
@@ -306,5 +307,6 @@ classdef RedBlackTree < handle
             end
             x.color = 0;
         end
+
     end
 end

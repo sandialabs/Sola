@@ -23,6 +23,7 @@ classdef RedBlackNode < handle
     end
 
     methods (Access = public)
+
         function this = RedBlackNode(key, data)
             this.color = 1;
             this.key = key;
@@ -31,5 +32,6 @@ classdef RedBlackNode < handle
             this.left = 0;
             this.right = 0;
         end
+
     end
 end
