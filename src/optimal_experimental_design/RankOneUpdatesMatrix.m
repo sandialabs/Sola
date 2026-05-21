@@ -9,6 +9,7 @@ classdef RankOneUpdatesMatrix < handle
     end
 
     methods (Access = public)
+
         function this = RankOneUpdatesMatrix(M)
             this.M = M;
             this.updates = [];
@@ -43,5 +44,6 @@ classdef RankOneUpdatesMatrix < handle
                 Bx = Bx - c * v;
             end
         end
+
     end
 end
