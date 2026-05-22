@@ -37,7 +37,7 @@ end
 passed = passed & (mean(random_vals) >= (1 - exp(-1) - eps) * best_f);
 
 if passed
-    fprintf(1, '\ndiscrete_optimization/Greedy_Algs passed.\n');
+    fprintf(1, '\noptimal_experimental_design/tools/Greedy_Algs passed.\n');
 else
-    fprintf(2, '\ndiscrete_optimization/Greedy_Algs failed.\n');
+    fprintf(2, '\noptimal_experimental_design/tools/Greedy_Algs failed.\n');
 end

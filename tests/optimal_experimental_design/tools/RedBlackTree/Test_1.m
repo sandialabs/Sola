@@ -33,9 +33,9 @@ for t = 1:3
 end
 
 if passed
-    fprintf(1, '\ndiscrete_optimization/RedBlackTree passed.\n');
+    fprintf(1, '\noptimal_experimental_design/tools/RedBlackTree passed.\n');
 else
-    fprintf(2, '\ndiscrete_optimization/RedBlackTree failed.\n');
+    fprintf(2, '\noptimal_experimental_design/tools/RedBlackTree failed.\n');
 end
 
 %% Functions for computing the height of the tree
