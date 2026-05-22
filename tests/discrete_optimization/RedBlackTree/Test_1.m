@@ -3,7 +3,7 @@ close all;
 
 N = 5;
 max_sample = 100;
-verbose = 1;
+verbose = 0;
 
 passed = 1;
 
