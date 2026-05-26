@@ -35,6 +35,14 @@ classdef Poisson_Prior_Model < Prior_Model
             z_prior_mean = zeros(this.poisson_con.m, 1);
         end
 
+        function [z_out] = Mass_Matrix_Apply(this, z_in)
+            z_out = this.poisson_con.M * z_in;
+        end
+
+        function [z_out] = Mass_Matrix_Inverse_Apply(this, z_in)
+            z_out = linsolve(this.poisson_con.M, z_in);
+        end
+
     end
 
 end

@@ -35,6 +35,8 @@ for i = 1:num_obs
     x(i) = 1;
     temp = likelihood.Observation_Operator_Transpose_Apply(x);
     temp = cons.c_u_Transpose_Inverse_Apply(temp) / noise_std;
+    temp = -cons.c_z_Transpose_Apply(temp);
+    temp = prior.Mass_Matrix_Inverse_Apply(temp);
     f = prior.Prior_Covariance_Factor_Apply(temp);
     F(i, :) = f;
 end

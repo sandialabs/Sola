@@ -50,7 +50,10 @@ classdef Linear_OED_D_Opt < handle
                 temp = zeros(this.d_dim, 1);
                 temp(i) = 1.0;
                 temp = this.likelihood.Observation_Operator_Transpose_Apply(temp);
+                % Compute adjoint of solution map
                 temp = this.con.c_u_Transpose_Inverse_Apply(temp);
+                temp = -this.con.c_z_Transpose_Apply(temp);
+                temp = this.prior.Mass_Matrix_Inverse_Apply(temp);
                 temp = this.prior.Prior_Covariance_Apply(temp);
                 temp = this.con.State_Solve(temp);
                 Fm_cov(i, :) = this.likelihood.Observation_Operator_Apply(temp);

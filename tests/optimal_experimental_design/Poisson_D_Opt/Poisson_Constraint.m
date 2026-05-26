@@ -23,9 +23,9 @@ classdef Poisson_Constraint < Constraint
         end
 
         function [Mv] = c_u_Transpose_Inverse_Apply(this, v, u, z)
-            temp = linsolve(this.A', v);
-            temp = this.B' * temp;
-            Mv = linsolve(this.M, temp);
+            Mv = linsolve(this.A', v);
+            % temp = this.B' * temp;
+            % Mv = linsolve(this.M, temp);
         end
 
         function [Mv] = c_z_Transpose_Apply(this, v, u, z)
