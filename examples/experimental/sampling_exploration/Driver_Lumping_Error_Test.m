@@ -74,55 +74,70 @@ sharedExponent = [];
 for k = 1:numel(indexSets)
     I = indexSets{k};
 
-    figure
-    hold on
+figure('Units','pixels','Position',[100 100 900 650])
+hold on
 
-    ax = gca;
+ax = gca;
 
-    yyaxis left
-    ax.YColor = leftColor;
-    plot(I, v(I), '-', 'Color', leftColor, 'LineWidth', 3)
-    plot(I, sqrt(coeff_var(I)), '--', 'Color', compColor, 'LineWidth', 3)
-    xlim([I(1)-length(I)/100, I(end)])
-    ylabel('Coefficient')
+yyaxis left
+ax.YColor = leftColor;
+plot(I, v(I), '-', 'Color', leftColor, 'LineWidth', 5)
+plot(I, sqrt(coeff_var(I)), '--', 'Color', compColor, 'LineWidth', 5)
+xlim([I(1)-length(I)/100, I(end)])
+ylabel('Coefficient')
 
-    yyaxis right
-    ax.YColor = rightColor;
-    plot(I, percent_var(I), '-', 'Color', rightColor, 'LineWidth', 3)
-    xlim([I(1)-length(I)/100, I(end)])
-    ylabel('Percent of Coefficient Variance')
-    ylim([0 1])
+yyaxis right
+ax.YColor = rightColor;
+plot(I, percent_var(I), '-', 'Color', rightColor, 'LineWidth', 5)
+xlim([I(1)-length(I)/100, I(end)])
+ylabel('Percent of Coefficient Variance')
+ylim([0 1])
 
-    xlabel('Coefficient Index')
-    legend({'$u$ coefficient','$u-\overline{u}$ coefficient bound','Percent of Variance'}, ...
-        'Location', 'east', 'Interpreter', 'latex')
+xlabel('Coefficient Index')
+legend({'$u$ coefficient','$u-\overline{u}$ coefficient bound','Percent of Variance'}, ...
+    'Location', 'east', 'Interpreter', 'latex')
 
-    set(gca, 'FontSize', 18)
+set(gca, 'FontSize', 24)
 
-    ax = gca;
-    ax.XAxis.Exponent = 0;  % suppress automatic x10^n label
+ax = gca;
+ax.XAxis.Exponent = 0;  % suppress automatic x10^n label
 
-    if k == 1
-        xt = xticks;
-        firstPlotLastTick = xt(end);
-
-        maxTick = max(abs(xt));
-        if maxTick > 0
-            sharedExponent = floor(log10(maxTick));
-        else
-            sharedExponent = 0;
-        end
-    else
-        xt = xticks;
-        xt = xt(xt > firstPlotLastTick);
-        xt = [firstPlotLastTick, xt];
-        xticks(xt)
-    end
-
-    % Use the same exponent for both plots
+if k == 1
     xt = xticks;
-    scaledTicks = xt / 10^sharedExponent;
-    xticklabels(arrayfun(@(x) sprintf('$%.3g\\times10^{%d}$', x, sharedExponent), ...
-        scaledTicks, 'UniformOutput', false))
-    ax.TickLabelInterpreter = 'latex';
+    firstPlotLastTick = xt(end);
+
+    maxTick = max(abs(xt));
+    if maxTick > 0
+        sharedExponent = floor(log10(maxTick));
+    else
+        sharedExponent = 0;
+    end
+else
+    xt = xticks;
+    xt = xt(xt > firstPlotLastTick);
+    xt = [firstPlotLastTick, xt];
+    xticks(xt)
+end
+
+% Use the same exponent for both plots
+xt = xticks;
+scaledTicks = xt / 10^sharedExponent;
+xticklabels(arrayfun(@(x) sprintf('$%.3g\\times10^{%d}$', x, sharedExponent), ...
+    scaledTicks, 'UniformOutput', false))
+ax.TickLabelInterpreter = 'latex';
+
+% Force consistent diagonal labels
+ax.XTickLabelRotation = 35;
+
+% Reserve fixed space for long rotated tick labels and x-label
+ax.Units = 'normalized';
+ax.Position = [0.13, 0.30, 0.72, 0.62];
+
+% Move x-axis label down slightly so it is never cut off
+xl = xlabel('Coefficient Index');
+xl.Units = 'normalized';
+xl.Position(2) = -0.20;
+
+print(gcf, '-depsc', sprintf('coefficient_error_d_%d_k_%d.eps', d, k))
+
 end
