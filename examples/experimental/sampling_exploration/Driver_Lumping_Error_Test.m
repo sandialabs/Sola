@@ -10,12 +10,13 @@ rng(1324)
 
 n_u = 200;
 d = 3;
-plot_sample = false;
+plot_sample = true;
 
 h = 1/(n_u-1);
 kappa_u = .2;
 
-C_d = 4 * d;
+nu = 2 - d/2;
+C_d = 8 * nu;
 beta_u = kappa_u^2/C_d;
 
 [M, S] = Assemble_Mass_and_Stiffness(n_u);
@@ -136,7 +137,7 @@ ax.Position = [0.13, 0.30, 0.72, 0.62];
 % Move x-axis label down slightly so it is never cut off
 xl = xlabel('Coefficient Index');
 xl.Units = 'normalized';
-xl.Position(2) = -0.20;
+xl.Position(2) = -0.30;
 
 print(gcf, '-depsc', sprintf('coefficient_error_d_%d_k_%d.eps', d, k))
 
