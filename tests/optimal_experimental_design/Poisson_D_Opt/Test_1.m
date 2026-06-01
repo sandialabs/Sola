@@ -21,10 +21,12 @@ obs_vec = (1:9:100)';
 likelihood = Poisson_Likelihood_Model(noise_std, obs_vec, N);
 num_sensors = 5;
 
+inversion_problem = Bayesian_Inversion(likelihood, prior, cons);
+
 %% OED
 num_obs = numel(obs_vec);
 %% Compute greedy with solution with data space log det approach
-linear_oed = Linear_OED_D_Opt(likelihood, prior, cons, num_sensors);
+linear_oed = Linear_OED_D_Opt(inversion_problem, num_sensors);
 greedy_sensors = linear_oed.Optimize_Design();
 
 %% Compute greedy solution using fast marginal gain computations

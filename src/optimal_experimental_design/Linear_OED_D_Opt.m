@@ -15,6 +15,7 @@ classdef Linear_OED_D_Opt < handle
     % determine an design.
 
     properties
+        bayesian_inversion
         likelihood
         prior
         con
@@ -31,16 +32,17 @@ classdef Linear_OED_D_Opt < handle
 
     methods (Access = public)
 
-        function this = Linear_OED_D_Opt(likelihood, prior, con, num_sensors)
-            this.likelihood = likelihood;
-            this.prior = prior;
-            this.con = con;
+        function this = Linear_OED_D_Opt(bayesian_inversion, num_sensors)
+            this.bayesian_inversion = bayesian_inversion;
+            this.likelihood = bayesian_inversion.likelihood;
+            this.prior = bayesian_inversion.prior;
+            this.con = bayesian_inversion.con;
             this.num_sensors = num_sensors;
-            z = prior.Get_Prior_Mean();
+            z = this.prior.Get_Prior_Mean();
             this.z_dim = length(z);
-            u = con.c_z_Apply(z);
+            u = this.con.c_z_Apply(z);
             this.u_dim = length(u);
-            d = likelihood.Observation_Operator_Apply(u);
+            d = this.likelihood.Observation_Operator_Apply(u);
             this.d_dim = length(d);
 
             % Construct the operator F. This assumes that the data dimension
