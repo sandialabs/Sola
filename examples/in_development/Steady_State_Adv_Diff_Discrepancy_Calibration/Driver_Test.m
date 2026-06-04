@@ -9,13 +9,12 @@ clc;
 addpath(genpath('../../src'));
 
 m = 200;
-diff_coeff = 1;
 vel_coeff = 1 / 2;
 robin_coeff = 2;
 reg_coeff = 10;
 xi = 1;
 obj = Adv_Diff_Objective(m, reg_coeff);
-con_hifi = Adv_Diff(m, diff_coeff, vel_coeff, xi);
+con_hifi = Adv_Diff(m, vel_coeff, xi);
 con_lofi = Diff(con_hifi);
 opt_hifi = Reduced_Space_Optimization(obj, con_hifi);
 opt_lofi = Reduced_Space_Optimization(obj, con_lofi);
@@ -50,7 +49,7 @@ if grid_refinement_check
     N = length(m_mesh);
     error = zeros(N, 1);
     for k = 1:N
-        con_k = Adv_Diff(m_mesh(k), diff_coeff, vel_coeff, xi);
+        con_k = Adv_Diff(m_mesh(k), vel_coeff, xi);
         x = con_k.x;
         y = cos(2 * pi * x);
         z = (10^-2) * ((4 * pi^2) * cos(2 * pi * x) - (2 * pi) * sin(2 * pi * x) * vel_coeff);
