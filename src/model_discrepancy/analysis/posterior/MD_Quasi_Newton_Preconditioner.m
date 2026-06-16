@@ -11,11 +11,11 @@ classdef MD_Quasi_Newton_Preconditioner < Quasi_Newton_Preconditioner
 
     methods (Access = public)
 
-        function [z_out] = Apply_Initial_Inverse_Hessian_Approximation(this, z_in)
+        function [beta_out] = Apply_Initial_Inverse_Hessian_Approximation(this, beta_in)
             if isempty(this.hessian_analysis.evals)
-                z_out = z_in;
+                beta_out = beta_in;
             else
-                z_out = z_in ./ this.hessian_analysis.evals;
+                beta_out = beta_in ./ this.hessian_analysis.evals;
             end
         end
 
