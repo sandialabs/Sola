@@ -28,9 +28,9 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
 
     methods (Access = public)
 
-        function [grad, val] = Gradient(this, z, theta_traj, time_index)
+        function [grad, val] = Gradient(this, beta, theta_traj, time_index)
 
-            this.State_Evaluation(z, theta_traj, time_index);
+            this.State_Evaluation(beta, theta_traj, time_index);
 
             delta = this.current_disc_ops.Eval(this.current_z, this.current_t);
             [val, grad_u, grad_z] = this.opt_prob_interface.Objective_Function(this.current_u + delta, this.current_z);
@@ -41,43 +41,43 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
             grad = this.hessian_analysis.Apply_V_Transpose(grad);
         end
 
-        function [z_out] = Apply_Hessian(this, z_in, z, theta_traj, time_index)
+        function [beta_out] = Apply_Hessian(this, beta_in, beta, theta_traj, time_index)
 
-            this.State_Evaluation(z, theta_traj, time_index);
-            V_z_in = this.hessian_analysis.Apply_V(z_in);
+            this.State_Evaluation(beta, theta_traj, time_index);
+            z_in = this.hessian_analysis.Apply_V(beta_in);
             delta = this.current_disc_ops.Eval(this.current_z, this.current_t);
 
-            z_out = this.opt_prob_interface.Apply_RS_Hessian(V_z_in, this.current_z);
+            z_out = this.opt_prob_interface.Apply_RS_Hessian(z_in, this.current_z);
 
-            u_tmp1 = this.current_disc_ops.Apply_z_Jacobian(V_z_in,  this.current_z,  this.current_t);
-            u_tmp2 = this.opt_prob_interface.Apply_Misfit_Hessian(u_tmp1,  this.current_u + delta,  this.current_z);
-            z_out = z_out + this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(u_tmp2,  this.current_z);
+            u_tmp = this.current_disc_ops.Apply_z_Jacobian(z_in, this.current_z, this.current_t);
+            u_tmp = this.opt_prob_interface.Apply_Misfit_Hessian(u_tmp, this.current_u + delta, this.current_z);
+            z_out = z_out + this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(u_tmp, this.current_z);
 
-            z_out = z_out + this.current_disc_ops.Apply_z_Jacobian_Transpose(u_tmp2,  this.current_z,  this.current_t);
+            z_out = z_out + this.current_disc_ops.Apply_z_Jacobian_Transpose(u_tmp, this.current_z, this.current_t);
 
-            u_tmp3 = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian(V_z_in,  this.current_z);
-            u_tmp4 = this.opt_prob_interface.Apply_Misfit_Hessian(u_tmp3,  this.current_u + delta,  this.current_z);
-            z_out = z_out + this.current_disc_ops.Apply_z_Jacobian_Transpose(u_tmp4,  this.current_z,  this.current_t);
+            u_tmp = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian(z_in, this.current_z);
+            u_tmp = this.opt_prob_interface.Apply_Misfit_Hessian(u_tmp, this.current_u + delta, this.current_z);
+            z_out = z_out + this.current_disc_ops.Apply_z_Jacobian_Transpose(u_tmp, this.current_z, this.current_t);
 
-            z_out = this.hessian_analysis.Apply_V_Transpose(z_out);
+            beta_out = this.hessian_analysis.Apply_V_Transpose(z_out);
 
         end
 
-        function [z_out] = Apply_B(this, z, theta_traj, time_index)
+        function [beta_out] = Apply_B(this, beta, theta_traj, time_index)
 
-            this.State_Evaluation(z, theta_traj, time_index);
+            this.State_Evaluation(beta, theta_traj, time_index);
             delta = this.current_disc_ops.Eval(this.current_z, this.current_t);
 
-            u_tmp1 = this.current_disc_ops.Apply_theta_Jacobian(this.current_z);
-            u_tmp2 = this.opt_prob_interface.Apply_Misfit_Hessian(u_tmp1, this.current_u + delta, this.current_z);
-            z_tmp1 = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(u_tmp2, this.current_z);
+            u_tmp = this.current_disc_ops.Apply_theta_Jacobian(this.current_z);
+            u_tmp = this.opt_prob_interface.Apply_Misfit_Hessian(u_tmp, this.current_u + delta, this.current_z);
+            z_out = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(u_tmp, this.current_z);
 
-            z_tmp2 = this.current_disc_ops.Apply_z_Jacobian_Transpose(u_tmp2, this.current_z, this.current_t);
+            z_out = z_out + this.current_disc_ops.Apply_z_Jacobian_Transpose(u_tmp, this.current_z, this.current_t);
 
             state_grad = this.opt_prob_interface.Misfit_Gradient(this.current_u + delta, this.current_z);
-            z_tmp3 = this.current_disc_ops.Apply_z_theta_Hessian(state_grad, this.current_z);
+            z_out = z_out + this.current_disc_ops.Apply_z_theta_Hessian(state_grad, this.current_z);
 
-            z_out = this.hessian_analysis.Apply_V_Transpose(z_tmp1 + z_tmp2 + z_tmp3);
+            beta_out = this.hessian_analysis.Apply_V_Transpose(z_out);
 
         end
 
@@ -130,16 +130,16 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
                    'sample_idx must be an integer in [0, num_samples].');
 
             if sample_idx == 0 % Mean
-                disc_ops.Eval          = @(z, t) t * this.Discrepancy_Evaluation_Mean(z);
-                disc_ops.Apply_z_Jacobian       = @(z_in, z, t) t * this.Apply_Discrepancy_z_Jacobian_Mean(z_in);
-                disc_ops.Apply_z_Jacobian_Transpose      = @(u_in, z, t) t * this.Apply_Discrepancy_z_Jacobian_Transpose_Mean(u_in);
-                disc_ops.Apply_theta_Jacobian   = @(z) this.Discrepancy_Evaluation_Mean(z);
+                disc_ops.Eval = @(z, t) t * this.Discrepancy_Evaluation_Mean(z);
+                disc_ops.Apply_z_Jacobian = @(z_in, z, t) t * this.Apply_Discrepancy_z_Jacobian_Mean(z_in);
+                disc_ops.Apply_z_Jacobian_Transpose = @(u_in, z, t) t * this.Apply_Discrepancy_z_Jacobian_Transpose_Mean(u_in);
+                disc_ops.Apply_theta_Jacobian = @(z) this.Discrepancy_Evaluation_Mean(z);
                 disc_ops.Apply_z_theta_Hessian = @(u_in, z) this.Apply_Discrepancy_z_Jacobian_Transpose_Mean(u_in);
             else
-                disc_ops.Eval          = @(z, t) t * this.Discrepancy_Evaluation_Sample(z, sample_idx);
-                disc_ops.Apply_z_Jacobian       = @(z_in, z, t) t * this.Apply_Discrepancy_z_Jacobian_Sample(z_in, z, sample_idx);
-                disc_ops.Apply_z_Jacobian_Transpose      = @(u_in, z, t) t * this.Apply_Discrepancy_z_Jacobian_Transpose_Sample(u_in, z, sample_idx);
-                disc_ops.Apply_theta_Jacobian   = @(z) this.Discrepancy_Evaluation_Sample(z, sample_idx);
+                disc_ops.Eval = @(z, t) t * this.Discrepancy_Evaluation_Sample(z, sample_idx);
+                disc_ops.Apply_z_Jacobian = @(z_in, z, t) t * this.Apply_Discrepancy_z_Jacobian_Sample(z_in, z, sample_idx);
+                disc_ops.Apply_z_Jacobian_Transpose = @(u_in, z, t) t * this.Apply_Discrepancy_z_Jacobian_Transpose_Sample(u_in, z, sample_idx);
+                disc_ops.Apply_theta_Jacobian = @(z) this.Discrepancy_Evaluation_Sample(z, sample_idx);
                 disc_ops.Apply_z_theta_Hessian = @(u_in, z) this.Apply_Discrepancy_z_Jacobian_Transpose_Sample(u_in, z, sample_idx);
             end
         end

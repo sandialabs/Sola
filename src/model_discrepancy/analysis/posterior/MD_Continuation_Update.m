@@ -64,6 +64,9 @@ classdef MD_Continuation_Update < handle
 
         function [u_k, z_k, beta_k] = Posterior_Update_Core(this, sample_idx)
 
+            % NOTE: All continuation classes prefixed with `MD_` update the latent variable beta, 
+            % although denoted by parent classes as z. This is not to be confused with the solution
+            % space optimization variable z in model discrepancy calibration.
             sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis);
             qn_prec = MD_Quasi_Newton_Preconditioner(this.hessian_analysis);
             beta_nom = zeros(this.r, 1);
