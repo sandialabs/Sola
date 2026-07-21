@@ -26,7 +26,11 @@ md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 opt_prob_interface = MD_Opt_Prob_Interface_synthetic_test_continuation(m);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 
-md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, 30, 10);
+num_evals = 20;
+oversampling = 10;
+md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
+
+
 
 %%
 num_continuation_steps = 3;
