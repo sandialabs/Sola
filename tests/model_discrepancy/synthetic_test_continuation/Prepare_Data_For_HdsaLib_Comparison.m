@@ -44,7 +44,7 @@ z_k = z_cont(:, end);
 beta_k = beta_cont(:, end);
 disp(norm(z_cont(:, end)));
 
-save('Sabl_output.mat', 'u_k', 'z_k', 'beta_k');
+save('Sola_output.mat', 'u_k', 'z_k', 'beta_k');
 save('reference_solution.mat', 'u_cont', 'z_cont', 'beta_cont', 'u_ks', 'z_ks', 'beta_ks');
 
 % ------------------------------------------------------------

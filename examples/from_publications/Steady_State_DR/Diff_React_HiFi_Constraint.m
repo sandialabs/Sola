@@ -27,7 +27,7 @@ classdef Diff_React_HiFi_Constraint < Constraint
             u0 = linsolve(A, b);
 
             % Execute nonlinear solve to determine the state
-            options = optimoptions('fsolve', 'Display', 'none', 'OptimalityTolerance', 1.e-14, 'SpecifyObjectiveGradient', true, 'CheckGradients', false);
+            options = optimoptions('fsolve', 'Display', 'none', 'OptimalityTolerance', 1.e-14, 'SpecifyObjectiveGradient', true);
             u = fsolve(@(u)this.Constraint_Evaluation(u, z), u0, options);
         end
 

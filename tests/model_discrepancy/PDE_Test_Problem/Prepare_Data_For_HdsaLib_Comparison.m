@@ -33,12 +33,14 @@ u_lofi = con_lofi.State_Solve(data_interface.Z);
 
 writematrix(data_interface.u_opt, 'u_opt.txt');
 writematrix(data_interface.z_opt, 'z_opt.txt');
-writematrix(data_interface.D(:, 1) + u_lofi(:, 1), 'U_Hifi_1.txt');
-writematrix(u_lofi(:, 1), 'U_Lofi_1.txt');
-writematrix(data_interface.Z(:, 1), 'Z_1.txt');
-writematrix(data_interface.D(:, 2) + u_lofi(:, 2), 'U_Hifi_2.txt');
-writematrix(u_lofi(:, 2), 'U_Lofi_2.txt');
-writematrix(data_interface.Z(:, 2), 'Z_2.txt');
+writematrix(data_interface.D, 'D.txt', 'Delimiter', ' ');
+writematrix(data_interface.Z, 'Z.txt', 'Delimiter', ' ');
+% writematrix(data_interface.D(:, 1) + u_lofi(:, 1), 'U_Hifi_1.txt');
+% writematrix(u_lofi(:, 1), 'U_Lofi_1.txt');
+% writematrix(data_interface.Z(:, 1), 'Z_1.txt');
+% writematrix(data_interface.D(:, 2) + u_lofi(:, 2), 'U_Hifi_2.txt');
+% writematrix(u_lofi(:, 2), 'U_Lofi_2.txt');
+% writematrix(data_interface.Z(:, 2), 'Z_2.txt');
 
 alpha_u = 1 / (2^2);
 alpha_z = 1 / (3^2);
@@ -73,8 +75,13 @@ opt_prob_interface = MD_Opt_Prob_Interface_Sola(opt_lofi, data_interface);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 md_update = MD_Update(md_post_samples, md_hessian_analysis);
 
+num_continuation_steps = 1;
+md_cont_update = MD_Continuation_Update(md_post_samples, md_hessian_analysis, num_continuation_steps);
+[u_cont, z_cont, betas_cont] = md_cont_update.Posterior_Update_Mean();
+z_k = z_cont(:, end);
 [post_z_mean, post_z_samples] = md_update.Posterior_Update_Samples();
-
+disp("Norm of posterior update:       " + norm(post_z_mean))
+disp("Norm of posterior update (ctn): " + norm(z_k))
 %%
 post_delta_mean = reshape(cell2mat(post_delta_mean), 200, 3);
-save('Sola_Output.mat', 'prior_delta', 'prior_delta_z_opt', 'post_delta_mean', 'post_delta_samples', 'post_z_mean', 'post_z_samples');
+save('Sola_Output.mat', 'prior_delta', 'prior_delta_z_opt', 'post_delta_mean', 'post_delta_samples', 'post_z_mean', 'post_z_samples', 'z_k');

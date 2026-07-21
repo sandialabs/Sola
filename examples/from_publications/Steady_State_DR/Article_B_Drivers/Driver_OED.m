@@ -90,4 +90,4 @@ end
 
 Z_oed = Z;
 D_oed = D;
-% save("oed-results.mat", "z_bars", "Jhat_DC_oed", "Z_oed", "D_oed");
+save("oed-results.mat", "z_bars", "Jhat_DC_oed", "Z_oed", "D_oed");
