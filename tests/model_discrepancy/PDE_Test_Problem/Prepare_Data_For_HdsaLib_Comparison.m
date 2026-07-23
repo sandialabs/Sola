@@ -75,7 +75,7 @@ opt_prob_interface = MD_Opt_Prob_Interface_Sola(opt_lofi, data_interface);
 md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 md_update = MD_Update(md_post_samples, md_hessian_analysis);
 
-num_continuation_steps = 1;
+num_continuation_steps = 3;
 md_cont_update = MD_Continuation_Update(md_post_samples, md_hessian_analysis, num_continuation_steps);
 [u_cont, z_cont, betas_cont] = md_cont_update.Posterior_Update_Mean();
 z_k = z_cont(:, end);
