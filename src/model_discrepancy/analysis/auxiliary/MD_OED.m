@@ -53,26 +53,35 @@ classdef MD_OED < handle
             end
 
             Mz_V = this.z_prior_interface.Apply_M_z(this.offline_data.V);
+            Vt_Mz_V = this.offline_data.V' * Mz_V;
+            Vt_Mz_V = 0.5 * (Vt_Mz_V + Vt_Mz_V');
+            this.offline_data.Vt_Mz_V = Vt_Mz_V;
+
+            [Q, d] = eig(Vt_Mz_V, 'vector');
+            d = real(d);
+            d(d < 0) = 0;
+            this.offline_data.Vt_Mz_V_evecs = Q;
+            this.offline_data.Vt_Mz_V_evals = d;
+
+            % Compute terms used repeatedly in the posterior covariance objective.
             Wz_inv_Mz_V = this.z_prior_interface.Apply_W_z_Inverse(Mz_V);
             this.offline_data.Mz_Wz_inv_Mz_V = this.z_prior_interface.Apply_M_z(Wz_inv_Mz_V);
             this.offline_data.Vt_Mz_Wz_inv_Mz_V = Mz_V' * Wz_inv_Mz_V;
+            this.offline_data.Vt_Mz_Wz_inv_Mz_V = 0.5 * (this.offline_data.Vt_Mz_Wz_inv_Mz_V + this.offline_data.Vt_Mz_Wz_inv_Mz_V');
             this.offline_data.lambda = this.u_prior_interface.Get_W_u_Generalized_Eigenvalues();
 
         end
 
         function [beta_new, Z_new] = Generate_Seq_Optimal_Design(this, beta_0, alpha_d, betas, beta_bar, constr_radius)
-            if this.verbosity
-                options = optimoptions('fmincon', 'Display', 'iter', 'MaxIterations', 5000, 'SpecifyObjectiveGradient', true, 'SpecifyConstraintGradient', true);
-            else
-                options = optimoptions('fmincon', 'Display', 'None', 'MaxIterations', 5000, 'SpecifyObjectiveGradient', true, 'SpecifyConstraintGradient', true);
+            r = this.offline_data.r;
+            if mod(length(beta_0), r) ~= 0
+                error('Length of beta_0 must be divisible by the reduced dimension r.');
             end
-            p = length(beta_0) / this.offline_data.r;
+            p = length(beta_0) / r;
             fun = @(beta_new) this.Evaluate_OED_Objective_Seq([betas; beta_new], alpha_d, beta_bar, p);
-            center_b = @(b) reshape(b, [], p) - beta_bar;
-            tmp = @(b) this.offline_data.V' * this.z_prior_interface.Apply_M_z(this.offline_data.V * center_b(b));
-            nonlcon = @(b) deal(trace(center_b(b)' * tmp(b) - constr_radius), [], reshape(2 * tmp(b), [], 1), []);
-            beta_new = fmincon(fun, beta_0, [], [], [], [], [], [], nonlcon, options);
-            Z_new = this.data_interface.z_opt + this.offline_data.V * reshape(beta_new, this.offline_data.r, []);
+            projection_data = MD_Ellipsoid_Ball_SPG.Prepare_Projection(beta_bar, p, constr_radius, this.offline_data.Vt_Mz_V_evecs, this.offline_data.Vt_Mz_V_evals);
+            beta_new = MD_Ellipsoid_Ball_SPG.Minimize(fun, beta_0, projection_data);
+            Z_new = this.data_interface.z_opt + this.offline_data.V * reshape(beta_new, r, []);
         end
 
         function [val, grad] = Evaluate_OED_Objective_Seq(this, beta, alpha_d, beta_bar, p)
@@ -101,8 +110,6 @@ classdef MD_OED < handle
 
             val = 0;
             grad = 0 * beta;
-            % Implement gradient via product rules, may be able to
-            % precompute additional vectors needed in the analysis
             for i = 1:N
                 val = val + p(i) * tr_Ws_Mu_Wu_inv(i);
                 grad_si = sum(g_jac{i}, 1)' + Mg_jac{i}' * (this.offline_data.Vt_Mz_Wz_inv_Mz_V * beta_bar);
@@ -122,21 +129,28 @@ classdef MD_OED < handle
             M = zeros(this.offline_data.r, N);
             M(:, 2:end) = reshape(beta, this.offline_data.r, N - 1);
             G = ones(N, N) + M' * this.offline_data.Vt_Mz_Wz_inv_Mz_V * M;
-            G = (G + G') / 2;
+            G = 0.5 * (G + G');
             [g, mu] = eig(G, 'vector');
+            mu = real(mu);
             Mg = M * g;
 
             g_jac = cell(N, 1);
             mu_jac = cell(N, 1);
             Mg_jac = cell(N, 1);
+            mu_tol = 1.e-12 * max(1, max(abs(mu)));
+
             for i = 1:N
                 vec2 = this.offline_data.Vt_Mz_Wz_inv_Mz_V * M * g(:, i);
                 mu_jac{i} = 2 * kron(g(2:end, i), vec2);
+                % mat = g * pinv(mu(i) * eye(N) - diag(mu)) * g';
+                denom = mu(i) - mu;
+                inv_denom = zeros(N, 1);
+                active = abs(denom) > mu_tol;
+                inv_denom(active) = 1 ./ denom(active);
+                mat = (g .* reshape(inv_denom, 1, [])) * g';
 
-                mat = g * pinv(mu(i) * eye(N) - diag(mu)) * g';
                 mat2 = mat * M' * this.offline_data.Vt_Mz_Wz_inv_Mz_V;
                 g_jac{i} = kron(mat(:, 2:end), vec2') + kron(g(2:end, i)', mat2);
-
                 Mg_jac{i} = kron(g(2:end, i)', eye(this.offline_data.r)) + M * g_jac{i};
             end
 

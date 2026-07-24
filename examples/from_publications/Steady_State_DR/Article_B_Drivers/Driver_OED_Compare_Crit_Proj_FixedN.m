@@ -59,13 +59,17 @@ end
 figure;
 plot((crit_rand - crit_same_pt) / (crit_DC_oed - crit_same_pt),  (crit_rand_hifi - crit_same_pt_hifi) / (crit_DC_oed_hifi - crit_same_pt_hifi), ".", "Color", [0.7 0.8 0.9], "MarkerSize", 25, "DisplayName", "Random");
 hold on;
-plot((crit_DC_oed - crit_same_pt) / (crit_DC_oed - crit_same_pt), (crit_DC_oed_hifi - crit_same_pt_hifi) / (crit_DC_oed_hifi - crit_same_pt_hifi), "r*", "DisplayName", "Optimal Data Point");
+plot(1.0, 1.0, "r*", "DisplayName", "Optimal Data Point");
 xlabel("Uncertainty reduction near $\bar{z}_k$", "Interpreter", "latex");
 ylabel("Uncertainty reduction near $z^{\star}$", "Interpreter", "latex");
 lgd = legend('Location', 'northwest');
 lgd.Direction = 'reverse';
 ylim([0 inf]);
-xlim([0 1]);
+xlim([0 inf]);
+
+disp("Max deviation:")
+disp(max((crit_rand_hifi - crit_same_pt_hifi) / (crit_DC_oed_hifi - crit_same_pt_hifi)))
+disp(max((crit_rand - crit_same_pt) / (crit_DC_oed - crit_same_pt)))
 % saveas(gcf, 'ScatterPlot', 'epsc');
 
 %% --ALTERNATIVE (ADDITIONAL) PLOTS--

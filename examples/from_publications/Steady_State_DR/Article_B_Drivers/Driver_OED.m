@@ -31,15 +31,16 @@ for p = 1:N
         z_p = z_lofi;
     else
         if p == 2
-            alpha_k_num = M_z_norm(z_bar - z_lofi)^2;
+            prev_z_distance = M_z_norm(z_bar - z_lofi);
         else
-            alpha_k_num = M_z_norm(z_bar - z_bars(:, p - 2))^2;
+            prev_z_distance = M_z_norm(z_bar - z_bars(:, p - 2));
         end
 
-        alpha_k = alpha_k_num / alpha_k_denom;
+        alpha_k = prev_z_distance^2 / alpha_k_denom;
+        constr_radius = prev_z_distance;
 
         md_oed.Set_Covariance_Coefficient(alpha_k);
-        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, betas, beta_bar, alpha_k_num);
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, betas, beta_bar, constr_radius);
         betas = [betas; beta_new];
         z_p = z_p(:, end);
     end
@@ -90,4 +91,4 @@ end
 
 Z_oed = Z;
 D_oed = D;
-save("oed-results.mat", "z_bars", "Jhat_DC_oed", "Z_oed", "D_oed");
+% save("oed-results.mat", "z_bars", "Jhat_DC_oed", "Z_oed", "D_oed");

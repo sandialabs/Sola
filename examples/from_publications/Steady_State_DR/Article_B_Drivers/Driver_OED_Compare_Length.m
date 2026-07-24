@@ -32,13 +32,15 @@ for p = 1:N
         z_p = z_lofi;
     else
         if p == 2
-            alpha_k_num = M_z_norm(z_bar - z_lofi)^2;
+            prev_z_distance = M_z_norm(z_bar - z_lofi);
         else
-            alpha_k_num = M_z_norm(z_bar - z_bars(:, p - 2))^2;
+            prev_z_distance = M_z_norm(z_bar - z_bars(:, p - 2));
         end
-        alpha_k = alpha_k_num / alpha_k_denom;
+        alpha_k = prev_z_distance^2 / alpha_k_denom;
+        constr_radius = prev_z_distance;
+
         md_oed.Set_Covariance_Coefficient(alpha_k);
-        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, betas, beta_bar, alpha_k_num);
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, betas, beta_bar, constr_radius);
         betas = [betas; beta_new];
     end
 
@@ -80,18 +82,21 @@ for p = 1:(N / p_seq)
     fprintf('\nStep %d:\n-------------\n', 2 + (p - 1) * (p_seq));
     if p == 1
         alpha_k = M_z_norm(z_lofi)^2 / alpha_k_denom;
+        constr_radius = M_z_norm(z_lofi);
         md_oed.Set_Covariance_Coefficient(alpha_k);
-        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0(num_evals + 1:end), alpha_d, betas, zeros(num_evals, 1), alpha_k_num);
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0(num_evals + 1:end), alpha_d, betas, zeros(num_evals, 1), constr_radius);
         betas = [betas; beta_new];
     else
         if p == 2
-            alpha_k_num = M_z_norm(z_bar - z_lofi)^2;
+            prev_z_distance = M_z_norm(z_bar - z_lofi);
         else
-            alpha_k_num = M_z_norm(z_bar - z_bars(:, p - 2))^2;
+            prev_z_distance = M_z_norm(z_bar - z_bars(:, p - 2));
         end
-        alpha_k = alpha_k_num / alpha_k_denom;
+        alpha_k = prev_z_distance^2 / alpha_k_denom;
+        constr_radius = prev_z_distance;
+
         md_oed.Set_Covariance_Coefficient(alpha_k);
-        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, betas, beta_bar, alpha_k_num);
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, betas, beta_bar, constr_radius);
         betas = [betas; beta_new];
     end
 
@@ -133,18 +138,21 @@ for p = 1:(N / p_seq)
     fprintf('\nStep %d:\n-------------\n', 2 + (p - 1) * (p_seq));
     if p == 1
         alpha_k = M_z_norm(z_lofi)^2 / alpha_k_denom;
+        constr_radius = M_z_norm(z_lofi);
         md_oed.Set_Covariance_Coefficient(alpha_k);
-        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0(num_evals + 1:end), alpha_d, betas, zeros(num_evals, 1), alpha_k_num);
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0(num_evals + 1:end), alpha_d, betas, zeros(num_evals, 1), constr_radius);
         betas = [betas; beta_new];
     else
         if p == 2
-            alpha_k_num = M_z_norm(z_bar - z_lofi)^2;
+            prev_z_distance = M_z_norm(z_bar - z_lofi);
         else
-            alpha_k_num = M_z_norm(z_bar - z_bars(:, p - 2))^2;
+            prev_z_distance = M_z_norm(z_bar - z_bars(:, p - 2));
         end
-        alpha_k = alpha_k_num / alpha_k_denom;
+        alpha_k = prev_z_distance^2 / alpha_k_denom;
+        constr_radius = prev_z_distance;
+
         md_oed.Set_Covariance_Coefficient(alpha_k);
-        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, betas, beta_bar, alpha_k_num);
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, betas, beta_bar, constr_radius);
         betas = [betas; beta_new];
     end
 
@@ -186,18 +194,21 @@ for p = 1:(N / p_seq)
     fprintf('\nStep %d:\n-------------\n', 2 + (p - 1) * (p_seq));
     if p == 1
         alpha_k = M_z_norm(z_lofi)^2 / alpha_k_denom;
+        constr_radius = M_z_norm(z_lofi);
         md_oed.Set_Covariance_Coefficient(alpha_k);
-        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0(num_evals + 1:end), alpha_d, betas, zeros(num_evals, 1), alpha_k_num);
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0(num_evals + 1:end), alpha_d, betas, zeros(num_evals, 1), constr_radius);
         betas = [betas; beta_new];
     else
         if p == 2
-            alpha_k_num = M_z_norm(z_bar - z_lofi)^2;
+            prev_z_distance = M_z_norm(z_bar - z_lofi);
         else
-            alpha_k_num = M_z_norm(z_bar - z_bars(:, p - 2))^2;
+            prev_z_distance = M_z_norm(z_bar - z_bars(:, p - 2));
         end
-        alpha_k = alpha_k_num / alpha_k_denom;
+        alpha_k = prev_z_distance^2 / alpha_k_denom;
+        constr_radius = prev_z_distance;
+
         md_oed.Set_Covariance_Coefficient(alpha_k);
-        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, betas, beta_bar, alpha_k_num);
+        [beta_new, z_p] = md_oed.Generate_Seq_Optimal_Design(beta_0, alpha_d, betas, beta_bar, constr_radius);
         betas = [betas; beta_new];
     end
 
