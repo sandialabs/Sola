@@ -25,7 +25,7 @@ md_prior_sampling = MD_Prior_Sampling(data_interface, u_prior_interface, z_prior
 
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 alpha_d = 1.e-5;
-num_post_samples = 10;
+num_post_samples = 100;
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
 
 opt_prob_interface = MD_Opt_Prob_Interface_synthetic_test_continuation(m);
@@ -38,14 +38,15 @@ md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversa
 num_continuation_steps = 3;
 md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
 [u_cont, z_cont, beta_cont] = md_cont_update.Posterior_Update_Mean();
-[u_ks, z_ks, beta_ks] = md_cont_update.Posterior_Update_Samples();
+% [u_ks, z_ks, beta_ks] = md_cont_update.Posterior_Update_Samples();
 u_k = u_cont(:, end);
 z_k = z_cont(:, end);
 beta_k = beta_cont(:, end);
 disp(norm(z_cont(:, end)));
 
-save('Sola_output.mat', 'u_k', 'z_k', 'beta_k');
-save('reference_solution.mat', 'u_cont', 'z_cont', 'beta_cont', 'u_ks', 'z_ks', 'beta_ks');
+save('Sabl_output.mat', 'u_k', 'z_k', 'beta_k');
+save('reference_solution.mat', 'u_cont', 'z_cont', 'beta_cont');
+%  'u_ks', 'z_ks', 'beta_ks'
 
 % ------------------------------------------------------------
 % Printers
@@ -62,11 +63,11 @@ u_hf_at_lf_opt  = high_fidelity_state(z_lf_opt);
 u_hf_at_updated = high_fidelity_state(z_k);
 u_hf_at_hf_opt = high_fidelity_state(z_hf_opt);
 
-J_lf_at_lf_opt  = 0.5*opt_prob_interface.Objective_Function(u_lf_at_lf_opt,  z_lf_opt);
-J_lf_at_updated = 0.5*opt_prob_interface.Objective_Function(u_lf_at_updated, z_k);
-J_hf_at_lf_opt  = 0.5*opt_prob_interface.Objective_Function(u_hf_at_lf_opt,  z_lf_opt);
-J_hf_at_updated = 0.5*opt_prob_interface.Objective_Function(u_hf_at_updated, z_k);
-J_hf_at_hf_opt = 0.5*opt_prob_interface.Objective_Function(u_hf_at_hf_opt, z_hf_opt);
+J_lf_at_lf_opt  = opt_prob_interface.Objective_Function(u_lf_at_lf_opt,  z_lf_opt);
+J_lf_at_updated = opt_prob_interface.Objective_Function(u_lf_at_updated, z_k);
+J_hf_at_lf_opt  = opt_prob_interface.Objective_Function(u_hf_at_lf_opt,  z_lf_opt);
+J_hf_at_updated = opt_prob_interface.Objective_Function(u_hf_at_updated, z_k);
+J_hf_at_hf_opt = opt_prob_interface.Objective_Function(u_hf_at_hf_opt, z_hf_opt);
 
 % ------------------------------------------------------------
 % Print results

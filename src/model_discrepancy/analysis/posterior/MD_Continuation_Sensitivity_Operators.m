@@ -49,6 +49,18 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
 
             z_out = this.opt_prob_interface.Apply_RS_Hessian(z_in, this.current_z);
 
+            % Correction for nonlinear state map S(z).
+            %
+            % Apply_RS_Hessian uses grad_u evaluated at S(z).  The continuation
+            % objective uses grad_u evaluated at S(z) + t*d(z).  Therefore we need
+            %
+            %   S_zz(z)[z_in]^* * (grad_u_corrected - grad_u_low_fidelity).
+            %
+            grad_u_corrected = this.opt_prob_interface.Misfit_Gradient(this.current_u + delta, this.current_z);
+            grad_u_low_fidelity = this.opt_prob_interface.Misfit_Gradient(this.current_u, this.current_z);
+            grad_u_diff = grad_u_corrected - grad_u_low_fidelity;
+            z_out = z_out + this.opt_prob_interface.Apply_Solution_Operator_z_Hessian_Adjoint(z_in, grad_u_diff, this.current_z);
+
             u_tmp = this.current_disc_ops.Apply_z_Jacobian(z_in, this.current_z, this.current_t);
             u_tmp = this.opt_prob_interface.Apply_Misfit_Hessian(u_tmp, this.current_u + delta, this.current_z);
             z_out = z_out + this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(u_tmp, this.current_z);

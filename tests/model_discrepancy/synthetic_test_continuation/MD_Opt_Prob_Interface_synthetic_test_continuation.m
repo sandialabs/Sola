@@ -21,12 +21,17 @@ classdef MD_Opt_Prob_Interface_synthetic_test_continuation < MD_Opt_Prob_Interfa
             z_out = 3 * diag(z.^2) * z_in;
         end
 
-        % This implementation assumes that it is evaluated at the optimal z so that
-        % the adjoint=0, a more general impl a term multiplied by the adjoint variable
+        function [z_out] = Apply_Solution_Operator_z_Hessian_Adjoint(this, z_in, u_adj, z)
+            z_out = 6 * z .* z_in .* u_adj;
+        end
+
         function [z_out] = Apply_RS_Hessian(this, z_in, z)
-            tmp1 = 3 * diag(z.^2) * z_in;
-            tmp2 = this.M * tmp1;
-            z_out = 3 * diag(z.^2) * tmp2;
+            u = this.State_Solve(z);
+            grad_u = this.Misfit_Gradient(u, z);
+            Sz_zin = 3 * z.^2 .* z_in;
+            gauss_newton_term = 3 * z.^2 .* (this.M * Sz_zin);
+            second_order_term = 6 * z .* z_in .* grad_u;
+            z_out = gauss_newton_term + second_order_term;
         end
 
         function [grad_u] = Misfit_Gradient(this, u, z)
@@ -43,7 +48,7 @@ classdef MD_Opt_Prob_Interface_synthetic_test_continuation < MD_Opt_Prob_Interfa
 
         function [val, grad_u, grad_z] = Objective_Function(this, u, z)
             grad_u = this.M * (u - (1 + this.x).^3);
-            val = (u - (1 + this.x).^3)' * grad_u;
+            val = 0.5 * (u - (1 + this.x).^3)' * grad_u;
             grad_z = zeros(size(z));
         end
 
