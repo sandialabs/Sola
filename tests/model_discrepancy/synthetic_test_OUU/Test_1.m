@@ -6,7 +6,6 @@
 %%
 clear;
 close all;
-clc;
 rng(121234);
 
 suppress_figures = false;
@@ -130,7 +129,7 @@ test2 = opt_prob_interface.Misfit_Gradient(u, z);
 local_error = norm(test1 - test2) / norm(test1);
 error = [error; local_error];
 
-disp('The following tests are sample covariance estimators. We should only expect local errors on the order of 1.e-2 or 1.e-3');
+%disp('The following tests are sample covariance estimators. We should only expect local errors on the order of 1.e-2 or 1.e-3');
 %%
 S = 10000;
 u_samples = u_prior_interface.Sample_with_Covariance_W_u_Inverse(S);
@@ -143,3 +142,10 @@ u_samples = u_prior_interface.Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse
 cov_approx = cov(u_samples');
 local_error = norm((W_u + scalar * M_u) * cov_approx - eye(m * N)) / norm(W_u + scalar * M_u);
 error = [error; local_error];
+
+if ( max(error(1:7)) > 1.e-8 ) || ( max(error(8:9)) > 1.e-3 )
+    fprintf(2, '\nmodel_discrepancy/synthetic_test_OUU failed.\n');
+else
+    fprintf(1, '\nmodel_discrepancy/synthetic_test_OUU passed.\n');
+end
+

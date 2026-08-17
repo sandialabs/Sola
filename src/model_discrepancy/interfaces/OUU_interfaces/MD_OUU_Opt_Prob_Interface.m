@@ -7,6 +7,7 @@ classdef MD_OUU_Opt_Prob_Interface < MD_Opt_Prob_Interface
 
     properties
         data_interface
+        ens_weights
     end
 
     %% Pure virtual functions for user implementation
@@ -46,7 +47,7 @@ classdef MD_OUU_Opt_Prob_Interface < MD_Opt_Prob_Interface
                 for s = 1:this.data_interface.n_r
                     z_out_k(:, s) = this.Apply_RS_Hessian_Per_Sample(z_in(:, k), z, s);
                 end
-                z_out(:, k) = mean(z_out_k, 2);
+                z_out(:, k) = z_out_k * this.ens_weights;
             end
         end
 
@@ -54,9 +55,9 @@ classdef MD_OUU_Opt_Prob_Interface < MD_Opt_Prob_Interface
             u = this.data_interface.Reshape_State_to_Mat(u);
             grad_u = 0 * u;
             for s = 1:this.data_interface.n_r
-                grad_u(:, s) = this.Misfit_Gradient_Per_Sample(u(:, s), z, s);
+                grad_u(:, s) = this.ens_weights(s) * this.Misfit_Gradient_Per_Sample(u(:, s), z, s);
             end
-            grad_u = (1 / this.data_interface.n_r) * this.data_interface.Reshape_State_to_Vec(grad_u);
+            grad_u = this.data_interface.Reshape_State_to_Vec(grad_u);
         end
 
         function [u_out] = Apply_Misfit_Hessian(this, u_in, u, z)
@@ -67,9 +68,9 @@ classdef MD_OUU_Opt_Prob_Interface < MD_Opt_Prob_Interface
                 u_in_k = this.data_interface.Reshape_State_to_Mat(u_in(:, k));
                 u_out_tmp = 0 * u_in_k;
                 for s = 1:this.data_interface.n_r
-                    u_out_tmp(:, s) = this.Apply_Misfit_Hessian_Per_Sample(u_in_k(:, s), u(:, s), z, s);
+                    u_out_tmp(:, s) = this.ens_weights(s) * this.Apply_Misfit_Hessian_Per_Sample(u_in_k(:, s), u(:, s), z, s);
                 end
-                u_out(:, k) = (1 / this.data_interface.n_r) * this.data_interface.Reshape_State_to_Vec(u_out_tmp);
+                u_out(:, k) = this.data_interface.Reshape_State_to_Vec(u_out_tmp);
             end
         end
 
@@ -78,11 +79,17 @@ classdef MD_OUU_Opt_Prob_Interface < MD_Opt_Prob_Interface
     %% Constructor
     methods
 
-        function this = MD_OUU_Opt_Prob_Interface(data_interface)
+        function this = MD_OUU_Opt_Prob_Interface(data_interface, ens_weights)
             arguments
                 data_interface MD_OUU_Data_Interface
+                ens_weights (:, 1) {mustBeNumeric} = 0
             end
             this.data_interface = data_interface;
+            if ens_weights == 0
+                this.ens_weights = (1 / this.data_interface.n_r) * ones(this.data_interface.n_r, 1);
+            else
+                this.ens_weights = ens_weights;
+            end
         end
 
     end
