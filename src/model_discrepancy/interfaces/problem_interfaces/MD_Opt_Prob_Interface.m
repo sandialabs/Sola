@@ -43,7 +43,7 @@ classdef MD_Opt_Prob_Interface < handle
 
         function [z_out] = Apply_Solution_Operator_z_Hessian_Adjoint(this, z_in, u_adj, z)
             z_out = zeros(size(z));
-            disp(['Apply_Solution_Operator_z_Hessian_Adjoint must be implemented to' ... 
+            disp(['Apply_Solution_Operator_z_Hessian_Adjoint must be implemented to ' ... 
             'use the continuation algorithm for nonlinear low-fidelity models']);
         end
 
