@@ -15,6 +15,7 @@ clc;
 
 test_automatic_differentiation = false;
 test_bayesian_inversion = true;
+test_bifidelity_correction = true;
 test_linear_algebra_tools = true;
 test_model_discrepancy = true;
 test_model_reduction = true;
@@ -51,6 +52,14 @@ clear;
 load('Test_Settings.mat');
 if test_bayesian_inversion
     cd bayesian_inversion/;
+    run Execute_Tests.m;
+    cd ../;
+end
+
+clear;
+load('Test_Settings.mat');
+if test_bifidelity_correction
+    cd bifidelity_correction/;
     run Execute_Tests.m;
     cd ../;
 end
