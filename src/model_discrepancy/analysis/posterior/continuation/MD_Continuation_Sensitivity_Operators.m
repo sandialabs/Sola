@@ -24,6 +24,18 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
         current_beta
         current_z
         current_disc_ops
+
+        % Phase 2 adaptive posterior-sample continuation data.
+        %
+        % breve_R satisfies
+        %
+        %   breve_R * breve_R' approx Sigma_beta.
+        %
+        % Each entry of breve_samplers stores one persistent lazy matrix-normal
+        % realization for the corresponding posterior sample index.
+        breve_R
+        breve_samplers
+        lazy_sampling_tol
     end
 
     methods (Access = public)
@@ -118,10 +130,23 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
             this.Mz_Wz_inv_Mz_Z_minus_z_opt = this.post_data.Mz_Wz_inv_Mz_Z - this.post_data.Mz_Wz_inv_Mz_z_opt;
             this.Mz_Wz_inv_Mz_yi = 0 * this.Mz_Wz_inv_Mz_Z_minus_z_opt;
             this.si = zeros(1, this.post_data.N);
+
             for i = 1:this.post_data.N
                 this.Mz_Wz_inv_Mz_yi(:, i) = this.post_data.Mz_Wz_inv_Mz_Z * this.post_data.g_vecs(:, i) - ...
                     sum(this.post_data.g_vecs(:, i)) * this.post_data.Mz_Wz_inv_Mz_z_opt;
                 this.si(i) = sum(this.post_data.g_vecs(:, i)) - this.z_opt' * this.Mz_Wz_inv_Mz_yi(:, i);
+            end
+
+            %
+            % The breve covariance factor is shared by all posterior samples.
+            % Each posterior sample gets its own persistent lazy sampler, created
+            % on first use by Get_Breve_Sampler.
+            this.lazy_sampling_tol = 1e-10;
+            this.breve_R = this.Compute_Breve_Beta_Covariance_Factor();
+            if isempty(this.post_data.num_samples)
+                this.breve_samplers = cell(0, 1);
+            else
+                this.breve_samplers = cell(this.post_data.num_samples, 1);
             end
         end
 
@@ -155,6 +180,103 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
                 disc_ops.Apply_theta_Jacobian = @(z) this.Discrepancy_Evaluation_Sample(z, sample_idx);
                 disc_ops.Apply_z_theta_Hessian = @(u_in, z) this.Apply_Discrepancy_z_Jacobian_Transpose_Sample(u_in, z, sample_idx);
             end
+        end
+
+        % ------------------------------------------------------------
+        % Phase 2: beta-space breve covariance and sampler cache
+        % ------------------------------------------------------------
+
+        function [R, Sigma_beta] = Compute_Breve_Beta_Covariance_Factor(this)
+
+            % Compute a factor R such that
+            %
+            %   R R' approx Sigma_beta,
+            %
+            % where
+            %
+            %   Sigma_beta =
+            %       V' [
+            %           M_z W_z^{-1} M_z
+            %           - M_z W_z^{-1} M_z Z_c
+            %             (Z_c' M_z W_z^{-1} M_z Z_c)^{-1}
+            %             Z_c' M_z W_z^{-1} M_z
+            %       ] V.
+            %
+            % The implementation below avoids explicitly forming the large
+            % z-space covariance/precision blocks and only acts on the reduced
+            % basis V.
+
+            if isempty(this.hessian_analysis.evals)
+                r = length(this.z_opt);
+            else
+                r = length(this.hessian_analysis.evals);
+            end
+
+            V = zeros(length(this.z_opt), r);
+
+            for j = 1:r
+                e = zeros(r, 1);
+                e(j) = 1.0;
+                V(:, j) = this.hessian_analysis.Apply_V(e);
+            end
+
+            Mz_V = this.z_prior_interface.Apply_M_z(V);
+            Wz_inv_Mz_V = this.z_prior_interface.Apply_W_z_Inverse(Mz_V);
+
+            if isempty(this.post_data.Zc_Mz_Wz_inv_Mz_Zc)
+                tmp_rhs = Wz_inv_Mz_V;
+            else
+                tmp_rhs = Wz_inv_Mz_V - ...
+                    this.post_data.Wz_inv_Mz_Zc * linsolve( ...
+                        this.post_data.Zc_Mz_Wz_inv_Mz_Zc, ...
+                        this.post_data.Mz_Zc' * Wz_inv_Mz_V);
+            end
+
+            Sigma_beta = Mz_V' * tmp_rhs;
+            Sigma_beta = 0.5 * (Sigma_beta + Sigma_beta');
+
+            [U, D] = eig(Sigma_beta);
+            lambda = real(diag(D));
+
+            lambda_scale = max(abs(lambda));
+            if isempty(lambda_scale)
+                lambda_scale = 0;
+            end
+
+            tol = 1e-12 * max(1.0, lambda_scale);
+
+            keep = lambda > tol;
+
+            if any(lambda < -tol)
+                disp('Warning: Compute_Breve_Beta_Covariance_Factor found negative eigenvalues below tolerance.');
+            end
+
+            if any(keep)
+                R = U(:, keep) * diag(sqrt(lambda(keep)));
+            else
+                R = zeros(r, 0);
+            end
+
+        end
+
+        function sampler = Get_Breve_Sampler(this, sample_idx)
+
+            assert(sample_idx >= 1 && sample_idx <= this.post_data.num_samples && floor(sample_idx) == sample_idx, ...
+                   'sample_idx must be an integer in [1, num_samples] for posterior samples.');
+
+            if isempty(this.breve_samplers{sample_idx})
+
+                output_dim = length(this.u_opt);
+
+                this.breve_samplers{sample_idx} = MD_Breve_Beta_Sampler( ...
+                    this.breve_R, ...
+                    this.post_sampling.u_prior_interface, ...
+                    output_dim, ...
+                    this.lazy_sampling_tol);
+            end
+
+            sampler = this.breve_samplers{sample_idx};
+
         end
 
         % ------------------------------------------------------------
@@ -204,7 +326,135 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
         end
 
         % ------------------------------------------------------------
+        % Phase 2: explicit sample kernels excluding breve term
+        % ------------------------------------------------------------
+
+        function [u_out] = Discrepancy_Evaluation_Explicit_Sample(this, z, sample_idx)
+
+            assert(sample_idx >= 1 && sample_idx <= this.post_data.num_samples && floor(sample_idx) == sample_idx, ...
+                   'sample_idx must be an integer in [1, num_samples].');
+
+            u_out = this.Discrepancy_Evaluation_Mean(z);
+            dz = z - this.z_opt;
+
+            u_hat = zeros(size(u_out));
+
+            for i = 1:this.post_data.N
+                sgi = sum(this.post_data.g_vecs(:, i));
+                coeff = (1 / sqrt(this.post_data.Mu(i, i))) * ...
+                    (sgi + this.Mz_Wz_inv_Mz_yi(:, i)' * dz);
+
+                u_hat = u_hat + coeff * this.post_data.ui_hat{i}(:, sample_idx);
+            end
+
+            u_hat = sqrt(this.post_data.alpha_d) * u_hat;
+
+            u_out = u_out + u_hat;
+
+        end
+
+        function [u_out] = Apply_Discrepancy_z_Jacobian_Explicit_Sample(this, z_in, sample_idx)
+
+            assert(sample_idx >= 1 && sample_idx <= this.post_data.num_samples && floor(sample_idx) == sample_idx, ...
+                   'sample_idx must be an integer in [1, num_samples].');
+
+            u_out = this.Apply_Discrepancy_z_Jacobian_Mean(z_in);
+
+            u_hat = zeros(size(u_out));
+
+            for i = 1:this.post_data.N
+                coeff = (1 / sqrt(this.post_data.Mu(i, i))) * ...
+                    (this.Mz_Wz_inv_Mz_yi(:, i)' * z_in);
+
+                u_hat = u_hat + coeff * this.post_data.ui_hat{i}(:, sample_idx);
+            end
+
+            u_hat = sqrt(this.post_data.alpha_d) * u_hat;
+
+            u_out = u_out + u_hat;
+
+        end
+
+        function [z_out] = Apply_Discrepancy_z_Jacobian_Transpose_Explicit_Sample(this, u_in, sample_idx)
+
+            assert(sample_idx >= 1 && sample_idx <= this.post_data.num_samples && floor(sample_idx) == sample_idx, ...
+                   'sample_idx must be an integer in [1, num_samples].');
+
+            z_out = this.Apply_Discrepancy_z_Jacobian_Transpose_Mean(u_in);
+
+            z_hat = zeros(size(z_out));
+
+            for i = 1:this.post_data.N
+                ui_hat_idx = this.post_data.ui_hat{i}(:, sample_idx);
+
+                coeff = (1 / sqrt(this.post_data.Mu(i, i))) * ...
+                    (ui_hat_idx' * u_in);
+
+                z_hat = z_hat + coeff * this.Mz_Wz_inv_Mz_yi(:, i);
+            end
+
+            z_hat = sqrt(this.post_data.alpha_d) * z_hat;
+
+            z_out = z_out + z_hat;
+
+        end
+
+        % ------------------------------------------------------------
+        % Phase 2: beta-space explicit-plus-breve sample helpers
+        % ------------------------------------------------------------
+
+        function [u_out] = Eval_Discrepancy_Sample_Beta(this, beta, sample_idx)
+
+            assert(sample_idx >= 1 && sample_idx <= this.post_data.num_samples && floor(sample_idx) == sample_idx, ...
+                   'sample_idx must be an integer in [1, num_samples].');
+
+            beta = beta(:);
+
+            z = this.z_opt + this.hessian_analysis.Apply_V(beta);
+
+            u_out = this.Discrepancy_Evaluation_Explicit_Sample(z, sample_idx);
+
+            sampler = this.Get_Breve_Sampler(sample_idx);
+            u_out = u_out + sampler.Eval(beta);
+
+        end
+
+        function [u_out] = Apply_Discrepancy_Beta_Jacobian_Sample(this, beta_in, sample_idx)
+
+            assert(sample_idx >= 1 && sample_idx <= this.post_data.num_samples && floor(sample_idx) == sample_idx, ...
+                   'sample_idx must be an integer in [1, num_samples].');
+
+            beta_in = beta_in(:);
+
+            z_in = this.hessian_analysis.Apply_V(beta_in);
+
+            u_out = this.Apply_Discrepancy_z_Jacobian_Explicit_Sample(z_in, sample_idx);
+
+            sampler = this.Get_Breve_Sampler(sample_idx);
+            u_out = u_out + sampler.Apply_Jacobian(beta_in);
+
+        end
+
+        function [beta_out] = Apply_Discrepancy_Beta_Jacobian_Transpose_Sample(this, u_in, sample_idx)
+
+            assert(sample_idx >= 1 && sample_idx <= this.post_data.num_samples && floor(sample_idx) == sample_idx, ...
+                   'sample_idx must be an integer in [1, num_samples].');
+
+            z_out = this.Apply_Discrepancy_z_Jacobian_Transpose_Explicit_Sample(u_in, sample_idx);
+
+            beta_out = this.hessian_analysis.Apply_V_Transpose(z_out);
+
+            sampler = this.Get_Breve_Sampler(sample_idx);
+            beta_out = beta_out + sampler.Apply_Jacobian_Transpose(u_in);
+
+        end
+
+        % ------------------------------------------------------------
         % Discrepancy kernels: Sample
+        %
+        % Legacy methods retained for now. These still contain the old scalarized
+        % breve contribution and should not be used by the Phase 3 continuation
+        % sample path.
         % ------------------------------------------------------------
 
         function [u_out] = Discrepancy_Evaluation_Sample(this, z, sample_idx)
