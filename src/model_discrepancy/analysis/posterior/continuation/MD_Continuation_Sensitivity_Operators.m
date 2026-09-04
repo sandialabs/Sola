@@ -148,6 +148,7 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
                 disc_ops.Apply_theta_Jacobian = @(z) this.Discrepancy_Evaluation_Mean(z);
                 disc_ops.Apply_z_theta_Hessian = @(u_in, z) this.Apply_Discrepancy_z_Jacobian_Transpose_Mean(u_in);
             else
+                disp('Warning: The posterior sampling routine for nonzero sample_idx contains unfinished implementations.')
                 disc_ops.Eval = @(z, t) t * this.Discrepancy_Evaluation_Sample(z, sample_idx);
                 disc_ops.Apply_z_Jacobian = @(z_in, z, t) t * this.Apply_Discrepancy_z_Jacobian_Sample(z_in, z, sample_idx);
                 disc_ops.Apply_z_Jacobian_Transpose = @(u_in, z, t) t * this.Apply_Discrepancy_z_Jacobian_Transpose_Sample(u_in, z, sample_idx);
@@ -237,7 +238,7 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
         end
 
         function [u_out] = Apply_Discrepancy_z_Jacobian_Sample(this, z_in, z, sample_idx)
-            % Note: z is needed since sampling is nonlinear in z via gamma(z) in delta_breve
+            disp('Warning: The following implementation is incorrect. Please use adaptive sampling techniques instead.')
             u_out_mean = this.Apply_Discrepancy_z_Jacobian_Mean(z_in);
 
             u = zeros(size(u_out_mean));
@@ -268,7 +269,7 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
         end
 
         function [z_out] = Apply_Discrepancy_z_Jacobian_Transpose_Sample(this, u_in, z, sample_idx)
-            % Note: z is needed since sampling is nonlinear in z via gamma(z) in delta_breve
+            disp('Warning: The following implementation is incorrect. Please use adaptive sampling techniques instead.')
             z_out_mean = this.Apply_Discrepancy_z_Jacobian_Transpose_Mean(u_in);
 
             z_out_sample = zeros(size(z_out_mean));

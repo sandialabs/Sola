@@ -20,6 +20,8 @@ classdef MD_Scaled_u_Prior_Interface < MD_u_Prior_Interface
 
         [u_out] = Apply_W_u_Acute_Inverse(this, u_in)
 
+        [u_out] = Apply_W_u_Acute(this, u_in)
+
     end
 
     %% Virtual functions for user implementation
@@ -60,6 +62,10 @@ classdef MD_Scaled_u_Prior_Interface < MD_u_Prior_Interface
 
         function [u_out] = Apply_W_u_Inverse(this, u_in)
             u_out = this.alpha_u * this.Apply_W_u_Acute_Inverse(u_in);
+        end
+
+        function [u_out] = Apply_W_u(this, u_in)
+            u_out = (1 / this.alpha_u) * this.Apply_W_u_Acute(u_in);
         end
 
         function [u_out] = Apply_W_u_Plus_scalar_M_u_Inverse(this, u_in, scalar)
