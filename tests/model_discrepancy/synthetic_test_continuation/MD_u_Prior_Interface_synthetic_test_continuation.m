@@ -18,6 +18,10 @@ classdef MD_u_Prior_Interface_synthetic_test_continuation < MD_u_Prior_Interface
         function [u_out] = Apply_M_u(this, u_in)
             u_out = this.M * u_in;
         end
+        
+        function [u_out] = Apply_W_u(this, u_in)
+            u_out = this.W_u * u_in;
+        end
 
         function [u_out] = Apply_W_u_Plus_scalar_M_u_Inverse(this, u_in, scalar)
             u_out = linsolve(this.W_u + scalar * this.M, u_in);

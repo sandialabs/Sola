@@ -1,0 +1,403 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%      Sola - Sandbox for Outer Loop Analysis         %%%%%%%%%
+%%%%%%%%% Questions? Contact Joseph Hart (joshart@sandia.gov) %%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%
+% Test_3.m
+%
+% Tests posterior continuation sampling with the adaptive beta-space breve
+% sampler.
+%
+% This test verifies:
+%
+%   1. Synthetic u prior supports Apply_W_u.
+%   2. Sigma_beta symmetry, PSD-ness, and factorization accuracy.
+%   3. Lazy breve sampler weighted orthonormality after full exploration.
+%   4. Lazy breve sampler adjoint consistency after full exploration.
+%   5. Full beta-space sample discrepancy Jacobian finite-difference check.
+%   6. Full beta-space sample discrepancy adjoint check.
+%   7. Sample continuation gradient finite-difference check.
+%   8. Sample continuation Hessian finite-difference check.
+%   9. Sample continuation Hessian symmetry check.
+%  10. Sample continuation mixed derivative Apply_B finite-difference check.
+%  11. End-to-end posterior sample continuation finite-output check.
+%
+% Important:
+%
+%   The lazy sampler may enrich its internal basis during either a forward
+%   apply or an adjoint apply. Therefore, adjoint and finite-difference
+%   comparisons must be made after the relevant lazy sample has been
+%   stabilized. For this small synthetic test, we fully explore the lazy
+%   breve sampler before doing derivative checks.
+
+clear;
+close all;
+rng(121235);
+
+fprintf('\n============================================================\n');
+fprintf('Running model_discrepancy/synthetic_test_continuation Test 3\n');
+fprintf('============================================================\n\n');
+
+%% Problem setup
+
+m = 51;
+
+data_interface = MD_Data_Interface_synthetic_test_continuation(m);
+data_interface.Load_Data();
+
+u_prior_interface = MD_u_Prior_Interface_synthetic_test_continuation(m);
+z_prior_interface = MD_z_Prior_Interface_synthetic_test_continuation(m);
+
+% The adaptive lazy matrix-normal sampler requires Apply_W_u.
+try
+    wu_test_in = randn(m, 2);
+    wu_test_out = u_prior_interface.Apply_W_u(wu_test_in);
+
+    if isempty(wu_test_out) || any(size(wu_test_out) ~= size(wu_test_in))
+        error('Apply_W_u returned an empty or incorrectly sized output.');
+    end
+catch ME
+    fprintf(2, '\nTest setup failed: u_prior_interface.Apply_W_u is required.\n');
+    fprintf(2, 'Add the following method to MD_u_Prior_Interface_synthetic_test_continuation:\n\n');
+    fprintf(2, '    function [u_out] = Apply_W_u(this, u_in)\n');
+    fprintf(2, '        u_out = this.W_u * u_in;\n');
+    fprintf(2, '    end\n\n');
+    rethrow(ME);
+end
+
+md_post_sampling = MD_Posterior_Sampling( ...
+    data_interface, u_prior_interface, z_prior_interface);
+
+alpha_d = 1.e-5;
+num_post_samples = 5;
+md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
+
+opt_prob_interface = MD_Opt_Prob_Interface_synthetic_test_continuation(m);
+
+md_hessian_analysis = MD_Hessian_Analysis( ...
+    opt_prob_interface, z_prior_interface);
+
+num_evals = 10;
+oversampling = 10;
+
+md_hessian_analysis.Compute_Hessian_GEVP( ...
+    data_interface.z_opt, num_evals, oversampling);
+
+if isempty(md_hessian_analysis.evals)
+    r = length(data_interface.z_opt);
+else
+    r = length(md_hessian_analysis.evals);
+end
+
+fprintf('Problem dimensions:\n');
+fprintf('  m                 = %d\n', m);
+fprintf('  reduced dim r     = %d\n', r);
+fprintf('  posterior samples = %d\n\n', num_post_samples);
+
+%% Construct continuation sensitivity operator
+
+sen_op = MD_Continuation_Sensitivity_Operators( ...
+    md_post_sampling, md_hessian_analysis);
+
+sample_idx = 1;
+t0 = 0.50;
+time_index = 1;
+
+theta_traj = make_theta_traj(t0, sample_idx);
+
+beta = 5.e-2 * randn(r, 1);
+
+v = randn(r, 1);
+v = v / norm(v);
+
+w = randn(r, 1);
+w = w / norm(w);
+
+u_test = randn(m, 1);
+
+%% Test bookkeeping
+
+test_names = {};
+test_errs = [];
+test_tols = [];
+
+%% Test 1: Sigma_beta symmetry and positive semidefiniteness
+
+[R, Sigma_beta] = sen_op.Compute_Breve_Beta_Covariance_Factor();
+
+sym_err = norm(Sigma_beta - Sigma_beta', 'fro') / ...
+    max(1, norm(Sigma_beta, 'fro'));
+
+if isempty(Sigma_beta)
+    eig_min = 0.0;
+else
+    eig_min = min(eig(0.5 * (Sigma_beta + Sigma_beta')));
+end
+
+psd_violation = max(0, -eig_min);
+
+Sigma_hat = R * R';
+fac_err = norm(Sigma_beta - Sigma_hat, 'fro') / ...
+    max(1, norm(Sigma_beta, 'fro'));
+
+test_names{end+1} = 'Sigma_beta relative symmetry error';
+test_errs(end+1) = sym_err;
+test_tols(end+1) = 1.e-12;
+
+test_names{end+1} = 'Sigma_beta PSD violation';
+test_errs(end+1) = psd_violation;
+test_tols(end+1) = 1.e-10;
+
+test_names{end+1} = 'Sigma_beta factorization relative error';
+test_errs(end+1) = fac_err;
+test_tols(end+1) = 1.e-10;
+
+%% Test 2: Fully explore the breve sampler for stable derivative checks
+
+sampler = sen_op.Get_Breve_Sampler(sample_idx);
+
+fully_explore_breve_sampler(sampler);
+
+[kl, kr] = sampler.lazy_Y.Basis_Dimensions();
+
+fprintf('Fully explored sample %d lazy breve sampler:\n', sample_idx);
+fprintf('  left basis dim  = %d\n', kl);
+fprintf('  right basis dim = %d\n\n', kr);
+
+%% Test 3: Breve sampler weighted orthonormality and adjoint consistency
+
+lazy_Y = sampler.lazy_Y;
+
+if isempty(lazy_Y.Q_l)
+    err_left_orth = 0.0;
+else
+    WQl = u_prior_interface.Apply_W_u(lazy_Y.Q_l);
+    err_left_orth = norm( ...
+        lazy_Y.Q_l' * WQl - eye(size(lazy_Y.Q_l, 2)), 'fro');
+end
+
+if isempty(lazy_Y.Q_r)
+    err_right_orth = 0.0;
+else
+    err_right_orth = norm( ...
+        lazy_Y.Q_r' * lazy_Y.Q_r - eye(size(lazy_Y.Q_r, 2)), 'fro');
+end
+
+beta_adj = randn(r, 1);
+u_adj = randn(m, 1);
+
+% Because the sampler is fully explored, neither call should enrich the
+% lazy state now.
+Xbeta = sampler.Eval(beta_adj);
+XTu = sampler.Apply_Jacobian_Transpose(u_adj);
+
+breve_left = Xbeta' * u_adj;
+breve_right = beta_adj' * XTu;
+
+breve_adj_err = abs(breve_left - breve_right) / ...
+    max([1, abs(breve_left), abs(breve_right)]);
+
+test_names{end+1} = 'Lazy breve sampler left weighted orthonormality';
+test_errs(end+1) = err_left_orth;
+test_tols(end+1) = 1.e-10;
+
+test_names{end+1} = 'Lazy breve sampler right orthonormality';
+test_errs(end+1) = err_right_orth;
+test_tols(end+1) = 1.e-10;
+
+test_names{end+1} = 'Lazy breve sampler adjoint relative error';
+test_errs(end+1) = breve_adj_err;
+test_tols(end+1) = 1.e-10;
+
+%% Test 4: Full beta-space sample discrepancy Jacobian finite difference
+
+eps_fd_disc = 1.e-6;
+
+D0 = sen_op.Discrepancy_Evaluation_Sample_Beta(beta, sample_idx);
+
+D1 = sen_op.Discrepancy_Evaluation_Sample_Beta( ...
+    beta + eps_fd_disc * v, sample_idx);
+
+fd_D = (D1 - D0) / eps_fd_disc;
+
+jac_D = sen_op.Apply_Discrepancy_Beta_Jacobian_Sample(v, sample_idx);
+
+disc_jac_fd_err = norm(fd_D - jac_D) / max(1, norm(jac_D));
+
+test_names{end+1} = 'Full beta sample discrepancy Jacobian FD relative error';
+test_errs(end+1) = disc_jac_fd_err;
+test_tols(end+1) = 1.e-5;
+
+%% Test 5: Full beta-space sample discrepancy adjoint consistency
+
+Dv = sen_op.Apply_Discrepancy_Beta_Jacobian_Sample(v, sample_idx);
+DTu = sen_op.Apply_Discrepancy_Beta_Jacobian_Transpose_Sample(u_test, sample_idx);
+
+disc_left = Dv' * u_test;
+disc_right = v' * DTu;
+
+disc_adj_err = abs(disc_left - disc_right) / ...
+    max([1, abs(disc_left), abs(disc_right)]);
+
+test_names{end+1} = 'Full beta sample discrepancy adjoint relative error';
+test_errs(end+1) = disc_adj_err;
+test_tols(end+1) = 1.e-10;
+
+%% Test 6: Sample continuation gradient finite difference
+
+eps_fd_grad = 1.e-6;
+
+% The lazy sampler is fully explored, so value and gradient evaluations use
+% the same fixed posterior sample.
+[g0, val0] = sen_op.Gradient(beta, theta_traj, time_index);
+
+[~, val1] = sen_op.Gradient( ...
+    beta + eps_fd_grad * v, theta_traj, time_index);
+
+fd_grad = (val1 - val0) / eps_fd_grad;
+dir_grad = g0' * v;
+
+grad_fd_err = abs(fd_grad - dir_grad) / max([1, abs(dir_grad), abs(fd_grad)]);
+
+test_names{end+1} = 'Sample continuation gradient FD relative error';
+test_errs(end+1) = grad_fd_err;
+test_tols(end+1) = 5.e-4;
+
+%% Test 7: Sample continuation Hessian finite difference
+
+eps_fd_hess = 1.e-6;
+
+[g0, ~] = sen_op.Gradient(beta, theta_traj, time_index);
+
+[g1, ~] = sen_op.Gradient( ...
+    beta + eps_fd_hess * v, theta_traj, time_index);
+
+fd_Hv = (g1 - g0) / eps_fd_hess;
+
+Hv = sen_op.Apply_Hessian(v, beta, theta_traj, time_index);
+
+hess_fd_err = norm(fd_Hv - Hv) / max(1, norm(Hv));
+
+test_names{end+1} = 'Sample continuation Hessian FD relative error';
+test_errs(end+1) = hess_fd_err;
+test_tols(end+1) = 5.e-3;
+
+%% Test 8: Sample continuation Hessian symmetry
+
+Hv = sen_op.Apply_Hessian(v, beta, theta_traj, time_index);
+Hw = sen_op.Apply_Hessian(w, beta, theta_traj, time_index);
+
+hess_left = v' * Hw;
+hess_right = w' * Hv;
+
+hess_sym_err = abs(hess_left - hess_right) / ...
+    max([1, abs(hess_left), abs(hess_right)]);
+
+test_names{end+1} = 'Sample continuation Hessian symmetry relative error';
+test_errs(end+1) = hess_sym_err;
+test_tols(end+1) = 1.e-7;
+
+%% Test 9: Sample continuation mixed derivative Apply_B finite difference
+
+eps_fd_B = 1.e-6;
+
+theta_traj_t0 = make_theta_traj(t0, sample_idx);
+theta_traj_t1 = make_theta_traj(t0 + eps_fd_B, sample_idx);
+
+[g_t0, ~] = sen_op.Gradient(beta, theta_traj_t0, time_index);
+[g_t1, ~] = sen_op.Gradient(beta, theta_traj_t1, time_index);
+
+fd_B = (g_t1 - g_t0) / eps_fd_B;
+
+B = sen_op.Apply_B(beta, theta_traj_t0, time_index);
+
+B_fd_err = norm(fd_B - B) / max(1, norm(B));
+
+test_names{end+1} = 'Sample continuation Apply_B FD relative error';
+test_errs(end+1) = B_fd_err;
+test_tols(end+1) = 5.e-4;
+
+%% Test 10: End-to-end posterior sample continuation finite-output check
+
+num_continuation_steps = 2;
+
+md_cont_update = MD_Continuation_Update( ...
+    md_post_sampling, md_hessian_analysis, num_continuation_steps);
+
+[u_ks, z_ks, beta_ks] = md_cont_update.Posterior_Update_Samples();
+
+finite_ok = all(isfinite(u_ks(:))) && ...
+            all(isfinite(z_ks(:))) && ...
+            all(isfinite(beta_ks(:)));
+
+if finite_ok
+    finite_err = 0.0;
+else
+    finite_err = Inf;
+end
+
+test_names{end+1} = 'End-to-end posterior sample continuation finite outputs';
+test_errs(end+1) = finite_err;
+test_tols(end+1) = 0.0;
+
+%% Report results
+
+fprintf('\nTest results:\n');
+fprintf('------------------------------------------------------------\n');
+
+all_passed = true;
+
+for j = 1:length(test_names)
+    passed = test_errs(j) <= test_tols(j);
+
+    if passed
+        status = 'PASS';
+    else
+        status = 'FAIL';
+        all_passed = false;
+    end
+
+    fprintf('%-65s  err = %.4e   tol = %.4e   %s\n', ...
+        test_names{j}, test_errs(j), test_tols(j), status);
+end
+
+fprintf('------------------------------------------------------------\n');
+
+if all_passed
+    fprintf(1, '\nmodel_discrepancy/synthetic_test_continuation 3 passed.\n\n');
+else
+    fprintf(2, '\nmodel_discrepancy/synthetic_test_continuation Test 3 failed.\n\n');
+end
+
+%% Local helpers
+
+function theta_traj = make_theta_traj(t, sample_idx)
+
+    theta_traj.Get_Time = @(time_index) t;
+    theta_traj.Get_Sample_Index = @() sample_idx;
+
+end
+
+function fully_explore_breve_sampler(sampler)
+
+    lazy_Y = sampler.lazy_Y;
+
+    input_dim = lazy_Y.input_dim;
+    output_dim = lazy_Y.output_dim;
+
+    % Explore all right/input directions of Y.
+    for j = 1:input_dim
+        e = zeros(input_dim, 1);
+        e(j) = 1.0;
+        lazy_Y.Forward_Apply(e);
+    end
+
+    % Explore all left/output directions of Y.
+    for i = 1:output_dim
+        e = zeros(output_dim, 1);
+        e(i) = 1.0;
+        lazy_Y.Adjoint_Apply(e);
+    end
+
+end
