@@ -5,7 +5,6 @@
 
 % Import the OED
 OED_Setup;
-load("oed-results.mat", "z_bars", "Z_oed", "D_oed");
 data_interface.Set_Z_and_D(z_lofi, Evaluate_Discrepancy(con_hifi, con_lofi, z_lofi))
 
 % Posterior Sampling
