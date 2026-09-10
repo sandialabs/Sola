@@ -103,13 +103,13 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
 
             delta = this.current_disc_ops.Eval(beta, this.current_t);
 
-            D = this.current_disc_ops.Apply_Theta_Jacobian(beta);
-            x = this.opt_prob_interface.Apply_Misfit_Hessian(D, this.current_u + delta, this.current_z);
-            z_S_adj = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(x, this.current_z);
-            beta_out = this.hessian_analysis.Apply_V_Transpose(z_S_adj);
-            beta_out = beta_out + this.current_disc_ops.Apply_Beta_Jacobian_Transpose(x, this.current_t);
+            u_tmp = this.current_disc_ops.Apply_Theta_Jacobian(beta);
+            u_tmp = this.opt_prob_interface.Apply_Misfit_Hessian(u_tmp, this.current_u + delta, this.current_z);
+            z_tmp = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(u_tmp, this.current_z);
+            beta_out = this.hessian_analysis.Apply_V_Transpose(z_tmp);
+            beta_out = beta_out + this.current_disc_ops.Apply_Beta_Jacobian_Transpose(u_tmp, this.current_t);
             state_grad = this.opt_prob_interface.Misfit_Gradient(this.current_u + delta, this.current_z);
-            beta_out = beta_out + this.current_disc_ops.Apply_Beta_Theta_Hessian(state_grad);
+            beta_out = beta_out + this.current_disc_ops.Apply_Beta_Theta_Hessian(state_grad); % This line blows up, resulting in a beta_out with norm 3.4e+04!
 
         end
 
@@ -157,12 +157,7 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
             t = theta_traj.Get_Time(time_index);
             sample_idx = theta_traj.Get_Sample_Index();
 
-            state_changed = max([ ...
-                abs(t - this.current_t), ...
-                norm(beta - this.current_beta), ...
-                abs(sample_idx - this.current_sample_idx)]) > 1.e-15;
-
-            if state_changed
+            if max([abs(t - this.current_t), norm(beta - this.current_beta), abs(sample_idx - this.current_sample_idx)]) > 1.e-15
 
                 this.current_t = t;
                 this.current_beta = beta;
@@ -180,38 +175,10 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
         end
 
         function [disc_ops] = Get_Continuation_Beta_Discrepancy_Ops(this, sample_idx)
-            % Return beta-space discrepancy operators for continuation.
-            %
-            % All returned operators are consistent with
-            %
-            %   z_beta = z_opt + V beta
-            %
-            % and with the continuation state
-            %
-            %   S(z_beta) + t D(beta).
-            %
-            % The methods are:
-            %
-            %   Eval(beta, t)
-            %       Returns t * D(beta).
-            %
-            %   Apply_Beta_Jacobian(beta_in, t)
-            %       Returns t * D_beta beta_in.
-            %
-            %   Apply_Beta_Jacobian_Transpose(u_in, t)
-            %       Returns t * D_beta' u_in.
-            %
-            %   Apply_Theta_Jacobian(beta)
-            %       Returns D(beta), i.e. derivative of t*D(beta) with respect to t.
-            %
-            %   Apply_Beta_Theta_Hessian(u_in)
-            %       Returns D_beta' u_in, i.e. derivative with respect to beta
-            %       of Apply_Theta_Jacobian paired against u_in.
-
             assert(sample_idx >= 0 && sample_idx <= this.post_data.num_samples && floor(sample_idx) == sample_idx, ...
                 'sample_idx must be an integer in [0, num_samples].');
 
-            if sample_idx == 0
+            if sample_idx == 0 % Mean
                 disc_ops.Eval = @(beta, t) t * this.Discrepancy_Evaluation_Mean(this.z_opt + this.hessian_analysis.Apply_V(beta));
                 disc_ops.Apply_Beta_Jacobian = @(beta_in, t) t * this.Apply_Discrepancy_z_Jacobian_Mean(this.hessian_analysis.Apply_V(beta_in));
                 disc_ops.Apply_Beta_Jacobian_Transpose = @(u_in, t) t * this.hessian_analysis.Apply_V_Transpose(this.Apply_Discrepancy_z_Jacobian_Transpose_Mean(u_in));
@@ -254,8 +221,7 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
             if isempty(this.post_data.Zc_Mz_Wz_inv_Mz_Zc)
                 tmp_rhs = Wz_inv_Mz_V;
             else
-                tmp_rhs = Wz_inv_Mz_V - this.post_data.Wz_inv_Mz_Zc * linsolve( ...
-                        this.post_data.Zc_Mz_Wz_inv_Mz_Zc, this.post_data.Mz_Zc' * Wz_inv_Mz_V);
+                tmp_rhs = Wz_inv_Mz_V - this.post_data.Wz_inv_Mz_Zc * linsolve(this.post_data.Zc_Mz_Wz_inv_Mz_Zc, this.post_data.Mz_Zc' * Wz_inv_Mz_V);
             end
 
             Sigma_beta = Mz_V' * tmp_rhs;
@@ -269,12 +235,15 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
                 lambda_scale = 0;
             end
 
-            tol = 1e-12 * max(1.0, lambda_scale);
+            tol = 1e-8 * max(1.0, lambda_scale);
 
             keep = lambda > tol;
 
             if any(lambda < -tol)
                 disp('Warning: Compute_Breve_Beta_Covariance_Factor found negative eigenvalues below tolerance.');
+                disp(min(lambda))
+                disp(max(lambda))
+                disp(tol)
             end
 
             if any(keep)
@@ -345,69 +314,7 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
         end
 
         % ------------------------------------------------------------
-        % Posterior sample explicit kernels excluding breve term
-        % ------------------------------------------------------------
-
-        function [u_out] = Discrepancy_Evaluation_Sample_Explicit(this, z, sample_idx)
-
-            assert(sample_idx >= 1 && sample_idx <= this.post_data.num_samples && floor(sample_idx) == sample_idx, ...
-                   'sample_idx must be an integer in [1, num_samples].');
-
-            u_out = this.Discrepancy_Evaluation_Mean(z);
-            dz = z - this.z_opt;
-
-            u_hat = zeros(size(u_out));
-
-            for i = 1:this.post_data.N
-                sgi = sum(this.post_data.g_vecs(:, i));
-                coeff = (1 / sqrt(this.post_data.Mu(i, i))) * (sgi + this.Mz_Wz_inv_Mz_yi(:, i)' * dz);
-                u_hat = u_hat + coeff * this.post_data.ui_hat{i}(:, sample_idx);
-            end
-
-            u_hat = sqrt(this.post_data.alpha_d) * u_hat;
-            u_out = u_out + u_hat;
-
-        end
-
-        function [u_out] = Apply_Discrepancy_z_Jacobian_Sample_Explicit(this, z_in, sample_idx)
-
-            assert(sample_idx >= 1 && sample_idx <= this.post_data.num_samples && floor(sample_idx) == sample_idx, ...
-                   'sample_idx must be an integer in [1, num_samples].');
-
-            u_out = this.Apply_Discrepancy_z_Jacobian_Mean(z_in);
-            u_hat = zeros(size(u_out));
-
-            for i = 1:this.post_data.N
-                coeff = (1 / sqrt(this.post_data.Mu(i, i))) * (this.Mz_Wz_inv_Mz_yi(:, i)' * z_in);
-                u_hat = u_hat + coeff * this.post_data.ui_hat{i}(:, sample_idx);
-            end
-
-            u_hat = sqrt(this.post_data.alpha_d) * u_hat;
-            u_out = u_out + u_hat;
-
-        end
-
-        function [z_out] = Apply_Discrepancy_z_Jacobian_Transpose_Sample_Explicit(this, u_in, sample_idx)
-
-            assert(sample_idx >= 1 && sample_idx <= this.post_data.num_samples && floor(sample_idx) == sample_idx, ...
-                   'sample_idx must be an integer in [1, num_samples].');
-
-            z_out = this.Apply_Discrepancy_z_Jacobian_Transpose_Mean(u_in);
-            z_hat = zeros(size(z_out));
-
-            for i = 1:this.post_data.N
-                ui_hat_idx = this.post_data.ui_hat{i}(:, sample_idx);
-                coeff = (1 / sqrt(this.post_data.Mu(i, i))) * (ui_hat_idx' * u_in);
-                z_hat = z_hat + coeff * this.Mz_Wz_inv_Mz_yi(:, i);
-            end
-
-            z_hat = sqrt(this.post_data.alpha_d) * z_hat;
-            z_out = z_out + z_hat;
-
-        end
-
-        % ------------------------------------------------------------
-        % Posterior sample beta-space explicit-plus-breve kernels
+        % Posterior sample kernels
         % ------------------------------------------------------------
 
         function [u_out] = Discrepancy_Evaluation_Sample_Beta(this, beta, sample_idx)
@@ -416,8 +323,21 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
                    'sample_idx must be an integer in [1, num_samples].');
 
             beta = beta(:);
-            z = this.z_opt + this.hessian_analysis.Apply_V(beta);
-            u_out = this.Discrepancy_Evaluation_Sample_Explicit(z, sample_idx);
+            dz = this.hessian_analysis.Apply_V(beta);
+            
+            % Mean component
+            u_out = this.Discrepancy_Evaluation_Mean(this.z_opt + dz);
+
+            % Hat component
+            u_hat = zeros(size(u_out));
+            for i = 1:this.post_data.N
+                sgi = sum(this.post_data.g_vecs(:, i));
+                coeff = (1 / sqrt(this.post_data.Mu(i, i))) * (sgi + this.Mz_Wz_inv_Mz_yi(:, i)' * dz);
+                u_hat = u_hat + coeff * this.post_data.ui_hat{i}(:, sample_idx);
+            end
+            u_out = u_out + sqrt(this.post_data.alpha_d) * u_hat;
+            
+            % Breve component
             sampler = this.Get_Breve_Sampler(sample_idx);
             u_out = u_out + sampler.Eval(beta);
 
@@ -430,7 +350,19 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
 
             beta_in = beta_in(:);
             z_in = this.hessian_analysis.Apply_V(beta_in);
-            u_out = this.Apply_Discrepancy_z_Jacobian_Sample_Explicit(z_in, sample_idx);
+
+            % Mean component
+            u_out = this.Apply_Discrepancy_z_Jacobian_Mean(z_in);
+
+            % Hat component
+            u_hat = zeros(size(u_out));
+            for i = 1:this.post_data.N
+                coeff = (1 / sqrt(this.post_data.Mu(i, i))) * (this.Mz_Wz_inv_Mz_yi(:, i)' * z_in);
+                u_hat = u_hat + coeff * this.post_data.ui_hat{i}(:, sample_idx);
+            end
+            u_out = u_out + sqrt(this.post_data.alpha_d) * u_hat;
+            
+            % Breve component
             sampler = this.Get_Breve_Sampler(sample_idx);
             u_out = u_out + sampler.Apply_Jacobian(beta_in);
 
@@ -441,8 +373,20 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
             assert(sample_idx >= 1 && sample_idx <= this.post_data.num_samples && floor(sample_idx) == sample_idx, ...
                    'sample_idx must be an integer in [1, num_samples].');
 
-            z_out = this.Apply_Discrepancy_z_Jacobian_Transpose_Sample_Explicit(u_in, sample_idx);
+            % Mean component
+            z_out = this.Apply_Discrepancy_z_Jacobian_Transpose_Mean(u_in);
+            
+            % Hat component
+            z_hat = zeros(size(z_out));
+            for i = 1:this.post_data.N
+                ui_hat_idx = this.post_data.ui_hat{i}(:, sample_idx);
+                coeff = (1 / sqrt(this.post_data.Mu(i, i))) * (ui_hat_idx' * u_in);
+                z_hat = z_hat + coeff * this.Mz_Wz_inv_Mz_yi(:, i);
+            end
+            z_out = z_out + sqrt(this.post_data.alpha_d) * z_hat;
             beta_out = this.hessian_analysis.Apply_V_Transpose(z_out);
+            
+            % Breve component
             sampler = this.Get_Breve_Sampler(sample_idx);
             beta_out = beta_out + sampler.Apply_Jacobian_Transpose(u_in);
 
