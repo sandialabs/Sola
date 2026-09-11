@@ -28,8 +28,15 @@ classdef MD_Posterior_Sampling < handle
             this.z_opt = data_interface.z_opt;
         end
 
-        function [] = Compute_Posterior_Data(this, alpha_d, num_samples)
-            this.post_data.Compute_Posterior_Data(this.data_interface, this.u_prior_interface, this.z_prior_interface, alpha_d, num_samples);
+        function [] = Compute_Posterior_Data(this, alpha_d, num_samples, sample_breve_vectors)
+            arguments
+                this
+                alpha_d (1, 1) {mustBeNumeric}
+                num_samples (1, 1) {mustBeNumeric}
+                sample_breve_vectors (1, 1) logical = true
+            end
+
+            this.post_data.Compute_Posterior_Data(this.data_interface, this.u_prior_interface, this.z_prior_interface, alpha_d, num_samples, sample_breve_vectors);
         end
 
         function [delta_mean, delta_samples] = Posterior_Discrepancy_Samples(this, z)
@@ -57,6 +64,10 @@ classdef MD_Posterior_Sampling < handle
                 end
                 delta_mean_k = (1 / this.post_data.alpha_d) * delta_mean_k + this.data_interface.data_shift;
                 delta_samples_k = sqrt(this.post_data.alpha_d) * delta_samples_k;
+
+                if isempty(this.post_data.u_breve)
+                    error('Posterior_Discrepancy_Samples requires explicit breve samples. Recompute posterior data with sample_breve_vectors = true.');
+                end
 
                 Wz_inv_Mz_dz = this.z_prior_interface.Apply_W_z_Inverse(Mz_dz);
                 tmp = Mz_dz' * Wz_inv_Mz_dz - Wz_inv_Mz_dz' * this.post_data.Mz_Zc * linsolve(this.post_data.Zc_Mz_Wz_inv_Mz_Zc, this.post_data.Mz_Zc' * Wz_inv_Mz_dz);

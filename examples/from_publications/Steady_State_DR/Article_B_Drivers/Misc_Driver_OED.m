@@ -10,7 +10,7 @@ data_interface.Set_Z_and_D(z_lofi, Evaluate_Discrepancy(con_hifi, con_lofi, z_lo
 % Posterior Sampling
 num_samples = 1;
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
-md_post_sampling.Compute_Posterior_Data(alpha_d, num_samples);
+md_post_sampling.Compute_Posterior_Data(alpha_d, num_samples, false);
 
 % Continuation
 num_continuation_steps = 3;

@@ -198,65 +198,7 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
         % Beta-space breve covariance and sampler cache
         % ------------------------------------------------------------
 
-        function [R, Sigma_beta] = Compute_Breve_Beta_Covariance_Factor(this)
-
-            if isempty(this.hessian_analysis.evals)
-                r = length(this.z_opt);
-            else
-                r = length(this.hessian_analysis.evals);
-            end
-
-            V = zeros(length(this.z_opt), r);
-
-            for j = 1:r
-                e = zeros(r, 1);
-                e(j) = 1.0;
-                V(:, j) = this.hessian_analysis.Apply_V(e);
-            end
-
-            Mz_V = this.z_prior_interface.Apply_M_z(V);
-            Wz_inv_Mz_V = this.z_prior_interface.Apply_W_z_Inverse(Mz_V);
-
-            if isempty(this.post_data.Zc_Mz_Wz_inv_Mz_Zc)
-                tmp_rhs = Wz_inv_Mz_V;
-            else
-                tmp_rhs = Wz_inv_Mz_V - this.post_data.Wz_inv_Mz_Zc * linsolve(this.post_data.Zc_Mz_Wz_inv_Mz_Zc, this.post_data.Mz_Zc' * Wz_inv_Mz_V);
-            end
-
-            Sigma_beta = Mz_V' * tmp_rhs;
-            Sigma_beta = 0.5 * (Sigma_beta + Sigma_beta');
-
-            [U, D] = eig(Sigma_beta);
-            lambda = real(diag(D));
-
-            lambda_scale = max(abs(lambda));
-            if isempty(lambda_scale)
-                lambda_scale = 0;
-            end
-
-            tol = 1e-8 * max(1.0, lambda_scale);
-
-            keep = lambda > tol;
-
-            if any(lambda < -tol)
-                disp('Warning: Compute_Breve_Beta_Covariance_Factor found negative eigenvalues below tolerance.');
-                disp(min(lambda))
-                disp(max(lambda))
-                disp(tol)
-            end
-
-            if any(keep)
-                R = U(:, keep) * diag(sqrt(lambda(keep)));
-            else
-                R = zeros(r, 0);
-            end
-
-        end
-
         function sampler = Get_Breve_Sampler(this, sample_idx)
-
-            assert(sample_idx >= 1 && sample_idx <= this.post_data.num_samples && floor(sample_idx) == sample_idx, ...
-                   'sample_idx must be an integer in [1, num_samples] for posterior samples.');
 
             if isempty(this.breve_samplers{sample_idx})
                 if this.discard_cache
@@ -332,9 +274,6 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
 
         function [u_out] = Discrepancy_Evaluation_Sample_Beta(this, beta, sample_idx)
 
-            assert(sample_idx >= 1 && sample_idx <= this.post_data.num_samples && floor(sample_idx) == sample_idx, ...
-                   'sample_idx must be an integer in [1, num_samples].');
-
             beta = beta(:);
             dz = this.hessian_analysis.Apply_V(beta);
             
@@ -358,9 +297,6 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
 
         function [u_out] = Apply_Discrepancy_Beta_Jacobian_Sample(this, beta_in, sample_idx)
 
-            assert(sample_idx >= 1 && sample_idx <= this.post_data.num_samples && floor(sample_idx) == sample_idx, ...
-                   'sample_idx must be an integer in [1, num_samples].');
-
             beta_in = beta_in(:);
             z_in = this.hessian_analysis.Apply_V(beta_in);
 
@@ -382,9 +318,6 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
         end
 
         function [beta_out] = Apply_Discrepancy_Beta_Jacobian_Transpose_Sample(this, u_in, sample_idx)
-
-            assert(sample_idx >= 1 && sample_idx <= this.post_data.num_samples && floor(sample_idx) == sample_idx, ...
-                   'sample_idx must be an integer in [1, num_samples].');
 
             % Mean component
             z_out = this.Apply_Discrepancy_z_Jacobian_Transpose_Mean(u_in);

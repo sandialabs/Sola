@@ -43,7 +43,8 @@ classdef MD_Breve_Beta_Sampler < handle
             end
 
             sigma_apply = @(beta_in) this.Apply_Sigma_Beta(beta_in);
-            this.lazy_X = MD_Lazy_Matrix_Normal_Operator(u_prior_interface, sigma_apply, right_dim, output_dim, tol);
+            sigma_sample = @(num_samples) this.Sample_Sigma_Beta(num_samples);
+            this.lazy_X = MD_Lazy_Matrix_Normal_Operator(u_prior_interface, sigma_apply, sigma_sample, right_dim, output_dim, tol);
         end
 
         function u_out = Eval(this, beta)

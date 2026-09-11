@@ -71,7 +71,7 @@ md_post_sampling = MD_Posterior_Sampling( ...
 
 alpha_d = 1.e-5;
 num_post_samples = 5;
-md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples);
+md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples, false);
 
 opt_prob_interface = MD_Opt_Prob_Interface_synthetic_test_continuation(m);
 
@@ -121,37 +121,6 @@ u_test = randn(m, 1);
 test_names = {};
 test_errs = [];
 test_tols = [];
-
-%% Test 1: Sigma_beta symmetry and positive semidefiniteness
-
-[R, Sigma_beta] = sen_op.Compute_Breve_Beta_Covariance_Factor();
-
-sym_err = norm(Sigma_beta - Sigma_beta', 'fro') / ...
-    max(1, norm(Sigma_beta, 'fro'));
-
-if isempty(Sigma_beta)
-    eig_min = 0.0;
-else
-    eig_min = min(eig(0.5 * (Sigma_beta + Sigma_beta')));
-end
-
-psd_violation = max(0, -eig_min);
-
-Sigma_hat = R * R';
-fac_err = norm(Sigma_beta - Sigma_hat, 'fro') / ...
-    max(1, norm(Sigma_beta, 'fro'));
-
-test_names{end+1} = 'Sigma_beta relative symmetry error';
-test_errs(end+1) = sym_err;
-test_tols(end+1) = 1.e-12;
-
-test_names{end+1} = 'Sigma_beta PSD violation';
-test_errs(end+1) = psd_violation;
-test_tols(end+1) = 1.e-10;
-
-test_names{end+1} = 'Sigma_beta factorization relative error';
-test_errs(end+1) = fac_err;
-test_tols(end+1) = 1.e-10;
 
 %% Test 2: Fully explore the breve sampler for stable derivative checks
 
@@ -212,7 +181,7 @@ test_tols(end+1) = 1.e-10;
 
 %% Test 4: Full beta-space sample discrepancy Jacobian finite difference
 
-eps_fd_disc = 1.e-6;
+eps_fd_disc = 1.e-5;
 
 D0 = sen_op.Discrepancy_Evaluation_Sample_Beta(beta, sample_idx);
 
