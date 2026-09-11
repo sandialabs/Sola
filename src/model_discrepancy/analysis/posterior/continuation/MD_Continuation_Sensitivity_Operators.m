@@ -33,6 +33,7 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
         % index.  The breve Sigma_beta covariance is applied on demand and is
         % not formed or factorized by the continuation path.
         breve_samplers
+        discard_cache
         lazy_sampling_tol
     end
 
@@ -114,10 +115,11 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
 
     methods
 
-        function this = MD_Continuation_Sensitivity_Operators(post_sampling, hessian_analysis)
+        function this = MD_Continuation_Sensitivity_Operators(post_sampling, hessian_analysis, discard_cache)
             arguments
                 post_sampling MD_Posterior_Sampling
                 hessian_analysis MD_Hessian_Analysis
+                discard_cache (1,1) logical = true
             end
 
             this.post_sampling = post_sampling;
@@ -144,6 +146,7 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
             end
 
             this.lazy_sampling_tol = 1e-10;
+            this.discard_cache = discard_cache;
             this.breve_samplers = cell(this.post_data.num_samples, 1);
         end
 
@@ -256,10 +259,24 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
                    'sample_idx must be an integer in [1, num_samples] for posterior samples.');
 
             if isempty(this.breve_samplers{sample_idx})
+                if this.discard_cache
+                    this.Clear_Breve_Samplers_Except(sample_idx);
+                end
+
                 this.breve_samplers{sample_idx} = MD_Breve_Beta_Sampler(this.hessian_analysis, this.z_prior_interface, this.post_data, this.post_sampling.u_prior_interface, length(this.u_opt), this.lazy_sampling_tol);
             end
 
             sampler = this.breve_samplers{sample_idx};
+
+        end
+
+        function [] = Clear_Breve_Samplers_Except(this, sample_idx)
+
+            for i = 1:length(this.breve_samplers)
+                if i ~= sample_idx
+                    this.breve_samplers{i} = [];
+                end
+            end
 
         end
 
