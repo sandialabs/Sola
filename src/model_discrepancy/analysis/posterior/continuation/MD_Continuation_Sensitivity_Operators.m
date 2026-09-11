@@ -28,13 +28,10 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
 
         % Adaptive posterior-sample continuation data.
         %
-        % breve_R satisfies
-        %
-        %   breve_R * breve_R' approx Sigma_beta.
-        %
-        % Each entry of breve_samplers stores one persistent lazy matrix-normal
-        % realization for the corresponding posterior sample index.
-        breve_R
+        % Each entry of breve_samplers stores one persistent matrix-free lazy
+        % matrix-normal realization for the corresponding posterior sample
+        % index.  The breve Sigma_beta covariance is applied on demand and is
+        % not formed or factorized by the continuation path.
         breve_samplers
         lazy_sampling_tol
     end
@@ -147,7 +144,6 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
             end
 
             this.lazy_sampling_tol = 1e-10;
-            this.breve_R = this.Compute_Breve_Beta_Covariance_Factor();
             this.breve_samplers = cell(this.post_data.num_samples, 1);
         end
 
@@ -260,7 +256,7 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
                    'sample_idx must be an integer in [1, num_samples] for posterior samples.');
 
             if isempty(this.breve_samplers{sample_idx})
-                this.breve_samplers{sample_idx} = MD_Breve_Beta_Sampler(this.breve_R, this.post_sampling.u_prior_interface, length(this.u_opt), this.lazy_sampling_tol);
+                this.breve_samplers{sample_idx} = MD_Breve_Beta_Sampler(this.hessian_analysis, this.z_prior_interface, this.post_data, this.post_sampling.u_prior_interface, length(this.u_opt), this.lazy_sampling_tol);
             end
 
             sampler = this.breve_samplers{sample_idx};

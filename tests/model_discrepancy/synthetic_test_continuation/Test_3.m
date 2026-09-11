@@ -159,7 +159,7 @@ sampler = sen_op.Get_Breve_Sampler(sample_idx);
 
 fully_explore_breve_sampler(sampler);
 
-[kl, kr] = sampler.lazy_Y.Basis_Dimensions();
+[kl, kr] = sampler.lazy_X.Basis_Dimensions();
 
 fprintf('Fully explored sample %d lazy breve sampler:\n', sample_idx);
 fprintf('  left basis dim  = %d\n', kl);
@@ -167,21 +167,21 @@ fprintf('  right basis dim = %d\n\n', kr);
 
 %% Test 3: Breve sampler weighted orthonormality and adjoint consistency
 
-lazy_Y = sampler.lazy_Y;
+lazy_X = sampler.lazy_X;
 
-if isempty(lazy_Y.Q_l)
+if isempty(lazy_X.Q_l)
     err_left_orth = 0.0;
 else
-    WQl = u_prior_interface.Apply_W_u(lazy_Y.Q_l);
+    WQl = u_prior_interface.Apply_W_u(lazy_X.Q_l);
     err_left_orth = norm( ...
-        lazy_Y.Q_l' * WQl - eye(size(lazy_Y.Q_l, 2)), 'fro');
+        lazy_X.Q_l' * WQl - eye(size(lazy_X.Q_l, 2)), 'fro');
 end
 
-if isempty(lazy_Y.Q_r)
+if isempty(lazy_X.Q_r)
     err_right_orth = 0.0;
 else
     err_right_orth = norm( ...
-        lazy_Y.Q_r' * lazy_Y.Q_r - eye(size(lazy_Y.Q_r, 2)), 'fro');
+        lazy_X.Q_r' * lazy_X.Sigma_Q_r - eye(size(lazy_X.Q_r, 2)), 'fro');
 end
 
 beta_adj = randn(r, 1);
@@ -202,9 +202,9 @@ test_names{end+1} = 'Lazy breve sampler left weighted orthonormality';
 test_errs(end+1) = err_left_orth;
 test_tols(end+1) = 1.e-10;
 
-test_names{end+1} = 'Lazy breve sampler right orthonormality';
+test_names{end+1} = 'Lazy breve sampler right Sigma_beta orthonormality';
 test_errs(end+1) = err_right_orth;
-test_tols(end+1) = 1.e-10;
+test_tols(end+1) = 1.e-09;
 
 test_names{end+1} = 'Lazy breve sampler adjoint relative error';
 test_errs(end+1) = breve_adj_err;
@@ -381,23 +381,23 @@ end
 
 function fully_explore_breve_sampler(sampler)
 
-    lazy_Y = sampler.lazy_Y;
+    lazy_X = sampler.lazy_X;
 
-    input_dim = lazy_Y.input_dim;
-    output_dim = lazy_Y.output_dim;
+    input_dim = lazy_X.input_dim;
+    output_dim = lazy_X.output_dim;
 
     % Explore all right/input directions of Y.
     for j = 1:input_dim
         e = zeros(input_dim, 1);
         e(j) = 1.0;
-        lazy_Y.Forward_Apply(e);
+        lazy_X.Forward_Apply(e);
     end
 
     % Explore all left/output directions of Y.
     for i = 1:output_dim
         e = zeros(output_dim, 1);
         e(i) = 1.0;
-        lazy_Y.Adjoint_Apply(e);
+        lazy_X.Adjoint_Apply(e);
     end
 
 end
