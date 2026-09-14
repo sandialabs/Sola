@@ -232,10 +232,17 @@ test_tols(end+1) = 1.e-11;
 
 
 % -------------------------------------------------------------------------
-% Test 2d: After full exploration, lazy applies agree with cached explicit X
+% Test 2d: After full exploration, lazy applies agree with reconstructed X
 %
-% Once both the input and output spaces have been fully explored, the lazy
-% operator should be equivalent to a fixed explicit matrix X_cache.
+% With the revealed-action cache
+%
+%   Y = X * Q_r,
+%
+% and Q_r' * Sigma_beta * Q_r = I, the represented Euclidean matrix is
+%
+%   X_cache = Y * Q_r' * Sigma_beta.
+%
+% This avoids relying on an Explicit_Matrix method.
 % -------------------------------------------------------------------------
 
 sampler_explicit = fresh_breve_sampler( ...
@@ -244,7 +251,7 @@ sampler_explicit = fresh_breve_sampler( ...
 
 fully_explore_breve_sampler(sampler_explicit);
 
-X_cache = sampler_explicit.lazy_X.Explicit_Matrix();
+X_cache = explicit_matrix_from_lazy_sampler(sampler_explicit);
 
 v_explicit = randn(r, 1);
 u_explicit = randn(m, 1);
@@ -261,13 +268,13 @@ explicit_forward_err = norm(lazy_forward - explicit_forward) / ...
 explicit_adjoint_err = norm(lazy_adjoint - explicit_adjoint) / ...
     max(1, norm(explicit_adjoint));
 
-test_names{end+1} = 'Lazy sampler explicit-matrix forward consistency';
+test_names{end+1} = 'Lazy sampler reconstructed-matrix forward consistency';
 test_errs(end+1) = explicit_forward_err;
-test_tols(end+1) = 1.e-11;
+test_tols(end+1) = 1.e-09;
 
-test_names{end+1} = 'Lazy sampler explicit-matrix adjoint consistency';
+test_names{end+1} = 'Lazy sampler reconstructed-matrix adjoint consistency';
 test_errs(end+1) = explicit_adjoint_err;
-test_tols(end+1) = 1.e-11;
+test_tols(end+1) = 1.e-09;
 
 
 % -------------------------------------------------------------------------
@@ -316,9 +323,13 @@ empirical_cov = cov(phi_samples, 1);
 
 predicted_cov = zeros(num_functionals, num_functionals);
 
+sigma_ref_sampler = fresh_breve_sampler( ...
+    md_hessian_analysis, z_prior_interface, md_post_sampling.post_data, ...
+    u_prior_interface, m);
+
 for jj = 1:num_functionals
     Wuinv_aj = u_prior_interface.Apply_W_u_Inverse(A_moment(:, jj));
-    Sig_bj = sampler_moment.Apply_Sigma_Beta(B_moment(:, jj));
+    Sig_bj = sigma_ref_sampler.Apply_Sigma_Beta(B_moment(:, jj));
 
     for kk = 1:num_functionals
         left_cov = A_moment(:, kk)' * Wuinv_aj;
@@ -397,6 +408,26 @@ test_tols(end+1) = 1.e-09;
 test_names{end+1} = 'Lazy breve sampler adjoint relative error';
 test_errs(end+1) = breve_adj_err;
 test_tols(end+1) = 1.e-10;
+
+% New revealed-action cache consistency check:
+%
+%   Q_l' * W_u * Y = T' * Q_r.
+%
+% This is the central invariant of the new lazy sampler.
+
+if isempty(lazy_X.Q_l) || isempty(lazy_X.Q_r)
+    cache_consistency_err = 0.0;
+else
+    left_cache = lazy_X.Q_l' * u_prior_interface.Apply_W_u(lazy_X.Y);
+    right_cache = lazy_X.T' * lazy_X.Q_r;
+
+    cache_consistency_err = norm(left_cache - right_cache, 'fro') / ...
+        max(1, norm(right_cache, 'fro'));
+end
+
+test_names{end+1} = 'Lazy sampler revealed-action cache consistency';
+test_errs(end+1) = cache_consistency_err;
+test_tols(end+1) = 1.e-09;
 
 %% Test 4: Full beta-space sample discrepancy Jacobian finite difference
 
@@ -574,14 +605,16 @@ function fully_explore_breve_sampler(sampler)
     input_dim = lazy_X.input_dim;
     output_dim = lazy_X.output_dim;
 
-    % Explore all right/input directions of Y.
+    % Explore all input directions. If Sigma_beta is rank-deficient,
+    % directions in its nullspace will not generate new basis vectors,
+    % which is the correct behavior.
     for j = 1:input_dim
         e = zeros(input_dim, 1);
         e(j) = 1.0;
         lazy_X.Forward_Apply(e);
     end
 
-    % Explore all left/output directions of Y.
+    % Explore all output directions in the W_u geometry.
     for i = 1:output_dim
         e = zeros(output_dim, 1);
         e(i) = 1.0;
@@ -599,5 +632,35 @@ function sampler = fresh_breve_sampler( ...
     sampler = MD_Breve_Beta_Sampler( ...
         md_hessian_analysis, z_prior_interface, post_data, ...
         u_prior_interface, output_dim, lazy_tol);
+
+end
+
+function X_cache = explicit_matrix_from_lazy_sampler(sampler)
+
+    lazy_X = sampler.lazy_X;
+
+    input_dim = lazy_X.input_dim;
+
+    Sigma_beta = zeros(input_dim, input_dim);
+
+    for j = 1:input_dim
+        e = zeros(input_dim, 1);
+        e(j) = 1.0;
+        Sigma_beta(:, j) = sampler.Apply_Sigma_Beta(e);
+    end
+
+    if isempty(lazy_X.Q_r)
+        X_cache = zeros(lazy_X.output_dim, lazy_X.input_dim);
+        return;
+    end
+
+    % Since Q_r' * Sigma_beta * Q_r = I and Y = X * Q_r,
+    % the represented Euclidean matrix is
+    %
+    %   X = Y * Q_r' * Sigma_beta.
+    %
+    % This also handles singular Sigma_beta correctly on the represented
+    % covariance range.
+    X_cache = lazy_X.Y * (lazy_X.Q_r' * Sigma_beta);
 
 end

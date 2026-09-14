@@ -5,21 +5,17 @@
 
 classdef MD_Lazy_Matrix_Normal_Operator < handle
 
-    % Lazy sampler for
+    % Symmetric lazy sampler for
     %
     %   X ~ MN_{m,r}(0, W_u^{-1}, Sigma_r),
     %
     % where Sigma_r is available through matrix-vector products and sampling.
-    % The right basis is Sigma_r-orthonormal,
     %
-    %   Q_r' Sigma_r Q_r = I,
+    % This implementation uses the symmetric revealed-action cache
     %
-    % and the represented sample is
+    %   Y = X * Q_r,
+    %   T = X' * W_u * Q_l,
     %
-    %   X = Q_l K Q_r' Sigma_r.
-    %
-    % The sampler also stores T = X' W_u Q_l.  This lets adjoint evaluations
-    % return beta-space vectors without completing the entire right basis.
 
     properties
         u_prior_interface
@@ -30,10 +26,11 @@ classdef MD_Lazy_Matrix_Normal_Operator < handle
         input_dim
 
         Q_l        % output_dim x num_left, W_u-orthonormal
+        W_Q_l
         Q_r        % input_dim x num_right, Sigma_r-orthonormal
         Sigma_Q_r  % input_dim x num_right, Sigma_r * Q_r
+        Y          % output_dim x num_right, X * Q_r
         T          % input_dim x num_left, X' * W_u * Q_l
-        K          % num_left x num_right
 
         tol
     end
@@ -66,11 +63,13 @@ classdef MD_Lazy_Matrix_Normal_Operator < handle
             this.tol = tol;
 
             this.Q_l = zeros(output_dim, 0);
+            this.W_Q_l = zeros(output_dim, 0);
             this.Q_r = zeros(input_dim, 0);
             this.Sigma_Q_r = zeros(input_dim, 0);
+            this.Y = zeros(output_dim, 0);
             this.T = zeros(input_dim, 0);
-            this.K = zeros(0, 0);
         end
+
 
         function y = Forward_Apply(this, v)
 
@@ -98,40 +97,29 @@ classdef MD_Lazy_Matrix_Normal_Operator < handle
                 q_new = r / norm_r;
                 Sigma_q_new = Sigma_r / norm_r;
 
+                if isempty(this.Q_l)
+                    y_cond = zeros(this.output_dim, 1);
+                else
+                    left_coeffs = this.T' * q_new;
+                    y_cond = this.Q_l * left_coeffs;
+                end
+
+                y_new = y_cond + this.Sample_Left_Residual();
                 this.Q_r = [this.Q_r, q_new];
                 this.Sigma_Q_r = [this.Sigma_Q_r, Sigma_q_new];
+                this.Y = [this.Y, y_new];
                 c = [c; norm_r];
 
-                new_col = this.T' * q_new;
-                this.K = [this.K, new_col];
-
-                % %
-                s = this.u_prior_interface.Sample_with_Covariance_W_u_Inverse(1);
-
-                if isempty(this.Q_l)
-                    rh = s;
-                else
-                    Ws = this.u_prior_interface.Apply_W_u(s);
-                    rh = s - this.Q_l * (this.Q_l' * Ws);
-
-                    Wr = this.u_prior_interface.Apply_W_u(rh);
-                    dc = this.Q_l' * Wr;
-                    rh = rh - this.Q_l * dc;
-                end
-
-                norm_rh = this.W_Norm(rh);
-                if norm_rh > this.tol
-                    q_new = rh / norm_rh;
-                    k_row = zeros(1, size(this.K, 2));
-                    if size(this.K, 2) > 0
-                        k_row(end) = norm_rh;
-                    end
-                    this.Append_Left_Basis(q_new, k_row);
-                end
             end
 
-            y = this.Q_l * (this.K * c);
+            if isempty(this.Y)
+                y = zeros(this.output_dim, 1);
+            else
+                y = this.Y * c;
+            end
+
         end
+
 
         function y = Adjoint_Apply(this, u)
             % Compute y = X' u.
@@ -140,48 +128,72 @@ classdef MD_Lazy_Matrix_Normal_Operator < handle
             if isempty(this.Q_l)
                 c = zeros(0, 1);
                 r = x;
+                W_r = u;
             else
-                Wx = this.u_prior_interface.Apply_W_u(x);
-                c = this.Q_l' * Wx;
+                c = this.Q_l' * u;
                 r = x - this.Q_l * c;
+                W_r = u - this.W_Q_l * c;
 
-                Wr = this.u_prior_interface.Apply_W_u(r);
-                dc = this.Q_l' * Wr;
+                % One W_u-weighted reorthogonalization pass.
+                dc = this.W_Q_l' * r;
                 c = c + dc;
                 r = r - this.Q_l * dc;
+                W_r = W_r - this.W_Q_l * dc;
             end
 
-            norm_r = this.W_Norm(r);
+            norm_r = sqrt(max(real(r' * W_r), 0));
 
             if norm_r > this.tol
                 q_new = r / norm_r;
+                W_q_new = W_r / norm_r;
+
+                if isempty(this.Q_r)
+                    t_cond = zeros(this.input_dim, 1);
+                else
+                    right_coeffs = this.Y' * W_q_new;
+                    t_cond = this.Sigma_Q_r * right_coeffs;
+                end
+
+                t_new = t_cond + this.Sample_Right_Residual();
+                this.Q_l = [this.Q_l, q_new];
+                this.W_Q_l = [this.W_Q_l, W_q_new];
+                this.T = [this.T, t_new];
                 c = [c; norm_r];
-                this.Append_Left_Basis(q_new, zeros(1, size(this.K, 2)));
             end
 
-            y = this.T * c;
-        end
-
-        function [] = Append_Left_Basis(this, q_new, k_row)
-
-            s = this.sigma_sample(1);
-
-            if isempty(this.Q_r)
-                t_new = s;
+            if isempty(this.T)
+                y = zeros(this.input_dim, 1);
             else
-                r = s - this.Sigma_Q_r * (this.Q_r' * s);
-                % Reduce roundoff error
-                r = r - this.Sigma_Q_r * (this.Q_r' * r);
-                t_new = this.Sigma_Q_r * k_row(:) + r;
+                y = this.T * c;
             end
 
-            this.Q_l = [this.Q_l, q_new];
-            this.T = [this.T, t_new];
-            this.K = [this.K; k_row(:)'];
         end
 
-        function X_cache = Explicit_Matrix(this)
-            X_cache = this.Q_l * this.T';
+        % ------------------------------------------------------------
+        % Residual samplers
+        % ------------------------------------------------------------
+
+        function eta = Sample_Left_Residual(this)
+            s = this.u_prior_interface.Sample_with_Covariance_W_u_Inverse(1);
+            if isempty(this.Q_l)
+                eta = s;
+                return;
+            end
+            eta = s - this.Q_l * (this.W_Q_l' * s);
+            % One reorthogonalization pass.
+            eta = eta - this.Q_l * (this.W_Q_l' * eta);
+
+        end
+
+        function eta = Sample_Right_Residual(this)
+            s = this.sigma_sample(1);
+            if isempty(this.Q_r)
+                eta = s;
+                return;
+            end
+            eta = s - this.Sigma_Q_r * (this.Q_r' * s);
+            % One reorthogonalization pass.
+            eta = eta - this.Sigma_Q_r * (this.Q_r' * eta);
         end
 
         function [kl, kr] = Basis_Dimensions(this)
@@ -194,10 +206,8 @@ classdef MD_Lazy_Matrix_Normal_Operator < handle
         end
 
         function val = W_Norm(this, x)
-            val = sqrt(max(this.W_Inner(x, x), 0));
+            val = sqrt(max(real(this.W_Inner(x, x)), 0));
         end
-
     end
 
 end
-
