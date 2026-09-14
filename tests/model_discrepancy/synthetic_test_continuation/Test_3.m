@@ -122,6 +122,225 @@ test_names = {};
 test_errs = [];
 test_tols = [];
 
+%% Test 2: Lazy matrix-normal sampler persistence and distribution checks
+
+fprintf('Running lazy matrix-normal sampler validation tests...\n\n');
+
+% -------------------------------------------------------------------------
+% Test 2a: Forward result must persist after adjoint enrichment
+%
+% This catches an important consistency bug:
+%
+%   If y0 = X*v has already been realized, then later calls to X'*u must not
+%   alter the previously realized value of X*v.
+%
+% With the incorrect implementation
+%
+%   Append_Left_Basis(q_new, randn(1, size(K,2)))
+%
+% inside Adjoint_Apply, this test should generally fail.
+% -------------------------------------------------------------------------
+
+sampler_fwd_persist = fresh_breve_sampler( ...
+    md_hessian_analysis, z_prior_interface, md_post_sampling.post_data, ...
+    u_prior_interface, m);
+
+v_persist = randn(r, 1);
+u_enrich = randn(m, 1);
+
+y_before = sampler_fwd_persist.Eval(v_persist);
+
+% This call will usually enrich the left basis.
+sampler_fwd_persist.Apply_Jacobian_Transpose(u_enrich);
+
+y_after = sampler_fwd_persist.Eval(v_persist);
+
+forward_persistence_err = norm(y_after - y_before) / max(1, norm(y_before));
+
+test_names{end+1} = 'Lazy sampler forward persistence after adjoint enrichment';
+test_errs(end+1) = forward_persistence_err;
+test_tols(end+1) = 1.e-11;
+
+
+% -------------------------------------------------------------------------
+% Test 2b: Adjoint result must persist after forward enrichment
+%
+% If z0 = X'*u has already been realized, then later calls to X*v must not
+% alter the previously realized value of X'*u.
+% -------------------------------------------------------------------------
+
+sampler_adj_persist = fresh_breve_sampler( ...
+    md_hessian_analysis, z_prior_interface, md_post_sampling.post_data, ...
+    u_prior_interface, m);
+
+u_persist = randn(m, 1);
+v_enrich = randn(r, 1);
+
+z_before = sampler_adj_persist.Apply_Jacobian_Transpose(u_persist);
+
+% This call will usually enrich the right basis.
+sampler_adj_persist.Eval(v_enrich);
+
+z_after = sampler_adj_persist.Apply_Jacobian_Transpose(u_persist);
+
+adjoint_persistence_err = norm(z_after - z_before) / max(1, norm(z_before));
+
+test_names{end+1} = 'Lazy sampler adjoint persistence after forward enrichment';
+test_errs(end+1) = adjoint_persistence_err;
+test_tols(end+1) = 1.e-11;
+
+
+% -------------------------------------------------------------------------
+% Test 2c: Interleaved repeated-query persistence
+%
+% Repeated calls to the same forward and adjoint queries should return the
+% same values even after several interleaved enrichments.
+% -------------------------------------------------------------------------
+
+sampler_interleave = fresh_breve_sampler( ...
+    md_hessian_analysis, z_prior_interface, md_post_sampling.post_data, ...
+    u_prior_interface, m);
+
+v0_interleave = randn(r, 1);
+u0_interleave = randn(m, 1);
+
+y0_interleave = sampler_interleave.Eval(v0_interleave);
+z0_interleave = sampler_interleave.Apply_Jacobian_Transpose(u0_interleave);
+
+num_interleave_queries = 10;
+for jj = 1:num_interleave_queries
+    sampler_interleave.Eval(randn(r, 1));
+    sampler_interleave.Apply_Jacobian_Transpose(randn(m, 1));
+end
+
+y1_interleave = sampler_interleave.Eval(v0_interleave);
+z1_interleave = sampler_interleave.Apply_Jacobian_Transpose(u0_interleave);
+
+interleave_forward_err = norm(y1_interleave - y0_interleave) / ...
+    max(1, norm(y0_interleave));
+
+interleave_adjoint_err = norm(z1_interleave - z0_interleave) / ...
+    max(1, norm(z0_interleave));
+
+test_names{end+1} = 'Lazy sampler interleaved forward repeatability';
+test_errs(end+1) = interleave_forward_err;
+test_tols(end+1) = 1.e-11;
+
+test_names{end+1} = 'Lazy sampler interleaved adjoint repeatability';
+test_errs(end+1) = interleave_adjoint_err;
+test_tols(end+1) = 1.e-11;
+
+
+% -------------------------------------------------------------------------
+% Test 2d: After full exploration, lazy applies agree with cached explicit X
+%
+% Once both the input and output spaces have been fully explored, the lazy
+% operator should be equivalent to a fixed explicit matrix X_cache.
+% -------------------------------------------------------------------------
+
+sampler_explicit = fresh_breve_sampler( ...
+    md_hessian_analysis, z_prior_interface, md_post_sampling.post_data, ...
+    u_prior_interface, m);
+
+fully_explore_breve_sampler(sampler_explicit);
+
+X_cache = sampler_explicit.lazy_X.Explicit_Matrix();
+
+v_explicit = randn(r, 1);
+u_explicit = randn(m, 1);
+
+lazy_forward = sampler_explicit.Eval(v_explicit);
+explicit_forward = X_cache * v_explicit;
+
+lazy_adjoint = sampler_explicit.Apply_Jacobian_Transpose(u_explicit);
+explicit_adjoint = X_cache' * u_explicit;
+
+explicit_forward_err = norm(lazy_forward - explicit_forward) / ...
+    max(1, norm(explicit_forward));
+
+explicit_adjoint_err = norm(lazy_adjoint - explicit_adjoint) / ...
+    max(1, norm(explicit_adjoint));
+
+test_names{end+1} = 'Lazy sampler explicit-matrix forward consistency';
+test_errs(end+1) = explicit_forward_err;
+test_tols(end+1) = 1.e-11;
+
+test_names{end+1} = 'Lazy sampler explicit-matrix adjoint consistency';
+test_errs(end+1) = explicit_adjoint_err;
+test_tols(end+1) = 1.e-11;
+
+
+% -------------------------------------------------------------------------
+% Test 2e: Empirical scalar-functional moment check
+%
+% For X ~ MN(0, W_u^{-1}, Sigma_beta), scalar functionals
+%
+%   phi_j = a_j' * X * b_j
+%
+% satisfy
+%
+%   Cov(phi_j, phi_k)
+%     = (a_j' W_u^{-1} a_k) * (b_j' Sigma_beta b_k).
+%
+% This is a stochastic test, so the tolerance is intentionally looser than
+% the deterministic consistency tests above.
+% -------------------------------------------------------------------------
+
+num_moment_samples = 400;
+num_functionals = 4;
+
+A_moment = randn(m, num_functionals);
+B_moment = randn(r, num_functionals);
+
+phi_samples = zeros(num_moment_samples, num_functionals);
+
+for ss = 1:num_moment_samples
+
+    sampler_moment = fresh_breve_sampler( ...
+        md_hessian_analysis, z_prior_interface, md_post_sampling.post_data, ...
+        u_prior_interface, m);
+
+    % Interleave calls to exercise both forward and adjoint paths.
+    for jj = 1:num_functionals
+        Xbj = sampler_moment.Eval(B_moment(:, jj));
+        phi_samples(ss, jj) = A_moment(:, jj)' * Xbj;
+
+        % Additional adjoint call to force mixed enrichment.
+        sampler_moment.Apply_Jacobian_Transpose(randn(m, 1));
+    end
+
+end
+
+empirical_mean = mean(phi_samples, 1)';
+empirical_cov = cov(phi_samples, 1);
+
+predicted_cov = zeros(num_functionals, num_functionals);
+
+for jj = 1:num_functionals
+    Wuinv_aj = u_prior_interface.Apply_W_u_Inverse(A_moment(:, jj));
+    Sig_bj = sampler_moment.Apply_Sigma_Beta(B_moment(:, jj));
+
+    for kk = 1:num_functionals
+        left_cov = A_moment(:, kk)' * Wuinv_aj;
+        right_cov = B_moment(:, kk)' * Sig_bj;
+        predicted_cov(kk, jj) = left_cov * right_cov;
+    end
+end
+
+mean_scale = sqrt(max(1, trace(predicted_cov)));
+moment_mean_err = norm(empirical_mean) / mean_scale;
+
+moment_cov_err = norm(empirical_cov - predicted_cov, 'fro') / ...
+    max(1, norm(predicted_cov, 'fro'));
+
+test_names{end+1} = 'Lazy sampler empirical scalar-functional mean';
+test_errs(end+1) = moment_mean_err;
+test_tols(end+1) = 2.5e-1;
+
+test_names{end+1} = 'Lazy sampler empirical scalar-functional covariance';
+test_errs(end+1) = moment_cov_err;
+test_tols(end+1) = 3.5e-1;
+
 %% Test 2: Fully explore the breve sampler for stable derivative checks
 
 sampler = sen_op.Get_Breve_Sampler(sample_idx);
@@ -368,5 +587,17 @@ function fully_explore_breve_sampler(sampler)
         e(i) = 1.0;
         lazy_X.Adjoint_Apply(e);
     end
+
+end
+
+function sampler = fresh_breve_sampler( ...
+    md_hessian_analysis, z_prior_interface, post_data, ...
+    u_prior_interface, output_dim)
+
+    lazy_tol = 1.e-12;
+
+    sampler = MD_Breve_Beta_Sampler( ...
+        md_hessian_analysis, z_prior_interface, post_data, ...
+        u_prior_interface, output_dim, lazy_tol);
 
 end
