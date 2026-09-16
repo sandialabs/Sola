@@ -25,6 +25,12 @@ classdef MD_Scaled_u_Prior_Interface < MD_u_Prior_Interface
     %% Virtual functions for user implementation
     methods
 
+        % Apply W_u
+        function [u_out] = Apply_W_u_Acute(this, u_in)
+            u_out = [];
+            disp('MD_u_Prior_Interface::Apply_W_u must be implemented to use adaptive posterior continuation sampling');
+        end
+
         % Compute samples from a mean zero Gaussian with covariance \acute{W}_u^{-1}
         function [u_out] = Sample_with_Covariance_W_u_Acute_Inverse(this, num_samples)
             u_out = [];
@@ -60,6 +66,10 @@ classdef MD_Scaled_u_Prior_Interface < MD_u_Prior_Interface
 
         function [u_out] = Apply_W_u_Inverse(this, u_in)
             u_out = this.alpha_u * this.Apply_W_u_Acute_Inverse(u_in);
+        end
+
+        function [u_out] = Apply_W_u(this, u_in)
+            u_out = (1 / this.alpha_u) * this.Apply_W_u_Acute(u_in);
         end
 
         function [u_out] = Apply_W_u_Plus_scalar_M_u_Inverse(this, u_in, scalar)

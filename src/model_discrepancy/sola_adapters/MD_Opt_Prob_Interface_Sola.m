@@ -57,6 +57,20 @@ classdef MD_Opt_Prob_Interface_Sola < MD_Opt_Prob_Interface
             [val, grad_u, grad_z] = this.sola_opt.obj.J(u, z);
         end
 
+        function [z_out] = Apply_Solution_Operator_z_Hessian_Adjoint(this, z_in, u_adj, z)
+            if norm(z - this.z_current) ~= 0
+                [~, ~, this.hessian_data] = this.sola_opt.Jhat(z);
+                this.z_current = z;
+                this.u_current = this.hessian_data(1:this.m);
+            end
+            u = this.u_current;
+            u_z = this.Apply_Solution_Operator_z_Jacobian(z_in, z);
+            lambda = this.sola_opt.con.c_u_Transpose_Inverse_Apply(u_adj, u, z);
+            u_term = this.sola_opt.con.c_uu_Apply(u_z, u, z, lambda) + this.sola_opt.con.c_uz_Apply(z_in, u, z, lambda);
+            z_term = this.sola_opt.con.c_zu_Apply(u_z, u, z, lambda) + this.sola_opt.con.c_zz_Apply(z_in, u, z, lambda);
+            z_out = -(this.Apply_Solution_Operator_z_Jacobian_Transpose(u_term, z) + z_term);
+        end
+
     end
 
     %% Constructor and helper function

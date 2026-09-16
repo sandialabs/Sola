@@ -53,6 +53,10 @@ classdef MD_Update < handle
             Btheta_hat = Btheta_hat + this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(tmp, this.z_opt);
             Btheta_hat = sqrt(this.post_sampling.post_data.alpha_d) * Btheta_hat;
 
+            if isempty(this.post_sampling.post_data.Mz_z_breve)
+                error('MD_Update::Posterior_Update_Samples requires explicit breve samples. Recompute posterior data with sample_breve_vectors = true.');
+            end
+
             tmp1 = this.post_sampling.post_data.Zc' * this.post_sampling.post_data.Mz_z_breve;
             tmp2 = linsolve(this.post_sampling.post_data.Zc_Mz_Wz_inv_Mz_Zc, tmp1);
             tmp3 = this.post_sampling.post_data.Mz_Wz_inv_Mz_Zc * tmp2;

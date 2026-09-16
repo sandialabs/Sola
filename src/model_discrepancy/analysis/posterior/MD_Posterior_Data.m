@@ -34,6 +34,7 @@ classdef MD_Posterior_Data < handle
         u_breve
         z_breve
         Mz_z_breve
+        sample_breve_vectors
     end
 
     methods
@@ -42,9 +43,20 @@ classdef MD_Posterior_Data < handle
 
         end
 
-        function [] = Compute_Posterior_Data(this, data_interface, u_prior_interface, z_prior_interface, alpha_d_in, num_samples)
+        function [] = Compute_Posterior_Data(this, data_interface, u_prior_interface, z_prior_interface, alpha_d_in, num_samples, sample_breve_vectors)
+            arguments
+                this
+                data_interface MD_Data_Interface
+                u_prior_interface MD_u_Prior_Interface
+                z_prior_interface MD_z_Prior_Interface
+                alpha_d_in (1, 1) {mustBeNumeric}
+                num_samples (1, 1) {mustBeNumeric}
+                sample_breve_vectors (1, 1) logical = true
+            end
+
             this.alpha_d = alpha_d_in;
             this.num_samples = num_samples;
+            this.sample_breve_vectors = sample_breve_vectors;
             this.Z = data_interface.Z;
             this.D = data_interface.D;
             this.N = size(this.D, 2);
@@ -96,10 +108,15 @@ classdef MD_Posterior_Data < handle
                     this.ui_hat{i} = (1 / sqrt(this.alpha_d)) * u_prior_interface.Sample_with_Covariance_W_u_Plus_scalar_M_u_Inverse(this.num_samples, this.Mu(i, i) / this.alpha_d);
                 end
 
-                this.u_breve = u_prior_interface.Sample_with_Covariance_W_u_Inverse(this.num_samples);
-
-                this.z_breve = z_prior_interface.Sample_with_Covariance_W_z_Inverse(this.num_samples);
-                this.Mz_z_breve = z_prior_interface.Apply_M_z(this.z_breve);
+                if this.sample_breve_vectors
+                    this.u_breve = u_prior_interface.Sample_with_Covariance_W_u_Inverse(this.num_samples);
+                    this.z_breve = z_prior_interface.Sample_with_Covariance_W_z_Inverse(this.num_samples);
+                    this.Mz_z_breve = z_prior_interface.Apply_M_z(this.z_breve);
+                else
+                    this.u_breve = [];
+                    this.z_breve = [];
+                    this.Mz_z_breve = [];
+                end
 
             end
 

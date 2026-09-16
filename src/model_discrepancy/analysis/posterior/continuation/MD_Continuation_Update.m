@@ -13,15 +13,17 @@ classdef MD_Continuation_Update < handle
         z_opt
         num_continuation_steps
         r
+        discard_cache
     end
 
     methods
 
-        function this = MD_Continuation_Update(post_sampling, hessian_analysis, num_continuation_steps)
+        function this = MD_Continuation_Update(post_sampling, hessian_analysis, num_continuation_steps, discard_cache)
             arguments
                 post_sampling MD_Posterior_Sampling
                 hessian_analysis MD_Hessian_Analysis
                 num_continuation_steps (1, 1) {mustBeNumeric}
+                discard_cache = true
             end
             this.post_sampling = post_sampling;
             this.hessian_analysis = hessian_analysis;
@@ -34,6 +36,7 @@ classdef MD_Continuation_Update < handle
                 this.r = length(hessian_analysis.evals);
             end
             this.num_continuation_steps = num_continuation_steps;
+            this.discard_cache = discard_cache;
         end
 
         % ------------------------------------------------------------
@@ -67,7 +70,7 @@ classdef MD_Continuation_Update < handle
             % NOTE: All continuation classes prefixed with `MD_` update the latent variable beta, 
             % although denoted by parent classes as z. This is not to be confused with the solution
             % space optimization variable z in model discrepancy calibration.
-            sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis);
+            sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis, this.discard_cache);
             qn_prec = MD_Quasi_Newton_Preconditioner(this.hessian_analysis);
             beta_nom = zeros(this.r, 1);
             pt_cont = Pseudo_Time_Continuation(beta_nom, sen_op, qn_prec);
@@ -85,21 +88,38 @@ classdef MD_Continuation_Update < handle
         % ------------------------------------------------------------
 
         function [val, grad] = Parameterized_RS_Objective_beta(this, beta, sample_idx)
+            beta = beta(:);
+            sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis, this.discard_cache);
+            disc_ops = sen_op.Get_Continuation_Beta_Discrepancy_Ops(sample_idx);
             z = this.z_opt + this.hessian_analysis.Apply_V(beta);
-            [val, grad_z] = this.Parameterized_RS_Objective(z, sample_idx);
-            grad = this.hessian_analysis.Apply_V_Transpose(grad_z);
+            u = this.opt_prob_interface.State_Solve(z);
+            delta = disc_ops.Eval(beta, 1.0);
+
+            [val, grad_u, grad_z] = this.opt_prob_interface.Objective_Function(u + delta, z);
+            beta_grad_z = this.hessian_analysis.Apply_V_Transpose(grad_z);
+            z_S_adj = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(grad_u, z);
+            beta_grad_S = this.hessian_analysis.Apply_V_Transpose(z_S_adj);
+            beta_grad_D = disc_ops.Apply_Beta_Jacobian_Transpose(grad_u, 1.0);
+            grad = beta_grad_z + beta_grad_S + beta_grad_D;
+
         end
 
         function [val, grad] = Parameterized_RS_Objective(this, z, sample_idx)
-            sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis);
-            disc_ops = sen_op.Get_Discrepancy_Ops(sample_idx);
+
+            assert(sample_idx == 0, ...
+                ['Parameterized_RS_Objective is only valid for the mean discrepancy. ', ...
+                'For posterior samples, use Parameterized_RS_Objective_beta.']);
+
+            sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis, this.discard_cache);
+
             u = this.opt_prob_interface.State_Solve(z);
-            delta = disc_ops.Eval(z, 1);
+            delta = sen_op.Discrepancy_Evaluation_Mean(z);
 
             [val, grad_u, grad_z] = this.opt_prob_interface.Objective_Function(u + delta, z);
-            z_tmp1 = disc_ops.Apply_z_Jacobian_Transpose(grad_u, z, 1);
+            z_tmp1 = sen_op.Apply_Discrepancy_z_Jacobian_Transpose_Mean(grad_u);
             z_tmp2 = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(grad_u, z);
             grad = grad_z + z_tmp1 + z_tmp2;
+
         end
 
     end

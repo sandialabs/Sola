@@ -51,6 +51,12 @@ classdef MD_Elliptic_u_Prior_Interface < MD_Scaled_u_Prior_Interface
         function [u_out] = Apply_W_u_Acute_Inverse(this, u_in)
             u_out = this.sing_vecs_output * diag(this.sing_vals.^2) * this.sing_vecs_output' * u_in;
         end
+        
+        function [u_out] = Apply_W_u_Acute(this, u_in)
+            M_u_in = this.Apply_M_u(u_in);
+            u_out = this.sing_vecs_output * diag(1 ./ this.sing_vals.^2) * this.sing_vecs_output' * M_u_in;
+            u_out = this.Apply_M_u(u_out);
+        end
 
         function [u_out] = Sample_with_Covariance_W_u_Acute_Inverse(this, num_samples)
             r = length(this.sing_vals);

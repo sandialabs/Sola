@@ -38,15 +38,14 @@ md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversa
 num_continuation_steps = 3;
 md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
 [u_cont, z_cont, beta_cont] = md_cont_update.Posterior_Update_Mean();
-% [u_ks, z_ks, beta_ks] = md_cont_update.Posterior_Update_Samples();
+[u_ks, z_ks, beta_ks] = md_cont_update.Posterior_Update_Samples();
 u_k = u_cont(:, end);
 z_k = z_cont(:, end);
 beta_k = beta_cont(:, end);
 disp(norm(z_cont(:, end)));
 
 save('Sabl_output.mat', 'u_k', 'z_k', 'beta_k');
-save('reference_solution.mat', 'u_cont', 'z_cont', 'beta_cont');
-%  'u_ks', 'z_ks', 'beta_ks'
+save('reference_solution.mat', 'u_cont', 'z_cont', 'beta_cont', 'u_ks', 'z_ks', 'beta_ks');
 
 % ------------------------------------------------------------
 % Printers
@@ -83,3 +82,14 @@ fprintf('J_HF at exact HF optimum:           %g\n', J_hf_at_hf_opt);
 fprintf('\nHF improvement factor:              %g%%\n', 100.0 * (1.0 - J_hf_at_updated / J_hf_at_lf_opt));
 fprintf('\n||z_LF_opt - z_HF_opt||:            %g\n', norm(z_lf_opt - z_hf_opt));
 fprintf('||z_updated - z_HF_opt||:           %g\n', norm(z_cont(:, end) - z_hf_opt));
+
+
+% Plot samples
+figure;
+plot(z_lf_opt, "b-", "LineWidth", 1, "DisplayName", "LoFi")
+hold on;
+plot(z_hf_opt, "g-", "LineWidth", 1, "DisplayName", "HiFi")
+plot(z_ks, "Color", [0.5 0.5 0.5], "LineWidth", 1, "HandleVisibility", "off")
+plot(z_cont, "r-", "LineWidth", 1, "DisplayName", "Post-Mean")
+legend("Location", "northeastoutside");
+hold off;

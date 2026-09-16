@@ -39,6 +39,10 @@ classdef MD_Lumped_Mass_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             u_out = this.Apply_E_u_Inverse(tmp2);
         end
 
+        function [u_out] = Apply_W_u_Acute(this, u_in)
+            u_out = this.W_u_acute * u_in;
+        end
+
         function [u_out] = Sample_with_Covariance_W_u_Acute_Inverse(this, num_samples)
             omega = randn(this.n_u, num_samples);
             vec = diag(sqrt(this.M_lumped_diag)) * omega;
