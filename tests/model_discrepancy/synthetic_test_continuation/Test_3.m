@@ -2,9 +2,13 @@ clear;
 close all;
 rng(121235);
 
-fprintf('\n============================================================\n');
-fprintf('Running model_discrepancy/synthetic_test_continuation Test 3\n');
-fprintf('============================================================\n\n');
+verbose = false;
+
+if verbose
+    fprintf('\n============================================================\n');
+    fprintf('Running model_discrepancy/synthetic_test_continuation Test 3\n');
+    fprintf('============================================================\n\n');
+end
 
 %% Problem setup
 
@@ -53,10 +57,12 @@ else
     r = length(md_hessian_analysis.evals);
 end
 
-fprintf('Problem dimensions:\n');
-fprintf('  m                 = %d\n', m);
-fprintf('  reduced dim r     = %d\n', r);
-fprintf('  posterior samples = %d\n\n', num_post_samples);
+if verbose
+    fprintf('Problem dimensions:\n');
+    fprintf('  m                 = %d\n', m);
+    fprintf('  reduced dim r     = %d\n', r);
+    fprintf('  posterior samples = %d\n\n', num_post_samples);
+end
 
 %% Construct continuation sensitivity operator
 
@@ -86,7 +92,9 @@ test_tols = [];
 
 %% Lazy matrix-normal sampler validation
 
-fprintf('Running lazy matrix-normal sampler validation tests...\n\n');
+if verbose
+    fprintf('Running lazy matrix-normal sampler validation tests...\n\n');
+end
 
 sampler_fwd_persist = fresh_breve_sampler(md_hessian_analysis, z_prior_interface, md_post_sampling.post_data,u_prior_interface, m);
 
@@ -238,9 +246,11 @@ fully_explore_breve_sampler(sampler);
 
 [kl, kr] = sampler.lazy_X.Basis_Dimensions();
 
-fprintf('Fully explored sample %d lazy breve sampler:\n', sample_idx);
-fprintf('  left basis dim  = %d\n', kl);
-fprintf('  right basis dim = %d\n\n', kr);
+if verbose
+    fprintf('Fully explored sample %d lazy breve sampler:\n', sample_idx);
+    fprintf('  left basis dim  = %d\n', kl);
+    fprintf('  right basis dim = %d\n\n', kr);
+end
 
 %% Breve sampler orthonormality and adjoint consistency
 
@@ -418,8 +428,10 @@ test_tols(end+1) = 0.0;
 
 %% Report results
 
-fprintf('\nTest results:\n');
-fprintf('------------------------------------------------------------\n');
+if verbose
+    fprintf('\nTest results:\n');
+    fprintf('------------------------------------------------------------\n');
+end
 
 all_passed = true;
 
@@ -433,10 +445,14 @@ for j = 1:length(test_names)
         all_passed = false;
     end
 
-    fprintf('%-65s  err = %.4e   tol = %.4e   %s\n',  test_names{j}, test_errs(j), test_tols(j), status);
+    if verbose
+        fprintf('%-65s  err = %.4e   tol = %.4e   %s\n',  test_names{j}, test_errs(j), test_tols(j), status);
+    end
 end
 
-fprintf('------------------------------------------------------------\n');
+if verbose
+    fprintf('------------------------------------------------------------\n');
+end
 
 if all_passed
     fprintf(1, '\nmodel_discrepancy/synthetic_test_continuation 3 passed.\n\n');

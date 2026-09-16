@@ -53,6 +53,12 @@ classdef MD_Bilaplacian_u_Prior_Interface < MD_Scaled_u_Prior_Interface
             this.W_u_Acute_Plus_scalar_M_u_Inverse_iters = [this.W_u_Acute_Plus_scalar_M_u_Inverse_iters; iter];
         end
 
+        function [u_out] = Apply_W_u_Acute(this, u_in)
+            tmp1 = this.E_u * u_in;
+            tmp2 = this.Apply_M_u_Inverse(tmp1);
+            u_out = this.E_u' * tmp2;
+        end
+
         function [u_out] = Apply_W_u_Acute_Inverse(this, u_in)
             tmp1 = this.Apply_E_u_Inverse_Transpose(u_in);
             tmp2 = this.Apply_M_u(tmp1);
@@ -155,12 +161,6 @@ classdef MD_Bilaplacian_u_Prior_Interface < MD_Scaled_u_Prior_Interface
         function [u_out] = Apply_E_u_Inverse_Transpose(this, u_in)
             tmp1 = this.R_u' \ u_in;
             u_out = this.R_u \ tmp1;
-        end
-
-        function [u_out] = Apply_W_u_Acute(this, u_in)
-            tmp1 = this.E_u * u_in;
-            tmp2 = this.Apply_M_u_Inverse(tmp1);
-            u_out = this.E_u' * tmp2;
         end
 
     end
