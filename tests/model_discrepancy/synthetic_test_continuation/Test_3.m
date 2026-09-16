@@ -1,36 +1,3 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%      Sola - Sandbox for Outer Loop Analysis         %%%%%%%%%
-%%%%%%%%% Questions? Contact Joseph Hart (joshart@sandia.gov) %%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%
-% Test_3.m
-%
-% Tests posterior continuation sampling with the adaptive beta-space breve
-% sampler.
-%
-% This test verifies:
-%
-%   1. Synthetic u prior supports Apply_W_u.
-%   2. Sigma_beta symmetry, PSD-ness, and factorization accuracy.
-%   3. Lazy breve sampler weighted orthonormality after full exploration.
-%   4. Lazy breve sampler adjoint consistency after full exploration.
-%   5. Full beta-space sample discrepancy Jacobian finite-difference check.
-%   6. Full beta-space sample discrepancy adjoint check.
-%   7. Sample continuation gradient finite-difference check.
-%   8. Sample continuation Hessian finite-difference check.
-%   9. Sample continuation Hessian symmetry check.
-%  10. Sample continuation mixed derivative Apply_B finite-difference check.
-%  11. End-to-end posterior sample continuation finite-output check.
-%
-% Important:
-%
-%   The lazy sampler may enrich its internal basis during either a forward
-%   apply or an adjoint apply. Therefore, adjoint and finite-difference
-%   comparisons must be made after the relevant lazy sample has been
-%   stabilized. For this small synthetic test, we fully explore the lazy
-%   breve sampler before doing derivative checks.
-
 clear;
 close all;
 rng(121235);
@@ -49,7 +16,6 @@ data_interface.Load_Data();
 u_prior_interface = MD_u_Prior_Interface_synthetic_test_continuation(m);
 z_prior_interface = MD_z_Prior_Interface_synthetic_test_continuation(m);
 
-% The adaptive lazy matrix-normal sampler requires Apply_W_u.
 try
     wu_test_in = randn(m, 2);
     wu_test_out = u_prior_interface.Apply_W_u(wu_test_in);
@@ -66,8 +32,7 @@ catch ME
     rethrow(ME);
 end
 
-md_post_sampling = MD_Posterior_Sampling( ...
-    data_interface, u_prior_interface, z_prior_interface);
+md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 
 alpha_d = 1.e-5;
 num_post_samples = 5;
@@ -75,14 +40,12 @@ md_post_sampling.Compute_Posterior_Data(alpha_d, num_post_samples, false);
 
 opt_prob_interface = MD_Opt_Prob_Interface_synthetic_test_continuation(m);
 
-md_hessian_analysis = MD_Hessian_Analysis( ...
-    opt_prob_interface, z_prior_interface);
+md_hessian_analysis = MD_Hessian_Analysis(opt_prob_interface, z_prior_interface);
 
 num_evals = 10;
 oversampling = 10;
 
-md_hessian_analysis.Compute_Hessian_GEVP( ...
-    data_interface.z_opt, num_evals, oversampling);
+md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
 
 if isempty(md_hessian_analysis.evals)
     r = length(data_interface.z_opt);
@@ -97,8 +60,7 @@ fprintf('  posterior samples = %d\n\n', num_post_samples);
 
 %% Construct continuation sensitivity operator
 
-sen_op = MD_Continuation_Sensitivity_Operators( ...
-    md_post_sampling, md_hessian_analysis);
+sen_op = MD_Continuation_Sensitivity_Operators(md_post_sampling, md_hessian_analysis);
 
 sample_idx = 1;
 t0 = 0.50;
@@ -122,35 +84,17 @@ test_names = {};
 test_errs = [];
 test_tols = [];
 
-%% Test 2: Lazy matrix-normal sampler persistence and distribution checks
+%% Lazy matrix-normal sampler validation
 
 fprintf('Running lazy matrix-normal sampler validation tests...\n\n');
 
-% -------------------------------------------------------------------------
-% Test 2a: Forward result must persist after adjoint enrichment
-%
-% This catches an important consistency bug:
-%
-%   If y0 = X*v has already been realized, then later calls to X'*u must not
-%   alter the previously realized value of X*v.
-%
-% With the incorrect implementation
-%
-%   Append_Left_Basis(q_new, randn(1, size(K,2)))
-%
-% inside Adjoint_Apply, this test should generally fail.
-% -------------------------------------------------------------------------
-
-sampler_fwd_persist = fresh_breve_sampler( ...
-    md_hessian_analysis, z_prior_interface, md_post_sampling.post_data, ...
-    u_prior_interface, m);
+sampler_fwd_persist = fresh_breve_sampler(md_hessian_analysis, z_prior_interface, md_post_sampling.post_data,u_prior_interface, m);
 
 v_persist = randn(r, 1);
 u_enrich = randn(m, 1);
 
 y_before = sampler_fwd_persist.Eval(v_persist);
 
-% This call will usually enrich the left basis.
 sampler_fwd_persist.Apply_Jacobian_Transpose(u_enrich);
 
 y_after = sampler_fwd_persist.Eval(v_persist);
@@ -161,24 +105,13 @@ test_names{end+1} = 'Lazy sampler forward persistence after adjoint enrichment';
 test_errs(end+1) = forward_persistence_err;
 test_tols(end+1) = 1.e-11;
 
-
-% -------------------------------------------------------------------------
-% Test 2b: Adjoint result must persist after forward enrichment
-%
-% If z0 = X'*u has already been realized, then later calls to X*v must not
-% alter the previously realized value of X'*u.
-% -------------------------------------------------------------------------
-
-sampler_adj_persist = fresh_breve_sampler( ...
-    md_hessian_analysis, z_prior_interface, md_post_sampling.post_data, ...
-    u_prior_interface, m);
+sampler_adj_persist = fresh_breve_sampler(md_hessian_analysis, z_prior_interface, md_post_sampling.post_data,u_prior_interface, m);
 
 u_persist = randn(m, 1);
 v_enrich = randn(r, 1);
 
 z_before = sampler_adj_persist.Apply_Jacobian_Transpose(u_persist);
 
-% This call will usually enrich the right basis.
 sampler_adj_persist.Eval(v_enrich);
 
 z_after = sampler_adj_persist.Apply_Jacobian_Transpose(u_persist);
@@ -189,17 +122,7 @@ test_names{end+1} = 'Lazy sampler adjoint persistence after forward enrichment';
 test_errs(end+1) = adjoint_persistence_err;
 test_tols(end+1) = 1.e-11;
 
-
-% -------------------------------------------------------------------------
-% Test 2c: Interleaved repeated-query persistence
-%
-% Repeated calls to the same forward and adjoint queries should return the
-% same values even after several interleaved enrichments.
-% -------------------------------------------------------------------------
-
-sampler_interleave = fresh_breve_sampler( ...
-    md_hessian_analysis, z_prior_interface, md_post_sampling.post_data, ...
-    u_prior_interface, m);
+sampler_interleave = fresh_breve_sampler(md_hessian_analysis, z_prior_interface, md_post_sampling.post_data,u_prior_interface, m);
 
 v0_interleave = randn(r, 1);
 u0_interleave = randn(m, 1);
@@ -216,11 +139,9 @@ end
 y1_interleave = sampler_interleave.Eval(v0_interleave);
 z1_interleave = sampler_interleave.Apply_Jacobian_Transpose(u0_interleave);
 
-interleave_forward_err = norm(y1_interleave - y0_interleave) / ...
-    max(1, norm(y0_interleave));
+interleave_forward_err = norm(y1_interleave - y0_interleave) / max(1, norm(y0_interleave));
 
-interleave_adjoint_err = norm(z1_interleave - z0_interleave) / ...
-    max(1, norm(z0_interleave));
+interleave_adjoint_err = norm(z1_interleave - z0_interleave) / max(1, norm(z0_interleave));
 
 test_names{end+1} = 'Lazy sampler interleaved forward repeatability';
 test_errs(end+1) = interleave_forward_err;
@@ -230,24 +151,7 @@ test_names{end+1} = 'Lazy sampler interleaved adjoint repeatability';
 test_errs(end+1) = interleave_adjoint_err;
 test_tols(end+1) = 1.e-11;
 
-
-% -------------------------------------------------------------------------
-% Test 2d: After full exploration, lazy applies agree with reconstructed X
-%
-% With the revealed-action cache
-%
-%   Y = X * Q_r,
-%
-% and Q_r' * Sigma_beta * Q_r = I, the represented Euclidean matrix is
-%
-%   X_cache = Y * Q_r' * Sigma_beta.
-%
-% This avoids relying on an Explicit_Matrix method.
-% -------------------------------------------------------------------------
-
-sampler_explicit = fresh_breve_sampler( ...
-    md_hessian_analysis, z_prior_interface, md_post_sampling.post_data, ...
-    u_prior_interface, m);
+sampler_explicit = fresh_breve_sampler(md_hessian_analysis, z_prior_interface, md_post_sampling.post_data,u_prior_interface, m);
 
 fully_explore_breve_sampler(sampler_explicit);
 
@@ -262,11 +166,9 @@ explicit_forward = X_cache * v_explicit;
 lazy_adjoint = sampler_explicit.Apply_Jacobian_Transpose(u_explicit);
 explicit_adjoint = X_cache' * u_explicit;
 
-explicit_forward_err = norm(lazy_forward - explicit_forward) / ...
-    max(1, norm(explicit_forward));
+explicit_forward_err = norm(lazy_forward - explicit_forward) / max(1, norm(explicit_forward));
 
-explicit_adjoint_err = norm(lazy_adjoint - explicit_adjoint) / ...
-    max(1, norm(explicit_adjoint));
+explicit_adjoint_err = norm(lazy_adjoint - explicit_adjoint) / max(1, norm(explicit_adjoint));
 
 test_names{end+1} = 'Lazy sampler reconstructed-matrix forward consistency';
 test_errs(end+1) = explicit_forward_err;
@@ -275,23 +177,6 @@ test_tols(end+1) = 1.e-09;
 test_names{end+1} = 'Lazy sampler reconstructed-matrix adjoint consistency';
 test_errs(end+1) = explicit_adjoint_err;
 test_tols(end+1) = 1.e-09;
-
-
-% -------------------------------------------------------------------------
-% Test 2e: Empirical scalar-functional moment check
-%
-% For X ~ MN(0, W_u^{-1}, Sigma_beta), scalar functionals
-%
-%   phi_j = a_j' * X * b_j
-%
-% satisfy
-%
-%   Cov(phi_j, phi_k)
-%     = (a_j' W_u^{-1} a_k) * (b_j' Sigma_beta b_k).
-%
-% This is a stochastic test, so the tolerance is intentionally looser than
-% the deterministic consistency tests above.
-% -------------------------------------------------------------------------
 
 num_moment_samples = 400;
 num_functionals = 4;
@@ -303,16 +188,12 @@ phi_samples = zeros(num_moment_samples, num_functionals);
 
 for ss = 1:num_moment_samples
 
-    sampler_moment = fresh_breve_sampler( ...
-        md_hessian_analysis, z_prior_interface, md_post_sampling.post_data, ...
-        u_prior_interface, m);
+    sampler_moment = fresh_breve_sampler(md_hessian_analysis, z_prior_interface, md_post_sampling.post_data, u_prior_interface, m);
 
-    % Interleave calls to exercise both forward and adjoint paths.
     for jj = 1:num_functionals
         Xbj = sampler_moment.Eval(B_moment(:, jj));
         phi_samples(ss, jj) = A_moment(:, jj)' * Xbj;
 
-        % Additional adjoint call to force mixed enrichment.
         sampler_moment.Apply_Jacobian_Transpose(randn(m, 1));
     end
 
@@ -323,9 +204,7 @@ empirical_cov = cov(phi_samples, 1);
 
 predicted_cov = zeros(num_functionals, num_functionals);
 
-sigma_ref_sampler = fresh_breve_sampler( ...
-    md_hessian_analysis, z_prior_interface, md_post_sampling.post_data, ...
-    u_prior_interface, m);
+sigma_ref_sampler = fresh_breve_sampler(md_hessian_analysis, z_prior_interface, md_post_sampling.post_data, u_prior_interface, m);
 
 for jj = 1:num_functionals
     Wuinv_aj = u_prior_interface.Apply_W_u_Inverse(A_moment(:, jj));
@@ -341,8 +220,7 @@ end
 mean_scale = sqrt(max(1, trace(predicted_cov)));
 moment_mean_err = norm(empirical_mean) / mean_scale;
 
-moment_cov_err = norm(empirical_cov - predicted_cov, 'fro') / ...
-    max(1, norm(predicted_cov, 'fro'));
+moment_cov_err = norm(empirical_cov - predicted_cov, 'fro') / max(1, norm(predicted_cov, 'fro'));
 
 test_names{end+1} = 'Lazy sampler empirical scalar-functional mean';
 test_errs(end+1) = moment_mean_err;
@@ -352,7 +230,7 @@ test_names{end+1} = 'Lazy sampler empirical scalar-functional covariance';
 test_errs(end+1) = moment_cov_err;
 test_tols(end+1) = 3.5e-1;
 
-%% Test 2: Fully explore the breve sampler for stable derivative checks
+%% Fully explore the breve sampler before derivative checks
 
 sampler = sen_op.Get_Breve_Sampler(sample_idx);
 
@@ -364,7 +242,7 @@ fprintf('Fully explored sample %d lazy breve sampler:\n', sample_idx);
 fprintf('  left basis dim  = %d\n', kl);
 fprintf('  right basis dim = %d\n\n', kr);
 
-%% Test 3: Breve sampler weighted orthonormality and adjoint consistency
+%% Breve sampler orthonormality and adjoint consistency
 
 lazy_X = sampler.lazy_X;
 
@@ -372,30 +250,25 @@ if isempty(lazy_X.Q_l)
     err_left_orth = 0.0;
 else
     WQl = u_prior_interface.Apply_W_u(lazy_X.Q_l);
-    err_left_orth = norm( ...
-        lazy_X.Q_l' * WQl - eye(size(lazy_X.Q_l, 2)), 'fro');
+    err_left_orth = norm(lazy_X.Q_l' * WQl - eye(size(lazy_X.Q_l, 2)), 'fro');
 end
 
 if isempty(lazy_X.Q_r)
     err_right_orth = 0.0;
 else
-    err_right_orth = norm( ...
-        lazy_X.Q_r' * lazy_X.Sigma_Q_r - eye(size(lazy_X.Q_r, 2)), 'fro');
+    err_right_orth = norm(lazy_X.Q_r' * lazy_X.Sigma_Q_r - eye(size(lazy_X.Q_r, 2)), 'fro');
 end
 
 beta_adj = randn(r, 1);
 u_adj = randn(m, 1);
 
-% Because the sampler is fully explored, neither call should enrich the
-% lazy state now.
 Xbeta = sampler.Eval(beta_adj);
 XTu = sampler.Apply_Jacobian_Transpose(u_adj);
 
 breve_left = Xbeta' * u_adj;
 breve_right = beta_adj' * XTu;
 
-breve_adj_err = abs(breve_left - breve_right) / ...
-    max([1, abs(breve_left), abs(breve_right)]);
+breve_adj_err = abs(breve_left - breve_right) / max([1, abs(breve_left), abs(breve_right)]);
 
 test_names{end+1} = 'Lazy breve sampler left weighted orthonormality';
 test_errs(end+1) = err_left_orth;
@@ -409,34 +282,26 @@ test_names{end+1} = 'Lazy breve sampler adjoint relative error';
 test_errs(end+1) = breve_adj_err;
 test_tols(end+1) = 1.e-10;
 
-% New revealed-action cache consistency check:
-%
-%   Q_l' * W_u * Y = T' * Q_r.
-%
-% This is the central invariant of the new lazy sampler.
-
 if isempty(lazy_X.Q_l) || isempty(lazy_X.Q_r)
     cache_consistency_err = 0.0;
 else
     left_cache = lazy_X.Q_l' * u_prior_interface.Apply_W_u(lazy_X.Y);
     right_cache = lazy_X.T' * lazy_X.Q_r;
 
-    cache_consistency_err = norm(left_cache - right_cache, 'fro') / ...
-        max(1, norm(right_cache, 'fro'));
+    cache_consistency_err = norm(left_cache - right_cache, 'fro') / max(1, norm(right_cache, 'fro'));
 end
 
 test_names{end+1} = 'Lazy sampler revealed-action cache consistency';
 test_errs(end+1) = cache_consistency_err;
 test_tols(end+1) = 1.e-09;
 
-%% Test 4: Full beta-space sample discrepancy Jacobian finite difference
+%% Full beta-space sample discrepancy Jacobian finite difference
 
 eps_fd_disc = 1.e-5;
 
 D0 = sen_op.Discrepancy_Evaluation_Sample_Beta(beta, sample_idx);
 
-D1 = sen_op.Discrepancy_Evaluation_Sample_Beta( ...
-    beta + eps_fd_disc * v, sample_idx);
+D1 = sen_op.Discrepancy_Evaluation_Sample_Beta(beta + eps_fd_disc * v, sample_idx);
 
 fd_D = (D1 - D0) / eps_fd_disc;
 
@@ -448,7 +313,7 @@ test_names{end+1} = 'Full beta sample discrepancy Jacobian FD relative error';
 test_errs(end+1) = disc_jac_fd_err;
 test_tols(end+1) = 1.e-5;
 
-%% Test 5: Full beta-space sample discrepancy adjoint consistency
+%% Full beta-space sample discrepancy adjoint consistency
 
 Dv = sen_op.Apply_Discrepancy_Beta_Jacobian_Sample(v, sample_idx);
 DTu = sen_op.Apply_Discrepancy_Beta_Jacobian_Transpose_Sample(u_test, sample_idx);
@@ -456,23 +321,19 @@ DTu = sen_op.Apply_Discrepancy_Beta_Jacobian_Transpose_Sample(u_test, sample_idx
 disc_left = Dv' * u_test;
 disc_right = v' * DTu;
 
-disc_adj_err = abs(disc_left - disc_right) / ...
-    max([1, abs(disc_left), abs(disc_right)]);
+disc_adj_err = abs(disc_left - disc_right) / max([1, abs(disc_left), abs(disc_right)]);
 
 test_names{end+1} = 'Full beta sample discrepancy adjoint relative error';
 test_errs(end+1) = disc_adj_err;
 test_tols(end+1) = 1.e-10;
 
-%% Test 6: Sample continuation gradient finite difference
+%% Sample continuation gradient finite difference
 
 eps_fd_grad = 1.e-6;
 
-% The lazy sampler is fully explored, so value and gradient evaluations use
-% the same fixed posterior sample.
 [g0, val0] = sen_op.Gradient(beta, theta_traj, time_index);
 
-[~, val1] = sen_op.Gradient( ...
-    beta + eps_fd_grad * v, theta_traj, time_index);
+[~, val1] = sen_op.Gradient(beta + eps_fd_grad * v, theta_traj, time_index);
 
 fd_grad = (val1 - val0) / eps_fd_grad;
 dir_grad = g0' * v;
@@ -483,14 +344,13 @@ test_names{end+1} = 'Sample continuation gradient FD relative error';
 test_errs(end+1) = grad_fd_err;
 test_tols(end+1) = 5.e-4;
 
-%% Test 7: Sample continuation Hessian finite difference
+%% Sample continuation Hessian finite difference
 
 eps_fd_hess = 1.e-6;
 
 [g0, ~] = sen_op.Gradient(beta, theta_traj, time_index);
 
-[g1, ~] = sen_op.Gradient( ...
-    beta + eps_fd_hess * v, theta_traj, time_index);
+[g1, ~] = sen_op.Gradient(beta + eps_fd_hess * v, theta_traj, time_index);
 
 fd_Hv = (g1 - g0) / eps_fd_hess;
 
@@ -502,7 +362,7 @@ test_names{end+1} = 'Sample continuation Hessian FD relative error';
 test_errs(end+1) = hess_fd_err;
 test_tols(end+1) = 5.e-3;
 
-%% Test 8: Sample continuation Hessian symmetry
+%% Sample continuation Hessian symmetry
 
 Hv = sen_op.Apply_Hessian(v, beta, theta_traj, time_index);
 Hw = sen_op.Apply_Hessian(w, beta, theta_traj, time_index);
@@ -510,14 +370,13 @@ Hw = sen_op.Apply_Hessian(w, beta, theta_traj, time_index);
 hess_left = v' * Hw;
 hess_right = w' * Hv;
 
-hess_sym_err = abs(hess_left - hess_right) / ...
-    max([1, abs(hess_left), abs(hess_right)]);
+hess_sym_err = abs(hess_left - hess_right) / max([1, abs(hess_left), abs(hess_right)]);
 
 test_names{end+1} = 'Sample continuation Hessian symmetry relative error';
 test_errs(end+1) = hess_sym_err;
 test_tols(end+1) = 1.e-7;
 
-%% Test 9: Sample continuation mixed derivative Apply_B finite difference
+%% Sample continuation mixed derivative Apply_B finite difference
 
 eps_fd_B = 1.e-6;
 
@@ -537,18 +396,15 @@ test_names{end+1} = 'Sample continuation Apply_B FD relative error';
 test_errs(end+1) = B_fd_err;
 test_tols(end+1) = 5.e-4;
 
-%% Test 10: End-to-end posterior sample continuation finite-output check
+%% End-to-end posterior sample continuation finite-output check
 
 num_continuation_steps = 2;
 
-md_cont_update = MD_Continuation_Update( ...
-    md_post_sampling, md_hessian_analysis, num_continuation_steps);
+md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
 
 [u_ks, z_ks, beta_ks] = md_cont_update.Posterior_Update_Samples();
 
-finite_ok = all(isfinite(u_ks(:))) && ...
-            all(isfinite(z_ks(:))) && ...
-            all(isfinite(beta_ks(:)));
+finite_ok = all(isfinite(u_ks(:))) && all(isfinite(z_ks(:))) && all(isfinite(beta_ks(:)));
 
 if finite_ok
     finite_err = 0.0;
@@ -577,8 +433,7 @@ for j = 1:length(test_names)
         all_passed = false;
     end
 
-    fprintf('%-65s  err = %.4e   tol = %.4e   %s\n', ...
-        test_names{j}, test_errs(j), test_tols(j), status);
+    fprintf('%-65s  err = %.4e   tol = %.4e   %s\n',  test_names{j}, test_errs(j), test_tols(j), status);
 end
 
 fprintf('------------------------------------------------------------\n');
@@ -605,16 +460,12 @@ function fully_explore_breve_sampler(sampler)
     input_dim = lazy_X.input_dim;
     output_dim = lazy_X.output_dim;
 
-    % Explore all input directions. If Sigma_beta is rank-deficient,
-    % directions in its nullspace will not generate new basis vectors,
-    % which is the correct behavior.
     for j = 1:input_dim
         e = zeros(input_dim, 1);
         e(j) = 1.0;
         lazy_X.Forward_Apply(e);
     end
 
-    % Explore all output directions in the W_u geometry.
     for i = 1:output_dim
         e = zeros(output_dim, 1);
         e(i) = 1.0;
@@ -623,15 +474,11 @@ function fully_explore_breve_sampler(sampler)
 
 end
 
-function sampler = fresh_breve_sampler( ...
-    md_hessian_analysis, z_prior_interface, post_data, ...
-    u_prior_interface, output_dim)
+function sampler = fresh_breve_sampler(md_hessian_analysis, z_prior_interface, post_data, u_prior_interface, output_dim)
 
     lazy_tol = 1.e-12;
 
-    sampler = MD_Breve_Beta_Sampler( ...
-        md_hessian_analysis, z_prior_interface, post_data, ...
-        u_prior_interface, output_dim, lazy_tol);
+    sampler = MD_Breve_Beta_Sampler(md_hessian_analysis, z_prior_interface, post_data, u_prior_interface, output_dim, lazy_tol);
 
 end
 
@@ -654,13 +501,6 @@ function X_cache = explicit_matrix_from_lazy_sampler(sampler)
         return;
     end
 
-    % Since Q_r' * Sigma_beta * Q_r = I and Y = X * Q_r,
-    % the represented Euclidean matrix is
-    %
-    %   X = Y * Q_r' * Sigma_beta.
-    %
-    % This also handles singular Sigma_beta correctly on the represented
-    % covariance range.
     X_cache = lazy_X.Y * (lazy_X.Q_r' * Sigma_beta);
 
 end

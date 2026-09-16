@@ -45,8 +45,7 @@ beta_k = beta_cont(:, end);
 disp(norm(z_cont(:, end)));
 
 save('Sabl_output.mat', 'u_k', 'z_k', 'beta_k');
-save('reference_solution.mat', 'u_cont', 'z_cont', 'beta_cont');
-%  'u_ks', 'z_ks', 'beta_ks'
+save('reference_solution.mat', 'u_cont', 'z_cont', 'beta_cont', 'u_ks', 'z_ks', 'beta_ks');
 
 % ------------------------------------------------------------
 % Printers
@@ -89,6 +88,7 @@ fprintf('||z_updated - z_HF_opt||:           %g\n', norm(z_cont(:, end) - z_hf_o
 figure;
 plot(z_lf_opt, "b-", "LineWidth", 1, "DisplayName", "LoFi")
 hold on;
+plot(z_hf_opt, "g-", "LineWidth", 1, "DisplayName", "HiFi")
 plot(z_ks, "Color", [0.5 0.5 0.5], "LineWidth", 1, "HandleVisibility", "off")
 plot(z_cont, "r-", "LineWidth", 1, "DisplayName", "Post-Mean")
 legend("Location", "northeastoutside");

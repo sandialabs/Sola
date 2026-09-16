@@ -8,7 +8,7 @@ OED_Setup;
 data_interface.Set_Z_and_D(z_lofi, Evaluate_Discrepancy(con_hifi, con_lofi, z_lofi))
 
 % Posterior Sampling
-num_samples = 10;
+num_samples = 100;
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_samples, false);
 
