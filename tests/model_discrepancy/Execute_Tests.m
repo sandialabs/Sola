@@ -28,6 +28,7 @@ cd ..;
 cd synthetic_test_continuation/;
 Test_1;
 Test_2;
+Test_3;
 cd ..;
 
 cd synthetic_test_OED/;
