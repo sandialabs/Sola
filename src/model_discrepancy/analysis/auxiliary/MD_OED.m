@@ -16,6 +16,8 @@ classdef MD_OED < handle
         verbosity
 
         covar_coeff
+        use_matrix_free_u_trace
+        u_trace_num_probes
     end
 
     methods
@@ -35,10 +37,19 @@ classdef MD_OED < handle
             this.hessian_analysis = hessian_analysis;
             this.verbosity = false;
             this.covar_coeff = 1;
+            this.use_matrix_free_u_trace = false;
+            this.u_trace_num_probes = 32;
         end
 
         function Set_Covariance_Coefficient(this, covar_coeff)
             this.covar_coeff = covar_coeff;
+        end
+
+        function Use_Matrix_Free_u_Trace(this, num_probes)
+            this.use_matrix_free_u_trace = true;
+            if nargin == 2
+                this.u_trace_num_probes = num_probes;
+            end
         end
 
         function this = Offline_Computation(this)
@@ -68,7 +79,17 @@ classdef MD_OED < handle
             this.offline_data.Mz_Wz_inv_Mz_V = this.z_prior_interface.Apply_M_z(Wz_inv_Mz_V);
             this.offline_data.Vt_Mz_Wz_inv_Mz_V = Mz_V' * Wz_inv_Mz_V;
             this.offline_data.Vt_Mz_Wz_inv_Mz_V = 0.5 * (this.offline_data.Vt_Mz_Wz_inv_Mz_V + this.offline_data.Vt_Mz_Wz_inv_Mz_V');
-            this.offline_data.lambda = this.u_prior_interface.Get_W_u_Generalized_Eigenvalues();
+
+            if ~this.use_matrix_free_u_trace
+                this.offline_data.lambda = this.u_prior_interface.Get_W_u_Generalized_Eigenvalues();
+                if isempty(this.offline_data.lambda)
+                    this.Use_Matrix_Free_u_Trace();
+                end
+            end
+
+            if this.use_matrix_free_u_trace
+                this.offline_data.u_trace_probes = this.Generate_u_Trace_Probes();
+            end
 
         end
 
@@ -94,13 +115,14 @@ classdef MD_OED < handle
             N = length(beta) / this.offline_data.r + 1;
 
             [g, mu, Mg, g_jac, mu_jac, Mg_jac] = this.G_eigs(beta);
-            tr_Ws_Mu_Wu_inv = zeros(N, 1);
+            tau = zeros(N, 1);
+            tau_deriv = zeros(N, 1);
             y_P_y = zeros(N, 1);
             s = zeros(N, 1);
             p = zeros(N, 1);
 
             for i = 1:N
-                tr_Ws_Mu_Wu_inv(i) = sum(1 ./ (this.offline_data.lambda .* (mu(i) +  alpha_d * this.offline_data.lambda)));
+                [tau(i), tau_deriv(i)] = this.Evaluate_u_Trace(mu(i), alpha_d);
 
                 tmp = this.offline_data.Mz_Wz_inv_Mz_V * Mg(:, i);
                 y_P_y(i) = this.covar_coeff * (tmp' * this.z_prior_interface.Apply_W_z_Inverse(tmp));
@@ -111,17 +133,63 @@ classdef MD_OED < handle
             val = 0;
             grad = 0 * beta;
             for i = 1:N
-                val = val + p(i) * tr_Ws_Mu_Wu_inv(i);
+                val = val + p(i) * tau(i);
                 grad_si = sum(g_jac{i}, 1)' + Mg_jac{i}' * (this.offline_data.Vt_Mz_Wz_inv_Mz_V * beta_bar);
                 tmp = this.covar_coeff * this.offline_data.Mz_Wz_inv_Mz_V' * this.z_prior_interface.Apply_W_z_Inverse(this.offline_data.Mz_Wz_inv_Mz_V * Mg(:, i));
                 grad_yPyi = Mg_jac{i}' * (2 * tmp);
                 grad_pi = 2 * s(i) * grad_si + grad_yPyi;
-                grad = grad + grad_pi * tr_Ws_Mu_Wu_inv(i);
+                grad = grad + grad_pi * tau(i);
 
-                tmp = -sum(1 ./ (this.offline_data.lambda .* (mu(i) + alpha_d * this.offline_data.lambda).^2));
-                grad = grad + p(i) * trace(tmp) * mu_jac{i};
+                grad = grad + p(i) * tau_deriv(i) * mu_jac{i};
             end
 
+        end
+
+        function [tau, tau_deriv] = Evaluate_u_Trace(this, mu, alpha_d)
+            if this.use_matrix_free_u_trace
+                Omega = this.offline_data.u_trace_probes;
+                BOmega = this.Apply_B_mu(Omega, mu, alpha_d);
+                COmega = this.Apply_C_mu(Omega, mu, alpha_d);
+                tau = real(sum(sum(Omega .* BOmega)) / size(Omega, 2));
+                tau_deriv = real(-sum(sum(Omega .* COmega)) / size(Omega, 2));
+            else
+                lambda = this.offline_data.lambda;
+                tau = sum(1 ./ (lambda .* (mu + alpha_d * lambda)));
+                tau_deriv = -sum(1 ./ (lambda .* (mu + alpha_d * lambda).^2));
+            end
+        end
+
+        function [u_out] = Apply_A_mu_Inverse(this, u_in, mu, alpha_d)
+            u_out = (1 / alpha_d) * this.u_prior_interface.Apply_W_u_Plus_scalar_M_u_Inverse(u_in, mu / alpha_d);
+        end
+
+        function [u_out] = Apply_B_mu(this, u_in, mu, alpha_d)
+            q = this.Apply_A_mu_Inverse(u_in, mu, alpha_d);
+            u_out = this.u_prior_interface.Apply_M_u(this.u_prior_interface.Apply_W_u_Inverse(this.u_prior_interface.Apply_M_u(q)));
+        end
+
+        function [u_out] = Apply_C_mu(this, u_in, mu, alpha_d)
+            q1 = this.Apply_A_mu_Inverse(u_in, mu, alpha_d);
+            q2 = this.Apply_A_mu_Inverse(this.u_prior_interface.Apply_M_u(q1), mu, alpha_d);
+            u_out = this.u_prior_interface.Apply_M_u(this.u_prior_interface.Apply_W_u_Inverse(this.u_prior_interface.Apply_M_u(q2)));
+        end
+
+        function [probes] = Generate_u_Trace_Probes(this)
+            probes = 2 * (rand(this.Get_u_Dimension(), this.u_trace_num_probes) > 0.5) - 1;
+        end
+
+        function [n_u] = Get_u_Dimension(this)
+            if isprop(this.u_prior_interface, 'n_u') && ~isempty(this.u_prior_interface.n_u)
+                n_u = this.u_prior_interface.n_u;
+            elseif isprop(this.u_prior_interface, 'total_dofs') && ~isempty(this.u_prior_interface.total_dofs)
+                n_u = this.u_prior_interface.total_dofs;
+            elseif ~isempty(this.data_interface.u_opt)
+                n_u = length(this.data_interface.u_opt);
+            elseif ~isempty(this.data_interface.D)
+                n_u = size(this.data_interface.D, 1);
+            else
+                error('Unable to determine u dimension for matrix-free OED trace probes.');
+            end
         end
 
         function [g, mu, Mg, g_jac, mu_jac, Mg_jac] = G_eigs(this, beta)

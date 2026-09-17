@@ -33,6 +33,7 @@ md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversa
 M_z_norm = @(z) sqrt(z' * z_prior_interface.Apply_M_z(z));
 % Get the OED Setup ready
 md_oed = MD_OED(opt_prob_interface, data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
+% md_oed.Use_Matrix_Free_u_Trace();
 md_oed.Offline_Computation();
 
 %% Perform OED (Reduced iterations for regression test)

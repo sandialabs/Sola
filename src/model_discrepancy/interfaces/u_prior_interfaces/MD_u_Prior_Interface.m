@@ -44,7 +44,7 @@ classdef MD_u_Prior_Interface < handle
         % Compute offline OED quantities
         function [lambda_js] = Get_W_u_Generalized_Eigenvalues(this)
             lambda_js = [];
-            disp('MD_u_Prior_Interface::Get_W_u_Generalized_Eigenvalues must be implemented to use OED algorithms');
+            disp('MD_u_Prior_Interface::Get_W_u_Generalized_Eigenvalues must be implemented to use eigenvalue-based OED algorithms');
         end
 
     end
