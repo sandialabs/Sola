@@ -25,7 +25,7 @@ classdef MD_Elliptic_u_Prior_Interface_Subsurface < MD_Elliptic_u_Prior_Interfac
         end
 
         function this = MD_Elliptic_u_Prior_Interface_Subsurface(alpha_u, sola_opt)
-            % TODO: Update if needed
+            % Subsurface state-discrepancy prior uses the FE mass and stiffness matrices.
             this@MD_Elliptic_u_Prior_Interface(alpha_u);
 
             S = sola_opt.con.S;

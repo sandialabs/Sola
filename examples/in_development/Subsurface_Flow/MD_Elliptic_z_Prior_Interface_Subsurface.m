@@ -46,7 +46,7 @@ classdef MD_Elliptic_z_Prior_Interface_Subsurface < MD_Elliptic_z_Prior_Interfac
         end
 
         function this = MD_Elliptic_z_Prior_Interface_Subsurface(alpha_z, sola_opt)
-            % TODO: Update if needed
+            % Subsurface control prior uses the FE mass and stiffness matrices.
             this@MD_Elliptic_z_Prior_Interface(alpha_z);
 
             S = sola_opt.con.S;
