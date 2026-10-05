@@ -106,13 +106,53 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
 
             delta = this.current_disc_ops.Eval(beta, this.current_t);
 
-            u_tmp = this.current_disc_ops.Apply_Theta_Jacobian(beta);
+            u_tmp = this.current_disc_ops.Apply_Theta_Jacobian(beta); % this function
             u_tmp = this.opt_prob_interface.Apply_Misfit_Hessian(u_tmp, this.current_u + delta, this.current_z);
             z_tmp = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(u_tmp, this.current_z);
             beta_out = this.hessian_analysis.Apply_V_Transpose(z_tmp);
             beta_out = beta_out + this.current_disc_ops.Apply_Beta_Jacobian_Transpose(u_tmp, this.current_t);
             state_grad = this.opt_prob_interface.Misfit_Gradient(this.current_u + delta, this.current_z);
-            beta_out = beta_out + this.current_disc_ops.Apply_Beta_Theta_Hessian(state_grad); % This line blows up, resulting in a beta_out with norm 3.4e+04!
+            beta_out = beta_out + this.current_disc_ops.Apply_Beta_Theta_Hessian(state_grad); % and this function
+            % should be mapped to sample for hybrid approach; the rest of the quantities will be the same.
+
+        end
+
+        function [beta_out] = Apply_B_hybrid(this, beta, mean_theta_traj, time_index, sample_idx)
+            % Mixed (beta, theta) derivative for the hybrid sampler, i.e., B
+            % applied to the perturbation (theta_k - theta_bar).
+            %
+            % The linearization point is the continuation posterior mean
+            % (beta_bar, theta_bar), so mean_theta_traj must have sample index 0
+            % and time_index should correspond to t = 1. Along the direction
+            % theta_bar -> theta_k, the discrepancy is
+            %     delta(beta, s) = D_0(beta) + s * (D_k(beta) - D_0(beta)),
+            % so d/ds of grad_beta J at s = 0 gives
+            %     B_k = V' S_z' H_uu dD + (dD_0/dbeta)' H_uu dD + (d dD/dbeta)' g_u,
+            % with dD = D_k(beta) - D_0(beta), g_u the misfit state gradient and
+            % H_uu the misfit state Hessian, all at u = S(z) + t * D_0(beta).
+
+            beta = beta(:);
+            assert(mean_theta_traj.Get_Sample_Index() == 0, ...
+                'Apply_B_hybrid must be linearized about the mean (sample index 0).');
+            assert(sample_idx >= 1 && sample_idx <= this.post_data.num_samples, ...
+                'sample_idx must be an integer in [1, num_samples].');
+
+            this.State_Evaluation(beta, mean_theta_traj, time_index);
+            delta = this.current_disc_ops.Eval(beta, this.current_t);
+            u_eval = this.current_u + delta;
+
+            % Discrepancy perturbation dD = D_k(beta) - D_0(beta)
+            dD = this.Discrepancy_Evaluation_Sample_Beta(beta, sample_idx) - ...
+                this.Discrepancy_Evaluation_Mean(this.current_z);
+
+            u_tmp = this.opt_prob_interface.Apply_Misfit_Hessian(dD, u_eval, this.current_z);
+            z_tmp = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian_Transpose(u_tmp, this.current_z);
+            beta_out = this.hessian_analysis.Apply_V_Transpose(z_tmp);
+            beta_out = beta_out + this.current_disc_ops.Apply_Beta_Jacobian_Transpose(u_tmp, this.current_t);
+
+            state_grad = this.opt_prob_interface.Misfit_Gradient(u_eval, this.current_z);
+            beta_out = beta_out + this.Apply_Discrepancy_Beta_Jacobian_Transpose_Sample(state_grad, sample_idx) - ...
+                this.hessian_analysis.Apply_V_Transpose(this.Apply_Discrepancy_z_Jacobian_Transpose_Mean(state_grad));
 
         end
 
