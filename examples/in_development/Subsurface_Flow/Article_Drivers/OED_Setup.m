@@ -25,7 +25,12 @@ if ~isfile(results_file)
     results_file = fullfile(example_dir, 'Optimization_Results.mat');
 end
 load(results_file);
-clear Z D;
+if ~exist('Z', 'var') || ~exist('D', 'var')
+    error(['Optimization_Results.mat must contain discrepancy design data Z and D. ', ...
+           'Run examples/in_development/Subsurface_Flow/Driver_Opt.m again.']);
+end
+hyperparam_Z = Z;
+hyperparam_D = D;
 
 % Guard against silently using optimization data from the earlier weak-
 % discrepancy version of the example.
@@ -60,15 +65,31 @@ x = con_lofi.x;
 Jhat_lofi = opt_hifi.Jhat(z_lofi);
 Jhat_hifi = opt_hifi.Jhat(z_hifi);
 
-% Note this does not contain access to Z/D until set explicitly.
+% Data interface used for automated prior hyperparameter initialization.
+% Driver_Opt saves a small set of discrepancy evaluations; these are used here to
+% estimate correlation lengths, prior magnitudes, and the data-noise scale.
 data_interface = MD_Data_Interface_Subsurface(u_lofi, z_lofi);
+data_interface.Set_Z_and_D(hyperparam_Z, hyperparam_D);
 
-% Generate priors for pressure discrepancy and control updates
-alpha_u = 1;
-alpha_z = 1.e-3;
-alpha_d = (1.e-2)^2 * alpha_u;
-u_prior_interface = MD_Elliptic_u_Prior_Interface_Subsurface(alpha_u, opt_lofi);
-z_prior_interface = MD_Elliptic_z_Prior_Interface_Subsurface(alpha_z, opt_lofi);
+% Automatically determine discrepancy-prior hyperparameters from the saved
+% discrepancy data.  This replaces the old manually specified alpha_u,
+% alpha_z, and alpha_d values while using the common numeric Laplacian prior
+% infrastructure in src/model_discrepancy.
+u_hyperparam_interface = MD_u_Hyperparameter_Interface_Subsurface(x, false);
+u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(con_lofi.S, con_lofi.M, data_interface, u_hyperparam_interface);
+
+z_hyperparam_interface = MD_z_Hyperparameter_Interface_Subsurface(x, con_lofi);
+z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(con_lofi.S, con_lofi.M, data_interface, z_hyperparam_interface, u_prior_interface);
+
+alpha_u = u_prior_interface.alpha_u;
+alpha_z = z_prior_interface.alpha_z;
+alpha_d = u_hyperparam_interface.alpha_d;
+beta_u = u_prior_interface.beta_u;
+beta_z = z_prior_interface.beta_z;
+
+fprintf('Automated discrepancy hyperparameters:\n');
+fprintf('  alpha_u = %.4e, beta_u = %.4e, alpha_d = %.4e\n', alpha_u, beta_u, alpha_d);
+fprintf('  alpha_z = %.4e, beta_z = %.4e\n', alpha_z, beta_z);
 
 % Convenience norms / diagnostics
 M_z_norm = @(z) sqrt(z' * z_prior_interface.Apply_M_z(z));

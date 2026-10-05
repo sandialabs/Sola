@@ -90,5 +90,5 @@ hold off;
 
 Z_oed = Z;
 D_oed = D;
-% save('oed-results.mat', 'z_bars', 'beta_bars', 'Jhat_DC_oed', 'Z_oed', 'D_oed', ...
-%     'Jhat_lofi', 'Jhat_hifi', 'Jhat_best_proj', 'alpha_k_denom_proj');
+save('oed-results.mat', 'z_bars', 'beta_bars', 'Jhat_DC_oed', 'Z_oed', 'D_oed', ...
+    'Jhat_lofi', 'Jhat_hifi', 'Jhat_best_proj', 'alpha_k_denom_proj');

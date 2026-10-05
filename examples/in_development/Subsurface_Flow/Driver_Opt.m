@@ -85,10 +85,19 @@ legend({'$q$', '$\tilde{q}$'}, 'location', 'north', 'Interpreter', 'latex');
 set(gca, 'FontSize', 24);
 set(gcf, 'Color', 'White');
 
-% Generate control samples and evaluate the model discrepancy on them.
-Z = zeros(m, 2);
+% Generate a small set of control samples and evaluate the model discrepancy
+% on them.  These samples are also used by the article/OED setup to
+% automatically estimate prior hyperparameters, so include both the optimum
+% and smooth nearby perturbations.
+control_scale = max(abs(z_lofi));
+if control_scale == 0
+    control_scale = 1;
+end
+Z = zeros(m, 4);
 Z(:, 1) = z_lofi;
-Z(:, 2) = max(abs(z_lofi)) * x .* (1 - x);
+Z(:, 2) = z_lofi + 0.25 * control_scale * sin(pi * x);
+Z(:, 3) = z_lofi + 0.50 * control_scale * x .* (1 - x);
+Z(:, 4) = z_lofi - 0.25 * control_scale * sin(2 * pi * x);
 
 D = Evaluate_Discrepancy(con_hifi, con_lofi, Z);
 

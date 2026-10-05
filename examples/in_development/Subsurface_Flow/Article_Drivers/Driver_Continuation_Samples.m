@@ -6,11 +6,11 @@
 % Import the OED setup and previously generated OED samples
 OED_Setup;
 oed_results = load('oed-results.mat');
-num_data_points = 4;
+num_data_points = 2;
 data_interface.Set_Z_and_D(oed_results.Z_oed(:, 1:num_data_points), oed_results.D_oed(:, 1:num_data_points));
 
 % Posterior sampling
-num_samples = 10;
+num_samples = 50;
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_samples, true);
 
