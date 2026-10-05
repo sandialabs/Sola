@@ -13,6 +13,10 @@ classdef Subsurface_LoFi_Constraint < Constraint
     %
     %   k_LF(p) = k0 * (1 + alpha*(p-p0) + 1/2*alpha^2*(p-p0)^2).
     %
+    % This model intentionally omits the localized cubic pressure-leakoff
+    % mechanism included in Subsurface_HiFi_Constraint, so the
+    % resulting optimization discrepancy is nonlinear and sizeable.
+    %
     % The control is z (the injection/production rate q) and the state is
     % u (the pressure p).
 
@@ -188,7 +192,7 @@ classdef Subsurface_LoFi_Constraint < Constraint
                 k0 = 1;
             end
             if nargin < 3
-                alpha = 0.75;
+                alpha = 0.5;
             end
             if nargin < 4
                 p0 = 0;

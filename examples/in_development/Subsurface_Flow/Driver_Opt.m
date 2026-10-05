@@ -11,14 +11,21 @@ addpath(genpath('../../src'));
 % Problem parameters
 m = 200;             % number of spatial nodes
 k0 = 1;              % reference permeability
-alpha = 0.75;        % pressure-permeability sensitivity
+alpha = 0.5;        % pressure-permeability sensitivity
 p0 = 0;              % reference and boundary pressure
 viscosity = 1;       % fluid viscosity
-reg_coeff = 1.e-4;   % injection/production regularization
+reg_coeff = 1.e-6;   % injection/production regularization
+
+% Extra high-fidelity localized pressure-leakoff nonlinearity.  The low-
+% fidelity model intentionally omits this stabilizing pressure sink, which
+% creates a sizeable nonlinear model discrepancy for optimization and OED.
+hifi_leakoff_coeff = 30;
+hifi_leakoff_center = 0.55;
+hifi_leakoff_width = 0.25;
 
 obj = Subsurface_Objective(m, reg_coeff, p0);
 con_lofi = Subsurface_LoFi_Constraint(m, k0, alpha, p0, viscosity);
-con_hifi = Subsurface_HiFi_Constraint(con_lofi);
+con_hifi = Subsurface_HiFi_Constraint(con_lofi, hifi_leakoff_coeff, hifi_leakoff_center, hifi_leakoff_width);
 
 opt_lofi = Reduced_Space_Optimization(obj, con_lofi);
 opt_hifi = Reduced_Space_Optimization(obj, con_hifi);
@@ -27,6 +34,15 @@ opt_hifi = Reduced_Space_Optimization(obj, con_hifi);
 z0 = zeros(m, 1);
 [u_lofi, z_lofi] = opt_lofi.Optimize(z0);
 [u_hifi, z_hifi] = opt_hifi.Optimize(z_lofi);
+
+% Report the high-fidelity objective gap induced by using the low-fidelity
+% control.  These diagnostics are useful before launching the article/OED
+% drivers, which use the same quantities at Step 0.
+Jhat_lofi_on_hifi = opt_hifi.Jhat(z_lofi);
+Jhat_hifi = opt_hifi.Jhat(z_hifi);
+fprintf('High-fidelity objective at low-fidelity control: %.6e\n', Jhat_lofi_on_hifi);
+fprintf('High-fidelity objective at high-fidelity control: %.6e\n', Jhat_hifi);
+fprintf('Relative objective gap: %.2f%%\n', 100 * (Jhat_lofi_on_hifi - Jhat_hifi) / max(abs(Jhat_hifi), eps));
 
 x = con_lofi.x;
 T = obj.T;
@@ -72,9 +88,10 @@ set(gcf, 'Color', 'White');
 % Generate control samples and evaluate the model discrepancy on them.
 Z = zeros(m, 2);
 Z(:, 1) = z_lofi;
-Z(:, 2) = 4.5 * max(abs(z_lofi)) * x .* (1 - x);
+Z(:, 2) = max(abs(z_lofi)) * x .* (1 - x);
 
 D = Evaluate_Discrepancy(con_hifi, con_lofi, Z);
 
 save('Optimization_Results.mat', 'm', 'k0', 'alpha', 'p0', 'viscosity', ...
+    'hifi_leakoff_coeff', 'hifi_leakoff_center', 'hifi_leakoff_width', ...
     'reg_coeff', 'z_lofi', 'z_hifi', 'u_lofi', 'u_hifi', 'Z', 'D');

@@ -62,9 +62,11 @@ classdef Subsurface_Objective < Objective
 
             x = linspace(0, 1, m)';
 
-            % Desired pressure perturbation.  It is compatible with the
-            % Dirichlet pressure p = p0 at x = 0 and x = 1.
-            this.T = p0 + 0.5 * sin(pi * x) + 0.15 * sin(2 * pi * x);
+            % Desired pressure perturbation.  The moderate amplitude is
+            % intentional: it activates the localized nonlinear high-fidelity
+            % leakoff term while remaining compatible with the Dirichlet
+            % pressure p = p0 at x = 0 and x = 1.
+            this.T = p0 + 1.00 * sin(pi * x) + 0.25 * sin(2 * pi * x);
 
             h = x(2) - x(1);
             M = diag(4 * ones(1, m)) + diag(ones(1, m - 1), 1) + diag(ones(1, m - 1), -1);

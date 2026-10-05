@@ -3,9 +3,14 @@
 %%%%%%%%% Questions? Contact Joseph Hart (joshart@sandia.gov) %%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Clear Workspace and Add Interfaces to Path
-addpath(genpath('..'));
-addpath(genpath('../../../src'));
+% Clear Workspace and Add Interfaces to Path.  Build paths relative to
+% this setup file so the driver can be launched from either this directory
+% or the parent Subsurface_Flow directory.
+article_dir = fileparts(mfilename('fullpath'));
+example_dir = fileparts(article_dir);
+repo_root = fullfile(example_dir, '..', '..', '..');
+addpath(genpath(example_dir));
+addpath(genpath(fullfile(repo_root, 'src')));
 rng(0);
 
 % Set Default Font Axes and Line Width
@@ -13,16 +18,41 @@ set(0, 'DefaultAxesFontSize', 20);
 set(0, 'DefaultLineLineWidth', 3);
 set(0, 'DefaultLineMarkerSize', 20);
 
-% Retrieve model parameters (saved by Driver_Opt)
-load Optimization_Results.mat;
+% Retrieve model parameters (saved by Driver_Opt).  Prefer a local copy
+% for article workflows, but fall back to the parent example directory.
+results_file = fullfile(article_dir, 'Optimization_Results.mat');
+if ~isfile(results_file)
+    results_file = fullfile(example_dir, 'Optimization_Results.mat');
+end
+load(results_file);
 clear Z D;
+
+% Guard against silently using optimization data from the earlier weak-
+% discrepancy version of the example.
+expected_alpha = 0.5;
+expected_reg_coeff = 1.e-6;
+expected_hifi_leakoff_coeff = 30;
+expected_hifi_leakoff_center = 0.55;
+expected_hifi_leakoff_width = 0.25;
+if ~exist('hifi_leakoff_coeff', 'var') || ...
+        ~exist('hifi_leakoff_center', 'var') || ...
+        ~exist('hifi_leakoff_width', 'var') || ...
+        abs(alpha - expected_alpha) > 1.e-12 || ...
+        abs(reg_coeff - expected_reg_coeff) > 1.e-15 || ...
+        abs(hifi_leakoff_coeff - expected_hifi_leakoff_coeff) > 1.e-12 || ...
+        abs(hifi_leakoff_center - expected_hifi_leakoff_center) > 1.e-12 || ...
+        abs(hifi_leakoff_width - expected_hifi_leakoff_width) > 1.e-12
+    error(['Optimization_Results.mat was generated with old subsurface parameters. ', ...
+           'Run examples/in_development/Subsurface_Flow/Driver_Opt.m again before the article drivers.']);
+end
+
 n = length(z_lofi);
 
 % Set Hi-Fi and Lo-Fi objectives and constraints
 obj = Subsurface_Objective(m, reg_coeff, p0);
 con_lofi = Subsurface_LoFi_Constraint(m, k0, alpha, p0, viscosity);
 opt_lofi = Reduced_Space_Optimization(obj, con_lofi);
-con_hifi = Subsurface_HiFi_Constraint(con_lofi);
+con_hifi = Subsurface_HiFi_Constraint(con_lofi, hifi_leakoff_coeff, hifi_leakoff_center, hifi_leakoff_width);
 opt_hifi = Reduced_Space_Optimization(obj, con_hifi);
 x = con_lofi.x;
 

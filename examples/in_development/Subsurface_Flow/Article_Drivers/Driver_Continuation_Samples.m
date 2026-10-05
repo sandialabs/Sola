@@ -6,7 +6,7 @@
 % Import the OED setup and previously generated OED samples
 OED_Setup;
 oed_results = load('oed-results.mat');
-num_data_points = 2;
+num_data_points = 4;
 data_interface.Set_Z_and_D(oed_results.Z_oed(:, 1:num_data_points), oed_results.D_oed(:, 1:num_data_points));
 
 % Posterior sampling
