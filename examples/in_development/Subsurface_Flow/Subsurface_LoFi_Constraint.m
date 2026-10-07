@@ -11,11 +11,12 @@ classdef Subsurface_LoFi_Constraint < Constraint
     %
     % where
     %
-    %   k_LF(p) = k0 * (1 + alpha*(p-p0) + 1/2*alpha^2*(p-p0)^2).
+    %   k_LF(p) = k0 * exp(alpha*(p-p0)).
     %
-    % This model intentionally omits the localized cubic pressure-leakoff
-    % mechanism included in Subsurface_HiFi_Constraint, so the
-    % resulting optimization discrepancy is nonlinear and sizeable.
+    % This model uses the same pressure-dependent permeability as the
+    % high-fidelity model, but intentionally omits the localized cubic
+    % pressure-leakoff mechanism included in Subsurface_HiFi_Constraint.
+    % The resulting optimization discrepancy is nonlinear and sizeable.
     %
     % The control is z (the injection/production rate q) and the state is
     % u (the pressure p).
@@ -98,11 +99,9 @@ classdef Subsurface_LoFi_Constraint < Constraint
         end
 
         function [a, a_prime, a_prime_prime] = Permeability_Function(this, p)
-            r = p - this.p0;
-            scale = this.k0 / this.viscosity;
-            a = scale * (1 + this.alpha * r + 0.5 * (this.alpha^2) * (r.^2));
-            a_prime = scale * (this.alpha + (this.alpha^2) * r);
-            a_prime_prime = scale * (this.alpha^2) * ones(size(p));
+            a = (this.k0 / this.viscosity) * exp(this.alpha * (p - this.p0));
+            a_prime = this.alpha * a;
+            a_prime_prime = (this.alpha^2) * a;
         end
 
         function [diff] = Finite_Difference_Diffusion_Function_Jacobian(this, u)

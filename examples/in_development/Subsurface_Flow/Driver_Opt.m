@@ -19,6 +19,7 @@ reg_coeff = 1.e-6;   % injection/production regularization
 % Extra high-fidelity localized pressure-leakoff nonlinearity.  The low-
 % fidelity model intentionally omits this stabilizing pressure sink, which
 % creates a sizeable nonlinear model discrepancy for optimization and OED.
+lofi_permeability_model = 'exponential';
 hifi_leakoff_coeff = 30;
 hifi_leakoff_center = 0.55;
 hifi_leakoff_width = 0.25;
@@ -102,5 +103,6 @@ Z(:, 4) = z_lofi - 0.25 * control_scale * sin(2 * pi * x);
 D = Evaluate_Discrepancy(con_hifi, con_lofi, Z);
 
 save('Optimization_Results.mat', 'm', 'k0', 'alpha', 'p0', 'viscosity', ...
-    'hifi_leakoff_coeff', 'hifi_leakoff_center', 'hifi_leakoff_width', ...
-    'reg_coeff', 'z_lofi', 'z_hifi', 'u_lofi', 'u_hifi', 'Z', 'D');
+    'lofi_permeability_model', 'hifi_leakoff_coeff', 'hifi_leakoff_center', ...
+    'hifi_leakoff_width', 'reg_coeff', 'z_lofi', 'z_hifi', 'u_lofi', ...
+    'u_hifi', 'Z', 'D');

@@ -4,7 +4,7 @@
 
 This mimics controlling injection or production during a pressure test, hydraulic characterization experiment, geothermal stimulation, or CO$_2$/water injection pilot. The goal is to create a desired pressure perturbation while avoiding excessive pressure.
 
-The implemented example is intentionally discrepancy-rich. The high-fidelity model includes a localized, pressure-triggered leakoff/storage sink. The low-fidelity model omits this nonlinear sink and retains only a global small-pressure permeability approximation. This makes the low-fidelity optimum noticeably suboptimal when evaluated with the high-fidelity model.
+The implemented example is intentionally discrepancy-rich. The high-fidelity model includes a localized, pressure-triggered leakoff/storage sink. The low-fidelity model uses the same exponential pressure-dependent permeability but omits this nonlinear sink. This makes the low-fidelity optimum noticeably suboptimal when evaluated with the high-fidelity model.
 
 ---
 ## Control variable
@@ -30,12 +30,12 @@ The cubic sink represents pressure-triggered leakoff or fracture storage that is
 ---
 ## Low-fidelity model
 
-Use a small-pressure-change approximation that ignores the localized leakoff/storage term:
-$$ k_{\mathrm{LF}}(p) = k_0 \left[ 1+\alpha(p-p_0) +\frac{1}{2}\alpha^2(p-p_0)^2 \right]. $$
+Use the same exponential pressure-dependent permeability, but ignore the localized leakoff/storage term:
+$$ k_{\mathrm{LF}}(p) = k_0 \exp\left(\alpha(p-p_0)\right). $$
 Then
 $$ -\frac{d}{dx} \left[ \frac{k_{\mathrm{LF}}(p)}{\mu}p' \right] = q(x). $$
 
-Both models are nonlinear, but the low-fidelity model misses the localized cubic-in-pressure sink. The default parameters deliberately stress this approximation while avoiding nearly singular Jacobians.
+Both models are nonlinear, but the low-fidelity model misses the localized cubic-in-pressure sink. This keeps the permeability physics consistent between fidelities and isolates the discrepancy to the omitted leakoff/storage mechanism.
 
 ---
 ## Objective

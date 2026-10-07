@@ -11,6 +11,7 @@ data_interface.Set_Z_and_D(oed_results.Z_oed(:, 1:num_data_points), oed_results.
 
 % Posterior sampling
 num_samples = 50;
+use_hybrid = true;
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_samples, true);
 
@@ -20,23 +21,35 @@ md_update = MD_Update(md_post_sampling, md_hessian_analysis);
 fprintf('Linearization Sampling...\n');
 [z_lin_mean, z_lin_samples] = md_update.Posterior_Update_Samples();
 
+
 % Continuation
-fprintf('Continuation Update...\n');
 num_continuation_steps = 3;
-md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
-[u_mean, z_mean, beta_mean] = md_cont_update.Posterior_Update_Mean(); %#ok<NASGU>
-fprintf('Continuation Sampling...\n');
-tic;
-[u_samples, z_samples, beta_samples] = md_cont_update.Posterior_Update_Samples(); %#ok<NASGU>
-toc;
+if ~use_hybrid
+     fprintf('Continuation Update...\n');
+     md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
+     [u_mean, z_mean, beta_mean] = md_cont_update.Posterior_Update_Mean();
+     disp("Continuation Sampling...")
+     tic;
+     [u_samples, z_samples, beta_samples] = md_cont_update.Posterior_Update_Samples();
+     toc;
+else
+     % Hybrid: continuation for the mean, linearize about it for the samples
+     disp("Hybrid Update...")
+     md_hybrid_update = MD_Hybrid_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
+     [u_mean, z_mean, beta_mean] = md_hybrid_update.Posterior_Update_Mean();
+     disp("Hybrid Sampling...")
+     tic;
+     [u_samples, z_samples, beta_samples] = md_hybrid_update.Posterior_Update_Samples();
+     toc;
+end
 
 figure;
 hold on;
 
-% Calculate percentiles
-plot_ptile = 100;
-[z_low, z_high] = deal(prctile(z_samples, 100 - plot_ptile, 2), prctile(z_samples, plot_ptile, 2));
-[z_lin_low, z_lin_high] = deal(prctile(z_lin_samples, 100 - plot_ptile, 2), prctile(z_lin_samples, plot_ptile, 2));
+% Calculate Percentiles
+plot_ptile = 50;
+[z_lin_low, z_lin_high]  = deal(prctile(z_lin_samples, 50-plot_ptile/2, 2), prctile(z_lin_samples, 50+plot_ptile/2, 2));
+[z_low, z_high]  = deal(prctile(z_samples, 50-plot_ptile/2, 2), prctile(z_samples, 50+plot_ptile/2, 2));
 
 % Shaded regions
 x_plot = 1:numel(z_mean);

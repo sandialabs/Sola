@@ -119,8 +119,8 @@ function [q] = Subsurface_MMS_Source(x, k0, alpha, p0, viscosity, model, hifi_le
             leakoff = hifi_leakoff_coeff * s .* (r.^3);
         case 'lofi'
             r = p - p0;
-            a = (k0 / viscosity) * (1 + alpha * r + 0.5 * (alpha^2) * (r.^2));
-            a_prime = (k0 / viscosity) * (alpha + (alpha^2) * r);
+            a = (k0 / viscosity) * exp(alpha * r);
+            a_prime = alpha * a;
             a_x = zeros(size(x));
             leakoff = zeros(size(x));
         otherwise
