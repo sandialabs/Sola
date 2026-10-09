@@ -26,15 +26,19 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
         current_disc_ops
         current_sample_idx
 
-        % Adaptive posterior-sample continuation data.
+        % Posterior-sample continuation data.
         %
-        % Each entry of breve_samplers stores one persistent matrix-free lazy
+        % Each entry of breve_samplers stores one persistent breve
         % matrix-normal realization for the corresponding posterior sample
-        % index.  The breve Sigma_beta covariance is applied on demand and is
-        % not formed or factorized by the continuation path.
+        % index.  By default, the realization is matrix-free/lazy.  If
+        % materialize_breve_samples is true, each breve sample is revealed on
+        % all beta basis vectors when it is first constructed, yielding a
+        % fixed dense output_dim-by-r beta-space matrix for deterministic
+        % trial evaluations.
         breve_samplers
         discard_cache
         lazy_sampling_tol
+        materialize_breve_samples
     end
 
     methods (Access = public)
@@ -160,11 +164,12 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
 
     methods
 
-        function this = MD_Continuation_Sensitivity_Operators(post_sampling, hessian_analysis, discard_cache)
+        function this = MD_Continuation_Sensitivity_Operators(post_sampling, hessian_analysis, discard_cache, materialize_breve_samples)
             arguments
                 post_sampling MD_Posterior_Sampling
                 hessian_analysis MD_Hessian_Analysis
                 discard_cache (1,1) logical = true
+                materialize_breve_samples (1,1) logical = false
             end
 
             this.post_sampling = post_sampling;
@@ -192,6 +197,7 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
 
             this.lazy_sampling_tol = 1e-10;
             this.discard_cache = discard_cache;
+            this.materialize_breve_samples = materialize_breve_samples;
             this.breve_samplers = cell(this.post_data.num_samples, 1);
         end
 
@@ -250,7 +256,9 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
                     this.Clear_Breve_Samplers_Except(sample_idx);
                 end
 
-                this.breve_samplers{sample_idx} = MD_Breve_Beta_Sampler(this.hessian_analysis, this.z_prior_interface, this.post_data, this.post_sampling.u_prior_interface, length(this.u_opt), this.lazy_sampling_tol);
+                this.breve_samplers{sample_idx} = MD_Breve_Beta_Sampler(this.hessian_analysis, ...
+                    this.z_prior_interface, this.post_data, this.post_sampling.u_prior_interface, ...
+                    length(this.u_opt), this.lazy_sampling_tol, this.materialize_breve_samples);
             end
 
             sampler = this.breve_samplers{sample_idx};

@@ -14,16 +14,18 @@ classdef MD_Continuation_Update < handle
         num_continuation_steps
         r
         discard_cache
+        materialize_breve_samples
     end
 
     methods
 
-        function this = MD_Continuation_Update(post_sampling, hessian_analysis, num_continuation_steps, discard_cache)
+        function this = MD_Continuation_Update(post_sampling, hessian_analysis, num_continuation_steps, discard_cache, materialize_breve_samples)
             arguments
                 post_sampling MD_Posterior_Sampling
                 hessian_analysis MD_Hessian_Analysis
                 num_continuation_steps (1, 1) {mustBeNumeric}
                 discard_cache = true
+                materialize_breve_samples (1, 1) logical = false
             end
             this.post_sampling = post_sampling;
             this.hessian_analysis = hessian_analysis;
@@ -37,6 +39,7 @@ classdef MD_Continuation_Update < handle
             end
             this.num_continuation_steps = num_continuation_steps;
             this.discard_cache = discard_cache;
+            this.materialize_breve_samples = materialize_breve_samples;
         end
 
         % ------------------------------------------------------------
@@ -74,7 +77,7 @@ classdef MD_Continuation_Update < handle
             % NOTE: All continuation classes prefixed with `MD_` update the latent variable beta, 
             % although denoted by parent classes as z. This is not to be confused with the solution
             % space optimization variable z in model discrepancy calibration.
-            sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis, this.discard_cache);
+            sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis, this.discard_cache, this.materialize_breve_samples);
             qn_prec = MD_Quasi_Newton_Preconditioner(this.hessian_analysis);
             beta_nom = zeros(this.r, 1);
             pt_cont = Pseudo_Time_Continuation(beta_nom, sen_op, qn_prec);
@@ -93,7 +96,7 @@ classdef MD_Continuation_Update < handle
 
         function [val, grad] = Parameterized_RS_Objective_beta(this, beta, sample_idx)
             beta = beta(:);
-            sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis, this.discard_cache);
+            sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis, this.discard_cache, this.materialize_breve_samples);
             disc_ops = sen_op.Get_Continuation_Beta_Discrepancy_Ops(sample_idx);
             z = this.z_opt + this.hessian_analysis.Apply_V(beta);
             u = this.opt_prob_interface.State_Solve(z);
@@ -114,7 +117,7 @@ classdef MD_Continuation_Update < handle
                 ['Parameterized_RS_Objective is only valid for the mean discrepancy. ', ...
                 'For posterior samples, use Parameterized_RS_Objective_beta.']);
 
-            sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis, this.discard_cache);
+            sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis, this.discard_cache, this.materialize_breve_samples);
 
             u = this.opt_prob_interface.State_Solve(z);
             delta = sen_op.Discrepancy_Evaluation_Mean(z);

@@ -10,8 +10,9 @@ num_data_points = 3;
 data_interface.Set_Z_and_D(oed_results.Z_oed(:, 1:num_data_points), oed_results.D_oed(:, 1:num_data_points));
 
 % Posterior sampling
-num_samples = 100;
+num_samples = 10;
 use_hybrid = false;
+materialize_breve_samples = true;
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_samples, true);
 
@@ -26,16 +27,16 @@ fprintf('Linearization Sampling...\n');
 num_continuation_steps = 7;
 if ~use_hybrid
      fprintf('Continuation Update...\n');
-     md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
+     md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps, true, materialize_breve_samples);
      [u_mean, z_mean, beta_mean] = md_cont_update.Posterior_Update_Mean();
      disp("Continuation Sampling...")
-     % tic;
+     tic;
      [u_samples, z_samples, beta_samples] = md_cont_update.Posterior_Update_Samples();
-     % toc;
+     toc;
 else
      % Hybrid: continuation for the mean, linearize about it for the samples
      disp("Hybrid Update...")
-     md_hybrid_update = MD_Hybrid_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
+     md_hybrid_update = MD_Hybrid_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps, true, materialize_breve_samples);
      [u_mean, z_mean, beta_mean] = md_hybrid_update.Posterior_Update_Mean();
      disp("Hybrid Sampling...")
      tic;
@@ -73,7 +74,7 @@ use_hybrid=true;
 if ~use_hybrid
      num_continuation_steps = 15;
      disp("Hybrid Update...")
-     md_hybrid_update = MD_Hybrid_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
+     md_hybrid_update = MD_Hybrid_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps, true, materialize_breve_samples);
      [u_hyb_mean, z_hyb_mean, beta_hyb_mean] = md_hybrid_update.Posterior_Update_Mean();
      disp("Hybrid Sampling...")
      tic;

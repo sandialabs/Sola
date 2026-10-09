@@ -30,6 +30,7 @@ classdef MD_Hybrid_Continuation_Update < handle
         num_continuation_steps
         r
         discard_cache
+        materialize_breve_samples
 
         sen_op
         qn_prec
@@ -42,12 +43,13 @@ classdef MD_Hybrid_Continuation_Update < handle
 
     methods
 
-        function this = MD_Hybrid_Continuation_Update(post_sampling, hessian_analysis, num_continuation_steps, discard_cache)
+        function this = MD_Hybrid_Continuation_Update(post_sampling, hessian_analysis, num_continuation_steps, discard_cache, materialize_breve_samples)
             arguments
                 post_sampling MD_Posterior_Sampling
                 hessian_analysis MD_Hessian_Analysis
                 num_continuation_steps (1, 1) {mustBeNumeric}
                 discard_cache = true
+                materialize_breve_samples (1, 1) logical = false
             end
             this.post_sampling = post_sampling;
             this.hessian_analysis = hessian_analysis;
@@ -61,12 +63,13 @@ classdef MD_Hybrid_Continuation_Update < handle
             end
             this.num_continuation_steps = num_continuation_steps;
             this.discard_cache = discard_cache;
+            this.materialize_breve_samples = materialize_breve_samples;
         end
 
         function [u, z, beta] = Posterior_Update_Mean(this)
             % Continuation for the posterior mean (cached after first call).
             if isempty(this.beta_bar)
-                this.sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis, this.discard_cache);
+                this.sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis, this.discard_cache, this.materialize_breve_samples);
                 this.qn_prec = MD_Quasi_Newton_Preconditioner(this.hessian_analysis);
                 this.pt_cont = Pseudo_Time_Continuation(zeros(this.r, 1), this.sen_op, this.qn_prec);
                 this.theta_traj = MD_Discrepancy_Parameter_Trajectory(this.num_continuation_steps, 0);

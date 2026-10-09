@@ -17,6 +17,7 @@ md_post_sampling.Compute_Posterior_Data(alpha_d, num_samples, true);
 % Continuation
 num_continuation_steps = 7;
 plot_ptile = 50;
+materialize_breve_samples = false;
 
 %% Hybrid-vs-direct continuation sample diagnostics
 %
@@ -46,7 +47,7 @@ if run_sample_map_diagnostics
      % Build one mean continuation point and one dense mean Hessian.  The
      % same sensitivity operator is then reused so each sample index has the
      % same lazy breve realization for hybrid and direct continuation.
-     sen_cmp = MD_Continuation_Sensitivity_Operators(md_post_sampling, md_hessian_analysis, false);
+     sen_cmp = MD_Continuation_Sensitivity_Operators(md_post_sampling, md_hessian_analysis, false, materialize_breve_samples);
      qn_mean_cmp = MD_Quasi_Newton_Preconditioner(md_hessian_analysis);
      pt_mean_cmp = Pseudo_Time_Continuation(zeros(r, 1), sen_cmp, qn_mean_cmp);
      theta_mean_cmp = MD_Discrepancy_Parameter_Trajectory(num_continuation_steps, 0);
@@ -150,7 +151,7 @@ if run_hybrid_diagnostics
           fprintf('\nDiagnostics for num_continuation_steps = %d\n', N_diag);
           fprintf('------------------------------------------------------------\n');
 
-          hyb_diag = MD_Hybrid_Continuation_Update(md_post_sampling, md_hessian_analysis, N_diag);
+          hyb_diag = MD_Hybrid_Continuation_Update(md_post_sampling, md_hessian_analysis, N_diag, true, materialize_breve_samples);
           [~, z_bar, beta_bar] = hyb_diag.Posterior_Update_Mean();
           z_bar_diag(:, jj) = z_bar;
 
