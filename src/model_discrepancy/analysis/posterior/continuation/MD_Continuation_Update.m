@@ -53,11 +53,15 @@ classdef MD_Continuation_Update < handle
             z_ks = zeros(length(this.z_opt), num_samples);
             beta_ks = zeros(this.r, num_samples);
 
+            h = waitbar(0, 'Initializing...', 'Name', 'Processing...');
+            tic;
             for sample_idx = 1:num_samples
                 [u_k, z_k, beta_k] = this.Posterior_Update_Core(sample_idx);
                 u_ks(:, sample_idx) = u_k;
                 z_ks(:, sample_idx) = z_k;
                 beta_ks(:, sample_idx) = beta_k;
+
+                waitbar(sample_idx/num_samples, h, sprintf('Progress: %d%% | ETA: %.1fs', round(100*sample_idx/num_samples), (toc / sample_idx) * (num_samples - sample_idx)));
             end
         end
 

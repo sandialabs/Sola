@@ -80,7 +80,6 @@ data_interface.Set_Z_and_D(hyperparam_Z, hyperparam_D);
 % infrastructure in src/model_discrepancy.
 u_hyperparam_interface = MD_u_Hyperparameter_Interface_Subsurface(x, false);
 u_prior_interface = MD_Numeric_Laplacian_u_Prior_Interface(con_lofi.S, con_lofi.M, data_interface, u_hyperparam_interface);
-u_hyperparam_interface.alpha_d = 1e3*u_hyperparam_interface.alpha_d;
 
 
 z_hyperparam_interface = MD_z_Hyperparameter_Interface_Subsurface(x, con_lofi);
@@ -88,6 +87,7 @@ z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(con_lofi.S, con_lofi.
 
 alpha_u = u_prior_interface.alpha_u;
 alpha_z = z_prior_interface.alpha_z;
+u_hyperparam_interface.alpha_d = (0.05)^2*alpha_u;
 alpha_d = u_hyperparam_interface.alpha_d;
 beta_u = u_prior_interface.beta_u;
 beta_z = z_prior_interface.beta_z;
