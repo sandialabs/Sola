@@ -12,7 +12,7 @@ data_interface.Set_Z_and_D(oed_results.Z_oed(:, 1:num_data_points), oed_results.
 % Posterior sampling
 num_samples = 10;
 use_hybrid = false;
-materialize_breve_samples = true;
+materialize_breve_samples = false;
 use_mean_to_sample = ~use_hybrid;
 z_mts_samples = [];
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);

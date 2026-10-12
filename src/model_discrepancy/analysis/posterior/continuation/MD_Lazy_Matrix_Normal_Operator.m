@@ -33,6 +33,10 @@ classdef MD_Lazy_Matrix_Normal_Operator < handle
         T          % input_dim x num_left, X' * W_u * Q_l
 
         tol
+        relative_tol
+        max_basis_vector_norm
+        local_orthogonality_tol
+        max_reorthogonalization_passes
     end
 
     methods
@@ -61,6 +65,10 @@ classdef MD_Lazy_Matrix_Normal_Operator < handle
             this.input_dim = input_dim;
             this.output_dim = output_dim;
             this.tol = tol;
+            this.relative_tol = sqrt(tol);
+            this.max_basis_vector_norm = 1.e6;
+            this.local_orthogonality_tol = 1.e-6;
+            this.max_reorthogonalization_passes = 3;
 
             this.Q_l = zeros(output_dim, 0);
             this.W_Q_l = zeros(output_dim, 0);
@@ -73,7 +81,9 @@ classdef MD_Lazy_Matrix_Normal_Operator < handle
 
         function y = Forward_Apply(this, v)
 
+            v = v(:);
             Sigma_v = this.sigma_apply(v);
+            total_norm = sqrt(max(real(v' * Sigma_v), 0));
 
             if isempty(this.Q_r)
                 c = zeros(0, 1);
@@ -83,17 +93,13 @@ classdef MD_Lazy_Matrix_Normal_Operator < handle
                 c = this.Q_r' * Sigma_v;
                 r = v - this.Q_r * c;
                 Sigma_r = Sigma_v - this.Sigma_Q_r * c;
-
-                % One Sigma_r-weighted reorthogonalization pass.
-                dc = this.Q_r' * Sigma_r;
-                c = c + dc;
-                r = r - this.Q_r * dc;
-                Sigma_r = Sigma_r - this.Sigma_Q_r * dc;
+                [r, Sigma_r, c] = this.Orthogonalize_Right_Residual(r, Sigma_r, c, total_norm);
             end
 
             norm_r = sqrt(max(real(r' * Sigma_r), 0));
+            add_basis = this.Should_Add_Basis_Vector(r, norm_r, total_norm);
 
-            if norm_r > this.tol
+            if add_basis
                 q_new = r / norm_r;
                 Sigma_q_new = Sigma_r / norm_r;
 
@@ -123,7 +129,9 @@ classdef MD_Lazy_Matrix_Normal_Operator < handle
 
         function y = Adjoint_Apply(this, u)
             % Compute y = X' u.
+            u = u(:);
             x = this.u_prior_interface.Apply_W_u_Inverse(u);
+            total_norm = sqrt(max(real(x' * u), 0));
 
             if isempty(this.Q_l)
                 c = zeros(0, 1);
@@ -133,17 +141,13 @@ classdef MD_Lazy_Matrix_Normal_Operator < handle
                 c = this.Q_l' * u;
                 r = x - this.Q_l * c;
                 W_r = u - this.W_Q_l * c;
-
-                % One W_u-weighted reorthogonalization pass.
-                dc = this.W_Q_l' * r;
-                c = c + dc;
-                r = r - this.Q_l * dc;
-                W_r = W_r - this.W_Q_l * dc;
+                [r, W_r, c] = this.Orthogonalize_Left_Residual(r, W_r, c, total_norm);
             end
 
             norm_r = sqrt(max(real(r' * W_r), 0));
+            add_basis = this.Should_Add_Basis_Vector(r, norm_r, total_norm);
 
-            if norm_r > this.tol
+            if add_basis
                 q_new = r / norm_r;
                 W_q_new = W_r / norm_r;
 
@@ -180,8 +184,13 @@ classdef MD_Lazy_Matrix_Normal_Operator < handle
                 return;
             end
             eta = s - this.Q_l * (this.W_Q_l' * s);
-            % One reorthogonalization pass.
-            eta = eta - this.Q_l * (this.W_Q_l' * eta);
+            for jj = 1:this.max_reorthogonalization_passes
+                deta = this.W_Q_l' * eta;
+                if norm(deta) <= this.tol
+                    break;
+                end
+                eta = eta - this.Q_l * deta;
+            end
 
         end
 
@@ -192,8 +201,13 @@ classdef MD_Lazy_Matrix_Normal_Operator < handle
                 return;
             end
             eta = s - this.Sigma_Q_r * (this.Q_r' * s);
-            % One reorthogonalization pass.
-            eta = eta - this.Sigma_Q_r * (this.Q_r' * eta);
+            for jj = 1:this.max_reorthogonalization_passes
+                deta = this.Q_r' * eta;
+                if norm(deta) <= this.tol
+                    break;
+                end
+                eta = eta - this.Sigma_Q_r * deta;
+            end
         end
 
         function [kl, kr] = Basis_Dimensions(this)
@@ -208,6 +222,60 @@ classdef MD_Lazy_Matrix_Normal_Operator < handle
         function val = W_Norm(this, x)
             val = sqrt(max(real(this.W_Inner(x, x)), 0));
         end
+
+        function metrics = Cache_Health_Metrics(this)
+            metrics.left_orth_err = 0.0;
+            metrics.right_orth_err = 0.0;
+            metrics.cross_err = 0.0;
+
+            if ~isempty(this.Q_l)
+                metrics.left_orth_err = norm(this.Q_l' * this.W_Q_l - eye(size(this.Q_l, 2)), 'fro');
+            end
+
+            if ~isempty(this.Q_r)
+                metrics.right_orth_err = norm(this.Q_r' * this.Sigma_Q_r - eye(size(this.Q_r, 2)), 'fro');
+            end
+
+            if ~isempty(this.Q_l) && ~isempty(this.Q_r)
+                left_cache = this.W_Q_l' * this.Y;
+                right_cache = this.T' * this.Q_r;
+                metrics.cross_err = norm(left_cache - right_cache, 'fro') / ...
+                    max([1, norm(left_cache, 'fro'), norm(right_cache, 'fro')]);
+            end
+        end
+
+        function tf = Should_Add_Basis_Vector(this, r, norm_r, total_norm)
+            tf = norm_r > max([this.tol, this.relative_tol * total_norm, norm(r) / this.max_basis_vector_norm]);
+        end
+
+        function [r, Sigma_r, c] = Orthogonalize_Right_Residual(this, r, Sigma_r, c, total_norm)
+            threshold = max(this.tol, this.relative_tol * total_norm);
+            for jj = 1:this.max_reorthogonalization_passes
+                norm_r = sqrt(max(real(r' * Sigma_r), 0));
+                dc = this.Q_r' * Sigma_r;
+                if norm_r <= threshold || norm(dc) <= norm_r * this.local_orthogonality_tol
+                    return;
+                end
+                c = c + dc;
+                r = r - this.Q_r * dc;
+                Sigma_r = Sigma_r - this.Sigma_Q_r * dc;
+            end
+        end
+
+        function [r, W_r, c] = Orthogonalize_Left_Residual(this, r, W_r, c, total_norm)
+            threshold = max(this.tol, this.relative_tol * total_norm);
+            for jj = 1:this.max_reorthogonalization_passes
+                norm_r = sqrt(max(real(r' * W_r), 0));
+                dc = this.W_Q_l' * r;
+                if norm_r <= threshold || norm(dc) <= norm_r * this.local_orthogonality_tol
+                    return;
+                end
+                c = c + dc;
+                r = r - this.Q_l * dc;
+                W_r = W_r - this.W_Q_l * dc;
+            end
+        end
+
     end
 
 end
