@@ -25,6 +25,7 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
         current_z
         current_disc_ops
         current_sample_idx
+        current_is_mean_to_sample
 
         % Posterior-sample continuation data.
         %
@@ -184,6 +185,7 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
             this.current_t = inf;
             this.current_beta = inf;
             this.current_sample_idx = inf;
+            this.current_is_mean_to_sample = false;
 
             this.Mz_Wz_inv_Mz_Z_minus_z_opt = this.post_data.Mz_Wz_inv_Mz_Z - this.post_data.Mz_Wz_inv_Mz_z_opt;
             this.Mz_Wz_inv_Mz_yi = 0 * this.Mz_Wz_inv_Mz_Z_minus_z_opt;
@@ -206,15 +208,22 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
 
             t = theta_traj.Get_Time(time_index);
             sample_idx = theta_traj.Get_Sample_Index();
+            is_mean_to_sample = this.Is_Mean_To_Sample_Trajectory(theta_traj);
 
-            if max([abs(t - this.current_t), norm(beta - this.current_beta), abs(sample_idx - this.current_sample_idx)]) > 1.e-15
+            if max([abs(t - this.current_t), norm(beta - this.current_beta), abs(sample_idx - this.current_sample_idx)]) > 1.e-15 || ...
+                    is_mean_to_sample ~= this.current_is_mean_to_sample
 
                 this.current_t = t;
                 this.current_beta = beta;
                 this.current_sample_idx = sample_idx;
+                this.current_is_mean_to_sample = is_mean_to_sample;
                 this.current_z = this.z_opt + this.hessian_analysis.Apply_V(beta);
                 this.current_u = this.opt_prob_interface.State_Solve(this.current_z);
-                this.current_disc_ops = this.Get_Continuation_Beta_Discrepancy_Ops(sample_idx);
+                if is_mean_to_sample
+                    this.current_disc_ops = this.Get_Mean_To_Sample_Beta_Discrepancy_Ops(sample_idx);
+                else
+                    this.current_disc_ops = this.Get_Continuation_Beta_Discrepancy_Ops(sample_idx);
+                end
 
             end
 
@@ -222,6 +231,14 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
                 this.Get_Breve_Sampler(sample_idx);
             end
 
+        end
+
+        function [is_mean_to_sample] = Is_Mean_To_Sample_Trajectory(this, theta_traj)
+            if ismethod(theta_traj, 'Is_Mean_To_Sample')
+                is_mean_to_sample = theta_traj.Is_Mean_To_Sample();
+            else
+                is_mean_to_sample = false;
+            end
         end
 
         function [disc_ops] = Get_Continuation_Beta_Discrepancy_Ops(this, sample_idx)
@@ -243,6 +260,18 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
                 disc_ops.Apply_Theta_Jacobian = @(beta) this.Discrepancy_Evaluation_Sample_Beta(beta, sample_idx);
                 disc_ops.Apply_Beta_Theta_Hessian = @(u_in) this.Apply_Discrepancy_Beta_Jacobian_Transpose_Sample(u_in, sample_idx);
             end
+        end
+
+        function [disc_ops] = Get_Mean_To_Sample_Beta_Discrepancy_Ops(this, sample_idx)
+            assert(sample_idx >= 1 && sample_idx <= this.post_data.num_samples && floor(sample_idx) == sample_idx, ...
+                'sample_idx must be an integer in [1, num_samples].');
+
+            this.Get_Breve_Sampler(sample_idx);
+            disc_ops.Eval = @(beta, s) this.Discrepancy_Evaluation_Mean_To_Sample_Beta(beta, s, sample_idx);
+            disc_ops.Apply_Beta_Jacobian = @(beta_in, s) this.Apply_Discrepancy_Beta_Jacobian_Mean_To_Sample(beta_in, s, sample_idx);
+            disc_ops.Apply_Beta_Jacobian_Transpose = @(u_in, s) this.Apply_Discrepancy_Beta_Jacobian_Transpose_Mean_To_Sample(u_in, s, sample_idx);
+            disc_ops.Apply_Theta_Jacobian = @(beta) this.Discrepancy_Evaluation_Sample_Minus_Mean_Beta(beta, sample_idx);
+            disc_ops.Apply_Beta_Theta_Hessian = @(u_in) this.Apply_Discrepancy_Beta_Jacobian_Transpose_Sample_Minus_Mean(u_in, sample_idx);
         end
 
         % ------------------------------------------------------------
@@ -324,6 +353,44 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
         % ------------------------------------------------------------
         % Posterior sample kernels
         % ------------------------------------------------------------
+
+        function [u_out] = Discrepancy_Evaluation_Mean_To_Sample_Beta(this, beta, s, sample_idx)
+
+            u_mean = this.Discrepancy_Evaluation_Mean(this.z_opt + this.hessian_analysis.Apply_V(beta));
+            u_diff = this.Discrepancy_Evaluation_Sample_Beta(beta, sample_idx) - u_mean;
+            u_out = u_mean + s * u_diff;
+
+        end
+
+        function [u_out] = Apply_Discrepancy_Beta_Jacobian_Mean_To_Sample(this, beta_in, s, sample_idx)
+
+            u_mean = this.Apply_Discrepancy_z_Jacobian_Mean(this.hessian_analysis.Apply_V(beta_in));
+            u_diff = this.Apply_Discrepancy_Beta_Jacobian_Sample(beta_in, sample_idx) - u_mean;
+            u_out = u_mean + s * u_diff;
+
+        end
+
+        function [beta_out] = Apply_Discrepancy_Beta_Jacobian_Transpose_Mean_To_Sample(this, u_in, s, sample_idx)
+
+            beta_mean = this.hessian_analysis.Apply_V_Transpose(this.Apply_Discrepancy_z_Jacobian_Transpose_Mean(u_in));
+            beta_diff = this.Apply_Discrepancy_Beta_Jacobian_Transpose_Sample(u_in, sample_idx) - beta_mean;
+            beta_out = beta_mean + s * beta_diff;
+
+        end
+
+        function [u_out] = Discrepancy_Evaluation_Sample_Minus_Mean_Beta(this, beta, sample_idx)
+
+            u_out = this.Discrepancy_Evaluation_Sample_Beta(beta, sample_idx) - ...
+                this.Discrepancy_Evaluation_Mean(this.z_opt + this.hessian_analysis.Apply_V(beta));
+
+        end
+
+        function [beta_out] = Apply_Discrepancy_Beta_Jacobian_Transpose_Sample_Minus_Mean(this, u_in, sample_idx)
+
+            beta_out = this.Apply_Discrepancy_Beta_Jacobian_Transpose_Sample(u_in, sample_idx) - ...
+                this.hessian_analysis.Apply_V_Transpose(this.Apply_Discrepancy_z_Jacobian_Transpose_Mean(u_in));
+
+        end
 
         function [u_out] = Discrepancy_Evaluation_Sample_Beta(this, beta, sample_idx)
 

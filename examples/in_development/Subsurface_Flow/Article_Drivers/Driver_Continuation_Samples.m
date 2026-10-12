@@ -13,6 +13,8 @@ data_interface.Set_Z_and_D(oed_results.Z_oed(:, 1:num_data_points), oed_results.
 num_samples = 10;
 use_hybrid = false;
 materialize_breve_samples = true;
+use_mean_to_sample = ~use_hybrid;
+z_mts_samples = [];
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_samples, true);
 
@@ -33,6 +35,12 @@ if ~use_hybrid
      tic;
      [u_samples, z_samples, beta_samples] = md_cont_update.Posterior_Update_Samples();
      toc;
+     if use_mean_to_sample
+          disp("Mean-to-sample Continuation Sampling...")
+          tic;
+          [u_mts_samples, z_mts_samples, beta_mts_samples] = md_cont_update.Posterior_Update_Samples_From_Mean(u_mean, z_mean, beta_mean);
+          toc;
+     end
 else
      % Hybrid: continuation for the mean, linearize about it for the samples
      disp("Hybrid Update...")
@@ -48,6 +56,9 @@ end
 plot_ptile = 90;
 [z_lin_low, z_lin_high]  = deal(prctile(z_lin_samples, 50-plot_ptile/2, 2), prctile(z_lin_samples, 50+plot_ptile/2, 2));
 [z_low, z_high]  = deal(prctile(z_samples, 50-plot_ptile/2, 2), prctile(z_samples, 50+plot_ptile/2, 2));
+if ~isempty(z_mts_samples)
+     [z_mts_low, z_mts_high]  = deal(prctile(z_mts_samples, 50-plot_ptile/2, 2), prctile(z_mts_samples, 50+plot_ptile/2, 2));
+end
 
 figure;
 hold on;
@@ -61,6 +72,10 @@ plot(x_plot, z_lin_mean, 'k--', 'LineWidth', 2, 'DisplayName', 'Linearized updat
 fill([x_plot, fliplr(x_plot)], [z_low(:).', fliplr(z_high(:).')], ...
      [0.25 0.75 0.25], 'FaceAlpha', 0.5, 'EdgeColor', 'none', 'DisplayName', 'Continuation samples');
 plot(x_plot, z_mean, '--', 'Color', [0.25 0.75 0.25], 'LineWidth', 2, 'DisplayName', 'Continuation update');
+if ~isempty(z_mts_samples)
+     fill([x_plot, fliplr(x_plot)], [z_mts_low(:).', fliplr(z_mts_high(:).')], ...
+          [0.95 0.55 0.20], 'FaceAlpha', 0.5, 'EdgeColor', 'none', 'DisplayName', 'Mean-to-sample continuation samples');
+end
 plot(x_plot, z_hifi, 'r-', 'LineWidth', 2, 'DisplayName', 'HiFi');
 
 legend('Location', 'northeastoutside');

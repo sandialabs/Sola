@@ -68,6 +68,52 @@ classdef MD_Continuation_Update < handle
             end
         end
 
+        function [u_ks, z_ks, beta_ks, u_bar, z_bar, beta_bar] = Posterior_Update_Samples_From_Mean(this, u_bar, z_bar, beta_bar)
+            arguments
+                this
+                u_bar = []
+                z_bar = []
+                beta_bar = []
+            end
+            % Continue each posterior sample from the posterior mean update.
+            if isempty(beta_bar)
+                [u_bar, z_bar, beta_bar] = this.Posterior_Update_Mean();
+            else
+                if isempty(z_bar)
+                    z_bar = this.z_opt + this.hessian_analysis.Apply_V(beta_bar);
+                end
+                if isempty(u_bar)
+                    u_bar = this.opt_prob_interface.State_Solve(z_bar);
+                end
+            end
+
+            num_samples = this.post_sampling.post_data.num_samples;
+            u_ks = zeros(length(this.u_opt), num_samples);
+            z_ks = zeros(length(this.z_opt), num_samples);
+            beta_ks = zeros(this.r, num_samples);
+
+            sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis, this.discard_cache, this.materialize_breve_samples);
+
+            h = waitbar(0, 'Initializing...', 'Name', 'Processing mean-to-sample continuation...');
+            tic;
+            for sample_idx = 1:num_samples
+                qn_prec = MD_Quasi_Newton_Preconditioner(this.hessian_analysis);
+                pt_cont = Pseudo_Time_Continuation(beta_bar, sen_op, qn_prec);
+                theta_traj = MD_Discrepancy_Mean_To_Sample_Trajectory(this.num_continuation_steps, sample_idx);
+                beta_k_tmp = pt_cont.Pseudo_Time_Continuation_Forward_Euler(theta_traj);
+
+                beta_k = beta_k_tmp(:, end);
+                u_ks(:, sample_idx) = pt_cont.sen_op.current_u;
+                z_ks(:, sample_idx) = pt_cont.sen_op.current_z;
+                beta_ks(:, sample_idx) = beta_k;
+
+                waitbar(sample_idx/num_samples, h, sprintf('Progress: %d%% | ETA: %.1fs', round(100*sample_idx/num_samples), (toc / sample_idx) * (num_samples - sample_idx)));
+            end
+            if ishandle(h)
+                close(h);
+            end
+        end
+
         % ------------------------------------------------------------
         % Core continuation driver (shared by mean and samples)
         % ------------------------------------------------------------
