@@ -78,7 +78,7 @@ classdef MD_Posterior_Data < handle
             this.G = (1 + this.Wz_inv_Mz_z_opt' * this.Mz_z_opt) - this.Mz_Z' * this.Wz_inv_Mz_z_opt - this.Wz_inv_Mz_z_opt' * this.Mz_Z + this.Mz_Z' * this.Wz_inv_Mz_Z;
             if size(this.G, 1) == 1
                 this.g_vecs = 1;
-                this.Mu = 1;
+                this.Mu = this.G;
             else
                 [this.g_vecs, this.Mu] = eigs(this.G, this.N);
             end

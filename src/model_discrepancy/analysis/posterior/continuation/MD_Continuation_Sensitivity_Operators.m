@@ -280,7 +280,7 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
                     u_out = u_out - coeff * this.post_data.u_i_ell{i}(:, ell);
                 end
             end
-            u_out = (1 / this.post_data.alpha_d) * u_out;
+            u_out = (1 / this.post_data.alpha_d) * u_out + this.data_interface.data_shift;
         end
 
         function [u_out] = Apply_Discrepancy_z_Jacobian_Mean(this, z_in)

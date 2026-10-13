@@ -10,7 +10,7 @@ num_data_points = 3;
 data_interface.Set_Z_and_D(oed_results.Z_oed(:, 1:num_data_points), oed_results.D_oed(:, 1:num_data_points));
 
 % Posterior sampling
-num_samples = 10;
+num_samples = 100;
 materialize_breve_samples = false;
 use_mean_to_sample = false;
 z_mts_samples = [];
@@ -26,8 +26,9 @@ fprintf('Linearization Sampling...\n');
 
 % Continuation
 num_continuation_steps = 7;
+use_parallel_sampling = true;
 fprintf('Continuation Update...\n');
-md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps, true, materialize_breve_samples);
+md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps, true, materialize_breve_samples, use_parallel_sampling);
 [u_mean, z_mean, beta_mean] = md_cont_update.Posterior_Update_Mean();
 disp("Continuation Sampling...")
 tic;
@@ -72,4 +73,3 @@ ylabel('Injection/production rate', 'Interpreter', 'latex');
 title('Posterior control samples for subsurface flow', 'Interpreter', 'latex');
 ylim([-40 60])
 hold off;
-
