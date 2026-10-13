@@ -66,6 +66,7 @@ classdef MD_Continuation_Update < handle
 
                 waitbar(sample_idx/num_samples, h, sprintf('Progress: %d%% | ETA: %.1fs', round(100*sample_idx/num_samples), (toc / sample_idx) * (num_samples - sample_idx)));
             end
+            close(h);
         end
 
         function [u_ks, z_ks, beta_ks, u_bar, z_bar, beta_bar] = Posterior_Update_Samples_From_Mean(this, u_bar, z_bar, beta_bar)
@@ -109,9 +110,7 @@ classdef MD_Continuation_Update < handle
 
                 waitbar(sample_idx/num_samples, h, sprintf('Progress: %d%% | ETA: %.1fs', round(100*sample_idx/num_samples), (toc / sample_idx) * (num_samples - sample_idx)));
             end
-            if ishandle(h)
-                close(h);
-            end
+            close(h);
         end
 
         % ------------------------------------------------------------

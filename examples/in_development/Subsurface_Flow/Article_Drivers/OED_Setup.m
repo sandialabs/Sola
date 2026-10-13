@@ -86,8 +86,8 @@ z_hyperparam_interface = MD_z_Hyperparameter_Interface_Subsurface(x, con_lofi);
 z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(con_lofi.S, con_lofi.M, data_interface, z_hyperparam_interface, u_prior_interface);
 
 alpha_u = u_prior_interface.alpha_u;
+% z_prior_interface.alpha_z = 100*z_prior_interface.alpha_z;
 alpha_z = z_prior_interface.alpha_z;
-u_hyperparam_interface.alpha_d = (0.05)^2*alpha_u;
 alpha_d = u_hyperparam_interface.alpha_d;
 beta_u = u_prior_interface.beta_u;
 beta_z = z_prior_interface.beta_z;
