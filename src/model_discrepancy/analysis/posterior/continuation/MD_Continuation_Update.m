@@ -16,11 +16,12 @@ classdef MD_Continuation_Update < handle
         discard_cache
         materialize_breve_samples
         use_parallel_sampling
+        num_mean_to_sample_steps
     end
 
     methods
 
-        function this = MD_Continuation_Update(post_sampling, hessian_analysis, num_continuation_steps, discard_cache, materialize_breve_samples, use_parallel_sampling)
+        function this = MD_Continuation_Update(post_sampling, hessian_analysis, num_continuation_steps, discard_cache, materialize_breve_samples, use_parallel_sampling, num_mean_to_sample_steps)
             arguments
                 post_sampling MD_Posterior_Sampling
                 hessian_analysis MD_Hessian_Analysis
@@ -28,6 +29,7 @@ classdef MD_Continuation_Update < handle
                 discard_cache = true
                 materialize_breve_samples (1, 1) logical = false
                 use_parallel_sampling (1, 1) logical = false
+                num_mean_to_sample_steps (1, 1) {mustBeNumeric} = max(1, ceil(num_continuation_steps / 2))
             end
             this.post_sampling = post_sampling;
             this.hessian_analysis = hessian_analysis;
@@ -43,6 +45,7 @@ classdef MD_Continuation_Update < handle
             this.discard_cache = discard_cache;
             this.materialize_breve_samples = materialize_breve_samples;
             this.use_parallel_sampling = use_parallel_sampling;
+            this.num_mean_to_sample_steps = num_mean_to_sample_steps;
         end
 
         % ------------------------------------------------------------
@@ -207,7 +210,7 @@ classdef MD_Continuation_Update < handle
 
             qn_prec = MD_Quasi_Newton_Preconditioner(this.hessian_analysis);
             pt_cont = Pseudo_Time_Continuation(beta_bar, sen_op, qn_prec);
-            theta_traj = MD_Discrepancy_Mean_To_Sample_Trajectory(this.num_continuation_steps, sample_idx);
+            theta_traj = MD_Discrepancy_Mean_To_Sample_Trajectory(this.num_mean_to_sample_steps, sample_idx);
             beta_k_tmp = pt_cont.Pseudo_Time_Continuation_Forward_Euler(theta_traj);
 
             beta_k = beta_k_tmp(:, end);
