@@ -164,6 +164,190 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
             this.breve_samplers = cell(this.post_data.num_samples, 1);
         end
 
+        function [dt, diagnostics] = Mean_A_Priori_Time_Step_Heuristic(this, beta, theta_traj, time_index, beta_dot, epsilon_nl, options)
+            arguments
+                this
+                beta (:, 1) {mustBeNumeric}
+                theta_traj Auxillary_Parameter_Trajectory
+                time_index (1, 1) {mustBeNumeric}
+                beta_dot (:, 1) {mustBeNumeric}
+                epsilon_nl (1, 1) {mustBeNumeric, mustBeNonnegative} = 0.1
+                options struct = struct()
+            end
+
+            apply_increment_jacobian = @(beta_in) this.Apply_Discrepancy_z_Jacobian_Mean(this.hessian_analysis.Apply_V(beta_in));
+            apply_increment_jacobian_transpose = @(u_in) this.hessian_analysis.Apply_V_Transpose(this.Apply_Discrepancy_z_Jacobian_Transpose_Mean(u_in));
+
+            [dt, diagnostics] = this.A_Priori_Time_Step_Heuristic(beta, theta_traj, time_index, beta_dot, ...
+                                                                  apply_increment_jacobian, ...
+                                                                  apply_increment_jacobian_transpose, ...
+                                                                  epsilon_nl, options);
+        end
+
+        function [dt, diagnostics] = Sample_A_Priori_Time_Step_Heuristic(this, beta, theta_traj, time_index, beta_dot, sample_idx, epsilon_nl, options)
+            arguments
+                this
+                beta (:, 1) {mustBeNumeric}
+                theta_traj Auxillary_Parameter_Trajectory
+                time_index (1, 1) {mustBeNumeric}
+                beta_dot (:, 1) {mustBeNumeric}
+                sample_idx (1, 1) {mustBeNumeric}
+                epsilon_nl (1, 1) {mustBeNumeric, mustBeNonnegative} = 0.1
+                options struct = struct()
+            end
+
+            apply_increment_jacobian = @(beta_in) this.Apply_Discrepancy_Beta_Jacobian_Sample_Minus_Mean(beta_in, sample_idx);
+            apply_increment_jacobian_transpose = @(u_in) this.Apply_Discrepancy_Beta_Jacobian_Transpose_Sample_Minus_Mean(u_in, sample_idx);
+
+            [dt, diagnostics] = this.A_Priori_Time_Step_Heuristic(beta, theta_traj, time_index, beta_dot, ...
+                                                                  apply_increment_jacobian, ...
+                                                                  apply_increment_jacobian_transpose, ...
+                                                                  epsilon_nl, options);
+        end
+
+        function [dt, diagnostics] = A_Priori_Time_Step_Heuristic(this, beta, theta_traj, time_index, beta_dot, apply_increment_jacobian, apply_increment_jacobian_transpose, epsilon_nl, options)
+            arguments
+                this
+                beta (:, 1) {mustBeNumeric}
+                theta_traj Auxillary_Parameter_Trajectory
+                time_index (1, 1) {mustBeNumeric}
+                beta_dot (:, 1) {mustBeNumeric}
+                apply_increment_jacobian function_handle
+                apply_increment_jacobian_transpose function_handle
+                epsilon_nl (1, 1) {mustBeNumeric, mustBeNonnegative} = 0.1
+                options struct = struct()
+            end
+
+            this.State_Evaluation(beta, theta_traj, time_index);
+
+            fd_rel_step = this.Get_Option(options, 'fd_rel_step', 1.e-4);
+            min_denominator = this.Get_Option(options, 'min_denominator', 1.e-14);
+            min_dt = this.Get_Option(options, 'min_dt', 1.e-3);
+            max_dt = this.Get_Option(options, 'max_dt', 1.0);
+            epsilon_curv = this.Get_Option(options, 'epsilon_curv', 1.0);
+
+            z_dot = this.hessian_analysis.Apply_V(beta_dot);
+            z_dot_norm = norm(z_dot);
+
+            if z_dot_norm <= min_denominator
+                A = 0.0;
+                first_norm = 0.0;
+                second_norm = 0.0;
+                fd_step = 0.0;
+            else
+                fd_step = fd_rel_step * max(1.0, norm(this.current_z)) / z_dot_norm;
+                u_plus = this.opt_prob_interface.State_Solve(this.current_z + fd_step * z_dot);
+                u_minus = this.opt_prob_interface.State_Solve(this.current_z - fd_step * z_dot);
+                second_order_action = (u_plus - 2 * this.current_u + u_minus) / (fd_step^2);
+                first_order_action = this.opt_prob_interface.Apply_Solution_Operator_z_Jacobian(z_dot, this.current_z);
+
+                second_norm = this.Weighted_u_Norm(second_order_action);
+                first_norm = this.Weighted_u_Norm(first_order_action);
+
+                if first_norm <= min_denominator
+                    A = 0.0;
+                else
+                    A = second_norm / (2 * first_norm);
+                end
+            end
+
+            eta = this.Relative_Gauss_Newton_Curvature(beta, theta_traj, time_index, ...
+                                                       apply_increment_jacobian, ...
+                                                       apply_increment_jacobian_transpose, ...
+                                                       min_denominator);
+
+            if A <= min_denominator
+                dt_nl = inf;
+            else
+                dt_nl = epsilon_nl / A;
+            end
+
+            if eta <= min_denominator
+                dt_curv = inf;
+            else
+                dt_curv = sqrt(epsilon_curv / eta);
+            end
+
+            dt = min([max_dt, 1.0, dt_nl, dt_curv]);
+            if ~isfinite(dt) || dt <= 0.0
+                dt = min(max_dt, 1.0);
+            end
+            dt = min(max_dt, max(min_dt, dt));
+
+            diagnostics = struct();
+            diagnostics.t = this.current_t;
+            diagnostics.A = A;
+            diagnostics.eta = eta;
+            diagnostics.dt_nonlinearity = dt_nl;
+            diagnostics.dt_curvature = dt_curv;
+            diagnostics.epsilon_nl = epsilon_nl;
+            diagnostics.epsilon_curv = epsilon_curv;
+            diagnostics.first_order_norm = first_norm;
+            diagnostics.second_order_norm = second_norm;
+            diagnostics.fd_step = fd_step;
+            diagnostics.dt = dt;
+        end
+
+        function [eta] = Relative_Gauss_Newton_Curvature(this, beta, theta_traj, time_index, apply_increment_jacobian, apply_increment_jacobian_transpose, regularization)
+            beta = beta(:);
+            r = length(beta);
+            H_ref = zeros(r, r);
+            H_delta = zeros(r, r);
+
+            delta = this.current_disc_ops.Eval(beta, this.current_t);
+            for j = 1:r
+                e_j = zeros(r, 1);
+                e_j(j) = 1.0;
+                H_ref(:, j) = this.Apply_Hessian(e_j, beta, theta_traj, time_index);
+
+                u_j = apply_increment_jacobian(e_j);
+                R_u_j = this.opt_prob_interface.Apply_Misfit_Hessian(u_j, this.current_u + delta, this.current_z);
+                H_delta(:, j) = apply_increment_jacobian_transpose(R_u_j);
+            end
+
+            H_ref = 0.5 * (H_ref + H_ref');
+            H_delta = 0.5 * (H_delta + H_delta');
+            H_ref = H_ref + regularization * eye(r);
+
+            if norm(H_delta, 'fro') <= regularization
+                eta = 0.0;
+                return;
+            end
+
+            try
+                vals = eig(H_delta, H_ref, 'vector');
+            catch
+                vals = eig(pinv(H_ref) * H_delta, 'vector');
+            end
+            vals = real(vals(isfinite(vals)));
+            if isempty(vals)
+                eta = 0.0;
+            else
+                eta = max(0.0, max(vals));
+            end
+        end
+
+        function [nrm] = Weighted_u_Norm(this, u)
+            try
+                Wu_u = this.post_sampling.u_prior_interface.Apply_W_u(u);
+                if isempty(Wu_u)
+                    nrm = norm(u);
+                else
+                    nrm = sqrt(abs(u' * Wu_u));
+                end
+            catch
+                nrm = norm(u);
+            end
+        end
+
+        function [value] = Get_Option(this, options, name, default_value) %#ok<INUSL>
+            if isfield(options, name) && ~isempty(options.(name))
+                value = options.(name);
+            else
+                value = default_value;
+            end
+        end
+
         function [] = State_Evaluation(this, beta, theta_traj, time_index)
             beta = beta(:);
 
@@ -343,6 +527,13 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
 
             u_out = this.Discrepancy_Evaluation_Sample_Beta(beta, sample_idx) - ...
                 this.Discrepancy_Evaluation_Mean(this.z_opt + this.hessian_analysis.Apply_V(beta));
+
+        end
+
+        function [u_out] = Apply_Discrepancy_Beta_Jacobian_Sample_Minus_Mean(this, beta_in, sample_idx)
+
+            u_out = this.Apply_Discrepancy_Beta_Jacobian_Sample(beta_in, sample_idx) - ...
+                this.Apply_Discrepancy_z_Jacobian_Mean(this.hessian_analysis.Apply_V(beta_in));
 
         end
 

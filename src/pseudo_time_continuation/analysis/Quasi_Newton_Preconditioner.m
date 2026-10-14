@@ -39,6 +39,27 @@ classdef Quasi_Newton_Preconditioner < handle
             this.PW_mags = [];
         end
 
+        function [snapshot] = Snapshot(this)
+            snapshot = struct();
+            snapshot.param_qn_data = this.param_qn_data;
+            snapshot.block_qn_data = this.block_qn_data;
+            snapshot.param_current_data_step = this.param_current_data_step;
+            snapshot.block_current_data_step = this.block_current_data_step;
+            snapshot.P = this.P;
+            snapshot.W = this.W;
+            snapshot.PW_mags = this.PW_mags;
+        end
+
+        function [] = Restore(this, snapshot)
+            this.param_qn_data = snapshot.param_qn_data;
+            this.block_qn_data = snapshot.block_qn_data;
+            this.param_current_data_step = snapshot.param_current_data_step;
+            this.block_current_data_step = snapshot.block_current_data_step;
+            this.P = snapshot.P;
+            this.W = snapshot.W;
+            this.PW_mags = snapshot.PW_mags;
+        end
+
         function [] = Add_Parametric_Quasi_Newton_Data(this, s_k, y_k)
             this.param_current_data_step = this.param_current_data_step + 1;
             this.param_qn_data{this.param_current_data_step} = struct;
