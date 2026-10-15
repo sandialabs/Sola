@@ -113,28 +113,41 @@ classdef Pseudo_Time_Continuation < handle
             end
         end
 
-        function [z_k, grad_k, time_grid, step_diagnostics] = Pseudo_Time_Continuation_Forward_Euler_Backtracking(this, theta_traj, initial_dt, options)
+        function [z_k, grad_k, time_grid, step_diagnostics, time_step_diagnostics] = Pseudo_Time_Continuation_Forward_Euler_Backtracking(this, theta_traj, initial_dt, options)
             arguments
                 this
                 theta_traj Auxillary_Parameter_Trajectory
-                initial_dt (1, 1) {mustBeNumeric, mustBePositive}
+                initial_dt = []
                 options struct = struct()
             end
 
             max_steps = this.Get_Option(options, 'max_steps', 100);
             shrink_factor = this.Get_Option(options, 'shrink_factor', 0.5);
             min_dt = this.Get_Option(options, 'min_dt', 1.e-6);
-            max_backtracks = this.Get_Option(options, 'max_backtracks', 20);
+            max_backtracks = this.Get_Option(options, 'max_backtracks', 5);
             gradient_reduction_factor = this.Get_Option(options, 'gradient_reduction_factor', 0.9);
             gradient_abs_tol = this.Get_Option(options, 'gradient_abs_tol', 1.e-8);
             require_objective_decrease = this.Get_Option(options, 'require_objective_decrease', false);
             objective_armijo_factor = this.Get_Option(options, 'objective_armijo_factor', 0.0);
+            time_step_callback = this.Get_Option(options, 'time_step_callback', []);
 
             if shrink_factor <= 0 || shrink_factor >= 1
                 error('Pseudo_Time_Continuation:InvalidShrinkFactor', ...
                       'Backtracking shrink_factor must lie in (0, 1).');
             end
-            initial_dt = min(initial_dt, 1.0);
+            if isempty(initial_dt)
+                if isempty(time_step_callback) || ~isa(time_step_callback, 'function_handle')
+                    error('Pseudo_Time_Continuation:MissingTimeStep', ...
+                          'Provide either initial_dt or options.time_step_callback.');
+                end
+                active_initial_dt = [];
+            else
+                if ~isnumeric(initial_dt) || ~isscalar(initial_dt) || initial_dt <= 0
+                    error('Pseudo_Time_Continuation:InvalidInitialStep', ...
+                          'initial_dt must be a positive scalar when provided.');
+                end
+                active_initial_dt = min(initial_dt, 1.0);
+            end
             this.qn_prec.Set_N(2 * max_steps);
 
             z_k = zeros(length(this.z_bar), max_steps + 1);
@@ -143,6 +156,7 @@ classdef Pseudo_Time_Continuation < handle
             grad_k = zeros(length(this.z_bar), max_steps + 1);
             time_grid = zeros(1, max_steps + 1);
             step_diagnostics = cell(max_steps, 1);
+            time_step_diagnostics = struct();
 
             trajectory_scale = theta_traj.Get_Number_of_Timesteps();
             t = 0.0;
@@ -155,12 +169,31 @@ classdef Pseudo_Time_Continuation < handle
                           'Pseudo-time continuation exceeded max_steps = %d.', max_steps);
                 end
 
-                trial_dt = min(initial_dt, 1.0 - t);
+                trial_dt = [];
                 accepted = false;
                 num_backtracks = 0;
                 last_diagnostics = struct();
 
                 while ~accepted
+                    qn_snapshot = this.qn_prec.Snapshot();
+                    time_index = trajectory_scale * t;
+
+                    B = this.sen_op.Apply_B(z_k(:, k), theta_traj, time_index);
+                    f = this.Apply_Inverse_Hessian(B, z_k(:, k), theta_traj, time_index);
+
+                    if isempty(active_initial_dt)
+                        [active_initial_dt, time_step_diagnostics] = time_step_callback(z_k(:, k), theta_traj, time_index, -f);
+                        if ~isnumeric(active_initial_dt) || ~isscalar(active_initial_dt) || active_initial_dt <= 0
+                            error('Pseudo_Time_Continuation:InvalidCallbackStep', ...
+                                  'options.time_step_callback must return a positive scalar time step.');
+                        end
+                        active_initial_dt = min(active_initial_dt, 1.0);
+                    end
+
+                    if isempty(trial_dt)
+                        trial_dt = min(active_initial_dt, 1.0 - t);
+                    end
+
                     if trial_dt < min_dt
                         error('Pseudo_Time_Continuation:BacktrackingMinStep', ...
                               'Pseudo-time continuation step fell below min_dt = %.3e.', min_dt);
@@ -170,13 +203,8 @@ classdef Pseudo_Time_Continuation < handle
                               'Pseudo-time continuation exceeded max_backtracks = %d.', max_backtracks);
                     end
 
-                    qn_snapshot = this.qn_prec.Snapshot();
-                    time_index = trajectory_scale * t;
                     t_next = t + trial_dt;
                     time_index_next = trajectory_scale * t_next;
-
-                    B = this.sen_op.Apply_B(z_k(:, k), theta_traj, time_index);
-                    f = this.Apply_Inverse_Hessian(B, z_k(:, k), theta_traj, time_index);
 
                     z_pred = z_k(:, k) - trial_dt * f;
                     [grad_pred, val_pred] = this.sen_op.Gradient(z_pred, theta_traj, time_index_next);
