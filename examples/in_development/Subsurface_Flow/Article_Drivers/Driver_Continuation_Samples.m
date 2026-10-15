@@ -28,9 +28,8 @@ num_continuation_steps = 7;
 pool = parpool("Threads");
 fprintf('Continuation Update...\n');
 continuation_options = struct();
-continuation_options.discard_cache = true;
-continuation_options.materialize_breve_samples = true;
-continuation_options.use_parallel_sampling = true;
+continuation_options.samples.materialize_breve_samples = true;
+continuation_options.samples.use_parallel_sampling = true;
 md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps, continuation_options);
 [u_mean, z_mean, beta_mean] = md_cont_update.Posterior_Update_Mean();
 disp("Continuation Sampling...")

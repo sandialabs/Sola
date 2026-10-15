@@ -20,27 +20,22 @@ num_samples = 5;
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_samples, true);
 
+md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis);
+
 %% Posterior-mean time-step heuristic diagnostic
 
-num_fixed_steps = 7;
-fixed_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_fixed_steps);
-[u_fixed, z_fixed, beta_fixed] = fixed_update.Posterior_Update_Mean();
+fixed_mean_options = struct();
+fixed_mean_options.num_steps = 7;
+[u_fixed, z_fixed, beta_fixed] = md_cont_update.Posterior_Update_Mean(fixed_mean_options);
 
-mean_continuation_options = struct();
-mean_continuation_options.discard_cache = true;
-mean_continuation_options.materialize_breve_samples = false;
-mean_continuation_options.use_parallel_sampling = false;
-% mean_continuation_options.num_mean_to_sample_steps = 5;
-mean_continuation_options.mean_time_step.use = true;
-mean_continuation_options.mean_time_step.epsilon_nl = 0.01;
+heuristic_mean_options = struct();
+heuristic_mean_options.time_step.use = true;
+heuristic_mean_options.time_step.epsilon_nl = 0.01;
+[u_heuristic, z_heuristic, beta_heuristic] = md_cont_update.Posterior_Update_Mean(heuristic_mean_options);
 
-heuristic_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_fixed_steps, ...
-                                          mean_continuation_options);
-[u_heuristic, z_heuristic, beta_heuristic] = heuristic_update.Posterior_Update_Mean();
-
-mean_prior_diagnostics = heuristic_update.last_mean_time_step_prior_diagnostics;
-mean_time_grid = heuristic_update.last_mean_time_grid;
-mean_step_diagnostics = heuristic_update.last_mean_time_step_diagnostics;
+mean_prior_diagnostics = md_cont_update.last_mean_time_step_prior_diagnostics;
+mean_time_grid = md_cont_update.last_mean_time_grid;
+mean_step_diagnostics = md_cont_update.last_mean_time_step_diagnostics;
 mean_dt_values = diff(mean_time_grid);
 num_mean_heuristic_steps = length(mean_dt_values);
 
@@ -50,7 +45,7 @@ J_lofi = opt_hifi.Jhat(z_lofi);
 
 fprintf('\nMean time-step heuristic diagnostics (subsurface flow)\n');
 fprintf('----------------------------------------------------\n');
-fprintf('Fixed continuation steps:       %d\n', num_fixed_steps);
+fprintf('Fixed continuation steps:       %d\n', fixed_mean_options.num_steps);
 fprintf('Heuristic continuation steps:   %d\n', num_mean_heuristic_steps);
 fprintf('A priori dt:                    %.4e\n', mean_prior_diagnostics.dt);
 fprintf('Accepted dt range:              [%.4e, %.4e]\n', min(mean_dt_values), max(mean_dt_values));
@@ -75,23 +70,18 @@ end
 
 %% Posterior-sample mean-to-sample time-step heuristic diagnostic
 
-sample_continuation_options = struct();
-sample_continuation_options.discard_cache = true;
-sample_continuation_options.materialize_breve_samples = true;
-sample_continuation_options.use_parallel_sampling = false;
-% sample_continuation_options.num_mean_to_sample_steps = 4;
-sample_continuation_options.sample_time_step.use = true;
-sample_continuation_options.sample_time_step.epsilon_nl = 0.1;
-
-md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_fixed_steps, ...
-                                        sample_continuation_options);
+sample_options = struct();
+sample_options.num_mean_to_sample_steps = 4;
+sample_options.materialize_breve_samples = true;
+sample_options.time_step.use = true;
 
 % Reuse the fixed-step mean as the mean-to-sample starting point so this block
 % isolates the sample-specific heuristic.
 u_bar = u_fixed;
 z_bar = z_fixed;
 beta_bar = beta_fixed;
-[u_samples, z_samples, beta_samples] = md_cont_update.Posterior_Update_Samples_From_Mean(u_bar, z_bar, beta_bar);
+[u_samples, z_samples, beta_samples] = md_cont_update.Posterior_Update_Samples_From_Mean(u_bar, z_bar, beta_bar, sample_options);
+sample_options = md_cont_update.options.samples;
 
 sample_prior_diags = md_cont_update.last_sample_time_step_prior_diagnostics;
 sample_time_grids = md_cont_update.last_sample_time_grids;
@@ -117,7 +107,7 @@ for sample_idx = 1:num_samples
     assert(abs(tg(1)) < 1.e-14, sprintf('Sample %d time grid does not start at zero.', sample_idx));
     assert(abs(tg(end) - 1.0) < 1.e-12, sprintf('Sample %d time grid does not end at one.', sample_idx));
     assert(all(diff(tg) > 0), sprintf('Sample %d time grid is not strictly increasing.', sample_idx));
-    assert(numel(diff(tg)) <= sample_max_steps, sprintf('Sample %d exceeded max sample steps.', sample_idx));
+    assert(numel(diff(tg)) <= sample_options.time_step.options.max_steps, sprintf('Sample %d exceeded max sample steps.', sample_idx));
 
     sample_dt_prior(sample_idx) = d.dt;
     sample_A(sample_idx) = d.A;
@@ -131,7 +121,7 @@ for sample_idx = 1:num_samples
     for k = 1:numel(sd)
         sample_total_backtracks(sample_idx) = sample_total_backtracks(sample_idx) + sd{k}.num_backtracks;
         assert(sd{k}.accepted, sprintf('Sample %d step %d was not accepted.', sample_idx, k));
-        assert(sd{k}.grad_corr_norm <= max(sample_heuristic_options.gradient_abs_tol, sample_heuristic_options.gradient_reduction_factor * sd{k}.grad_pred_norm) || sd{k}.objective_accept, ...
+        assert(sd{k}.grad_corr_norm <= max(sample_options.time_step.options.gradient_abs_tol, sample_options.time_step.options.gradient_reduction_factor * sd{k}.grad_pred_norm) || sd{k}.objective_accept, ...
                sprintf('Sample %d step %d did not satisfy acceptance diagnostics.', sample_idx, k));
     end
 end
@@ -150,7 +140,7 @@ J_bar = opt_hifi.Jhat(z_bar);
 fprintf('\nSample time-step heuristic diagnostics (subsurface flow)\n');
 fprintf('------------------------------------------------------\n');
 fprintf('Number of samples:             %d\n', num_samples);
-fprintf('Mean-to-sample base steps:      %d\n', num_mean_to_sample_steps);
+fprintf('Mean-to-sample base steps:      %d\n', sample_options.num_mean_to_sample_steps);
 fprintf('LoFi HiFi objective:           %.6e\n', J_lofi);
 fprintf('Posterior mean HiFi objective: %.6e\n', J_bar);
 fprintf('\nPer-sample a priori and accepted-step diagnostics:\n');

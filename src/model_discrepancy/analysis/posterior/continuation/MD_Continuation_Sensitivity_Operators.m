@@ -220,11 +220,11 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
 
             this.State_Evaluation(beta, theta_traj, time_index);
 
-            fd_rel_step = this.Get_Option(options, 'fd_rel_step', 1.e-4);
-            min_denominator = this.Get_Option(options, 'min_denominator', 1.e-14);
-            min_dt = this.Get_Option(options, 'min_dt', 1.e-3);
-            max_dt = this.Get_Option(options, 'max_dt', 1.0);
-            epsilon_curv = this.Get_Option(options, 'epsilon_curv', 1.0);
+            fd_rel_step = options.fd_rel_step;
+            min_denominator = options.min_denominator;
+            min_dt = options.min_dt;
+            max_dt = options.max_dt;
+            epsilon_curv = options.epsilon_curv;
 
             z_dot = this.hessian_analysis.Apply_V(beta_dot);
             z_dot_norm = norm(z_dot);
@@ -340,13 +340,6 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
             end
         end
 
-        function [value] = Get_Option(this, options, name, default_value) %#ok<INUSL>
-            if isfield(options, name) && ~isempty(options.(name))
-                value = options.(name);
-            else
-                value = default_value;
-            end
-        end
 
         function [] = State_Evaluation(this, beta, theta_traj, time_index)
             beta = beta(:);

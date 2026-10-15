@@ -121,15 +121,18 @@ classdef Pseudo_Time_Continuation < handle
                 options struct = struct()
             end
 
-            max_steps = this.Get_Option(options, 'max_steps', 100);
-            shrink_factor = this.Get_Option(options, 'shrink_factor', 0.5);
-            min_dt = this.Get_Option(options, 'min_dt', 1.e-6);
-            max_backtracks = this.Get_Option(options, 'max_backtracks', 5);
-            gradient_reduction_factor = this.Get_Option(options, 'gradient_reduction_factor', 0.9);
-            gradient_abs_tol = this.Get_Option(options, 'gradient_abs_tol', 1.e-8);
-            require_objective_decrease = this.Get_Option(options, 'require_objective_decrease', false);
-            objective_armijo_factor = this.Get_Option(options, 'objective_armijo_factor', 0.0);
-            time_step_callback = this.Get_Option(options, 'time_step_callback', []);
+            max_steps = options.max_steps;
+            shrink_factor = options.shrink_factor;
+            min_dt = options.min_dt;
+            max_backtracks = options.max_backtracks;
+            gradient_reduction_factor = options.gradient_reduction_factor;
+            gradient_abs_tol = options.gradient_abs_tol;
+            require_objective_decrease = options.require_objective_decrease;
+            objective_armijo_factor = options.objective_armijo_factor;
+            time_step_callback = [];
+            if isfield(options, 'time_step_callback')
+                time_step_callback = options.time_step_callback;
+            end
 
             if shrink_factor <= 0 || shrink_factor >= 1
                 error('Pseudo_Time_Continuation:InvalidShrinkFactor', ...
@@ -275,13 +278,6 @@ classdef Pseudo_Time_Continuation < handle
             step_diagnostics = step_diagnostics(1:(k - 1));
         end
 
-        function [value] = Get_Option(this, options, name, default_value) %#ok<INUSL>
-            if isfield(options, name) && ~isempty(options.(name))
-                value = options.(name);
-            else
-                value = default_value;
-            end
-        end
 
         function [z_k, grad_k] = Pseudo_Time_Continuation_Modified_Euler(this, theta_traj)
 
