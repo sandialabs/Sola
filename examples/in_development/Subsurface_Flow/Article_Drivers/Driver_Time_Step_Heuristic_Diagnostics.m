@@ -42,6 +42,8 @@ num_mean_heuristic_steps = length(mean_dt_values);
 J_fixed = opt_hifi.Jhat(z_fixed);
 J_heuristic = opt_hifi.Jhat(z_heuristic);
 J_lofi = opt_hifi.Jhat(z_lofi);
+[J_fixed_param, grad_fixed_param] = md_cont_update.Parameterized_RS_Objective_beta(beta_fixed, 0);
+[J_heuristic_param, grad_heuristic_param] = md_cont_update.Parameterized_RS_Objective_beta(beta_heuristic, 0);
 
 fprintf('\nMean time-step heuristic diagnostics (subsurface flow)\n');
 fprintf('----------------------------------------------------\n');
@@ -54,6 +56,8 @@ fprintf('A priori dt_nl, dt_curv:        %.4e, %.4e\n', mean_prior_diagnostics.d
 fprintf('HiFi objective at LoFi opt:     %.6e\n', J_lofi);
 fprintf('HiFi objective fixed mean:      %.6e\n', J_fixed);
 fprintf('HiFi objective heuristic mean:  %.6e\n', J_heuristic);
+fprintf('Param objective fixed mean:     %.6e  (||g_beta|| = %.4e)\n', J_fixed_param, norm(grad_fixed_param));
+fprintf('Param objective heuristic mean: %.6e  (||g_beta|| = %.4e)\n', J_heuristic_param, norm(grad_heuristic_param));
 fprintf('||z_heuristic - z_fixed||/||z_fixed|| = %.4e\n', ...
         norm(z_heuristic - z_fixed) / max(norm(z_fixed), eps));
 
@@ -71,9 +75,11 @@ end
 %% Posterior-sample mean-to-sample time-step heuristic diagnostic
 
 sample_options = struct();
-sample_options.num_mean_to_sample_steps = 4;
+% sample_options.num_mean_to_sample_steps = 4;
 sample_options.materialize_breve_samples = true;
 sample_options.time_step.use = true;
+sample_options.time_step.epsilon_nl = 0.005;
+% sample_options.time_step.options.epsilon_curv = 100;
 
 % Reuse the fixed-step mean as the mean-to-sample starting point so this block
 % isolates the sample-specific heuristic.
@@ -96,6 +102,8 @@ sample_num_steps = zeros(num_samples, 1);
 sample_total_backtracks = zeros(num_samples, 1);
 sample_min_dt = zeros(num_samples, 1);
 sample_max_dt = zeros(num_samples, 1);
+sample_t1_param_objective = NaN(num_samples, 1);
+sample_t1_grad_norm = NaN(num_samples, 1);
 
 for sample_idx = 1:num_samples
     d = sample_prior_diags{sample_idx};
@@ -124,6 +132,14 @@ for sample_idx = 1:num_samples
         assert(sd{k}.grad_corr_norm <= max(sample_options.time_step.options.gradient_abs_tol, sample_options.time_step.options.gradient_reduction_factor * sd{k}.grad_pred_norm) || sd{k}.objective_accept, ...
                sprintf('Sample %d step %d did not satisfy acceptance diagnostics.', sample_idx, k));
     end
+
+    if ~isempty(sd)
+        final_diag = sd{end};
+        assert(abs(final_diag.t_end - 1.0) < 1.e-12, ...
+               sprintf('Sample %d final diagnostic is not at t = 1.', sample_idx));
+        sample_t1_param_objective(sample_idx) = final_diag.val_corr;
+        sample_t1_grad_norm(sample_idx) = final_diag.grad_corr_norm;
+    end
 end
 
 if max(sample_dt_prior) - min(sample_dt_prior) <= 1.e-12
@@ -143,6 +159,7 @@ fprintf('Number of samples:             %d\n', num_samples);
 fprintf('Mean-to-sample base steps:      %d\n', sample_options.num_mean_to_sample_steps);
 fprintf('LoFi HiFi objective:           %.6e\n', J_lofi);
 fprintf('Posterior mean HiFi objective: %.6e\n', J_bar);
+fprintf('Posterior mean param objective: %.6e  (||g_beta|| = %.4e)\n', J_fixed_param, norm(grad_fixed_param));
 fprintf('\nPer-sample a priori and accepted-step diagnostics:\n');
 fprintf(' sample    dt_prior        A          eta       dt_nl     dt_curv   steps  backtracks   accepted dt range\n');
 for sample_idx = 1:num_samples
@@ -151,10 +168,19 @@ for sample_idx = 1:num_samples
             sample_dt_nl(sample_idx), sample_dt_curv(sample_idx), sample_num_steps(sample_idx), ...
             sample_total_backtracks(sample_idx), sample_min_dt(sample_idx), sample_max_dt(sample_idx));
 end
-fprintf('\nSample HiFi objective range:    [%.6e, %.6e]\n', min(J_samples), max(J_samples));
+fprintf('\nPer-sample t = 1 discrepancy-parameterized optimization diagnostics:\n');
+fprintf(' sample    param objective     ||g_beta||    HiFi objective\n');
+for sample_idx = 1:num_samples
+    fprintf(' %4d     %14.6e   %10.4e    %14.6e\n', ...
+            sample_idx, sample_t1_param_objective(sample_idx), sample_t1_grad_norm(sample_idx), J_samples(sample_idx));
+end
+fprintf('\nSample param objective range:  [%.6e, %.6e]\n', min(sample_t1_param_objective), max(sample_t1_param_objective));
+fprintf('Sample t=1 ||g_beta|| range:  [%.4e, %.4e]\n', min(sample_t1_grad_norm), max(sample_t1_grad_norm));
+fprintf('Sample HiFi objective range:    [%.6e, %.6e]\n', min(J_samples), max(J_samples));
 fprintf('Sample dt_prior range:          [%.4e, %.4e]\n', min(sample_dt_prior), max(sample_dt_prior));
 fprintf('Sample eta range:               [%.4e, %.4e]\n', min(sample_eta), max(sample_eta));
 
-save('time_step_heuristic_subsurface_diagnostics.mat');
+output_file = 'time_step_heuristic_subsurface_diagnostics.mat';
+save(output_file);
 fprintf('\nSaved diagnostics to %s\n', output_file);
 
