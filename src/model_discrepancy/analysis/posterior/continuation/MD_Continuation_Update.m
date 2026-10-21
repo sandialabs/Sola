@@ -56,7 +56,7 @@ classdef MD_Continuation_Update < handle
             options.mean.num_steps = 3;
             options.mean.time_step = struct();
             options.mean.time_step.use = false;
-            options.mean.time_step.epsilon_nl = 0.1;
+            options.mean.time_step.epsilon_nl = 0.01;
             options.mean.time_step.options = struct();
             options.mean.time_step.options.max_steps = 30;
             options.mean.time_step.options.shrink_factor = 0.5;
@@ -79,7 +79,7 @@ classdef MD_Continuation_Update < handle
             options.samples.use_parallel_sampling = false;
             options.samples.time_step = struct();
             options.samples.time_step.use = false;
-            options.samples.time_step.epsilon_nl = 0.1;
+            options.samples.time_step.epsilon_nl = 0.01;
             options.samples.time_step.options = struct();
             options.samples.time_step.options.max_steps = 15;
             options.samples.time_step.options.shrink_factor = 0.5;
