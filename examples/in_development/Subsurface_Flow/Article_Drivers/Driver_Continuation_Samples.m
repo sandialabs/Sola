@@ -6,7 +6,9 @@
 % Import the OED setup and previously generated OED samples
 OED_Setup;
 oed_results = load('oed-results.mat');
-num_data_points = 5;
+num_data_points = 0;
+
+if num_data_points > 0
 data_interface.Set_Z_and_D(oed_results.Z_oed(:, 1:num_data_points), oed_results.D_oed(:, 1:num_data_points));
 
 % Posterior sampling
@@ -31,7 +33,7 @@ mean_options.num_steps = 7;
 
 
 sample_options = struct();
-sample_options.num_mean_to_sample_steps = 4;
+sample_options.num_mean_to_sample_steps = 5;
 % sample_options.time_step.use = true;
 sample_options.materialize_breve_samples = true;
 sample_options.use_parallel_sampling = true;
@@ -72,3 +74,47 @@ ylim([-40 60])
 hold off;
 
 % exportgraphics(gca, ['new_plot_', num2str(num_data_points), '.pdf'])
+else
+
+%% Prior samples with linearization and continuation
+num_prior_samples = 50;
+md_prior_cont_sampling = MD_Prior_Continuation_Sampling(data_interface, u_prior_interface, z_prior_interface, md_hessian_analysis);
+md_prior_cont_sampling.Generate_Prior_Samples(num_prior_samples);
+
+fprintf('Prior Linearization Sampling...\n');
+md_prior_opt_sampling = MD_Prior_Opt_Solution_Sampling(data_interface, u_prior_interface, z_prior_interface, opt_prob_interface, md_hessian_analysis);
+z_prior_lin_samples = md_prior_opt_sampling.Generate_Prior_Opt_Solution_Samples(num_prior_samples);
+
+fprintf('Prior Continuation Sampling...\n');
+prior_options = struct();
+prior_options.num_steps = 7;
+prior_options.use_parallel_sampling = true;
+pool = parpool("Threads");
+tic;
+[~, z_prior_samples, ~] = md_prior_cont_sampling.Prior_Update_Samples(num_prior_samples, prior_options);
+toc;
+delete(pool)
+
+plot_ptile = 90;
+get_percentile = @(samples, ptile) deal(prctile(samples, 50-ptile/2, 2), prctile(samples, 50+ptile/2, 2));
+[z_prior_lin_low, z_prior_lin_high] = get_percentile(z_prior_lin_samples, plot_ptile);
+[z_prior_low, z_prior_high] = get_percentile(z_prior_samples, plot_ptile);
+
+figure;
+hold on;
+x_plot = 1:numel(z_mean);
+plot(x_plot, z_lofi, 'b-', 'LineWidth', 2, 'DisplayName', 'LoFi');
+fill([x_plot, fliplr(x_plot)], [z_prior_lin_low(:).', fliplr(z_prior_lin_high(:).')], ...
+     [0.25 0.25 0.25], 'FaceAlpha', 0.5, 'EdgeColor', 'none', 'DisplayName', 'Linearized prior samples');
+fill([x_plot, fliplr(x_plot)], [z_prior_low(:).', fliplr(z_prior_high(:).')], ...
+     [0.25 0.75 0.25], 'FaceAlpha', 0.5, 'EdgeColor', 'none', 'DisplayName', 'Continuation prior samples');
+plot(x_plot, z_hifi, 'r-', 'LineWidth', 2, 'DisplayName', 'HiFi');
+plot(x_plot, z_best_proj, 'c-', 'LineWidth', 2, 'DisplayName', 'HiFi Proj');
+
+legend('Location', 'northeastoutside');
+xlabel('Control index', 'Interpreter', 'latex');
+ylabel('Injection/production rate', 'Interpreter', 'latex');
+title('Prior control samples for subsurface flow', 'Interpreter', 'latex');
+hold off;
+
+end

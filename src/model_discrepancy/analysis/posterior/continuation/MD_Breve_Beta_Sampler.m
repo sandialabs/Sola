@@ -30,7 +30,7 @@ classdef MD_Breve_Beta_Sampler < handle
             arguments
                 hessian_analysis MD_Hessian_Analysis
                 z_prior_interface MD_z_Prior_Interface
-                post_data MD_Posterior_Data
+                post_data {mustBeA(post_data, ["MD_Posterior_Data", "double"])} % empty ([]) for the unconditioned prior
                 u_prior_interface MD_u_Prior_Interface
                 output_dim (1, 1) {mustBeNumeric}
                 tol (1, 1) {mustBeNumeric} = 1e-10
@@ -41,7 +41,11 @@ classdef MD_Breve_Beta_Sampler < handle
             this.post_data = post_data;
 
             if isempty(hessian_analysis.evals)
-                right_dim = length(post_data.Mz_z_opt);
+                if isempty(post_data)
+                    right_dim = z_prior_interface.n_z;
+                else
+                    right_dim = length(post_data.Mz_z_opt);
+                end
             else
                 right_dim = length(hessian_analysis.evals);
             end
@@ -122,7 +126,7 @@ classdef MD_Breve_Beta_Sampler < handle
             Mz_z_in = this.z_prior_interface.Apply_M_z(z_in);
             tmp_rhs = this.z_prior_interface.Apply_W_z_Inverse(Mz_z_in);
 
-            if ~isempty(this.post_data.Zc_Mz_Wz_inv_Mz_Zc)
+            if ~isempty(this.post_data) && ~isempty(this.post_data.Zc_Mz_Wz_inv_Mz_Zc)
                 coeff = linsolve(this.post_data.Zc_Mz_Wz_inv_Mz_Zc, this.post_data.Mz_Zc' * tmp_rhs);
                 tmp_rhs = tmp_rhs - this.post_data.Wz_inv_Mz_Zc * coeff;
             end
@@ -133,7 +137,7 @@ classdef MD_Breve_Beta_Sampler < handle
         function beta_samps = Sample_Sigma_Beta(this, num_samples)
             z_samps = this.z_prior_interface.Sample_with_Covariance_W_z_Inverse(num_samples);
 
-            if ~isempty(this.post_data.Zc_Mz_Wz_inv_Mz_Zc)
+            if ~isempty(this.post_data) && ~isempty(this.post_data.Zc_Mz_Wz_inv_Mz_Zc)
                 coeff = linsolve(this.post_data.Zc_Mz_Wz_inv_Mz_Zc, this.post_data.Mz_Zc' * z_samps);
                 z_samps = z_samps - this.post_data.Wz_inv_Mz_Zc * coeff;
             end

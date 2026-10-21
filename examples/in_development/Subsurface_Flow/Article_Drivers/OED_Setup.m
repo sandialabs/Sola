@@ -87,6 +87,8 @@ z_prior_interface = MD_Numeric_Laplacian_z_Prior_Interface(con_lofi.S, con_lofi.
 
 alpha_u = u_prior_interface.alpha_u;
 % z_prior_interface.alpha_z = 100*z_prior_interface.alpha_z;
+% u_hyperparam_interface.alpha_d=100*u_hyperparam_interface.alpha_d;
+% u_prior_interface.alpha_u = 100*u_prior_interface.alpha_u;
 alpha_z = z_prior_interface.alpha_z;
 alpha_d = u_hyperparam_interface.alpha_d;
 beta_u = u_prior_interface.beta_u;
