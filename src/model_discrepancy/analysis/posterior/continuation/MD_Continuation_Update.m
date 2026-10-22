@@ -76,7 +76,7 @@ classdef MD_Continuation_Update < handle
             options.samples.num_mean_to_sample_steps = 2;
             options.samples.discard_cache = true;
             options.samples.materialize_breve_samples = false;
-            options.samples.use_parallel_sampling = false;
+            options.samples.use_parallel_sampling = true;
             options.samples.time_step = struct();
             options.samples.time_step.use = false;
             options.samples.time_step.epsilon_nl = 0.01;

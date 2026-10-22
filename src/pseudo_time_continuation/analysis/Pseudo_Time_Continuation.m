@@ -133,6 +133,12 @@ classdef Pseudo_Time_Continuation < handle
             if isfield(options, 'time_step_callback')
                 time_step_callback = options.time_step_callback;
             end
+            % Round the a priori step down to 1/ceil(1/dt) so the grid is
+            % uniform instead of ending in a short remainder step.
+            equal_size_steps = true;
+            if isfield(options, 'equal_size_steps')
+                equal_size_steps = options.equal_size_steps;
+            end
 
             if shrink_factor <= 0 || shrink_factor >= 1
                 error('Pseudo_Time_Continuation:InvalidShrinkFactor', ...
@@ -191,6 +197,11 @@ classdef Pseudo_Time_Continuation < handle
                                   'options.time_step_callback must return a positive scalar time step.');
                         end
                         active_initial_dt = min(active_initial_dt, 1.0);
+                        if equal_size_steps
+                            time_step_diagnostics.dt_heuristic = active_initial_dt;
+                            active_initial_dt = 1.0 / ceil(1.0 / active_initial_dt - 1.e-10);
+                            time_step_diagnostics.dt = active_initial_dt;
+                        end
                     end
 
                     if isempty(trial_dt)
