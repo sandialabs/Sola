@@ -54,6 +54,7 @@ classdef MD_Continuation_Update < handle
 
             options.mean = struct();
             options.mean.num_steps = 3;
+            options.mean.num_newton_steps = 0;
             options.mean.time_step = struct();
             options.mean.time_step.use = false;
             options.mean.time_step.epsilon_nl = 0.01;
@@ -74,6 +75,7 @@ classdef MD_Continuation_Update < handle
             options.samples = struct();
             options.samples.num_steps = 3;
             options.samples.num_mean_to_sample_steps = 2;
+            options.samples.num_newton_steps = 0;
             options.samples.discard_cache = true;
             options.samples.materialize_breve_samples = false;
             options.samples.use_parallel_sampling = true;
@@ -302,7 +304,7 @@ classdef MD_Continuation_Update < handle
                 this.last_mean_time_step_prior_diagnostics = mean_prior_diagnostics;
             else
                 theta_traj = MD_Discrepancy_Parameter_Trajectory(continuation_options.num_steps, sample_idx);
-                beta_k_tmp = pt_cont.Pseudo_Time_Continuation_Forward_Euler(theta_traj);
+                beta_k_tmp = pt_cont.Pseudo_Time_Continuation_Forward_Euler(theta_traj, continuation_options.num_newton_steps);
                 if sample_idx == 0
                     this.last_mean_time_step_prior_diagnostics = struct();
                     this.last_mean_time_grid = linspace(0, 1, continuation_options.num_steps + 1);
@@ -341,7 +343,7 @@ classdef MD_Continuation_Update < handle
                                                                                 backtracking_options);
             else
                 theta_traj = MD_Discrepancy_Mean_To_Sample_Trajectory(sample_options.num_mean_to_sample_steps, sample_idx);
-                beta_k_tmp = pt_cont.Pseudo_Time_Continuation_Forward_Euler(theta_traj);
+                beta_k_tmp = pt_cont.Pseudo_Time_Continuation_Forward_Euler(theta_traj, sample_options.num_newton_steps);
                 time_grid = linspace(0, 1, sample_options.num_mean_to_sample_steps + 1);
             end
 

@@ -72,15 +72,22 @@ classdef Pseudo_Time_Continuation < handle
             end
         end
 
-        function [z_k, grad_k] = Pseudo_Time_Continuation_Forward_Euler(this, theta_traj)
+        % num_newton_steps (optional, default 0) appends that many Newton
+        % corrections at the final pseudo-time after the N continuation steps.
+        % The extra iterates are returned as additional columns of z_k and
+        % grad_k, so z_k(:, end) is always the final solution.
+        function [z_k, grad_k] = Pseudo_Time_Continuation_Forward_Euler(this, theta_traj, num_newton_steps)
+            if nargin < 3 || isempty(num_newton_steps)
+                num_newton_steps = 0;
+            end
 
             N = theta_traj.Get_Number_of_Timesteps();
-            this.qn_prec.Set_N(N);
+            this.qn_prec.Set_N(N + num_newton_steps);
 
-            z_k = zeros(length(this.z_bar), N + 1);
+            z_k = zeros(length(this.z_bar), N + num_newton_steps + 1);
             z_k(:, 1) = this.z_bar;
 
-            grad_k = zeros(length(this.z_bar), N + 1);
+            grad_k = zeros(length(this.z_bar), N + num_newton_steps + 1);
             dt = 1 / N;
 
             grad_k(:, 1) = this.sen_op.Gradient(z_k(:, 1), theta_traj, 0);
@@ -110,6 +117,21 @@ classdef Pseudo_Time_Continuation < handle
                     this.qn_prec.Add_Parametric_Quasi_Newton_Data(s_k, y_k);
                 end
 
+            end
+
+            % Extra Newton steps at the final pseudo-time (theta fixed).
+            for j = 1:num_newton_steps
+                idx = N + j;
+                f = this.Apply_Inverse_Hessian(grad_k(:, idx), z_k(:, idx), theta_traj, N);
+                z_k(:, idx + 1) = z_k(:, idx) - f;
+                grad_k(:, idx + 1) = this.sen_op.Gradient(z_k(:, idx + 1), theta_traj, N);
+
+                if this.use_qn_prec
+                    this.qn_prec.Add_Block_Quasi_Newton_Data();
+                    s_k = z_k(:, idx + 1) - z_k(:, idx);
+                    y_k = grad_k(:, idx + 1) - grad_k(:, idx);
+                    this.qn_prec.Add_Parametric_Quasi_Newton_Data(s_k, y_k);
+                end
             end
         end
 

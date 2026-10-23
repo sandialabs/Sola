@@ -6,7 +6,7 @@
 % Import the OED setup and previously generated OED samples
 OED_Setup;
 oed_results = load('oed-results.mat');
-num_data_points = 0;
+num_data_points = 1;
 
 if num_data_points > 0
 data_interface.Set_Z_and_D(oed_results.Z_oed(:, 1:num_data_points), oed_results.D_oed(:, 1:num_data_points));
