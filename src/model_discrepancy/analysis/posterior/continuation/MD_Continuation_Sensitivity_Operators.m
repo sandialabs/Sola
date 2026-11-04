@@ -494,112 +494,103 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
 
         function [u_out] = Discrepancy_Evaluation_Mean_To_Sample_Beta(this, beta, s, sample_idx)
 
+            beta = beta(:);
             u_mean = this.Discrepancy_Evaluation_Mean(this.z_opt + this.hessian_analysis.Apply_V(beta));
-            u_diff = this.Discrepancy_Evaluation_Sample_Beta(beta, sample_idx) - u_mean;
-            u_out = u_mean + s * u_diff;
+            u_out = u_mean + s * this.Discrepancy_Evaluation_Sample_Minus_Mean_Beta(beta, sample_idx);
 
         end
 
         function [u_out] = Apply_Discrepancy_Beta_Jacobian_Mean_To_Sample(this, beta_in, s, sample_idx)
 
+            beta_in = beta_in(:);
             u_mean = this.Apply_Discrepancy_z_Jacobian_Mean(this.hessian_analysis.Apply_V(beta_in));
-            u_diff = this.Apply_Discrepancy_Beta_Jacobian_Sample(beta_in, sample_idx) - u_mean;
-            u_out = u_mean + s * u_diff;
+            u_out = u_mean + s * this.Apply_Discrepancy_Beta_Jacobian_Sample_Minus_Mean(beta_in, sample_idx);
 
         end
 
         function [beta_out] = Apply_Discrepancy_Beta_Jacobian_Transpose_Mean_To_Sample(this, u_in, s, sample_idx)
 
             beta_mean = this.hessian_analysis.Apply_V_Transpose(this.Apply_Discrepancy_z_Jacobian_Transpose_Mean(u_in));
-            beta_diff = this.Apply_Discrepancy_Beta_Jacobian_Transpose_Sample(u_in, sample_idx) - beta_mean;
-            beta_out = beta_mean + s * beta_diff;
+            beta_out = beta_mean + s * this.Apply_Discrepancy_Beta_Jacobian_Transpose_Sample_Minus_Mean(u_in, sample_idx);
 
         end
 
         function [u_out] = Discrepancy_Evaluation_Sample_Minus_Mean_Beta(this, beta, sample_idx)
 
-            u_out = this.Discrepancy_Evaluation_Sample_Beta(beta, sample_idx) - ...
-                this.Discrepancy_Evaluation_Mean(this.z_opt + this.hessian_analysis.Apply_V(beta));
-
-        end
-
-        function [u_out] = Apply_Discrepancy_Beta_Jacobian_Sample_Minus_Mean(this, beta_in, sample_idx)
-
-            u_out = this.Apply_Discrepancy_Beta_Jacobian_Sample(beta_in, sample_idx) - ...
-                this.Apply_Discrepancy_z_Jacobian_Mean(this.hessian_analysis.Apply_V(beta_in));
-
-        end
-
-        function [beta_out] = Apply_Discrepancy_Beta_Jacobian_Transpose_Sample_Minus_Mean(this, u_in, sample_idx)
-
-            beta_out = this.Apply_Discrepancy_Beta_Jacobian_Transpose_Sample(u_in, sample_idx) - ...
-                this.hessian_analysis.Apply_V_Transpose(this.Apply_Discrepancy_z_Jacobian_Transpose_Mean(u_in));
-
-        end
-
-        function [u_out] = Discrepancy_Evaluation_Sample_Beta(this, beta, sample_idx)
-
             beta = beta(:);
             dz = this.hessian_analysis.Apply_V(beta);
-            
-            % Mean component
-            u_out = this.Discrepancy_Evaluation_Mean(this.z_opt + dz);
 
             % Hat component
-            u_hat = zeros(size(u_out));
+            u_hat = zeros(size(this.u_opt));
             for i = 1:this.post_data.N
                 sgi = sum(this.post_data.g_vecs(:, i));
                 coeff = (1 / sqrt(this.post_data.Mu(i, i))) * (sgi + this.Mz_Wz_inv_Mz_yi(:, i)' * dz);
                 u_hat = u_hat + coeff * this.post_data.ui_hat{i}(:, sample_idx);
             end
-            u_out = u_out + sqrt(this.post_data.alpha_d) * u_hat;
-            
+            u_out = sqrt(this.post_data.alpha_d) * u_hat;
+
             % Breve component
             sampler = this.Get_Breve_Sampler(sample_idx);
             u_out = u_out + sampler.Eval(beta);
 
         end
 
-        function [u_out] = Apply_Discrepancy_Beta_Jacobian_Sample(this, beta_in, sample_idx)
+        function [u_out] = Apply_Discrepancy_Beta_Jacobian_Sample_Minus_Mean(this, beta_in, sample_idx)
 
             beta_in = beta_in(:);
             z_in = this.hessian_analysis.Apply_V(beta_in);
 
-            % Mean component
-            u_out = this.Apply_Discrepancy_z_Jacobian_Mean(z_in);
-
             % Hat component
-            u_hat = zeros(size(u_out));
+            u_hat = zeros(size(this.u_opt));
             for i = 1:this.post_data.N
                 coeff = (1 / sqrt(this.post_data.Mu(i, i))) * (this.Mz_Wz_inv_Mz_yi(:, i)' * z_in);
                 u_hat = u_hat + coeff * this.post_data.ui_hat{i}(:, sample_idx);
             end
-            u_out = u_out + sqrt(this.post_data.alpha_d) * u_hat;
-            
+            u_out = sqrt(this.post_data.alpha_d) * u_hat;
+
             % Breve component
             sampler = this.Get_Breve_Sampler(sample_idx);
             u_out = u_out + sampler.Apply_Jacobian(beta_in);
 
         end
 
-        function [beta_out] = Apply_Discrepancy_Beta_Jacobian_Transpose_Sample(this, u_in, sample_idx)
+        function [beta_out] = Apply_Discrepancy_Beta_Jacobian_Transpose_Sample_Minus_Mean(this, u_in, sample_idx)
 
-            % Mean component
-            z_out = this.Apply_Discrepancy_z_Jacobian_Transpose_Mean(u_in);
-            
             % Hat component
-            z_hat = zeros(size(z_out));
+            z_hat = zeros(size(this.z_opt));
             for i = 1:this.post_data.N
                 ui_hat_idx = this.post_data.ui_hat{i}(:, sample_idx);
                 coeff = (1 / sqrt(this.post_data.Mu(i, i))) * (ui_hat_idx' * u_in);
                 z_hat = z_hat + coeff * this.Mz_Wz_inv_Mz_yi(:, i);
             end
-            z_out = z_out + sqrt(this.post_data.alpha_d) * z_hat;
-            beta_out = this.hessian_analysis.Apply_V_Transpose(z_out);
-            
+            beta_out = sqrt(this.post_data.alpha_d) * this.hessian_analysis.Apply_V_Transpose(z_hat);
+
             % Breve component
             sampler = this.Get_Breve_Sampler(sample_idx);
             beta_out = beta_out + sampler.Apply_Jacobian_Transpose(u_in);
+
+        end
+
+        function [u_out] = Discrepancy_Evaluation_Sample_Beta(this, beta, sample_idx)
+
+            beta = beta(:);
+            u_out = this.Discrepancy_Evaluation_Mean(this.z_opt + this.hessian_analysis.Apply_V(beta)) + ...
+                this.Discrepancy_Evaluation_Sample_Minus_Mean_Beta(beta, sample_idx);
+
+        end
+
+        function [u_out] = Apply_Discrepancy_Beta_Jacobian_Sample(this, beta_in, sample_idx)
+
+            beta_in = beta_in(:);
+            u_out = this.Apply_Discrepancy_z_Jacobian_Mean(this.hessian_analysis.Apply_V(beta_in)) + ...
+                this.Apply_Discrepancy_Beta_Jacobian_Sample_Minus_Mean(beta_in, sample_idx);
+
+        end
+
+        function [beta_out] = Apply_Discrepancy_Beta_Jacobian_Transpose_Sample(this, u_in, sample_idx)
+
+            beta_out = this.hessian_analysis.Apply_V_Transpose(this.Apply_Discrepancy_z_Jacobian_Transpose_Mean(u_in)) + ...
+                this.Apply_Discrepancy_Beta_Jacobian_Transpose_Sample_Minus_Mean(u_in, sample_idx);
 
         end
 

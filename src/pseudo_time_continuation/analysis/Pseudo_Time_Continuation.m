@@ -127,10 +127,12 @@ classdef Pseudo_Time_Continuation < handle
                 grad_k(:, idx + 1) = this.sen_op.Gradient(z_k(:, idx + 1), theta_traj, N);
 
                 if this.use_qn_prec
-                    this.qn_prec.Add_Block_Quasi_Newton_Data();
                     s_k = z_k(:, idx + 1) - z_k(:, idx);
                     y_k = grad_k(:, idx + 1) - grad_k(:, idx);
-                    this.qn_prec.Add_Parametric_Quasi_Newton_Data(s_k, y_k);
+                    if s_k' * y_k > 0
+                        this.qn_prec.Add_Block_Quasi_Newton_Data();
+                        this.qn_prec.Add_Parametric_Quasi_Newton_Data(s_k, y_k);
+                    end
                 end
             end
         end
