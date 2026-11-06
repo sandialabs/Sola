@@ -68,9 +68,13 @@ classdef Subsurface_LoFi_Constraint < Constraint
         end
 
         function [c_uu] = Constraint_Hessian(this, u, lambda)
+            % Hessian of lambda' * c(u, z) with respect to u.  The Dirichlet rows of c
+            % (u - p0 at the two boundary nodes) are linear, so only the interior
+            % multipliers contribute.  Using the boundary multipliers here (as the
+            % assembled diffusion Hessian would) adds spurious terms and makes the
+            % reduced Hessian inexact (about 1% relative error).
+            lambda([1, this.m]) = 0;
             c_uu = this.Assemble_Diffusion_Function_Hessian(u, lambda);
-            c_uu([1, this.m], :) = 0;
-            c_uu(:, [1, this.m]) = 0;
         end
 
         function [K, K_u] = Assemble_Diffusion_Function(this, u)

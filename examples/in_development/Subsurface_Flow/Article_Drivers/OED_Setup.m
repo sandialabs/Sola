@@ -116,6 +116,6 @@ Jhat_best_proj = opt_hifi.Jhat(z_best_proj);
 
 % Display initial objectives
 fprintf('\nStep 0:\n-------------\n');
-fprintf('Objective of z_lofi: \t%.3f\n', 100 * Jhat_lofi);
-fprintf('Objective of z_hifi: \t%.3f\n', 100 * Jhat_hifi);
-fprintf('Objective of z_proj: \t%.3f\n\n', 100 * Jhat_best_proj);
+fprintf('Objective of z_lofi (x100): \t%.3f\n', 100 * Jhat_lofi);
+fprintf('Objective of z_hifi (x100): \t%.3f\n', 100 * Jhat_hifi);
+fprintf('Objective of z_proj (x100): \t%.3f\n\n', 100 * Jhat_best_proj);

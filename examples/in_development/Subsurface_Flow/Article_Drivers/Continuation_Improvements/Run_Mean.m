@@ -6,6 +6,8 @@
 function out = Run_Mean(sen_op, hessian_analysis, z_opt, r, num_steps, epsilon_nl, bt_options, num_max_newton_steps, newton_gradient_tol)
     % Posterior-mean continuation: fixed uniform steps if epsilon_nl is
     % empty, otherwise the a priori heuristic with backtracking.
+    % If num_steps is the string 'backtrack', backtracking only: start with a full
+    % step (dt = 1) and shrink only when a step is rejected (epsilon_nl is ignored).
     % num_max_newton_steps (optional, default 0): maximum number of Newton steps
     % at t = 1 after the continuation steps (both modes).
     % newton_gradient_tol (optional, default 0): stop the Newton steps once
@@ -19,10 +21,20 @@ function out = Run_Mean(sen_op, hessian_analysis, z_opt, r, num_steps, epsilon_n
     end
     qn_prec = MD_Quasi_Newton_Preconditioner(hessian_analysis);
     pt = Pseudo_Time_Continuation(zeros(r, 1), sen_op, qn_prec);
+    out = struct('steps', [], 'backtracks', [], 'time_grid', [], 'dt_prior', []);   % fixed field order
     tic;
-    if isempty(epsilon_nl)
+    if ischar(num_steps) || isstring(num_steps)
+        assert(strcmp(num_steps, 'backtrack'), 'num_steps must be a number or ''backtrack''.');
+        theta = MD_Discrepancy_Parameter_Trajectory(1, 0);
+        bt_options.num_max_newton_steps = num_max_newton_steps;
+        bt_options.newton_gradient_tol = newton_gradient_tol;
+        [beta_traj, grad_traj, out.time_grid, step_diags] = pt.Pseudo_Time_Continuation_Forward_Euler_Backtracking(theta, 1.0, bt_options);
+        out.dt_prior = 1.0;
+        out.steps = length(step_diags);
+        out.backtracks = sum(cellfun(@(d) d.num_backtracks, step_diags));
+    elseif isempty(epsilon_nl)
         theta = MD_Discrepancy_Parameter_Trajectory(num_steps, 0);
-        beta_traj = pt.Pseudo_Time_Continuation_Forward_Euler(theta, num_max_newton_steps, newton_gradient_tol);
+        [beta_traj, grad_traj] = pt.Pseudo_Time_Continuation_Forward_Euler(theta, num_max_newton_steps, newton_gradient_tol);
         out.steps = num_steps;
         out.backtracks = 0;
         out.time_grid = linspace(0, 1, num_steps + 1);
@@ -33,7 +45,7 @@ function out = Run_Mean(sen_op, hessian_analysis, z_opt, r, num_steps, epsilon_n
         bt_options.newton_gradient_tol = newton_gradient_tol;
         bt_options.time_step_callback = @(beta, th, ti, beta_dot) ...
             sen_op.Mean_A_Priori_Time_Step_Heuristic(beta, th, ti, beta_dot, epsilon_nl, bt_options);
-        [beta_traj, ~, out.time_grid, step_diags, prior_diag] = pt.Pseudo_Time_Continuation_Forward_Euler_Backtracking(theta, [], bt_options);
+        [beta_traj, grad_traj, out.time_grid, step_diags, prior_diag] = pt.Pseudo_Time_Continuation_Forward_Euler_Backtracking(theta, [], bt_options);
         out.dt_prior = prior_diag.dt;
         out.steps = length(step_diags);
         out.backtracks = sum(cellfun(@(d) d.num_backtracks, step_diags));
@@ -41,6 +53,9 @@ function out = Run_Mean(sen_op, hessian_analysis, z_opt, r, num_steps, epsilon_n
     out.time = toc;
     out.newton_steps = size(beta_traj, 2) - 1 - out.steps;
     out.work = out.steps + out.backtracks + out.newton_steps;
+    % Gradient norm after the continuation (first entry) and after each Newton step taken.
+    out.newton_grad_norms = vecnorm(grad_traj(:, out.steps + 1:end));
+    out.grad_after_continuation = out.newton_grad_norms(1);
     out.beta = beta_traj(:, end);
     out.z = z_opt + hessian_analysis.Apply_V(out.beta);
     grad = sen_op.Gradient(out.beta, theta, theta.Get_Number_of_Timesteps());

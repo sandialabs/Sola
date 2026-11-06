@@ -3,21 +3,44 @@
 %%%%%%%%% Questions? Contact Joseph Hart (joshart@sandia.gov) %%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Plot for Experiment 2a (Driver_CI_Adaptive_Mean), read from its saved results.
+% Plots for Experiment 2a (Driver_CI_Adaptive_Mean), read from its saved results.
+% Bare-bones on purpose: plot/semilogy, labels, title, legend.
 
 results_file = fullfile(fileparts(mfilename('fullpath')), 'ci-adaptive-mean-results.mat');
 loaded = load(results_file, 'results');
 res = loaded.results;
 
-%% 4. Adaptive steps, posterior mean
-disp('Plot 4: adaptive steps, mean');
+runs = [res.mean_fixed, res.mean_backtrack, res.mean_adapt];
+labels = {runs.label};
+n = length(runs);
+
+%% 1. Cost to reach the Newton tolerance: continuation vs Newton
+disp('Plot 1: cost of continuation and Newton steps');
+cont = [runs.steps] + [runs.backtracks];
+newton_cost_part = [runs.cost] - cont;
 figure;
-semilogy([res.mean_fixed.work], [res.mean_fixed.grad_norm], 'o-', ...
-         [res.mean_adapt.work], [res.mean_adapt.grad_norm], 's-');
-xlabel('Work (steps + backtracks + Newton steps)');
-ylabel('Endpoint gradient norm');
-title('Posterior mean: fixed vs adaptive');
-legend('fixed', 'adaptive');
+bar(1:n, [cont(:), newton_cost_part(:)], 'stacked');
+set(gca, 'XTick', 1:n, 'XTickLabel', labels, 'TickLabelInterpreter', 'none');
+xtickangle(45);
+ylabel(sprintf('Cost (continuation steps + %.2g \\times Newton steps)', res.settings.newton_cost));
+title(sprintf('Posterior mean, Newton until ||g|| \\leq %.2g', res.settings.newton_gradient_tol));
+legend('continuation steps', 'Newton steps (weighted)', 'Location', 'best');
+drawnow;
+
+%% 2. Newton convergence trajectories
+disp('Plot 2: gradient norm vs Newton step');
+figure;
+hold on;
+for k = 1:n
+    g = runs(k).newton_grad_norms;
+    semilogy(0:(length(g) - 1), g, 'o-');
+end
+yline(res.settings.newton_gradient_tol, '--');
+set(gca, 'YScale', 'log');
+xlabel('Newton steps after the continuation');
+ylabel('Gradient norm');
+title('Posterior mean: Newton convergence from each continuation');
+legend([labels, {'tolerance'}], 'Location', 'best', 'Interpreter', 'none');
 drawnow;
 
 disp('Adaptive-mean plots done.');

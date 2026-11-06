@@ -44,14 +44,30 @@ reference_newton_tol_factor = 1;    % stopping once ||g_beta|| <= factor * ||gra
 epsilon_curv = 100;                      % curvature tolerance used by the heuristics
 sample_max_steps = 15;                 % backtracking-integrator step cap for samples
 breve_seed = 2024;                     % seed for the (materialized) breve sample realizations, built once below
+model_version = 3;                     % bump when the model/Hessian/OED data change (invalidates the caches); 2: exact constraint Hessian, 3: regenerated Optimization_Results/oed-results
 
 setup_file = fullfile(ci_dir, ['ci-setup', cache_tag, '.mat']);
 setup_key = struct('num_data_points', num_data_points, 'num_samples', num_samples, ...
                    'fixed_mean_steps', fixed_mean_steps, 'mean_reference_steps', mean_reference_steps, ...
                    'reference_num_max_newton_steps', reference_num_max_newton_steps, 'reference_newton_tol_factor', reference_newton_tol_factor, ...
-                   'epsilon_curv', epsilon_curv, 'sample_max_steps', sample_max_steps, 'breve_seed', breve_seed);
+                   'epsilon_curv', epsilon_curv, 'sample_max_steps', sample_max_steps, 'breve_seed', breve_seed, 'model_version', model_version);
 
-if isfile(setup_file) && isequal(load(setup_file, 'setup_key').setup_key, setup_key)
+% The cache is valid only if the settings match and the file contains every variable the
+% drivers need (an incomplete file can result from running the setup in a workspace that
+% already held variables of the same names, which are then not saved).
+required_vars = {'setup_key', 'sen_op', 'md_hessian_analysis', 'md_post_sampling', 'data_interface', ...
+                 'z_opt', 'r', 'beta_bar', 'mean_ref', 'mean_start', 'mean_bt_options', 'sample_bt_options', ...
+                 'sample_indices', 'lowfi_grad_norm', 'reference_newton_gradient_tol'};
+cache_valid = isfile(setup_file);
+if cache_valid
+    file_info = whos('-file', setup_file);
+    cache_valid = all(ismember(required_vars, {file_info.name}));
+end
+if cache_valid
+    cache_valid = isequal(load(setup_file, 'setup_key').setup_key, setup_key);
+end
+
+if cache_valid
     % Classes must be on the path before the saved objects are loaded.
     example_dir = fileparts(fileparts(ci_dir));   % Subsurface_Flow
     addpath(genpath(example_dir));
@@ -72,6 +88,10 @@ if isfile(setup_file) && isequal(load(setup_file, 'setup_key').setup_key, setup_
     fprintf('Continuation improvements setup loaded from %s.\n', setup_file);
     return;
 end
+% Start from a clean workspace (keeping the settings defined above) so that every variable
+% created by the setup below is saved in the cache.
+keep_vars = [who; {'keep_vars'}];
+clearvars('-except', keep_vars{:});
 vars_before = who;
 OED_Setup;
 oed_results = load(fullfile(article_dir, 'oed-results.mat'));
@@ -126,6 +146,6 @@ mean_start = Run_Mean(sen_op, md_hessian_analysis, z_opt, r, fixed_mean_steps, [
 beta_bar = mean_start.beta;
 fprintf('Mean solve (%d steps): %.2fs, ||grad|| = %.3e\n', fixed_mean_steps, mean_start.time, mean_start.grad_norm);
 
-vars_to_save = setdiff(who, [vars_before; {'vars_before'}]);
+vars_to_save = setdiff(who, [vars_before; {'vars_before'}; {'keep_vars'}]);
 save(setup_file, vars_to_save{:}, 'setup_key', '-v7.3');
 fprintf('Saved setup to %s.\n', setup_file);

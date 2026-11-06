@@ -56,8 +56,10 @@ for p = 1:N
 
     % Obtain optimal solution update via continuation
     num_continuation_steps = 3;
-    md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis, num_continuation_steps);
-    [u_cont, z_cont, betas_cont] = md_cont_update.Posterior_Update_Mean(); %#ok<NASGU>
+    md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis);
+    mean_options = struct();
+    mean_options.num_steps = num_continuation_steps;
+    [u_cont, z_cont, betas_cont] = md_cont_update.Posterior_Update_Mean(mean_options); %#ok<NASGU>
     z_bar = z_cont(:, end);
     z_bars(:, p) = z_bar;
     beta_bar = betas_cont(:, end);
@@ -65,7 +67,7 @@ for p = 1:N
 
     % Display stats
     Jhat_DC_oed(p) = opt_hifi.Jhat(z_bar);
-    fprintf('Objective of z_bar: \t%.5f\n', Jhat_DC_oed(p));
+    fprintf('Objective of z_bar (x100): \t%.5f\n', 100 * Jhat_DC_oed(p));
     fprintf('Relative error to z_hifi: \t%.5f\n', oed_z_error_fn(z_bar));
     if p == 1
         fprintf('Percent Improvement: \t%.2f%%\n\n', 100 * (Jhat_lofi - Jhat_DC_oed(p)) / (Jhat_lofi - Jhat_hifi));
