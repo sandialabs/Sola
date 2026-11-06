@@ -24,6 +24,10 @@ function out = Run_Samples(sen_op, hessian_analysis, z_opt, r, method, N_c, beta
     out.dt_nl = nan(num_samples, 1);
     out.dt_curv = nan(num_samples, 1);
     out.failures = false(num_samples, 1);
+    % Gradient norm after the continuation steps (column 1) and after each
+    % Newton step (columns 2..M+1); the Newton iterates are prefixes, so one
+    % run with M steps gives the result for every smaller M.
+    out.newton_grad_norms = nan(num_samples, num_newton_steps + 1);
 
     tic;
     for ii = 1:num_samples
@@ -34,13 +38,15 @@ function out = Run_Samples(sen_op, hessian_analysis, z_opt, r, method, N_c, beta
                 case 'nominal'
                     pt = Pseudo_Time_Continuation(zeros(r, 1), sen_op, qn_prec);
                     theta = MD_Discrepancy_Parameter_Trajectory(N_c, idx);
-                    beta_traj = pt.Pseudo_Time_Continuation_Forward_Euler(theta, num_newton_steps);
+                    [beta_traj, grad_traj] = pt.Pseudo_Time_Continuation_Forward_Euler(theta, num_newton_steps);
+                    cont_steps = N_c;
                     out.steps(ii) = N_c;
                     out.dt_prior(ii) = 1 / N_c;
                 case 'fixed_mts'
                     pt = Pseudo_Time_Continuation(beta_bar, sen_op, qn_prec);
                     theta = MD_Discrepancy_Mean_To_Sample_Trajectory(N_c, idx);
-                    beta_traj = pt.Pseudo_Time_Continuation_Forward_Euler(theta, num_newton_steps);
+                    [beta_traj, grad_traj] = pt.Pseudo_Time_Continuation_Forward_Euler(theta, num_newton_steps);
+                    cont_steps = N_c;
                     out.steps(ii) = N_c;
                     out.dt_prior(ii) = 1 / N_c;
                 case 'adaptive_mts'
@@ -50,7 +56,8 @@ function out = Run_Samples(sen_op, hessian_analysis, z_opt, r, method, N_c, beta
                     opts.num_newton_steps = num_newton_steps;
                     opts.time_step_callback = @(beta, th, ti, beta_dot) ...
                         sen_op.Sample_A_Priori_Time_Step_Heuristic(beta, th, ti, beta_dot, idx, epsilon_nl, bt_options);
-                    [beta_traj, ~, ~, step_diags, prior_diag] = pt.Pseudo_Time_Continuation_Forward_Euler_Backtracking(theta, [], opts);
+                    [beta_traj, grad_traj, ~, step_diags, prior_diag] = pt.Pseudo_Time_Continuation_Forward_Euler_Backtracking(theta, [], opts);
+                    cont_steps = length(step_diags);
                     out.dt_prior(ii) = prior_diag.dt;
                     out.A(ii) = prior_diag.A;
                     out.eta(ii) = prior_diag.eta;
@@ -62,6 +69,7 @@ function out = Run_Samples(sen_op, hessian_analysis, z_opt, r, method, N_c, beta
                     error('Unknown method "%s".', method);
             end
             beta_k = beta_traj(:, end);
+            out.newton_grad_norms(ii, :) = sqrt(sum(grad_traj(:, cont_steps + 1:end).^2, 1));
             out.z(:, ii) = z_opt + hessian_analysis.Apply_V(beta_k);
 
             % All methods are scored on the same endpoint (t = 1) sample objective.

@@ -19,10 +19,10 @@
 % materialized breve samples, so every method sees identical sample
 % realizations.
 
-% This folder is Article_Drivers/Diagnostics/Continuation_Improvements; make
-% OED_Setup (two levels up) and the helpers here available from any cwd.
+% This folder is Article_Drivers/Continuation_Improvements; make
+% OED_Setup (one level up) and the helpers here available from any cwd.
 ci_dir = fileparts(mfilename('fullpath'));
-addpath(ci_dir, fileparts(fileparts(ci_dir)));
+addpath(ci_dir, fileparts(ci_dir));
 
 % ------------------------
 % Shared settings
@@ -52,7 +52,7 @@ setup_key = struct('num_data_points', num_data_points, 'num_samples', num_sample
 
 if isfile(setup_file) && isequal(load(setup_file, 'setup_key').setup_key, setup_key)
     % Classes must be on the path before the saved objects are loaded.
-    example_dir = fileparts(fileparts(fileparts(ci_dir)));
+    example_dir = fileparts(fileparts(ci_dir));   % Subsurface_Flow
     addpath(genpath(example_dir));
     addpath(genpath(fullfile(example_dir, '..', '..', '..', 'src')));
     load(setup_file);
