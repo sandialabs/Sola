@@ -19,6 +19,7 @@ classdef MD_Continuation_Update < handle
         last_sample_time_step_prior_diagnostics
         last_sample_time_step_diagnostics
         last_sample_time_grids
+        last_sample_grad_norms
     end
 
     methods
@@ -47,6 +48,7 @@ classdef MD_Continuation_Update < handle
             this.last_sample_time_step_prior_diagnostics = {};
             this.last_sample_time_step_diagnostics = {};
             this.last_sample_time_grids = {};
+            this.last_sample_grad_norms = [];
         end
 
         function [options] = Default_Options(this) %#ok<MANU>
@@ -146,6 +148,7 @@ classdef MD_Continuation_Update < handle
                 h = waitbar(0, 'Initializing...', 'Name', 'Processing samples in parallel...');
                 tic;
                 progress_count = 0;
+                this.Ensure_Parallel_Pool();
                 q = parallel.pool.DataQueue;
                 afterEach(q, @(~) update_parallel_waitbar());
 
@@ -218,22 +221,25 @@ classdef MD_Continuation_Update < handle
             prior_diagnostics = cell(num_samples, 1);
             step_diagnostics = cell(num_samples, 1);
             time_grids = cell(num_samples, 1);
+            grad_norms = zeros(num_samples, 1);
 
             if use_parallel_sampling
                 h = waitbar(0, 'Initializing...', 'Name', 'Processing mean-to-sample continuation in parallel...');
                 tic;
                 progress_count = 0;
+                this.Ensure_Parallel_Pool();
                 q = parallel.pool.DataQueue;
                 afterEach(q, @(~) update_parallel_waitbar());
 
                 parfor sample_idx = 1:num_samples
-                    [u_k, z_k, beta_k, prior_diag, time_grid, step_diag] = this.Posterior_Update_Sample_From_Mean_Core(beta_bar, sample_idx);
+                    [u_k, z_k, beta_k, prior_diag, time_grid, step_diag, grad_norm] = this.Posterior_Update_Sample_From_Mean_Core(beta_bar, sample_idx);
                     u_ks(:, sample_idx) = u_k;
                     z_ks(:, sample_idx) = z_k;
                     beta_ks(:, sample_idx) = beta_k;
                     prior_diagnostics{sample_idx} = prior_diag;
                     time_grids{sample_idx} = time_grid;
                     step_diagnostics{sample_idx} = step_diag;
+                    grad_norms(sample_idx) = grad_norm;
                     send(q, sample_idx);
                 end
                 close(h);
@@ -243,13 +249,14 @@ classdef MD_Continuation_Update < handle
                 h = waitbar(0, 'Initializing...', 'Name', 'Processing mean-to-sample continuation...');
                 tic;
                 for sample_idx = 1:num_samples
-                    [u_k, z_k, beta_k, prior_diag, time_grid, step_diag] = this.Posterior_Update_Sample_From_Mean_Core(beta_bar, sample_idx, sen_op);
+                    [u_k, z_k, beta_k, prior_diag, time_grid, step_diag, grad_norm] = this.Posterior_Update_Sample_From_Mean_Core(beta_bar, sample_idx, sen_op);
                     u_ks(:, sample_idx) = u_k;
                     z_ks(:, sample_idx) = z_k;
                     beta_ks(:, sample_idx) = beta_k;
                     prior_diagnostics{sample_idx} = prior_diag;
                     time_grids{sample_idx} = time_grid;
                     step_diagnostics{sample_idx} = step_diag;
+                    grad_norms(sample_idx) = grad_norm;
 
                     waitbar(sample_idx/num_samples, h, sprintf('Progress: %d%% | ETA: %.1fs', round(100*sample_idx/num_samples), (toc / sample_idx) * (num_samples - sample_idx)));
                 end
@@ -259,6 +266,7 @@ classdef MD_Continuation_Update < handle
             this.last_sample_time_step_prior_diagnostics = prior_diagnostics;
             this.last_sample_time_grids = time_grids;
             this.last_sample_time_step_diagnostics = step_diagnostics;
+            this.last_sample_grad_norms = grad_norms;
 
             function update_parallel_waitbar()
                 progress_count = progress_count + 1;
@@ -294,6 +302,7 @@ classdef MD_Continuation_Update < handle
                 theta_traj = MD_Discrepancy_Parameter_Trajectory(1, sample_idx);
 
                 backtracking_options = continuation_options.time_step.options;
+                backtracking_options.num_newton_steps = continuation_options.num_newton_steps;
                 backtracking_options.time_step_callback = ...
                     @(beta, theta, time_index, beta_dot) sen_op.Mean_A_Priori_Time_Step_Heuristic(beta, theta, time_index, beta_dot, ...
                                                                                                   continuation_options.time_step.epsilon_nl, ...
@@ -318,7 +327,7 @@ classdef MD_Continuation_Update < handle
 
         end
 
-        function [u_k, z_k, beta_k, prior_diagnostics, time_grid, step_diagnostics] = Posterior_Update_Sample_From_Mean_Core(this, beta_bar, sample_idx, sen_op)
+        function [u_k, z_k, beta_k, prior_diagnostics, time_grid, step_diagnostics, grad_norm] = Posterior_Update_Sample_From_Mean_Core(this, beta_bar, sample_idx, sen_op)
             if nargin < 4 || isempty(sen_op)
                 sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis, this.options.samples.discard_cache, this.options.samples.materialize_breve_samples);
             end
@@ -334,6 +343,7 @@ classdef MD_Continuation_Update < handle
                 theta_traj = MD_Discrepancy_Mean_To_Sample_Trajectory(1, sample_idx);
 
                 backtracking_options = sample_options.time_step.options;
+                backtracking_options.num_newton_steps = sample_options.num_newton_steps;
                 backtracking_options.time_step_callback = ...
                     @(beta, theta, time_index, beta_dot) sen_op.Sample_A_Priori_Time_Step_Heuristic(beta, theta, time_index, beta_dot, sample_idx, ...
                                                                                                     sample_options.time_step.epsilon_nl, ...
@@ -348,8 +358,19 @@ classdef MD_Continuation_Update < handle
             end
 
             beta_k = beta_k_tmp(:, end);
+            % Endpoint (t = 1, after any Newton polishing) gradient norm, using
+            % this sample's own breve realization.
+            grad_norm = norm(sen_op.Gradient(beta_k, theta_traj, theta_traj.Get_Number_of_Timesteps()));
             u_k = pt_cont.sen_op.current_u;
             z_k = pt_cont.sen_op.current_z;
+        end
+
+        function [] = Ensure_Parallel_Pool(this) %#ok<MANU>
+            % Use an existing pool if there is one; otherwise start a Threads
+            % pool (instead of the default-profile Processes pool).
+            if isempty(gcp('nocreate'))
+                parpool('Threads');
+            end
         end
 
         function [tf] = Parallel_Sampling_Available(this) %#ok<MANU>

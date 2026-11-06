@@ -288,42 +288,32 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
             diagnostics.dt = dt;
         end
 
-        function [eta] = Relative_Gauss_Newton_Curvature(this, beta, theta_traj, time_index, apply_increment_jacobian, apply_increment_jacobian_transpose, regularization)
+        function [eta] = Relative_Gauss_Newton_Curvature(this, beta, ~, ~, apply_increment_jacobian, apply_increment_jacobian_transpose, regularization)
+            % Estimates largest eigenvalue of (H_delta, H_ref + regularization*I) via power iterations
+            num_iterations = 5;
             beta = beta(:);
             r = length(beta);
-            H_ref = zeros(r, r);
-            H_delta = zeros(r, r);
+
+            d = this.hessian_analysis.evals;
+            if isempty(d)
+                d = ones(r, 1);
+            end
+            d_inv_sqrt = 1 ./ sqrt(abs(d(:)) + regularization);
 
             delta = this.current_disc_ops.Eval(beta, this.current_t);
-            for j = 1:r
-                e_j = zeros(r, 1);
-                e_j(j) = 1.0;
-                H_ref(:, j) = this.Apply_Hessian(e_j, beta, theta_traj, time_index);
+            u_state = this.current_u + delta;
+            apply_S = @(x) d_inv_sqrt .* apply_increment_jacobian_transpose(this.opt_prob_interface.Apply_Misfit_Hessian(apply_increment_jacobian(d_inv_sqrt .* x), u_state, this.current_z));
 
-                u_j = apply_increment_jacobian(e_j);
-                R_u_j = this.opt_prob_interface.Apply_Misfit_Hessian(u_j, this.current_u + delta, this.current_z);
-                H_delta(:, j) = apply_increment_jacobian_transpose(R_u_j);
-            end
-
-            H_ref = 0.5 * (H_ref + H_ref');
-            H_delta = 0.5 * (H_delta + H_delta');
-            H_ref = H_ref + regularization * eye(r);
-
-            if norm(H_delta, 'fro') <= regularization
-                eta = 0.0;
-                return;
-            end
-
-            try
-                vals = eig(H_delta, H_ref, 'vector');
-            catch
-                vals = eig(pinv(H_ref) * H_delta, 'vector');
-            end
-            vals = real(vals(isfinite(vals)));
-            if isempty(vals)
-                eta = 0.0;
-            else
-                eta = max(0.0, max(vals));
+            x = randn(r, 1);
+            x = x / norm(x);
+            eta = 0.0;
+            for k = 1:num_iterations
+                y = apply_S(x);
+                eta = max(0.0, x' * y);
+                if norm(y) == 0
+                    return;
+                end
+                x = y / norm(y);
             end
         end
 

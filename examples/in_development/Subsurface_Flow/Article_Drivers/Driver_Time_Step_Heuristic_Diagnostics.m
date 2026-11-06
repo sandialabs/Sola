@@ -13,7 +13,7 @@
 OED_Setup;
 
 oed_results = load('oed-results.mat');
-num_data_points = 3;
+num_data_points = 1;
 data_interface.Set_Z_and_D(oed_results.Z_oed(:, 1:num_data_points), oed_results.D_oed(:, 1:num_data_points));
 
 num_samples = 5;
@@ -22,20 +22,24 @@ md_post_sampling.Compute_Posterior_Data(alpha_d, num_samples, true);
 
 md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis);
 
+% Newton polishing steps at t = 1 after the continuation steps (fixed and heuristic).
+num_newton_steps = 2;
+
 %% Posterior-mean time-step heuristic diagnostic
 
 fixed_mean_options = struct();
 fixed_mean_options.num_steps = 7;
+fixed_mean_options.num_newton_steps = num_newton_steps;
 [u_fixed, z_fixed, beta_fixed] = md_cont_update.Posterior_Update_Mean(fixed_mean_options);
 
 heuristic_mean_options = struct();
+heuristic_mean_options.num_newton_steps = num_newton_steps;
 heuristic_mean_options.time_step.use = true;
 heuristic_mean_options.time_step.epsilon_nl = 0.01;
 [u_heuristic, z_heuristic, beta_heuristic] = md_cont_update.Posterior_Update_Mean(heuristic_mean_options);
 
 mean_prior_diagnostics = md_cont_update.last_mean_time_step_prior_diagnostics;
 mean_time_grid = md_cont_update.last_mean_time_grid;
-mean_step_diagnostics = md_cont_update.last_mean_time_step_diagnostics;
 mean_dt_values = diff(mean_time_grid);
 num_mean_heuristic_steps = length(mean_dt_values);
 
@@ -61,25 +65,15 @@ fprintf('Param objective heuristic mean: %.6e  (||g_beta|| = %.4e)\n', J_heurist
 fprintf('||z_heuristic - z_fixed||/||z_fixed|| = %.4e\n', ...
         norm(z_heuristic - z_fixed) / max(norm(z_fixed), eps));
 
-if ~isempty(mean_step_diagnostics)
-    fprintf('\nMean backtracking diagnostics:\n');
-    fprintf('  step       t_start        dt      backtracks   ||g_pred||   ||g_corr||\n');
-    for k = 1:length(mean_step_diagnostics)
-        d = mean_step_diagnostics{k};
-        fprintf('  %4d    %10.4e  %10.4e      %4d    %10.4e  %10.4e\n', ...
-                k, d.t_start, d.dt_used, d.num_backtracks, ...
-                d.grad_pred_norm, d.grad_corr_norm);
-    end
-end
-
 %% Posterior-sample mean-to-sample time-step heuristic diagnostic
 
 sample_options = struct();
 % sample_options.num_mean_to_sample_steps = 4;
 sample_options.materialize_breve_samples = true;
+sample_options.num_newton_steps = num_newton_steps;
 sample_options.time_step.use = true;
-sample_options.time_step.epsilon_nl = 0.005;
-% sample_options.time_step.options.epsilon_curv = 100;
+sample_options.time_step.epsilon_nl = 0.01;
+sample_options.time_step.options.epsilon_curv = 1;
 
 % Reuse the fixed-step mean as the mean-to-sample starting point so this block
 % isolates the sample-specific heuristic.
@@ -102,8 +96,6 @@ sample_num_steps = zeros(num_samples, 1);
 sample_total_backtracks = zeros(num_samples, 1);
 sample_min_dt = zeros(num_samples, 1);
 sample_max_dt = zeros(num_samples, 1);
-sample_t1_param_objective = NaN(num_samples, 1);
-sample_t1_grad_norm = NaN(num_samples, 1);
 
 for sample_idx = 1:num_samples
     d = sample_prior_diags{sample_idx};
@@ -132,14 +124,6 @@ for sample_idx = 1:num_samples
         assert(sd{k}.grad_corr_norm <= max(sample_options.time_step.options.gradient_abs_tol, sample_options.time_step.options.gradient_reduction_factor * sd{k}.grad_pred_norm) || sd{k}.objective_accept, ...
                sprintf('Sample %d step %d did not satisfy acceptance diagnostics.', sample_idx, k));
     end
-
-    if ~isempty(sd)
-        final_diag = sd{end};
-        assert(abs(final_diag.t_end - 1.0) < 1.e-12, ...
-               sprintf('Sample %d final diagnostic is not at t = 1.', sample_idx));
-        sample_t1_param_objective(sample_idx) = final_diag.val_corr;
-        sample_t1_grad_norm(sample_idx) = final_diag.grad_corr_norm;
-    end
 end
 
 if max(sample_dt_prior) - min(sample_dt_prior) <= 1.e-12
@@ -147,10 +131,7 @@ if max(sample_dt_prior) - min(sample_dt_prior) <= 1.e-12
             'All sample a priori dt values are numerically identical for this run.');
 end
 
-J_samples = zeros(num_samples, 1);
-for sample_idx = 1:num_samples
-    J_samples(sample_idx) = opt_hifi.Jhat(z_samples(:, sample_idx));
-end
+sample_grad_norm = md_cont_update.last_sample_grad_norms;   % ||g_beta|| at t = 1, after Newton polishing
 J_bar = opt_hifi.Jhat(z_bar);
 
 fprintf('\nSample time-step heuristic diagnostics (subsurface flow)\n');
@@ -168,15 +149,12 @@ for sample_idx = 1:num_samples
             sample_dt_nl(sample_idx), sample_dt_curv(sample_idx), sample_num_steps(sample_idx), ...
             sample_total_backtracks(sample_idx), sample_min_dt(sample_idx), sample_max_dt(sample_idx));
 end
-fprintf('\nPer-sample t = 1 discrepancy-parameterized optimization diagnostics:\n');
-fprintf(' sample    param objective     ||g_beta||    HiFi objective\n');
+fprintf('\nPer-sample endpoint (t = 1, after %d Newton polishing steps) gradient norm:\n', num_newton_steps);
+fprintf(' sample    ||g_beta||\n');
 for sample_idx = 1:num_samples
-    fprintf(' %4d     %14.6e   %10.4e    %14.6e\n', ...
-            sample_idx, sample_t1_param_objective(sample_idx), sample_t1_grad_norm(sample_idx), J_samples(sample_idx));
+    fprintf(' %4d     %10.4e\n', sample_idx, sample_grad_norm(sample_idx));
 end
-fprintf('\nSample param objective range:  [%.6e, %.6e]\n', min(sample_t1_param_objective), max(sample_t1_param_objective));
-fprintf('Sample t=1 ||g_beta|| range:  [%.4e, %.4e]\n', min(sample_t1_grad_norm), max(sample_t1_grad_norm));
-fprintf('Sample HiFi objective range:    [%.6e, %.6e]\n', min(J_samples), max(J_samples));
+fprintf('\nSample ||g_beta|| range:        [%.4e, %.4e]\n', min(sample_grad_norm), max(sample_grad_norm));
 fprintf('Sample dt_prior range:          [%.4e, %.4e]\n', min(sample_dt_prior), max(sample_dt_prior));
 fprintf('Sample eta range:               [%.4e, %.4e]\n', min(sample_eta), max(sample_eta));
 

@@ -181,7 +181,11 @@ classdef Pseudo_Time_Continuation < handle
                 end
                 active_initial_dt = min(initial_dt, 1.0);
             end
-            this.qn_prec.Set_N(2 * max_steps);
+            num_newton_steps = 0;
+            if isfield(options, 'num_newton_steps') && ~isempty(options.num_newton_steps)
+                num_newton_steps = options.num_newton_steps;
+            end
+            this.qn_prec.Set_N(2 * max_steps + num_newton_steps);
 
             z_k = zeros(length(this.z_bar), max_steps + 1);
             z_k(:, 1) = this.z_bar;
@@ -311,6 +315,25 @@ classdef Pseudo_Time_Continuation < handle
             grad_k = grad_k(:, 1:k);
             time_grid = time_grid(1:k);
             step_diagnostics = step_diagnostics(1:(k - 1));
+
+            % Extra Newton steps at the final pseudo-time (theta fixed).
+            for j = 1:num_newton_steps
+                f = this.Apply_Inverse_Hessian(grad_k(:, end), z_k(:, end), theta_traj, trajectory_scale);
+                z_new = z_k(:, end) - f;
+                grad_new = this.sen_op.Gradient(z_new, theta_traj, trajectory_scale);
+
+                if this.use_qn_prec
+                    s_k = z_new - z_k(:, end);
+                    y_k = grad_new - grad_k(:, end);
+                    if s_k' * y_k > 0
+                        this.qn_prec.Add_Block_Quasi_Newton_Data();
+                        this.qn_prec.Add_Parametric_Quasi_Newton_Data(s_k, y_k);
+                    end
+                end
+
+                z_k(:, end + 1) = z_new;
+                grad_k(:, end + 1) = grad_new;
+            end
         end
 
 
