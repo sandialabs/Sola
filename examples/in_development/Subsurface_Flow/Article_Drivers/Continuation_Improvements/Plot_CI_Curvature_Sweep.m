@@ -4,72 +4,35 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Plots for Experiment 2c (Driver_CI_Curvature_Sweep), read from its saved
-% results.  Bare-bones on purpose: plot/semilogy, labels, title, legend.
+% results.  With Newton polishing that stops on a gradient tolerance, the
+% endpoint gradient is small by construction, so the plots compare the cost to
+% reach the tolerance and the fraction of samples that reach it.
 
 results_file = fullfile(fileparts(mfilename('fullpath')), 'ci-curvature-sweep-results.mat');
 loaded = load(results_file, 'results');
 res = loaded.results;
 
-polish_Ms = res.settings.polish_Ms;
-grad_target = res.settings.grad_target;
+cost_label = sprintf('Cost per sample (continuation steps + %.2g \\times Newton steps)', res.settings.newton_cost);
+header = sprintf('Mean-to-sample, Newton until ||g|| \\leq %.2g', res.settings.newton_gradient_tol);
 
-for ip = 1:length(polish_Ms)
-    M = polish_Ms(ip);
-    fx = res.fixed{ip};
-    ad = res.adapt{ip};
-    fam = {ad.family};
-    both = strcmp(fam, 'both');
-    curv_only = strcmp(fam, 'curv only');
+%% 1-2. Cost to reach the tolerance: fixed N_c vs adaptive settings
+disp('Plots 1-2: cost to reach the Newton tolerance');
+fixed_summaries = cellfun(@(f) f.summary, res.fixed, 'UniformOutput', false);
+adapt_summaries = cellfun(@(a) a.summary, res.adapt, 'UniformOutput', false);
+summaries = [fixed_summaries{:}, adapt_summaries{:}];
+Plot_CI_Cost_Panels(summaries, header, cost_label);
 
-    %% Median and tail gradient vs mean work
-    fprintf('Plots (M = %d): endpoint gradient vs work\n', M);
-    stats = {'median', 'p90'};
-    titles = {'Median', '90th percentile'};
-    for ss = 1:2
-        figure;
-        hold on;
-        semilogy([fx.work_mean], [fx.(stats{ss})], 'ko-');
-        semilogy([ad(both).work_mean], [ad(both).(stats{ss})], 's-');
-        semilogy([ad(curv_only).work_mean], [ad(curv_only).(stats{ss})], '^-');
-        Label_Points(ad(both), stats{ss});
-        Label_Points(ad(curv_only), stats{ss});
-        yline(grad_target, '--');
-        set(gca, 'YScale', 'log');
-        xlabel('Mean work per sample (steps + backtracks + Newton steps)');
-        ylabel('Endpoint gradient norm');
-        title(sprintf('%s gradient vs work (M = %d); labels = \\epsilon_{curv}', titles{ss}, M));
-        legend('fixed N_c', sprintf('both (\\epsilon_{nl} = %g)', res.settings.eps_nl_both), 'curvature only', 'low-fidelity ||grad||', 'Location', 'best');
-        drawnow;
-    end
-
-    %% Max gradient vs mean work
-    figure;
-    hold on;
-    semilogy([fx.work_mean], [fx.max], 'ko-');
-    semilogy([ad(both).work_mean], [ad(both).max], 's-');
-    semilogy([ad(curv_only).work_mean], [ad(curv_only).max], '^-');
-    Label_Points(ad(both), 'max');
-    Label_Points(ad(curv_only), 'max');
-    yline(grad_target, '--');
-    set(gca, 'YScale', 'log');
-    xlabel('Mean work per sample (steps + backtracks + Newton steps)');
-    ylabel('Endpoint gradient norm');
-    title(sprintf('Worst-sample gradient vs work (M = %d)', M));
-    legend('fixed N_c', 'both', 'curvature only', 'low-fidelity ||grad||', 'Location', 'best');
-    drawnow;
-end
-
-%% Does eta rank sample difficulty?  (1-step gradient vs eta)
-disp('Plot: eta vs one-step gradient');
+%% 3. Does eta rank sample difficulty?  (Newton steps needed after one step vs eta)
+disp('Plot 3: eta vs difficulty');
 figure;
-loglog(res.eta, res.one_step_grad, 'o');
+semilogx(res.eta, res.difficulty, 'o');
 xlabel('\eta (a priori curvature)');
-ylabel('Gradient after one fixed step (unpolished)');
+ylabel('Newton steps needed after one continuation step');
 title(sprintf('Difficulty vs \\eta (Spearman %.2f)', res.pred_corr(1, 2)));
 drawnow;
 
-%% Predictor-defect coefficient vs eta and vs eta * ||beta_dot||
-disp('Plot: predictor defect vs eta and eta*||beta_dot||');
+%% 4-5. Predictor-defect coefficient vs eta and vs eta * ||beta_dot||
+disp('Plots 4-5: predictor defect vs eta and eta*||beta_dot||');
 c_pred = res.pred.c(:, end);
 figure;
 loglog(res.eta, c_pred, 'o');
@@ -86,9 +49,3 @@ title(sprintf('Predictor defect vs \\eta||\\beta_{dot}|| (Spearman %.2f)', res.p
 drawnow;
 
 disp('Curvature-sweep plots done.');
-
-function Label_Points(cfgs, stat)
-    for kk = 1:length(cfgs)
-        text(cfgs(kk).work_mean, cfgs(kk).(stat), sprintf('  %g', cfgs(kk).eps_curv), 'FontSize', 12);
-    end
-end

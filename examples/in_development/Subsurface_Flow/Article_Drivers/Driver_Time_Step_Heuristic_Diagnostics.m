@@ -22,21 +22,29 @@ md_post_sampling.Compute_Posterior_Data(alpha_d, num_samples, true);
 
 md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis);
 
-% Newton polishing steps at t = 1 after the continuation steps (fixed and heuristic).
-num_newton_steps = 2;
+% Newton polishing at t = 1 after the continuation steps (fixed and heuristic):
+% at most num_max_newton_steps steps, stopping once ||g_beta|| <= newton_gradient_tol
+% (the gradient norm of the low-fidelity optimum, as in CI_Setup).
+num_max_newton_steps = 10;
+[~, lofi_grad] = opt_lofi.Jhat(data_interface.z_opt);
+newton_gradient_tol = norm(lofi_grad);
 
 %% Posterior-mean time-step heuristic diagnostic
 
 fixed_mean_options = struct();
 fixed_mean_options.num_steps = 7;
-fixed_mean_options.num_newton_steps = num_newton_steps;
+fixed_mean_options.num_max_newton_steps = num_max_newton_steps;
+fixed_mean_options.newton_gradient_tol = newton_gradient_tol;
 [u_fixed, z_fixed, beta_fixed] = md_cont_update.Posterior_Update_Mean(fixed_mean_options);
+mean_newton_fixed = md_cont_update.last_mean_num_newton_steps;
 
 heuristic_mean_options = struct();
-heuristic_mean_options.num_newton_steps = num_newton_steps;
+heuristic_mean_options.num_max_newton_steps = num_max_newton_steps;
+heuristic_mean_options.newton_gradient_tol = newton_gradient_tol;
 heuristic_mean_options.time_step.use = true;
 heuristic_mean_options.time_step.epsilon_nl = 0.01;
 [u_heuristic, z_heuristic, beta_heuristic] = md_cont_update.Posterior_Update_Mean(heuristic_mean_options);
+mean_newton_heuristic = md_cont_update.last_mean_num_newton_steps;
 
 mean_prior_diagnostics = md_cont_update.last_mean_time_step_prior_diagnostics;
 mean_time_grid = md_cont_update.last_mean_time_grid;
@@ -53,6 +61,7 @@ fprintf('\nMean time-step heuristic diagnostics (subsurface flow)\n');
 fprintf('----------------------------------------------------\n');
 fprintf('Fixed continuation steps:       %d\n', fixed_mean_options.num_steps);
 fprintf('Heuristic continuation steps:   %d\n', num_mean_heuristic_steps);
+fprintf('Newton steps (fixed, heuristic): %d, %d  (max %d, tol %.3e)\n', mean_newton_fixed, mean_newton_heuristic, num_max_newton_steps, newton_gradient_tol);
 fprintf('A priori dt:                    %.4e\n', mean_prior_diagnostics.dt);
 fprintf('Accepted dt range:              [%.4e, %.4e]\n', min(mean_dt_values), max(mean_dt_values));
 fprintf('A priori A, eta:                %.4e, %.4e\n', mean_prior_diagnostics.A, mean_prior_diagnostics.eta);
@@ -70,7 +79,8 @@ fprintf('||z_heuristic - z_fixed||/||z_fixed|| = %.4e\n', ...
 sample_options = struct();
 % sample_options.num_mean_to_sample_steps = 4;
 sample_options.materialize_breve_samples = true;
-sample_options.num_newton_steps = num_newton_steps;
+sample_options.num_max_newton_steps = num_max_newton_steps;
+sample_options.newton_gradient_tol = newton_gradient_tol;
 sample_options.time_step.use = true;
 sample_options.time_step.epsilon_nl = 0.01;
 sample_options.time_step.options.epsilon_curv = 1;
@@ -149,10 +159,11 @@ for sample_idx = 1:num_samples
             sample_dt_nl(sample_idx), sample_dt_curv(sample_idx), sample_num_steps(sample_idx), ...
             sample_total_backtracks(sample_idx), sample_min_dt(sample_idx), sample_max_dt(sample_idx));
 end
-fprintf('\nPer-sample endpoint (t = 1, after %d Newton polishing steps) gradient norm:\n', num_newton_steps);
-fprintf(' sample    ||g_beta||\n');
+sample_num_newton = md_cont_update.last_sample_num_newton_steps;
+fprintf('\nPer-sample endpoint (t = 1, after Newton polishing: at most %d steps, tol %.3e) gradient norm:\n', num_max_newton_steps, newton_gradient_tol);
+fprintf(' sample   Newton steps   ||g_beta||\n');
 for sample_idx = 1:num_samples
-    fprintf(' %4d     %10.4e\n', sample_idx, sample_grad_norm(sample_idx));
+    fprintf(' %4d        %3d         %10.4e\n', sample_idx, sample_num_newton(sample_idx), sample_grad_norm(sample_idx));
 end
 fprintf('\nSample ||g_beta|| range:        [%.4e, %.4e]\n', min(sample_grad_norm), max(sample_grad_norm));
 fprintf('Sample dt_prior range:          [%.4e, %.4e]\n', min(sample_dt_prior), max(sample_dt_prior));

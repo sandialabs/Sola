@@ -7,7 +7,7 @@
 %
 % Compares spending the budget on continuation steps (predictor + corrector at
 % each pseudo-time) against fewer continuation steps followed by M extra Newton
-% steps at t = 1 (option num_newton_steps of
+% steps at t = 1 (argument num_max_newton_steps of
 % Pseudo_Time_Continuation_Forward_Euler).  Extra Newton steps cost one
 % inverse-Hessian solve and one gradient each, roughly half a continuation
 % step, so wall time per sample is reported next to accuracy.

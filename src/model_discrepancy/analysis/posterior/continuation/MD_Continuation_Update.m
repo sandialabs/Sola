@@ -20,6 +20,8 @@ classdef MD_Continuation_Update < handle
         last_sample_time_step_diagnostics
         last_sample_time_grids
         last_sample_grad_norms
+        last_sample_num_newton_steps
+        last_mean_num_newton_steps
     end
 
     methods
@@ -49,6 +51,8 @@ classdef MD_Continuation_Update < handle
             this.last_sample_time_step_diagnostics = {};
             this.last_sample_time_grids = {};
             this.last_sample_grad_norms = [];
+            this.last_sample_num_newton_steps = [];
+            this.last_mean_num_newton_steps = 0;
         end
 
         function [options] = Default_Options(this) %#ok<MANU>
@@ -56,7 +60,8 @@ classdef MD_Continuation_Update < handle
 
             options.mean = struct();
             options.mean.num_steps = 3;
-            options.mean.num_newton_steps = 0;
+            options.mean.num_max_newton_steps = 0;     % max Newton polishing steps at t = 1
+            options.mean.newton_gradient_tol = 0;      % stop Newton once ||g_beta|| <= tol (0: always take the max)
             options.mean.time_step = struct();
             options.mean.time_step.use = false;
             options.mean.time_step.epsilon_nl = 0.01;
@@ -77,7 +82,8 @@ classdef MD_Continuation_Update < handle
             options.samples = struct();
             options.samples.num_steps = 3;
             options.samples.num_mean_to_sample_steps = 2;
-            options.samples.num_newton_steps = 0;
+            options.samples.num_max_newton_steps = 0;
+            options.samples.newton_gradient_tol = 0;
             options.samples.discard_cache = true;
             options.samples.materialize_breve_samples = false;
             options.samples.use_parallel_sampling = true;
@@ -222,6 +228,7 @@ classdef MD_Continuation_Update < handle
             step_diagnostics = cell(num_samples, 1);
             time_grids = cell(num_samples, 1);
             grad_norms = zeros(num_samples, 1);
+            num_newtons = zeros(num_samples, 1);
 
             if use_parallel_sampling
                 h = waitbar(0, 'Initializing...', 'Name', 'Processing mean-to-sample continuation in parallel...');
@@ -232,7 +239,7 @@ classdef MD_Continuation_Update < handle
                 afterEach(q, @(~) update_parallel_waitbar());
 
                 parfor sample_idx = 1:num_samples
-                    [u_k, z_k, beta_k, prior_diag, time_grid, step_diag, grad_norm] = this.Posterior_Update_Sample_From_Mean_Core(beta_bar, sample_idx);
+                    [u_k, z_k, beta_k, prior_diag, time_grid, step_diag, grad_norm, num_newton] = this.Posterior_Update_Sample_From_Mean_Core(beta_bar, sample_idx);
                     u_ks(:, sample_idx) = u_k;
                     z_ks(:, sample_idx) = z_k;
                     beta_ks(:, sample_idx) = beta_k;
@@ -240,6 +247,7 @@ classdef MD_Continuation_Update < handle
                     time_grids{sample_idx} = time_grid;
                     step_diagnostics{sample_idx} = step_diag;
                     grad_norms(sample_idx) = grad_norm;
+                    num_newtons(sample_idx) = num_newton;
                     send(q, sample_idx);
                 end
                 close(h);
@@ -249,7 +257,7 @@ classdef MD_Continuation_Update < handle
                 h = waitbar(0, 'Initializing...', 'Name', 'Processing mean-to-sample continuation...');
                 tic;
                 for sample_idx = 1:num_samples
-                    [u_k, z_k, beta_k, prior_diag, time_grid, step_diag, grad_norm] = this.Posterior_Update_Sample_From_Mean_Core(beta_bar, sample_idx, sen_op);
+                    [u_k, z_k, beta_k, prior_diag, time_grid, step_diag, grad_norm, num_newton] = this.Posterior_Update_Sample_From_Mean_Core(beta_bar, sample_idx, sen_op);
                     u_ks(:, sample_idx) = u_k;
                     z_ks(:, sample_idx) = z_k;
                     beta_ks(:, sample_idx) = beta_k;
@@ -257,6 +265,7 @@ classdef MD_Continuation_Update < handle
                     time_grids{sample_idx} = time_grid;
                     step_diagnostics{sample_idx} = step_diag;
                     grad_norms(sample_idx) = grad_norm;
+                    num_newtons(sample_idx) = num_newton;
 
                     waitbar(sample_idx/num_samples, h, sprintf('Progress: %d%% | ETA: %.1fs', round(100*sample_idx/num_samples), (toc / sample_idx) * (num_samples - sample_idx)));
                 end
@@ -267,6 +276,7 @@ classdef MD_Continuation_Update < handle
             this.last_sample_time_grids = time_grids;
             this.last_sample_time_step_diagnostics = step_diagnostics;
             this.last_sample_grad_norms = grad_norms;
+            this.last_sample_num_newton_steps = num_newtons;
 
             function update_parallel_waitbar()
                 progress_count = progress_count + 1;
@@ -302,7 +312,8 @@ classdef MD_Continuation_Update < handle
                 theta_traj = MD_Discrepancy_Parameter_Trajectory(1, sample_idx);
 
                 backtracking_options = continuation_options.time_step.options;
-                backtracking_options.num_newton_steps = continuation_options.num_newton_steps;
+                backtracking_options.num_max_newton_steps = continuation_options.num_max_newton_steps;
+                backtracking_options.newton_gradient_tol = continuation_options.newton_gradient_tol;
                 backtracking_options.time_step_callback = ...
                     @(beta, theta, time_index, beta_dot) sen_op.Mean_A_Priori_Time_Step_Heuristic(beta, theta, time_index, beta_dot, ...
                                                                                                   continuation_options.time_step.epsilon_nl, ...
@@ -313,7 +324,7 @@ classdef MD_Continuation_Update < handle
                 this.last_mean_time_step_prior_diagnostics = mean_prior_diagnostics;
             else
                 theta_traj = MD_Discrepancy_Parameter_Trajectory(continuation_options.num_steps, sample_idx);
-                beta_k_tmp = pt_cont.Pseudo_Time_Continuation_Forward_Euler(theta_traj, continuation_options.num_newton_steps);
+                beta_k_tmp = pt_cont.Pseudo_Time_Continuation_Forward_Euler(theta_traj, continuation_options.num_max_newton_steps, continuation_options.newton_gradient_tol);
                 if sample_idx == 0
                     this.last_mean_time_step_prior_diagnostics = struct();
                     this.last_mean_time_grid = linspace(0, 1, continuation_options.num_steps + 1);
@@ -322,12 +333,16 @@ classdef MD_Continuation_Update < handle
             end
 
             beta_k = beta_k_tmp(:, end);
+            if sample_idx == 0
+                % columns = continuation steps + 1 + Newton steps taken
+                this.last_mean_num_newton_steps = size(beta_k_tmp, 2) - numel(this.last_mean_time_grid);
+            end
             u_k = pt_cont.sen_op.current_u;
             z_k = pt_cont.sen_op.current_z;
 
         end
 
-        function [u_k, z_k, beta_k, prior_diagnostics, time_grid, step_diagnostics, grad_norm] = Posterior_Update_Sample_From_Mean_Core(this, beta_bar, sample_idx, sen_op)
+        function [u_k, z_k, beta_k, prior_diagnostics, time_grid, step_diagnostics, grad_norm, num_newton] = Posterior_Update_Sample_From_Mean_Core(this, beta_bar, sample_idx, sen_op)
             if nargin < 4 || isempty(sen_op)
                 sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis, this.options.samples.discard_cache, this.options.samples.materialize_breve_samples);
             end
@@ -343,7 +358,8 @@ classdef MD_Continuation_Update < handle
                 theta_traj = MD_Discrepancy_Mean_To_Sample_Trajectory(1, sample_idx);
 
                 backtracking_options = sample_options.time_step.options;
-                backtracking_options.num_newton_steps = sample_options.num_newton_steps;
+                backtracking_options.num_max_newton_steps = sample_options.num_max_newton_steps;
+                backtracking_options.newton_gradient_tol = sample_options.newton_gradient_tol;
                 backtracking_options.time_step_callback = ...
                     @(beta, theta, time_index, beta_dot) sen_op.Sample_A_Priori_Time_Step_Heuristic(beta, theta, time_index, beta_dot, sample_idx, ...
                                                                                                     sample_options.time_step.epsilon_nl, ...
@@ -353,13 +369,14 @@ classdef MD_Continuation_Update < handle
                                                                                 backtracking_options);
             else
                 theta_traj = MD_Discrepancy_Mean_To_Sample_Trajectory(sample_options.num_mean_to_sample_steps, sample_idx);
-                beta_k_tmp = pt_cont.Pseudo_Time_Continuation_Forward_Euler(theta_traj, sample_options.num_newton_steps);
+                beta_k_tmp = pt_cont.Pseudo_Time_Continuation_Forward_Euler(theta_traj, sample_options.num_max_newton_steps, sample_options.newton_gradient_tol);
                 time_grid = linspace(0, 1, sample_options.num_mean_to_sample_steps + 1);
             end
 
             beta_k = beta_k_tmp(:, end);
             % Endpoint (t = 1, after any Newton polishing) gradient norm, using
             % this sample's own breve realization.
+            num_newton = size(beta_k_tmp, 2) - numel(time_grid);   % Newton steps taken
             grad_norm = norm(sen_op.Gradient(beta_k, theta_traj, theta_traj.Get_Number_of_Timesteps()));
             u_k = pt_cont.sen_op.current_u;
             z_k = pt_cont.sen_op.current_z;

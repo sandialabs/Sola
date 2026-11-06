@@ -6,23 +6,28 @@
 % Experiment 2c: is the curvature limit (eps_curv) of the a priori time-step
 % heuristic needed, and how should it be set?
 %
-% Part 1 (ablation / frontier).  Mean-to-sample continuation is run with
-%   - fixed N_c steps (the reference frontier),
+% Part 1 (ablation).  Mean-to-sample continuation is run with
+%   - 'backtrack only': no a priori step size; start with a full step and shrink only
+%     when the backtracking safeguard (gradient reduction, negative curvature) rejects it,
+%   - fixed N_c steps (the baseline),
 %   - 'both'      : eps_nl = eps_nl_both,  eps_curv swept (Inf = nonlinearity limit only),
-%   - 'curv only' : eps_nl = Inf,          eps_curv swept (curvature limit only),
-% each with M = 0 and M = 2 Newton polishing steps (M = 0 shows what
-% polishing would otherwise hide).  Work = steps + backtracks + M.  Each run
-% is scored by the endpoint gradient norm ||g_beta|| (median, 90th percentile,
-% max over samples), the fraction of samples reaching grad_target, and the
-% ratio to the fixed-step frontier interpolated at the same mean work
-% (ratio < 1: better than fixed steps at equal work).
+%   - 'curv only' : eps_nl = Inf,          eps_curv swept (curvature limit only).
+% Every run ends with Newton polishing that stops, per sample, once
+% ||g_beta|| <= newton_gradient_tol (at most num_max_newton_steps steps), so the
+% endpoint gradient is small by construction.  What differs is
+%   cost = continuation steps (+ backtracks) + newton_cost * Newton steps taken
+% and whether the sample reaches the tolerance at all ("converged"; a sample
+% whose continuation ends outside Newton's basin does not).  Adaptive settings are
+% compared with the best uniform fixed N_c chosen in hindsight and with the
+% per-sample oracle (cheapest fixed N_c for each sample).
 %
 % Part 2 (predictor-error test).  For each sample, one Euler predictor step
 % from the mean start at dt = 0.5 and 0.25.  Its gradient defect
 % ||g(pred) - g(start)|| should scale like dt^2; the coefficient c is compared
-% (Spearman) with eta, eta * ||beta_dot||, A, A * ||beta_dot|| and ||beta_dot||.
-% If eta * ||beta_dot|| predicts c better than eta, the curvature limit lacks
-% a path-length factor.
+% (Spearman) with eta, eta * ||beta_dot||, A, A * ||beta_dot|| and ||beta_dot||,
+% and with the difficulty of the sample (Newton steps needed after one
+% continuation step).  If eta * ||beta_dot|| predicts c better than eta, the
+% curvature limit lacks a path-length factor.
 
 ci_num_data_points = 1;                % this experiment uses 1 data point (other drivers use 3)
 CI_Setup;
@@ -30,10 +35,11 @@ CI_Sample_Reference;
 clear ci_num_data_points;
 
 fixed_sweep = [1, 2, 3, 4, 5];
-polish_Ms = [0, 2];                    % Newton polishing steps at t = 1 (counted as work)
+num_max_newton_steps = 10;             % Newton polishing at t = 1: at most this many steps ...
+newton_gradient_tol = lowfi_grad_norm; % ... stopping per sample once ||g_beta|| <= this
+newton_cost = 0.5;                     % cost of a Newton step relative to a continuation step
 eps_nl_both = 0.01;                    % eps_nl for the 'both' family
 eps_curv_sweep = [1, 3, 10, 30, Inf];  % Inf = curvature limit off
-grad_target = lowfi_grad_norm;         % "converged" level for the meet-target fractions
 pred_dts = [0.5, 0.25];
 
 % Adaptive configurations.
@@ -44,75 +50,70 @@ end
 for ec = eps_curv_sweep(isfinite(eps_curv_sweep))
     configs(end + 1) = struct('family', 'curv only', 'eps_nl', Inf, 'eps_curv', ec); %#ok<SAGROW>
 end
+configs(end + 1) = struct('family', 'backtrack only', 'eps_nl', Inf, 'eps_curv', Inf);   % no a priori step: dt = 1, shrink on rejection
 num_cfg = length(configs);
-num_M = length(polish_Ms);
 num_N = length(fixed_sweep);
 S = num_samples;
 
 fprintf('\n============================================================\n');
 fprintf('Experiment 2c: curvature-limit sweep (%d data points, %d samples)\n', num_data_points, S);
 fprintf('============================================================\n');
-fprintf('grad_target (low-fidelity optimizer ||grad||) = %.3e\n', grad_target);
-fprintf('Work = steps + backtracks + Newton steps M.  "ratio" = adaptive stat / fixed-step\n');
-fprintf('frontier stat interpolated at the same mean work (<1 means adaptive is better).\n');
+fprintf('Newton polishing: at most %d steps, stop at ||g_beta|| <= %.3e (low-fidelity optimizer level)\n', num_max_newton_steps, newton_gradient_tol);
+fprintf('cost = continuation steps (+ backtracks) + %.2f * Newton steps; "converged" = reached the tolerance.\n', newton_cost);
 
-fixed = cell(num_M, 1);
-adapt = cell(num_M, 1);
-for ip = 1:num_M
-    M = polish_Ms(ip);
-    fprintf('\n------------------------------------------------------------\n');
-    fprintf('Newton polishing steps M = %d\n', M);
-    fprintf('------------------------------------------------------------\n');
-
-    fprintf('Fixed steps (mean-to-sample):\n');
-    fprintf('  N_c | work | median grad | p90 grad    | max grad    | meet target | s/sample\n');
-    fixed{ip} = [];
-    for jj = 1:num_N
-        run_out = Run_Samples(sen_op, md_hessian_analysis, z_opt, r, 'fixed_mts', fixed_sweep(jj), beta_bar, [], [], sample_indices, M);
-        sm = Summarize_CI_Run(run_out, grad_target);
-        sm.N_c = fixed_sweep(jj);
-        fixed{ip} = [fixed{ip}, sm];
-        fprintf('  %3d | %4.1f | %.4e  | %.4e  | %.4e  |   %5.1f%%    | %.2f\n', sm.N_c, sm.work_mean, ...
-                sm.median, sm.p90, sm.max, 100 * sm.meet_frac, sm.time_per_sample);
-    end
-    fixed_work = [fixed{ip}.work_mean];
-
-    fprintf('Adaptive (eps_curv = Inf means curvature limit off; eps_nl = Inf means nonlinearity limit off):\n');
-    fprintf('  family    | eps_nl | eps_curv | work mean/max | steps | bt | curv binds | median (ratio)      | p90 (ratio)         | max (ratio)         | meet   | s/sample\n');
-    adapt{ip} = [];
-    for cc = 1:num_cfg
-        cfg = configs(cc);
-        bt_options = sample_bt_options;
-        bt_options.epsilon_curv = cfg.eps_curv;
-        run_out = Run_Samples(sen_op, md_hessian_analysis, z_opt, r, 'adaptive_mts', [], beta_bar, cfg.eps_nl, bt_options, sample_indices, M);
-        sm = Summarize_CI_Run(run_out, grad_target);
-        sm.family = cfg.family;  sm.eps_nl = cfg.eps_nl;  sm.eps_curv = cfg.eps_curv;
-        sm.steps = run_out.steps;  sm.dt_prior = run_out.dt_prior;
-        sm.A = run_out.A;  sm.eta = run_out.eta;  sm.dt_nl = run_out.dt_nl;  sm.dt_curv = run_out.dt_curv;
-        sm.curv_binds = mean(sm.dt_curv < sm.dt_nl, 'omitnan');   % fraction of samples limited by curvature
-        sm.ratio_median = Frontier_Ratio(fixed_work, [fixed{ip}.median], sm.work_mean, sm.median);
-        sm.ratio_p90 = Frontier_Ratio(fixed_work, [fixed{ip}.p90], sm.work_mean, sm.p90);
-        sm.ratio_max = Frontier_Ratio(fixed_work, [fixed{ip}.max], sm.work_mean, sm.max);
-        adapt{ip} = [adapt{ip}, sm];
-        fprintf('  %-9s | %6.3g | %8.3g | %5.1f / %2d    | %5.2f | %2d |   %5.1f%%   | %.3e (%s) | %.3e (%s) | %.3e (%s) | %5.1f%% | %.2f\n', ...
-                sm.family, sm.eps_nl, sm.eps_curv, sm.work_mean, sm.work_max, sm.steps_mean, sm.backtracks, 100 * sm.curv_binds, ...
-                sm.median, Ratio_String(sm.ratio_median), sm.p90, Ratio_String(sm.ratio_p90), sm.max, Ratio_String(sm.ratio_max), ...
-                100 * sm.meet_frac, sm.time_per_sample);
-    end
+%% Fixed-step baseline
+fixed = cell(1, num_N);
+fprintf('\nFixed steps (mean-to-sample):\n');
+fprintf('%-28s | cont mean/max | Newton mean/max | cost mean / p90 / max | converged | s/sample\n', 'setting');
+for jj = 1:num_N
+    run_out = Run_Samples(sen_op, md_hessian_analysis, z_opt, r, 'fixed_mts', fixed_sweep(jj), beta_bar, [], [], sample_indices, num_max_newton_steps, newton_gradient_tol);
+    run_out.summary = Summarize_CI_Cost(run_out, newton_cost, newton_gradient_tol, sprintf('fixed N_c = %d', fixed_sweep(jj)));
+    fixed{jj} = run_out;
+    Print_Summary(run_out.summary);
 end
+fixed_cost = cell2mat(cellfun(@(f) f.summary.cost, fixed, 'UniformOutput', false));   % S x num_N
+fixed_converged = cellfun(@(f) f.summary.converged_frac, fixed);
+fixed_mean_cost = cellfun(@(f) f.summary.mean_cost, fixed);
+fixed_p90_cost = cellfun(@(f) f.summary.p90_cost, fixed);
+ok_fixed = find(fixed_converged >= max(fixed_converged) - 1.e-12);
+[best_fixed_cost, jb] = min(fixed_mean_cost(ok_fixed));
+jb = ok_fixed(jb);
+oracle_cost = mean(min(fixed_cost, [], 2), 'omitnan');
+[~, jopt] = min(fixed_cost, [], 2);
+N_opt = fixed_sweep(jopt)';            % cheapest fixed N_c for each sample (hindsight)
+fprintf('Best uniform fixed N_c in hindsight (among those converging most often): N_c = %d, mean cost %.2f, p90 %.2f\n', ...
+        fixed_sweep(jb), best_fixed_cost, fixed_p90_cost(jb));
+fprintf('Per-sample oracle (cheapest fixed N_c per sample): mean cost %.2f\n', oracle_cost);
 
-%% Smallest fixed N_c that reaches grad_target, per sample
-N_star = nan(S, num_M);
-for ip = 1:num_M
-    for ii = 1:S
-        for jj = 1:num_N
-            if fixed{ip}(jj).grad_norm(ii) <= grad_target
-                N_star(ii, ip) = fixed_sweep(jj);
-                break;
-            end
-        end
+%% Adaptive settings
+adapt = cell(1, num_cfg);
+fprintf('\nAdaptive (Inf = limit off):\n');
+fprintf('%-28s | cont mean/max | Newton mean/max | cost mean / p90 / max | converged | s/sample | curv binds | mean cost vs best fixed | p90 vs best fixed\n', 'setting');
+for cc = 1:num_cfg
+    cfg = configs(cc);
+    bt_options = sample_bt_options;
+    bt_options.epsilon_curv = cfg.eps_curv;
+    if strcmp(cfg.family, 'backtrack only')
+        run_out = Run_Samples(sen_op, md_hessian_analysis, z_opt, r, 'backtrack_mts', [], beta_bar, [], bt_options, sample_indices, num_max_newton_steps, newton_gradient_tol);
+        label = 'backtrack only (dt = 1 start)';
+    else
+        run_out = Run_Samples(sen_op, md_hessian_analysis, z_opt, r, 'adaptive_mts', [], beta_bar, cfg.eps_nl, bt_options, sample_indices, num_max_newton_steps, newton_gradient_tol);
+        label = sprintf('%s: nl=%g, curv=%g', cfg.family, cfg.eps_nl, cfg.eps_curv);
     end
+    run_out.summary = Summarize_CI_Cost(run_out, newton_cost, newton_gradient_tol, label);
+    run_out.family = cfg.family;  run_out.eps_nl = cfg.eps_nl;  run_out.eps_curv = cfg.eps_curv;
+    run_out.curv_binds = mean(run_out.dt_curv < run_out.dt_nl, 'omitnan');   % fraction limited by curvature
+    if strcmp(cfg.family, 'backtrack only')
+        run_out.curv_binds = NaN;
+    end
+    adapt{cc} = run_out;
+    sm = run_out.summary;
+    fprintf('%-28s |  %4.2f / %2d   |   %4.2f / %2d     |   %5.2f / %5.2f / %5.2f |   %5.1f%%  | %.2f     |  %5.1f%%    |  %5.2fx                 |  %5.2fx\n', ...
+            sm.label, sm.mean_cont, max(sm.cont_steps), sm.mean_newton, max(sm.newton_steps), ...
+            sm.mean_cost, sm.p90_cost, sm.max_cost, 100 * sm.converged_frac, sm.time_per_sample, ...
+            100 * run_out.curv_binds, sm.mean_cost / best_fixed_cost, sm.p90_cost / fixed_p90_cost(jb));
 end
+fprintf('(ratios < 1: cheaper than the best uniform fixed N_c chosen in hindsight; the oracle mean cost %.2f is the floor for any fixed-N_c rule.)\n', oracle_cost);
 
 %% Part 2: predictor-error test
 fprintf('\n------------------------------------------------------------\n');
@@ -142,48 +143,44 @@ for ii = 1:S
     end
 end
 
-eta_s = adapt{1}(1).eta;               % a priori quantities do not depend on eps or M
-A_s = adapt{1}(1).A;
-one_step_grad = fixed{1}(1).grad_norm;  % unpolished one-step gradient: difficulty proxy
+j1 = find(fixed_sweep == 1, 1);
+eta_s = adapt{1}.eta;                  % a priori quantities do not depend on eps
+A_s = adapt{1}.A;
+if isempty(j1)
+    difficulty = nan(S, 1);
+else
+    difficulty = fixed{j1}.summary.newton_steps;   % Newton steps needed after one continuation step
+end
 c_pred = pred.c(:, end);
 
 fprintf('\nPer-sample table:\n');
-fprintf(' sample |    A       |   eta      | ||beta_dot|| | c (pred)   | slope | 1-step grad |');
-for ip = 1:num_M
-    fprintf(' N* (M=%d) |', polish_Ms(ip));
-end
-fprintf('\n');
+fprintf(' sample |    A       |   eta      | ||beta_dot|| | c (pred)   | slope | Newton after N_c=1 | cheapest N_c\n');
 for ii = 1:S
-    fprintf(' %5d  | %.3e | %.3e | %.3e   | %.3e | %5.2f | %.3e   |', ii, A_s(ii), eta_s(ii), pred.speed(ii), c_pred(ii), pred.slope(ii), one_step_grad(ii));
-    for ip = 1:num_M
-        if isnan(N_star(ii, ip))
-            fprintf('   >%d     |', max(fixed_sweep));
-        else
-            fprintf('   %3d     |', N_star(ii, ip));
-        end
-    end
-    fprintf('\n');
+    fprintf(' %5d  | %.3e | %.3e | %.3e   | %.3e | %5.2f |        %3d         |     %d\n', ii, A_s(ii), eta_s(ii), ...
+            pred.speed(ii), c_pred(ii), pred.slope(ii), difficulty(ii), N_opt(ii));
 end
-fprintf('(N* = smallest fixed N_c reaching grad_target; slope should be ~2 for a clean quadratic predictor defect.)\n');
+fprintf('(slope should be ~2 for a clean quadratic predictor defect; cheapest N_c = argmin of the fixed-step cost per sample.)\n');
 
-fprintf('\nSpearman correlation with the predictor defect coefficient c (and with the 1-step gradient):\n');
+fprintf('\nSpearman correlation with the predictor defect coefficient c and with the sample difficulty:\n');
 cands = {'eta', eta_s; 'eta*||beta_dot||', eta_s .* pred.speed; 'A', A_s; 'A*||beta_dot||', A_s .* pred.speed; '||beta_dot||', pred.speed};
 pred_corr = zeros(size(cands, 1), 2);
 for kk = 1:size(cands, 1)
     pred_corr(kk, 1) = Safe_Spearman(cands{kk, 2}, c_pred);
-    pred_corr(kk, 2) = Safe_Spearman(cands{kk, 2}, one_step_grad);
-    fprintf('  %-18s  vs c: %6.3f   vs 1-step grad: %6.3f\n', cands{kk, 1}, pred_corr(kk, 1), pred_corr(kk, 2));
+    pred_corr(kk, 2) = Safe_Spearman(cands{kk, 2}, difficulty);
+    fprintf('  %-18s  vs c: %6.3f   vs difficulty (Newton steps after N_c=1): %6.3f\n', cands{kk, 1}, pred_corr(kk, 1), pred_corr(kk, 2));
 end
 fprintf('(If eta*||beta_dot|| correlates better than eta, the curvature limit lacks a path-length factor.)\n');
 
 results = struct();
 results.settings = struct('num_data_points', num_data_points, 'num_samples', S, 'fixed_sweep', fixed_sweep, ...
-                          'polish_Ms', polish_Ms, 'eps_nl_both', eps_nl_both, 'eps_curv_sweep', eps_curv_sweep, ...
-                          'grad_target', grad_target, 'pred_dts', pred_dts);
+                          'num_max_newton_steps', num_max_newton_steps, 'newton_gradient_tol', newton_gradient_tol, ...
+                          'newton_cost', newton_cost, 'eps_nl_both', eps_nl_both, 'eps_curv_sweep', eps_curv_sweep, ...
+                          'pred_dts', pred_dts);
 results.configs = configs;
-results.fixed = fixed;  results.adapt = adapt;  results.N_star = N_star;
+results.fixed = fixed;  results.adapt = adapt;
+results.best_fixed_index = jb;  results.oracle_cost = oracle_cost;  results.N_opt = N_opt;
 results.pred = pred;  results.pred_corr = pred_corr;
-results.eta = eta_s;  results.A = A_s;  results.one_step_grad = one_step_grad;
+results.eta = eta_s;  results.A = A_s;  results.difficulty = difficulty;
 results_file = fullfile(ci_dir, 'ci-curvature-sweep-results.mat');
 save(results_file, 'results');
 fprintf('\nSaved results to:\n  %s\n', results_file);
@@ -191,42 +188,10 @@ fprintf('\nSaved results to:\n  %s\n', results_file);
 Plot_CI_Curvature_Sweep;
 
 %% Local helpers
-function s = Summarize_CI_Run(run_out, grad_target)
-    g = run_out.grad_norm(:);
-    ok = isfinite(g);
-    s.grad_norm = g;
-    s.work_mean = mean(run_out.work, 'omitnan');
-    s.work_max = max(run_out.work, [], 'omitnan');
-    s.steps_mean = mean(run_out.steps, 'omitnan');
-    s.backtracks = sum(run_out.backtracks);
-    s.median = median(g, 'omitnan');
-    s.max = max(g, [], 'omitnan');
-    if any(ok)
-        s.p90 = prctile(g(ok), 90);
-        s.meet_frac = mean(g(ok) <= grad_target);
-    else
-        s.p90 = NaN;
-        s.meet_frac = NaN;
-    end
-    s.failures = sum(run_out.failures);
-    s.time_per_sample = run_out.time / numel(g);
-end
-
-function ratio = Frontier_Ratio(fixed_work, fixed_stat, work, stat)
-    % adaptive stat / fixed-step stat interpolated (log-linearly) at the same work
-    ratio = NaN;
-    if work < min(fixed_work) || work > max(fixed_work) || any(~isfinite(fixed_stat)) || any(fixed_stat <= 0)
-        return;
-    end
-    ratio = stat / 10^interp1(fixed_work, log10(fixed_stat), work);
-end
-
-function str = Ratio_String(ratio)
-    if isnan(ratio)
-        str = '  n/a';
-    else
-        str = sprintf('%5.2f', ratio);
-    end
+function Print_Summary(s)
+    fprintf('%-28s |  %4.2f / %2d   |   %4.2f / %2d     |   %5.2f / %5.2f / %5.2f |   %5.1f%%  | %.2f\n', ...
+            s.label, s.mean_cont, max(s.cont_steps), s.mean_newton, max(s.newton_steps), ...
+            s.mean_cost, s.p90_cost, s.max_cost, 100 * s.converged_frac, s.time_per_sample);
 end
 
 function rho = Safe_Spearman(x, y)

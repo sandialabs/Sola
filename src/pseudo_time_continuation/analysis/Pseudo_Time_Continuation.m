@@ -72,22 +72,31 @@ classdef Pseudo_Time_Continuation < handle
             end
         end
 
-        % num_newton_steps (optional, default 0) appends that many Newton
-        % corrections at the final pseudo-time after the N continuation steps.
-        % The extra iterates are returned as additional columns of z_k and
-        % grad_k, so z_k(:, end) is always the final solution.
-        function [z_k, grad_k] = Pseudo_Time_Continuation_Forward_Euler(this, theta_traj, num_newton_steps)
-            if nargin < 3 || isempty(num_newton_steps)
-                num_newton_steps = 0;
+        % num_max_newton_steps (optional, default 0) is the maximum number of
+        % Newton corrections appended at the final pseudo-time after the N
+        % continuation steps.  newton_gradient_tol (optional, default 0) stops
+        % the Newton steps early once the gradient norm is <= this value
+        % (checked before each step, so 0 Newton steps are taken if the
+        % continuation endpoint already satisfies it).  With the default of 0 all
+        % num_max_newton_steps are taken.  The Newton iterates are returned as
+        % additional columns of z_k and grad_k, so z_k(:, end) is always the
+        % final solution and the number of Newton steps taken is
+        % size(z_k, 2) - 1 - N.
+        function [z_k, grad_k] = Pseudo_Time_Continuation_Forward_Euler(this, theta_traj, num_max_newton_steps, newton_gradient_tol)
+            if nargin < 3 || isempty(num_max_newton_steps)
+                num_max_newton_steps = 0;
+            end
+            if nargin < 4 || isempty(newton_gradient_tol)
+                newton_gradient_tol = 0;
             end
 
             N = theta_traj.Get_Number_of_Timesteps();
-            this.qn_prec.Set_N(N + num_newton_steps);
+            this.qn_prec.Set_N(N + num_max_newton_steps);
 
-            z_k = zeros(length(this.z_bar), N + num_newton_steps + 1);
+            z_k = zeros(length(this.z_bar), N + num_max_newton_steps + 1);
             z_k(:, 1) = this.z_bar;
 
-            grad_k = zeros(length(this.z_bar), N + num_newton_steps + 1);
+            grad_k = zeros(length(this.z_bar), N + num_max_newton_steps + 1);
             dt = 1 / N;
 
             grad_k(:, 1) = this.sen_op.Gradient(z_k(:, 1), theta_traj, 0);
@@ -100,10 +109,13 @@ classdef Pseudo_Time_Continuation < handle
                 grad_tmp = this.sen_op.Gradient(z_tmp, theta_traj, k);
 
                 if this.use_qn_prec
-                    this.qn_prec.Add_Block_Quasi_Newton_Data();
+                    % Skip secant pairs without positive curvature (s'y <= 0).
                     s_k = z_tmp - z_k(:, k);
                     y_k = grad_tmp - grad_k(:, k) - dt * B;
-                    this.qn_prec.Add_Parametric_Quasi_Newton_Data(s_k, y_k);
+                    if s_k' * y_k > 0
+                        this.qn_prec.Add_Block_Quasi_Newton_Data();
+                        this.qn_prec.Add_Parametric_Quasi_Newton_Data(s_k, y_k);
+                    end
                 end
 
                 f = this.Apply_Inverse_Hessian(grad_tmp, z_tmp, theta_traj, k);
@@ -111,17 +123,25 @@ classdef Pseudo_Time_Continuation < handle
                 grad_k(:, k + 1) = this.sen_op.Gradient(z_k(:, k + 1), theta_traj, k);
 
                 if this.use_qn_prec
-                    this.qn_prec.Add_Block_Quasi_Newton_Data();
                     s_k = z_k(:, k + 1) - z_tmp;
                     y_k = grad_k(:, k + 1) - grad_tmp;
-                    this.qn_prec.Add_Parametric_Quasi_Newton_Data(s_k, y_k);
+                    if s_k' * y_k > 0
+                        this.qn_prec.Add_Block_Quasi_Newton_Data();
+                        this.qn_prec.Add_Parametric_Quasi_Newton_Data(s_k, y_k);
+                    end
                 end
 
             end
 
-            % Extra Newton steps at the final pseudo-time (theta fixed).
-            for j = 1:num_newton_steps
+            % Extra Newton steps at the final pseudo-time (theta fixed), stopping
+            % early once the gradient norm is below newton_gradient_tol.
+            num_newton_taken = 0;
+            for j = 1:num_max_newton_steps
                 idx = N + j;
+                if norm(grad_k(:, idx)) <= newton_gradient_tol
+                    break;
+                end
+                num_newton_taken = j;
                 f = this.Apply_Inverse_Hessian(grad_k(:, idx), z_k(:, idx), theta_traj, N);
                 z_k(:, idx + 1) = z_k(:, idx) - f;
                 grad_k(:, idx + 1) = this.sen_op.Gradient(z_k(:, idx + 1), theta_traj, N);
@@ -135,8 +155,17 @@ classdef Pseudo_Time_Continuation < handle
                     end
                 end
             end
+            z_k = z_k(:, 1:(N + 1 + num_newton_taken));
+            grad_k = grad_k(:, 1:(N + 1 + num_newton_taken));
         end
 
+        % options.num_max_newton_steps (optional, default 0) is the maximum number
+        % of Newton corrections taken at t = 1 after the accepted continuation
+        % steps; options.newton_gradient_tol (optional, default 0) stops them
+        % early once the gradient norm is <= this value (checked before each
+        % step).  The extra iterates are appended as columns of z_k and grad_k
+        % (so z_k(:, end) is the final solution); time_grid and step_diagnostics
+        % cover only the continuation steps.
         function [z_k, grad_k, time_grid, step_diagnostics, time_step_diagnostics] = Pseudo_Time_Continuation_Forward_Euler_Backtracking(this, theta_traj, initial_dt, options)
             arguments
                 this
@@ -153,6 +182,7 @@ classdef Pseudo_Time_Continuation < handle
             gradient_abs_tol = options.gradient_abs_tol;
             require_objective_decrease = options.require_objective_decrease;
             objective_armijo_factor = options.objective_armijo_factor;
+            neg_curv_rel_tol = 1.e-8;   % relative size of s'y below which a secant pair counts as negative curvature
             time_step_callback = [];
             if isfield(options, 'time_step_callback')
                 time_step_callback = options.time_step_callback;
@@ -181,11 +211,15 @@ classdef Pseudo_Time_Continuation < handle
                 end
                 active_initial_dt = min(initial_dt, 1.0);
             end
-            num_newton_steps = 0;
-            if isfield(options, 'num_newton_steps') && ~isempty(options.num_newton_steps)
-                num_newton_steps = options.num_newton_steps;
+            num_max_newton_steps = 0;
+            if isfield(options, 'num_max_newton_steps') && ~isempty(options.num_max_newton_steps)
+                num_max_newton_steps = options.num_max_newton_steps;
             end
-            this.qn_prec.Set_N(2 * max_steps + num_newton_steps);
+            newton_gradient_tol = 0;
+            if isfield(options, 'newton_gradient_tol') && ~isempty(options.newton_gradient_tol)
+                newton_gradient_tol = options.newton_gradient_tol;
+            end
+            this.qn_prec.Set_N(2 * max_steps + num_max_newton_steps);
 
             z_k = zeros(length(this.z_bar), max_steps + 1);
             z_k(:, 1) = this.z_bar;
@@ -251,36 +285,67 @@ classdef Pseudo_Time_Continuation < handle
                     z_pred = z_k(:, k) - trial_dt * f;
                     [grad_pred, val_pred] = this.sen_op.Gradient(z_pred, theta_traj, time_index_next);
 
+                    % A secant pair with significantly negative curvature (s'y < 0)
+                    % means the trial step crosses a non-convex region: reject it
+                    % (and backtrack) instead of corrupting the quasi-Newton
+                    % preconditioner.  Pairs with s'y ~ 0 (e.g., roundoff near
+                    % convergence) are just skipped.
+                    negative_curvature = false;
                     if this.use_qn_prec
-                        this.qn_prec.Add_Block_Quasi_Newton_Data();
                         s_k = z_pred - z_k(:, k);
                         y_k = grad_pred - grad_k(:, k) - trial_dt * B;
-                        this.qn_prec.Add_Parametric_Quasi_Newton_Data(s_k, y_k);
+                        sy = s_k' * y_k;
+                        if sy > 0
+                            this.qn_prec.Add_Block_Quasi_Newton_Data();
+                            this.qn_prec.Add_Parametric_Quasi_Newton_Data(s_k, y_k);
+                        elseif sy < -neg_curv_rel_tol * norm(s_k) * norm(y_k)
+                            negative_curvature = true;
+                        end
                     end
 
-                    f_corr = this.Apply_Inverse_Hessian(grad_pred, z_pred, theta_traj, time_index_next);
-                    z_corr = z_pred - f_corr;
-                    [grad_corr, val_corr] = this.sen_op.Gradient(z_corr, theta_traj, time_index_next);
-
-                    if this.use_qn_prec
-                        this.qn_prec.Add_Block_Quasi_Newton_Data();
-                        s_k = z_corr - z_pred;
-                        y_k = grad_corr - grad_pred;
-                        this.qn_prec.Add_Parametric_Quasi_Newton_Data(s_k, y_k);
-                    end
-
-                    grad_pred_norm = norm(grad_pred);
-                    grad_corr_norm = norm(grad_corr);
-                    gradient_accept = grad_corr_norm <= max(gradient_abs_tol, gradient_reduction_factor * grad_pred_norm);
-                    objective_accept = ~isempty(val_pred) && ~isempty(val_corr) && ...
-                        isscalar(val_pred) && isscalar(val_corr) && ...
-                        isfinite(val_pred) && isfinite(val_corr) && ...
-                        (val_corr <= val_pred - objective_armijo_factor * max(1.0, abs(val_pred)));
-
-                    if require_objective_decrease
-                        accepted = gradient_accept && objective_accept;
+                    if negative_curvature
+                        % Reject without computing the corrector.
+                        z_corr = z_pred;
+                        grad_corr = grad_pred;
+                        val_corr = val_pred;
+                        grad_pred_norm = norm(grad_pred);
+                        grad_corr_norm = grad_pred_norm;
+                        gradient_accept = false;
+                        objective_accept = false;
+                        accepted = false;
                     else
-                        accepted = gradient_accept || objective_accept;
+                        f_corr = this.Apply_Inverse_Hessian(grad_pred, z_pred, theta_traj, time_index_next);
+                        z_corr = z_pred - f_corr;
+                        [grad_corr, val_corr] = this.sen_op.Gradient(z_corr, theta_traj, time_index_next);
+
+                        if this.use_qn_prec
+                            s_k = z_corr - z_pred;
+                            y_k = grad_corr - grad_pred;
+                            sy = s_k' * y_k;
+                            if sy > 0
+                                this.qn_prec.Add_Block_Quasi_Newton_Data();
+                                this.qn_prec.Add_Parametric_Quasi_Newton_Data(s_k, y_k);
+                            elseif sy < -neg_curv_rel_tol * norm(s_k) * norm(y_k)
+                                negative_curvature = true;
+                            end
+                        end
+
+                        grad_pred_norm = norm(grad_pred);
+                        grad_corr_norm = norm(grad_corr);
+                        gradient_accept = grad_corr_norm <= max(gradient_abs_tol, gradient_reduction_factor * grad_pred_norm);
+                        objective_accept = ~isempty(val_pred) && ~isempty(val_corr) && ...
+                            isscalar(val_pred) && isscalar(val_corr) && ...
+                            isfinite(val_pred) && isfinite(val_corr) && ...
+                            (val_corr <= val_pred - objective_armijo_factor * max(1.0, abs(val_pred)));
+
+                        if require_objective_decrease
+                            accepted = gradient_accept && objective_accept;
+                        else
+                            accepted = gradient_accept || objective_accept;
+                        end
+                        if negative_curvature
+                            accepted = false;
+                        end
                     end
 
                     last_diagnostics = struct();
@@ -295,6 +360,7 @@ classdef Pseudo_Time_Continuation < handle
                     last_diagnostics.gradient_accept = gradient_accept;
                     last_diagnostics.objective_accept = objective_accept;
                     last_diagnostics.accepted = accepted;
+                    last_diagnostics.negative_curvature = negative_curvature;
 
                     if ~accepted
                         this.qn_prec.Restore(qn_snapshot);
@@ -317,7 +383,10 @@ classdef Pseudo_Time_Continuation < handle
             step_diagnostics = step_diagnostics(1:(k - 1));
 
             % Extra Newton steps at the final pseudo-time (theta fixed).
-            for j = 1:num_newton_steps
+            for j = 1:num_max_newton_steps
+                if norm(grad_k(:, end)) <= newton_gradient_tol
+                    break;
+                end
                 f = this.Apply_Inverse_Hessian(grad_k(:, end), z_k(:, end), theta_traj, trajectory_scale);
                 z_new = z_k(:, end) - f;
                 grad_new = this.sen_op.Gradient(z_new, theta_traj, trajectory_scale);
