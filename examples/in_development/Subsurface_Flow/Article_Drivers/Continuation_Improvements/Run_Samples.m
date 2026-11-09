@@ -3,7 +3,7 @@
 %%%%%%%%% Questions? Contact Joseph Hart (joshart@sandia.gov) %%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function out = Run_Samples(sen_op, hessian_analysis, z_opt, r, method, N_c, beta_bar, epsilon_nl, bt_options, sample_indices, num_max_newton_steps, newton_gradient_tol)
+function out = Run_Samples(sen_op, hessian_analysis, z_opt, r, method, N_c, beta_bar, epsilon_nl, bt_options, sample_indices, num_max_newton_steps, newton_gradient_tol, extrap_scale)
     % method: 'nominal'      fixed steps from beta = 0
     %         'fixed_mts'    fixed steps from beta_bar
     %         'adaptive_mts' heuristic + backtracking from beta_bar
@@ -14,6 +14,13 @@ function out = Run_Samples(sen_op, hessian_analysis, z_opt, r, method, N_c, beta
     % newton_gradient_tol (optional, default 0): stop the Newton steps (per
     % sample) once ||g_beta|| <= tol (0: always take num_max_newton_steps).
     % The Newton steps actually taken are out.newton_steps and count toward out.work.
+    % extrap_scale (optional, default 1): for the mean-to-sample methods, continue to
+    % mean + extrap_scale * (sample - mean) (MD_Discrepancy_Extrapolated_Trajectory).
+    % extrap_scale > 1 makes the problem harder; scoring uses the same endpoint.
+    if nargin < 13 || isempty(extrap_scale)
+        extrap_scale = 1;
+    end
+    mts_traj = @(N, idx) MD_Discrepancy_Extrapolated_Trajectory(N, idx, extrap_scale);
     if nargin < 11 || isempty(num_max_newton_steps)
         num_max_newton_steps = 0;
     end
@@ -21,27 +28,37 @@ function out = Run_Samples(sen_op, hessian_analysis, z_opt, r, method, N_c, beta
         newton_gradient_tol = 0;
     end
     num_samples = length(sample_indices);
-    out.z = nan(length(z_opt), num_samples);
-    out.grad_norm = nan(num_samples, 1);
-    out.steps = nan(num_samples, 1);
-    out.backtracks = zeros(num_samples, 1);
-    out.dt_prior = nan(num_samples, 1);
+    o_z = nan(length(z_opt), num_samples);
+    o_grad_norm = nan(num_samples, 1);
+    o_steps = nan(num_samples, 1);
+    o_backtracks = zeros(num_samples, 1);
+    o_dt_prior = nan(num_samples, 1);
     % A priori heuristic quantities (adaptive_mts only; NaN otherwise).
-    out.A = nan(num_samples, 1);
-    out.eta = nan(num_samples, 1);
-    out.dt_nl = nan(num_samples, 1);
-    out.dt_curv = nan(num_samples, 1);
-    out.failures = false(num_samples, 1);
-    out.newton_steps = nan(num_samples, 1);
+    o_A = nan(num_samples, 1);
+    o_eta = nan(num_samples, 1);
+    o_dt_nl = nan(num_samples, 1);
+    o_dt_curv = nan(num_samples, 1);
+    o_failures = false(num_samples, 1);
+    o_newton_steps = nan(num_samples, 1);
     % Gradient norm after the continuation steps (column 1) and after each
     % Newton step taken (columns 2..); the Newton iterates are prefixes, so with
     % newton_gradient_tol = 0 one run with M steps gives the result for every
     % smaller M.  Columns beyond the steps taken (early stop) stay NaN.
-    out.newton_grad_norms = nan(num_samples, num_max_newton_steps + 1);
+    o_ngn = nan(num_samples, num_max_newton_steps + 1);
 
+    % Samples are independent: run them in parallel.  Use the current pool if there
+    % is one, otherwise start a Threads pool (needs the Parallel Computing Toolbox;
+    % without it parfor runs serially).  Each worker gets its own copy of sen_op,
+    % so its state cache is never shared; the (seeded) breve samplers already
+    % stored in sen_op are copied along with it.  out.time is wall-clock time.
+    if license('test', 'Distrib_Computing_Toolbox') && isempty(gcp('nocreate'))
+        parpool('Threads');
+    end
     tic;
-    for ii = 1:num_samples
+    parfor ii = 1:num_samples
         idx = sample_indices(ii);
+        warn_state = warning('error', 'MATLAB:nearlySingularMatrix');
+        warn_cleanup = onCleanup(@() warning(warn_state));
         try
             qn_prec = MD_Quasi_Newton_Preconditioner(hessian_analysis);
             switch method
@@ -50,18 +67,18 @@ function out = Run_Samples(sen_op, hessian_analysis, z_opt, r, method, N_c, beta
                     theta = MD_Discrepancy_Parameter_Trajectory(N_c, idx);
                     [beta_traj, grad_traj] = pt.Pseudo_Time_Continuation_Forward_Euler(theta, num_max_newton_steps, newton_gradient_tol);
                     cont_steps = N_c;
-                    out.steps(ii) = N_c;
-                    out.dt_prior(ii) = 1 / N_c;
+                    o_steps(ii) = N_c;
+                    o_dt_prior(ii) = 1 / N_c;
                 case 'fixed_mts'
                     pt = Pseudo_Time_Continuation(beta_bar, sen_op, qn_prec);
-                    theta = MD_Discrepancy_Mean_To_Sample_Trajectory(N_c, idx);
+                    theta = mts_traj(N_c, idx);
                     [beta_traj, grad_traj] = pt.Pseudo_Time_Continuation_Forward_Euler(theta, num_max_newton_steps, newton_gradient_tol);
                     cont_steps = N_c;
-                    out.steps(ii) = N_c;
-                    out.dt_prior(ii) = 1 / N_c;
+                    o_steps(ii) = N_c;
+                    o_dt_prior(ii) = 1 / N_c;
                 case 'adaptive_mts'
                     pt = Pseudo_Time_Continuation(beta_bar, sen_op, qn_prec);
-                    theta = MD_Discrepancy_Mean_To_Sample_Trajectory(1, idx);
+                    theta = mts_traj(1, idx);
                     opts = bt_options;
                     opts.num_max_newton_steps = num_max_newton_steps;
                     opts.newton_gradient_tol = newton_gradient_tol;
@@ -69,41 +86,50 @@ function out = Run_Samples(sen_op, hessian_analysis, z_opt, r, method, N_c, beta
                         sen_op.Sample_A_Priori_Time_Step_Heuristic(beta, th, ti, beta_dot, idx, epsilon_nl, bt_options);
                     [beta_traj, grad_traj, ~, step_diags, prior_diag] = pt.Pseudo_Time_Continuation_Forward_Euler_Backtracking(theta, [], opts);
                     cont_steps = length(step_diags);
-                    out.dt_prior(ii) = prior_diag.dt;
-                    out.A(ii) = prior_diag.A;
-                    out.eta(ii) = prior_diag.eta;
-                    out.dt_nl(ii) = prior_diag.dt_nonlinearity;
-                    out.dt_curv(ii) = prior_diag.dt_curvature;
-                    out.steps(ii) = length(step_diags);
-                    out.backtracks(ii) = sum(cellfun(@(d) d.num_backtracks, step_diags));
+                    o_dt_prior(ii) = prior_diag.dt;
+                    o_A(ii) = prior_diag.A;
+                    o_eta(ii) = prior_diag.eta;
+                    o_dt_nl(ii) = prior_diag.dt_nonlinearity;
+                    o_dt_curv(ii) = prior_diag.dt_curvature;
+                    o_steps(ii) = length(step_diags);
+                    o_backtracks(ii) = sum(cellfun(@(d) d.num_backtracks, step_diags));
                 case 'backtrack_mts'
                     pt = Pseudo_Time_Continuation(beta_bar, sen_op, qn_prec);
-                    theta = MD_Discrepancy_Mean_To_Sample_Trajectory(1, idx);
+                    theta = mts_traj(1, idx);
                     opts = bt_options;
                     opts.num_max_newton_steps = num_max_newton_steps;
                     opts.newton_gradient_tol = newton_gradient_tol;
                     [beta_traj, grad_traj, ~, step_diags] = pt.Pseudo_Time_Continuation_Forward_Euler_Backtracking(theta, 1.0, opts);
                     cont_steps = length(step_diags);
-                    out.dt_prior(ii) = 1.0;
-                    out.steps(ii) = length(step_diags);
-                    out.backtracks(ii) = sum(cellfun(@(d) d.num_backtracks, step_diags));
+                    o_dt_prior(ii) = 1.0;
+                    o_steps(ii) = length(step_diags);
+                    o_backtracks(ii) = sum(cellfun(@(d) d.num_backtracks, step_diags));
                 otherwise
                     error('Unknown method "%s".', method);
             end
             beta_k = beta_traj(:, end);
             g_newton = sqrt(sum(grad_traj(:, cont_steps + 1:end).^2, 1));
-            out.newton_grad_norms(ii, 1:numel(g_newton)) = g_newton;
-            out.newton_steps(ii) = numel(g_newton) - 1;
-            out.z(:, ii) = z_opt + hessian_analysis.Apply_V(beta_k);
+            ngn_row = nan(1, num_max_newton_steps + 1);
+            ngn_row(1:numel(g_newton)) = g_newton;
+            o_ngn(ii, :) = ngn_row;
+            o_newton_steps(ii) = numel(g_newton) - 1;
+            o_z(:, ii) = z_opt + hessian_analysis.Apply_V(beta_k);
 
             % All methods are scored on the same endpoint (t = 1) sample objective.
-            theta_end = MD_Discrepancy_Parameter_Trajectory(1, idx);
-            out.grad_norm(ii) = norm(sen_op.Gradient(beta_k, theta_end, 1));
+            if strcmp(method, 'nominal')
+                theta_end = MD_Discrepancy_Parameter_Trajectory(1, idx);
+            else
+                theta_end = mts_traj(1, idx);
+            end
+            o_grad_norm(ii) = norm(sen_op.Gradient(beta_k, theta_end, 1));
         catch ME
-            out.failures(ii) = true;
-            fprintf('  %s sample %d failed: %s\n', method, idx, ME.message);
+            o_failures(ii) = true;
+            fprintf('  %s (N_c = %s, lambda = %g) sample %d failed: %s\n', method, num2str(N_c), extrap_scale, idx, ME.message);
         end
     end
     out.time = toc;
+    out.z = o_z;  out.grad_norm = o_grad_norm;  out.steps = o_steps;  out.backtracks = o_backtracks;
+    out.dt_prior = o_dt_prior;  out.A = o_A;  out.eta = o_eta;  out.dt_nl = o_dt_nl;  out.dt_curv = o_dt_curv;
+    out.failures = o_failures;  out.newton_steps = o_newton_steps;  out.newton_grad_norms = o_ngn;
     out.work = out.steps + out.backtracks + out.newton_steps;
 end

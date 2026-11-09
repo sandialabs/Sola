@@ -152,6 +152,33 @@ classdef Reduced_Space_Optimization < handle
             z_out = xJ + xc;
         end
 
+        function [p] = Truncated_CG_Newton_Step(~, hess_vec, grad, max_cg_iter)
+            g_norm = norm(grad);
+            tmp_cg_tol = min(0.5, sqrt(g_norm)) * g_norm;
+            p = zeros(size(grad));
+            r = -grad;
+            d = r;
+            rr = r' * r;
+            for j = 1:max_cg_iter
+                Hd = hess_vec(d);
+                curv = d' * Hd;
+                if curv <= 1.e-14 * norm(Hd) * norm(d)
+                    if j == 1
+                        p = d / max(abs(curv) / (d' * d), eps);
+                    end
+                    return;
+                end
+                step = rr / curv;
+                p = p + step * d;
+                r = r - step * Hd;
+                rr_new = r' * r;
+                if sqrt(rr_new) <= tmp_cg_tol
+                    return;
+                end
+                d = r + (rr_new / rr) * d;
+                rr = rr_new;
+            end
+        end
 
         function [u, z, info] = Newton_Polish(this, z0, grad_tol, max_iter, basis)
             if nargin < 3 || isempty(grad_tol)
@@ -179,32 +206,7 @@ classdef Reduced_Space_Optimization < handle
                 end
 
                 hess_vec = @(v) basis' * this.Jhat_hessVec(hessian_data, basis * v);
-                % p = this.Truncated_CG_Newton_Step(hess_vec, grad, n);
-                g_norm = norm(grad);
-                tmp_cg_tol = min(0.5, sqrt(g_norm)) * g_norm;
-                p = zeros(size(grad));
-                r = -grad;
-                d = r;
-                rr = r' * r;
-                for j = 1:n
-                    Hd = hess_vec(d);
-                    curv = d' * Hd;
-                    if curv <= 1.e-14 * norm(Hd) * norm(d)
-                        if j == 1
-                            p = d / max(abs(curv) / (d' * d), eps);
-                        end
-                        return;
-                    end
-                    step = rr / curv;
-                    p = p + step * d;
-                    r = r - step * Hd;
-                    rr_new = r' * r;
-                    if sqrt(rr_new) <= tmp_cg_tol
-                        return;
-                    end
-                    d = r + (rr_new / rr) * d;
-                    rr = rr_new;
-                end
+                p = this.Truncated_CG_Newton_Step(hess_vec, grad, n);
 
                 slope = grad' * p;
                 t = 1.0;

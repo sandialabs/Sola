@@ -152,14 +152,14 @@ classdef Quasi_Newton_Preconditioner < handle
                 if ~isempty(Pk)
 
                     tmp1 = Pk' * z_in;
-                    tmp1 = linsolve(Dk, tmp1);
+                    tmp1 = tmp1 ./ diag(Dk);   % Dk is diagonal; a dense solve only triggers spurious RCOND warnings
                     tmp2 = Pk * tmp1;
                     tmp1 = z_in - Wk * tmp1;
 
                     tmp_out = this.Apply_QN_Inverse_Hessian_Approximation(tmp1, param_counter, block_counter - 1);
 
                     tmp3 = Wk' * tmp_out;
-                    tmp3 = linsolve(Dk, tmp3);
+                    tmp3 = tmp3 ./ diag(Dk);
                     tmp3 = tmp_out - Pk * tmp3;
 
                     z_out = tmp3 + tmp2;

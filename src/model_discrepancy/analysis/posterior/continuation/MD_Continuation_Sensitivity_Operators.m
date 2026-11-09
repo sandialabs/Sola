@@ -119,6 +119,17 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
             state_grad = this.opt_prob_interface.Misfit_Gradient(this.current_u + delta, this.current_z);
             beta_out = beta_out + this.current_disc_ops.Apply_Beta_Theta_Hessian(state_grad);
 
+            % d/dt of the discrepancy is Get_Scale() times its d/ds (extrapolated trajectories).
+            beta_out = this.Trajectory_Scale(theta_traj) * beta_out;
+
+        end
+
+        function [scale] = Trajectory_Scale(~, theta_traj)
+            if ismethod(theta_traj, 'Get_Scale')
+                scale = theta_traj.Get_Scale();
+            else
+                scale = 1.0;
+            end
         end
 
 
@@ -196,8 +207,9 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
                 options struct = struct()
             end
 
-            apply_increment_jacobian = @(beta_in) this.Apply_Discrepancy_Beta_Jacobian_Sample_Minus_Mean(beta_in, sample_idx);
-            apply_increment_jacobian_transpose = @(u_in) this.Apply_Discrepancy_Beta_Jacobian_Transpose_Sample_Minus_Mean(u_in, sample_idx);
+            scale = this.Trajectory_Scale(theta_traj);
+            apply_increment_jacobian = @(beta_in) scale * this.Apply_Discrepancy_Beta_Jacobian_Sample_Minus_Mean(beta_in, sample_idx);
+            apply_increment_jacobian_transpose = @(u_in) scale * this.Apply_Discrepancy_Beta_Jacobian_Transpose_Sample_Minus_Mean(u_in, sample_idx);
 
             [dt, diagnostics] = this.A_Priori_Time_Step_Heuristic(beta, theta_traj, time_index, beta_dot, ...
                                                                   apply_increment_jacobian, ...
