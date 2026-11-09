@@ -110,8 +110,14 @@ num_evals = 4;
 oversampling = 20;
 md_hessian_analysis.Compute_Hessian_GEVP(data_interface.z_opt, num_evals, oversampling);
 
-% Get best possible z under projected problem
-z_best_proj = z_lofi + md_hessian_analysis.evecs * (md_hessian_analysis.evecs \ (z_hifi - z_lofi));
+% Get best possible z under projected problem: solve the high-fidelity problem
+% restricted to z = z_lofi + V c (V = Hessian eigenvectors).  The projection of
+% z_hifi onto the subspace is only the initial guess; Newton polishing on the
+% coefficients converges to the true subspace optimum (reduced gradient = 0).
+z_proj_init = z_lofi + md_hessian_analysis.evecs * (md_hessian_analysis.evecs \ (z_hifi - z_lofi));
+[~, z_best_proj, proj_info] = opt_hifi.Newton_Polish(z_proj_init, 1.e-10, 20, md_hessian_analysis.evecs);
+fprintf('Subspace HiFi solve: %d Newton iterations, reduced ||grad|| %.2e -> %.2e\n', ...
+        proj_info.iterations, proj_info.grad_norm(1), proj_info.grad_norm(end));
 Jhat_best_proj = opt_hifi.Jhat(z_best_proj);
 
 % Display initial objectives

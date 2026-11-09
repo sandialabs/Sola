@@ -36,6 +36,17 @@ z0 = zeros(m, 1);
 [u_lofi, z_lofi] = opt_lofi.Optimize(z0);
 [u_hifi, z_hifi] = opt_hifi.Optimize(z_lofi);
 
+% The trust-region solver can stop far from the minimizer for this ill-conditioned
+% problem (reg_coeff = 1e-6): the high-fidelity objective it returns can be an order
+% of magnitude above the true minimum.  Converge it with damped Newton steps.
+[~, g_lofi] = opt_lofi.Jhat(z_lofi);
+fprintf('Low-fidelity optimizer: ||grad|| = %.3e\n', norm(g_lofi));
+[J_hifi_fminunc, g_hifi_fminunc] = opt_hifi.Jhat(z_hifi);
+[u_hifi, z_hifi, polish_info] = opt_hifi.Newton_Polish(z_hifi, 1.e-12, 50);
+fprintf('High-fidelity optimizer: fminunc result J = %.6e, ||grad|| = %.3e\n', J_hifi_fminunc, norm(g_hifi_fminunc));
+fprintf('High-fidelity optimizer after %d Newton polishing steps: J = %.6e, ||grad|| = %.3e\n', ...
+        polish_info.iterations, polish_info.val(end), polish_info.grad_norm(end));
+
 % Report the high-fidelity objective gap induced by using the low-fidelity
 % control.  These diagnostics are useful before launching the article/OED
 % drivers, which use the same quantities at Step 0.

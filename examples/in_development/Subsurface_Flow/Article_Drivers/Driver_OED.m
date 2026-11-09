@@ -19,6 +19,14 @@ Jhat_DC_oed = zeros(N, 1);
 z_bars = zeros(n, N);
 beta_bars = zeros(num_evals, N);
 beta_0 = randn(num_evals, 1);
+
+% Newton polishing settings for the mean continuation
+[~, lowfi_grad] = opt_lofi.Jhat(data_interface.z_opt);
+mean_options = struct();
+mean_options.num_steps = 3;
+mean_options.num_max_newton_steps = 5;
+mean_options.newton_gradient_tol = 1e-8;
+
 alpha_k_denom = trace(z_prior_interface.Apply_W_z_Inverse(z_prior_interface.M));
 alpha_k_denom_proj = trace(md_hessian_analysis.evecs' * z_prior_interface.M * md_hessian_analysis.evecs) / W_z_norm(z_lofi)^2;
 
@@ -55,10 +63,7 @@ for p = 1:N
     md_post_sampling.Compute_Posterior_Data(alpha_d, 1);
 
     % Obtain optimal solution update via continuation
-    num_continuation_steps = 3;
     md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis);
-    mean_options = struct();
-    mean_options.num_steps = num_continuation_steps;
     [u_cont, z_cont, betas_cont] = md_cont_update.Posterior_Update_Mean(mean_options); %#ok<NASGU>
     z_bar = z_cont(:, end);
     z_bars(:, p) = z_bar;

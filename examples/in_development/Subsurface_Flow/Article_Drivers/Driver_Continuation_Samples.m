@@ -6,13 +6,13 @@
 % Import the OED setup and previously generated OED samples
 OED_Setup;
 oed_results = load('oed-results.mat');
-num_data_points = 1;
+num_data_points = 5;
 
 if num_data_points > 0
 data_interface.Set_Z_and_D(oed_results.Z_oed(:, 1:num_data_points), oed_results.D_oed(:, 1:num_data_points));
 
 % Posterior sampling
-num_samples = 50;
+num_samples = 2*18;
 md_post_sampling = MD_Posterior_Sampling(data_interface, u_prior_interface, z_prior_interface);
 md_post_sampling.Compute_Posterior_Data(alpha_d, num_samples, true);
 
@@ -26,24 +26,29 @@ fprintf('Linearization Sampling...\n');
 fprintf('Continuation Update...\n');
 md_cont_update = MD_Continuation_Update(md_post_sampling, md_hessian_analysis);
 
+[~, lowfi_grad] = opt_lofi.Jhat(data_interface.z_opt);
+newton_gradient_tol = 1e-8;
+
 mean_options = struct();
 mean_options.num_steps = 7;
+mean_options.num_max_newton_steps = 5;
+mean_options.newton_gradient_tol = newton_gradient_tol;
 % mean_options.time_step.use = true;
 [u_mean, z_mean, beta_mean] = md_cont_update.Posterior_Update_Mean(mean_options);
 
 
 sample_options = struct();
-sample_options.num_mean_to_sample_steps = 5;
+sample_options.num_mean_to_sample_steps = 1;
+sample_options.num_max_newton_steps = 5;
+sample_options.newton_gradient_tol = newton_gradient_tol;
 % sample_options.time_step.use = true;
 sample_options.materialize_breve_samples = true;
 sample_options.use_parallel_sampling = true;
 
-pool = parpool("Threads");
 disp("Continuation Sampling...")
 tic;
 [u_samples, z_samples, beta_samples] = md_cont_update.Posterior_Update_Samples_From_Mean(u_mean, z_mean, beta_mean, sample_options);
 toc;
-delete(pool)
 
 % Calculate Percentiles
 plot_ptile = 90;
@@ -89,11 +94,9 @@ fprintf('Prior Continuation Sampling...\n');
 prior_options = struct();
 prior_options.num_steps = 7;
 prior_options.use_parallel_sampling = true;
-pool = parpool("Threads");
 tic;
 [~, z_prior_samples, ~] = md_prior_cont_sampling.Prior_Update_Samples(num_prior_samples, prior_options);
 toc;
-delete(pool)
 
 plot_ptile = 90;
 get_percentile = @(samples, ptile) deal(prctile(samples, 50-ptile/2, 2), prctile(samples, 50+ptile/2, 2));

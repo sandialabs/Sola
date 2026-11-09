@@ -152,6 +152,80 @@ classdef Reduced_Space_Optimization < handle
             z_out = xJ + xc;
         end
 
+
+        function [u, z, info] = Newton_Polish(this, z0, grad_tol, max_iter, basis)
+            if nargin < 3 || isempty(grad_tol)
+                grad_tol = 1.e-12;
+            end
+            if nargin < 4 || isempty(max_iter)
+                max_iter = 50;
+            end
+
+            z0 = z0(:);
+            if nargin < 5 || isempty(basis)
+                basis = speye(length(z0));
+            end
+            n = size(basis, 2);
+            c = zeros(n, 1);
+            z = z0;
+            info = struct('iterations', 0, 'val', [], 'grad_norm', []);
+            for k = 1:max_iter
+                [val, grad, hessian_data] = this.Jhat(z);
+                grad = basis' * grad;
+                info.val(end + 1) = val;
+                info.grad_norm(end + 1) = norm(grad);
+                if norm(grad) <= grad_tol
+                    break;
+                end
+
+                hess_vec = @(v) basis' * this.Jhat_hessVec(hessian_data, basis * v);
+                % p = this.Truncated_CG_Newton_Step(hess_vec, grad, n);
+                g_norm = norm(grad);
+                tmp_cg_tol = min(0.5, sqrt(g_norm)) * g_norm;
+                p = zeros(size(grad));
+                r = -grad;
+                d = r;
+                rr = r' * r;
+                for j = 1:n
+                    Hd = hess_vec(d);
+                    curv = d' * Hd;
+                    if curv <= 1.e-14 * norm(Hd) * norm(d)
+                        if j == 1
+                            p = d / max(abs(curv) / (d' * d), eps);
+                        end
+                        return;
+                    end
+                    step = rr / curv;
+                    p = p + step * d;
+                    r = r - step * Hd;
+                    rr_new = r' * r;
+                    if sqrt(rr_new) <= tmp_cg_tol
+                        return;
+                    end
+                    d = r + (rr_new / rr) * d;
+                    rr = rr_new;
+                end
+
+                slope = grad' * p;
+                t = 1.0;
+                while t > 1.e-12
+                    val_new = this.Jhat(z0 + basis * (c + t * p));
+                    if val_new <= val + 1.e-4 * t * slope + 1.e-14 * abs(val)
+                        break;
+                    end
+                    t = t / 2;
+                end
+                c = c + t * p;
+                z = z0 + basis * c;
+                info.iterations = k;
+            end
+            [val, grad] = this.Jhat(z);
+            grad = basis' * grad;
+            info.val(end + 1) = val;
+            info.grad_norm(end + 1) = norm(grad);
+            u = this.con.State_Solve(z);
+        end
+
         %% Finite difference tests
 
         function [diffs] = Finite_Difference_Gradient_Check(this, z)

@@ -11,7 +11,7 @@
 
 CI_Setup;
 
-step_counts = [1, 2, 3, 5, 7, 10];     % continuation steps N_c
+step_counts = [1, 2, 3, 5];     % continuation steps N_c
 newton_counts = [0, 1, 2, 3];             % extra Newton steps M at t = 1
 
 fprintf('\n--- Experiment 4b: posterior mean, continuation steps + final Newton steps ---\n');

@@ -15,6 +15,7 @@ classdef Quasi_Newton_Preconditioner < handle
         P
         W
         PW_mags
+        num_skipped_block_updates = 0   % block updates skipped because no eigenvalue exceeded tau
     end
 
     methods
@@ -93,6 +94,11 @@ classdef Quasi_Newton_Preconditioner < handle
                     Lambda = Lambda(J);
                     V = V(:, J);
                     I = find(Lambda > this.tau);
+                    if isempty(I)
+                        % No direction with curvature above tau; skip this update.
+                        this.num_skipped_block_updates = this.num_skipped_block_updates + 1;
+                        return;
+                    end
                     if length(I) > this.max_size
                         I = I(1:this.max_size);
                     end

@@ -36,12 +36,12 @@ xlabel('Continuation steps N_c'); ylabel('||grad||');
 title('Posterior mean: endpoint gradient vs steps'); legend([leg, {'low-fidelity optimizer'}]); grid on; drawnow;
 
 figure;
-loglog(t_run, err, '-o');
+semilogy(t_run, err, '-o');
 xlabel('Time (s)'); ylabel('Relative error');
 title('Posterior mean: accuracy vs cost'); legend(leg); grid on; drawnow;
 
 figure;
-loglog(t_run, grad, '-o');
+semilogy(t_run, grad, '-o');
 yline(res.lowfi_grad_norm, 'k--');
 xlabel('Time (s)'); ylabel('||grad||');
 title('Posterior mean: endpoint gradient vs cost'); legend([leg, {'low-fidelity optimizer'}]); grid on; drawnow;
