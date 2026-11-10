@@ -32,16 +32,21 @@ fixed_steps = [1, 2, 4];        % fixed N_c
 num_max_newton_steps = 5;              % keep modest: a bad endpoint must fail
 newton_gradient_tol = max(lowfi_grad_norm, 1.e-9);   % fixed floor (see findings, item 7)
 newton_cost = 0.5;
-adaptive_epsilon_nl = 0.10;
+adaptive_epsilon_nl = 0.08;
 adaptive_epsilon_curv = Inf;            % gentle curvature limit (section 4.3)
+include_backtrack_only = false;    % also run the backtracking-only method
+use_parallel_sampling = false;     % run the samples of each method in parallel (parfor; pool or Threads)
 adaptive_max_steps = 60;               % the default cap (15) would mask the heuristic
 
 bt_options = sample_bt_options;
 bt_options.epsilon_curv = adaptive_epsilon_curv;
 bt_options.max_steps = adaptive_max_steps;
 
-method_labels = [arrayfun(@(n) sprintf('fixed N_c = %d', n), fixed_steps, 'UniformOutput', false), ...
-                 {'backtrack only', 'adaptive heuristic'}];
+method_labels = arrayfun(@(n) sprintf('fixed N_c = %d', n), fixed_steps, 'UniformOutput', false);
+if include_backtrack_only
+    method_labels{end + 1} = 'backtrack only';
+end
+method_labels{end + 1} = 'adaptive heuristic';
 nM = length(method_labels);
 nL = length(lambdas);
 summaries = cell(nM, nL);
@@ -57,13 +62,13 @@ for ll = 1:nL
     for mm = 1:nM
         if mm <= length(fixed_steps)
             out = Run_Samples(sen_op, md_hessian_analysis, z_opt, r, 'fixed_mts', fixed_steps(mm), beta_bar, [], [], ...
-                              sample_indices, num_max_newton_steps, newton_gradient_tol, lam);
+                              sample_indices, num_max_newton_steps, newton_gradient_tol, lam, use_parallel_sampling);
         elseif strcmp(method_labels{mm}, 'backtrack only')
             out = Run_Samples(sen_op, md_hessian_analysis, z_opt, r, 'backtrack_mts', [], beta_bar, [], bt_options, ...
-                              sample_indices, num_max_newton_steps, newton_gradient_tol, lam);
+                              sample_indices, num_max_newton_steps, newton_gradient_tol, lam, use_parallel_sampling);
         else
             out = Run_Samples(sen_op, md_hessian_analysis, z_opt, r, 'adaptive_mts', [], beta_bar, adaptive_epsilon_nl, bt_options, ...
-                              sample_indices, num_max_newton_steps, newton_gradient_tol, lam);
+                              sample_indices, num_max_newton_steps, newton_gradient_tol, lam, use_parallel_sampling);
         end
         s = Summarize_CI_Cost(out, newton_cost, newton_gradient_tol, method_labels{mm});
         summaries{mm, ll} = s;
@@ -87,7 +92,8 @@ results.settings = struct('num_data_points', num_data_points, 'num_samples', num
                           'lambdas', lambdas, 'fixed_steps', fixed_steps, 'method_labels', {method_labels}, ...
                           'num_max_newton_steps', num_max_newton_steps, 'newton_gradient_tol', newton_gradient_tol, ...
                           'newton_cost', newton_cost, 'adaptive_epsilon_nl', adaptive_epsilon_nl, ...
-                          'adaptive_epsilon_curv', adaptive_epsilon_curv, 'adaptive_max_steps', adaptive_max_steps);
+                          'adaptive_epsilon_curv', adaptive_epsilon_curv, 'adaptive_max_steps', adaptive_max_steps, ...
+                          'include_backtrack_only', include_backtrack_only, 'use_parallel_sampling', use_parallel_sampling);
 results.summaries = summaries;
 results.runs = runs;
 results_file = fullfile(ci_dir, 'ci-extrapolated-results.mat');

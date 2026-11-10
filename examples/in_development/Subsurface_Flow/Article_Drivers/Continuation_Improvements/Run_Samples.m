@@ -3,7 +3,7 @@
 %%%%%%%%% Questions? Contact Joseph Hart (joshart@sandia.gov) %%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function out = Run_Samples(sen_op, hessian_analysis, z_opt, r, method, N_c, beta_bar, epsilon_nl, bt_options, sample_indices, num_max_newton_steps, newton_gradient_tol, extrap_scale)
+function out = Run_Samples(sen_op, hessian_analysis, z_opt, r, method, N_c, beta_bar, epsilon_nl, bt_options, sample_indices, num_max_newton_steps, newton_gradient_tol, extrap_scale, use_parallel)
     % method: 'nominal'      fixed steps from beta = 0
     %         'fixed_mts'    fixed steps from beta_bar
     %         'adaptive_mts' heuristic + backtracking from beta_bar
@@ -17,6 +17,11 @@ function out = Run_Samples(sen_op, hessian_analysis, z_opt, r, method, N_c, beta
     % extrap_scale (optional, default 1): for the mean-to-sample methods, continue to
     % mean + extrap_scale * (sample - mean) (MD_Discrepancy_Extrapolated_Trajectory).
     % extrap_scale > 1 makes the problem harder; scoring uses the same endpoint.
+    % use_parallel (optional, default true): run the samples with parfor (current
+    % pool, else a Threads pool).  false runs them serially in the client.
+    if nargin < 14 || isempty(use_parallel)
+        use_parallel = true;
+    end
     if nargin < 13 || isempty(extrap_scale)
         extrap_scale = 1;
     end
@@ -51,11 +56,16 @@ function out = Run_Samples(sen_op, hessian_analysis, z_opt, r, method, N_c, beta
     % without it parfor runs serially).  Each worker gets its own copy of sen_op,
     % so its state cache is never shared; the (seeded) breve samplers already
     % stored in sen_op are copied along with it.  out.time is wall-clock time.
-    if license('test', 'Distrib_Computing_Toolbox') && isempty(gcp('nocreate'))
-        parpool('Threads');
+    num_workers = 0;                     % parfor (ii = ..., 0) runs serially in the client
+    if use_parallel && license('test', 'Distrib_Computing_Toolbox')
+        pool = gcp('nocreate');
+        if isempty(pool)
+            pool = parpool('Threads');
+        end
+        num_workers = pool.NumWorkers;
     end
     tic;
-    parfor ii = 1:num_samples
+    parfor (ii = 1:num_samples, num_workers)
         idx = sample_indices(ii);
         warn_state = warning('error', 'MATLAB:nearlySingularMatrix');
         warn_cleanup = onCleanup(@() warning(warn_state));

@@ -23,13 +23,18 @@ for mm = 1:nM
         steps(mm, ll) = s.mean_cont;
     end
 end
-styles = [repmat({'-o'}, 1, nM - 2), {'k--s', 'r-d'}];
+nfix = length(S.fixed_steps);
+heur = find(strcmp(S.method_labels, 'adaptive heuristic'));
+bt_idx = find(strcmp(S.method_labels, 'backtrack only'));   % empty if it was not run
+fixed_colors = lines(max(nfix, 1));
+styles = repmat({'-o'}, 1, nM);
+styles{heur} = 'r-d';
+if ~isempty(bt_idx), styles{bt_idx} = 'k--s'; end
 
 % Cost counted only where every sample converged (otherwise NaN: the method failed).
 cost_ok = cost;
 cost_ok(conv < 100 - 1.e-9) = NaN;
 % Cheapest fixed N_c that fully converges, per lambda (the hindsight oracle).
-nfix = length(S.fixed_steps);
 oracle = min(cost_ok(1:nfix, :), [], 1);
 
 figure; hold on;
@@ -37,8 +42,9 @@ for mm = 1:nM
     semilogx(S.lambdas, conv(mm, :), styles{mm});
 end
 set(gca, 'XScale', 'log');
-xlabel('Increment inflation \lambda'); ylabel('Samples converged (%)');
-title('Newton tolerance reached'); legend(S.method_labels, 'Location', 'southwest'); grid on; drawnow;
+xlabel('Increment scale \lambda'); ylabel('Samples converged (%)');
+% legend(S.method_labels, 'Location', 'southwest'); 
+grid on; drawnow;
 
 figure; hold on;
 for mm = 1:nM
@@ -52,8 +58,8 @@ figure; hold on;
 for mm = 1:nM
     loglog(S.lambdas, steps(mm, :), styles{mm});
 end
-xlabel('Increment inflation \lambda'); ylabel('Mean continuation steps (incl. backtracks)');
-title('Steps chosen'); legend(S.method_labels, 'Location', 'northwest'); grid on; drawnow;
+xlabel('Increment scale \lambda'); ylabel('Mean continuation steps');
+legend(S.method_labels, 'Location', 'northeastoutside'); grid on; drawnow;
 
 if false
     % Single summary figure: time per CONVERGED sample against lambda.
@@ -91,13 +97,13 @@ if false
     for mm = 1:nM
         if mm == heur
             col = [0.84 0.15 0.16];  lw = 4;  ms = 12;           % highlighted
-        elseif mm == heur - 1
+        elseif ~isempty(bt_idx) && mm == bt_idx
             col = [0.12 0.47 0.71];  lw = 2;  ms = 9;            % backtracking only
         else
             col = fixed_colors(mod(mm - 1, size(fixed_colors, 1)) + 1, :);  lw = 2;  ms = 8;
         end
         ls = '-';
-        if mm < heur - 1, ls = '--'; end
+        if mm <= nfix, ls = '--'; end
         h_line(mm) = plot(S.lambdas, metric(mm, :), ls, 'Color', col, 'LineWidth', lw);
         for ll = 1:nL
             if isnan(metric(mm, ll)), continue; end
