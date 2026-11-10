@@ -26,7 +26,7 @@ classdef MD_Breve_Beta_Sampler < handle
 
     methods
 
-        function this = MD_Breve_Beta_Sampler(hessian_analysis, z_prior_interface, post_data, u_prior_interface, output_dim, tol, materialize_sample)
+        function this = MD_Breve_Beta_Sampler(hessian_analysis, z_prior_interface, post_data, u_prior_interface, output_dim, tol, materialize_sample, auto_complete)
             arguments
                 hessian_analysis MD_Hessian_Analysis
                 z_prior_interface MD_z_Prior_Interface
@@ -35,6 +35,7 @@ classdef MD_Breve_Beta_Sampler < handle
                 output_dim (1, 1) {mustBeNumeric}
                 tol (1, 1) {mustBeNumeric} = 1e-10
                 materialize_sample (1, 1) logical = false
+                auto_complete (1, 1) {mustBeNumeric} = 0
             end
             this.hessian_analysis = hessian_analysis;
             this.z_prior_interface = z_prior_interface;
@@ -57,6 +58,8 @@ classdef MD_Breve_Beta_Sampler < handle
             sigma_apply = @(beta_in) this.Apply_Sigma_Beta(beta_in);
             sigma_sample = @(num_samples) this.Sample_Sigma_Beta(num_samples);
             this.lazy_X = MD_Lazy_Matrix_Normal_Operator(u_prior_interface, sigma_apply, sigma_sample, right_dim, output_dim, tol);
+
+            this.lazy_X.auto_complete = auto_complete;
 
             if materialize_sample
                 this.Materialize();

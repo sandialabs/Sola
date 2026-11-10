@@ -86,6 +86,7 @@ classdef MD_Continuation_Update < handle
             options.samples.newton_gradient_tol = 0;
             options.samples.discard_cache = true;
             options.samples.materialize_breve_samples = false;
+            options.samples.complete_breve_samples = false;
             options.samples.use_parallel_sampling = true;
             options.samples.time_step = struct();
             options.samples.time_step.use = false;
@@ -252,7 +253,7 @@ classdef MD_Continuation_Update < handle
                 end
                 close(h);
             else
-                sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis, this.options.samples.discard_cache, this.options.samples.materialize_breve_samples);
+                sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis, this.options.samples.discard_cache, this.options.samples.materialize_breve_samples, this.options.samples.complete_breve_samples);
 
                 h = waitbar(0, 'Initializing...', 'Name', 'Processing mean-to-sample continuation...');
                 tic;
@@ -300,7 +301,8 @@ classdef MD_Continuation_Update < handle
                 continuation_options = this.options.samples;
                 sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis, ...
                                                                continuation_options.discard_cache, ...
-                                                               continuation_options.materialize_breve_samples);
+                                                               continuation_options.materialize_breve_samples, ...
+                                                               continuation_options.complete_breve_samples);
             end
             qn_prec = MD_Quasi_Newton_Preconditioner(this.hessian_analysis);
             beta_nom = zeros(this.r, 1);
@@ -344,7 +346,7 @@ classdef MD_Continuation_Update < handle
 
         function [u_k, z_k, beta_k, prior_diagnostics, time_grid, step_diagnostics, grad_norm, num_newton] = Posterior_Update_Sample_From_Mean_Core(this, beta_bar, sample_idx, sen_op)
             if nargin < 4 || isempty(sen_op)
-                sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis, this.options.samples.discard_cache, this.options.samples.materialize_breve_samples);
+                sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis, this.options.samples.discard_cache, this.options.samples.materialize_breve_samples, this.options.samples.complete_breve_samples);
             end
 
             qn_prec = MD_Quasi_Newton_Preconditioner(this.hessian_analysis);
@@ -403,7 +405,7 @@ classdef MD_Continuation_Update < handle
 
         function [val, grad] = Parameterized_RS_Objective_beta(this, beta, sample_idx)
             beta = beta(:);
-            sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis, this.options.samples.discard_cache, this.options.samples.materialize_breve_samples);
+            sen_op = MD_Continuation_Sensitivity_Operators(this.post_sampling, this.hessian_analysis, this.options.samples.discard_cache, this.options.samples.materialize_breve_samples, this.options.samples.complete_breve_samples);
             disc_ops = sen_op.Get_Continuation_Beta_Discrepancy_Ops(sample_idx);
             z = this.z_opt + this.hessian_analysis.Apply_V(beta);
             u = this.opt_prob_interface.State_Solve(z);

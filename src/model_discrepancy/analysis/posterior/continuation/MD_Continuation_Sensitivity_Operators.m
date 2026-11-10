@@ -40,6 +40,7 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
         discard_cache
         lazy_sampling_tol
         materialize_breve_samples
+        complete_breve_samples   % 0/false: off; true/1: complete at break-even cache size; f in (0,1): complete at f*break-even
     end
 
     methods (Access = public)
@@ -137,12 +138,13 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
 
     methods
 
-        function this = MD_Continuation_Sensitivity_Operators(post_sampling, hessian_analysis, discard_cache, materialize_breve_samples)
+        function this = MD_Continuation_Sensitivity_Operators(post_sampling, hessian_analysis, discard_cache, materialize_breve_samples, complete_breve_samples)
             arguments
                 post_sampling MD_Posterior_Sampling
                 hessian_analysis MD_Hessian_Analysis
                 discard_cache (1,1) logical = true
                 materialize_breve_samples (1,1) logical = false
+                complete_breve_samples (1,1) {mustBeNumeric} = 0
             end
 
             this.post_sampling = post_sampling;
@@ -172,6 +174,7 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
             this.lazy_sampling_tol = 1e-10;
             this.discard_cache = discard_cache;
             this.materialize_breve_samples = materialize_breve_samples;
+            this.complete_breve_samples = complete_breve_samples;
             this.breve_samplers = cell(this.post_data.num_samples, 1);
         end
 
@@ -427,7 +430,7 @@ classdef MD_Continuation_Sensitivity_Operators < Sensitivity_Operators
 
                 this.breve_samplers{sample_idx} = MD_Breve_Beta_Sampler(this.hessian_analysis, ...
                     this.z_prior_interface, this.post_data, this.post_sampling.u_prior_interface, ...
-                    length(this.u_opt), this.lazy_sampling_tol, this.materialize_breve_samples);
+                    length(this.u_opt), this.lazy_sampling_tol, this.materialize_breve_samples, this.complete_breve_samples);
             end
 
             sampler = this.breve_samplers{sample_idx};

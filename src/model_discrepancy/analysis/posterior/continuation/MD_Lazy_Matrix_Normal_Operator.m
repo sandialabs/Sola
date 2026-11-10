@@ -37,6 +37,15 @@ classdef MD_Lazy_Matrix_Normal_Operator < handle
         max_basis_vector_norm
         local_orthogonality_tol
         max_reorthogonalization_passes
+
+        % Sample completion (see "Posterior sample completion" in the paper).
+        % After completion, the caches are frozen and
+        %   X = S + Y Q_r' Sigma + Q_l T' (I - Q_r Q_r' Sigma),
+        % with S = S_left * S_right' stored through thin factors.
+        auto_complete = 0   % 0: off; f>0: complete once (k_f+k_t)(n_u+r) >= f*n_u*r (f=1 is break-even)
+        is_completed = false
+        S_left     % output_dim x num_comp, P_u S_u, P_u = I - Q_l Q_l' W_u
+        S_right    % input_dim x num_comp, G with G G' = Sigma - Sigma Q_r Q_r' Sigma
     end
 
     methods
@@ -83,6 +92,12 @@ classdef MD_Lazy_Matrix_Normal_Operator < handle
 
             v = v(:);
             Sigma_v = this.sigma_apply(v);
+
+            if this.is_completed
+                y = this.Completed_Forward_Apply(v, Sigma_v);
+                return;
+            end
+
             total_norm = sqrt(max(real(v' * Sigma_v), 0));
 
             if isempty(this.Q_r)
@@ -124,12 +139,20 @@ classdef MD_Lazy_Matrix_Normal_Operator < handle
                 y = this.Y * c;
             end
 
+            this.Check_Auto_Complete();
+
         end
 
 
         function y = Adjoint_Apply(this, u)
             % Compute y = X' u.
             u = u(:);
+
+            if this.is_completed
+                y = this.Completed_Adjoint_Apply(u);
+                return;
+            end
+
             x = this.u_prior_interface.Apply_W_u_Inverse(u);
             total_norm = sqrt(max(real(x' * u), 0));
 
@@ -171,6 +194,87 @@ classdef MD_Lazy_Matrix_Normal_Operator < handle
                 y = this.T * c;
             end
 
+            this.Check_Auto_Complete();
+
+        end
+
+        % ------------------------------------------------------------
+        % Sample completion
+        % ------------------------------------------------------------
+
+        function Check_Auto_Complete(this)
+            if this.auto_complete > 0 && ~this.is_completed
+                [kl, kr] = this.Basis_Dimensions();
+                if (kl + kr) * (this.input_dim + this.output_dim) >= this.auto_complete * this.input_dim * this.output_dim
+                    this.Complete_Sample();
+                end
+            end
+        end
+
+        function Complete_Sample(this)
+            % Draw the part of X not determined by the caches, conditionally
+            % on everything revealed so far, and freeze the caches.
+            if this.is_completed
+                return;
+            end
+
+            % Factor G with G G' = Sigma - Sigma Q_r Q_r' Sigma. Sigma is
+            % formed through input_dim applies and eigendecomposed.
+            I_r = eye(this.input_dim);
+            Sigma = zeros(this.input_dim);
+            for j = 1:this.input_dim
+                Sigma(:, j) = this.sigma_apply(I_r(:, j));
+            end
+            Sigma = (Sigma + Sigma') / 2;
+            Sigma_res = Sigma - this.Sigma_Q_r * this.Sigma_Q_r';
+            Sigma_res = (Sigma_res + Sigma_res') / 2;
+            [U, L] = eig(Sigma_res, 'vector');
+            keep = L > max([L; 0]) * eps * this.input_dim * 1e2;
+            G = U(:, keep) * diag(sqrt(L(keep)));
+            num_comp = size(G, 2);
+
+            % P_u S_u with S_u columns ~ N(0, W_u^{-1})
+            if num_comp > 0
+                S_u = this.u_prior_interface.Sample_with_Covariance_W_u_Inverse(num_comp);
+                if ~isempty(this.Q_l)
+                    S_u = S_u - this.Q_l * (this.W_Q_l' * S_u);
+                    S_u = S_u - this.Q_l * (this.W_Q_l' * S_u); % re-projection
+                end
+            else
+                S_u = zeros(this.output_dim, 0);
+            end
+            this.S_left = S_u;
+            this.S_right = G;
+            this.is_completed = true;
+        end
+
+        function y = Completed_Forward_Apply(this, v, Sigma_v)
+            % y = S v + Y Q_r' Sigma v + Q_l T' (v - Q_r Q_r' Sigma v)
+            y = this.S_left * (this.S_right' * v);
+            if ~isempty(this.Q_r)
+                c = this.Q_r' * Sigma_v;
+                y = y + this.Y * c;
+                if ~isempty(this.Q_l)
+                    y = y + this.Q_l * (this.T' * (v - this.Q_r * c));
+                end
+            elseif ~isempty(this.Q_l)
+                y = y + this.Q_l * (this.T' * v);
+            end
+        end
+
+        function y = Completed_Adjoint_Apply(this, u)
+            % y = S' u + Sigma Q_r Y' u + (I - Sigma Q_r Q_r') T Q_l' u
+            y = this.S_right * (this.S_left' * u);
+            if ~isempty(this.Q_r)
+                y = y + this.Sigma_Q_r * (this.Y' * u);
+            end
+            if ~isempty(this.Q_l)
+                w = this.T * (this.Q_l' * u);
+                if ~isempty(this.Q_r)
+                    w = w - this.Sigma_Q_r * (this.Q_r' * w);
+                end
+                y = y + w;
+            end
         end
 
         % ------------------------------------------------------------
